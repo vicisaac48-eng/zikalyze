@@ -134,17 +134,10 @@ const OnChainMetrics = ({ crypto, price, change, volume, marketCap, coinGeckoId 
               isConnected ? "bg-success animate-pulse" : isConnecting ? "bg-primary animate-pulse" : "bg-muted-foreground"
             )} />
           </div>
-          <h3 className="font-semibold text-foreground">24h On-Chain Data</h3>
+          <h3 className="font-semibold text-foreground">On-Chain Data</h3>
           <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-secondary rounded">
             {crypto.toUpperCase()}
           </span>
-          <div className={cn(
-            "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium",
-            isConnected ? "bg-success/20 text-success" : isPolling ? "bg-warning/20 text-warning" : isConnecting ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-          )}>
-            <StatusIcon className="h-3 w-3" />
-            {statusLabel}
-          </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
