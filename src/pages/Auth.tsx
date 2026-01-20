@@ -188,6 +188,12 @@ const Auth = () => {
       return;
     }
 
+    // Show success toast with email confirmation
+    toast({
+      title: t("auth.accountCreated"),
+      description: t("auth.welcomeEmailSent"),
+    });
+
     // Show email confirmation screen
     setShowEmailConfirmation(true);
   };
