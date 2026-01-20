@@ -773,12 +773,6 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-foreground">{crypto.toUpperCase()}</span>
-                {liveData.priceIsLive && isDataFresh && (
-                  <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-success/20 text-success font-medium">
-                    <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                    REALTIME
-                  </span>
-                )}
               </div>
               <div className={cn(
                 "text-2xl font-bold tabular-nums",
