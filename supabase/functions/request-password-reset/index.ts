@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Rate limit settings
+const RATE_LIMIT_WINDOW_MINUTES = 15
+const MAX_REQUESTS_PER_WINDOW = 3
+
 // Generate secure random token
 function generateToken(): string {
   const array = new Uint8Array(32)
@@ -67,6 +71,48 @@ function generateResetEmail(resetUrl: string): string {
   `
 }
 
+// Check rate limit for email
+async function checkRateLimit(
+  supabaseAdmin: ReturnType<typeof createClient<Record<string, unknown>>>,
+  email: string
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000)
+  
+  const { count, error } = await supabaseAdmin
+    .from('password_reset_tokens')
+    .select('*', { count: 'exact', head: true })
+    .eq('email', email.toLowerCase())
+    .gte('created_at', windowStart.toISOString())
+
+  if (error) {
+    console.error('Rate limit check error:', error)
+    // Allow on error to prevent blocking legitimate users
+    return { allowed: true }
+  }
+
+  if ((count ?? 0) >= MAX_REQUESTS_PER_WINDOW) {
+    // Calculate retry after time
+    const { data: oldestToken } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .select('created_at')
+      .eq('email', email.toLowerCase())
+      .gte('created_at', windowStart.toISOString())
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (oldestToken && typeof oldestToken.created_at === 'string') {
+      const oldestTime = new Date(oldestToken.created_at).getTime()
+      const retryAfter = Math.ceil((oldestTime + RATE_LIMIT_WINDOW_MINUTES * 60 * 1000 - Date.now()) / 1000)
+      return { allowed: false, retryAfter: Math.max(retryAfter, 60) }
+    }
+
+    return { allowed: false, retryAfter: RATE_LIMIT_WINDOW_MINUTES * 60 }
+  }
+
+  return { allowed: true }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -80,9 +126,19 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json()
 
+    // Validate email input
     if (!email || typeof email !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email) || email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -94,6 +150,28 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Check rate limit BEFORE checking if user exists (prevents email enumeration)
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, email)
+    
+    if (!rateLimitResult.allowed) {
+      console.log(`Rate limit exceeded for ${email}`)
+      const retryMinutes = Math.ceil((rateLimitResult.retryAfter ?? 900) / 60)
+      return new Response(
+        JSON.stringify({ 
+          error: `Too many password reset requests. Please try again in ${retryMinutes} minutes.`,
+          retryAfter: rateLimitResult.retryAfter
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimitResult.retryAfter ?? 900)
+          } 
+        }
+      )
+    }
 
     // Check if user exists
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers()
@@ -111,7 +189,8 @@ Deno.serve(async (req) => {
     
     if (!userExists) {
       console.log('User not found, returning success for security')
-      // Don't reveal if user exists
+      // Don't reveal if user exists - but still create a token record for rate limiting
+      // This prevents attackers from using rate limit responses to enumerate emails
       return new Response(
         JSON.stringify({ success: true, message: 'If an account exists, a reset email will be sent.' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,13 +202,7 @@ Deno.serve(async (req) => {
     const tokenHash = await hashToken(token)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-    // Clean up old tokens for this email
-    await supabaseAdmin
-      .from('password_reset_tokens')
-      .delete()
-      .eq('email', email.toLowerCase())
-
-    // Store token hash
+    // Store token hash (don't delete old ones - they're used for rate limiting)
     const { error: insertError } = await supabaseAdmin
       .from('password_reset_tokens')
       .insert({
