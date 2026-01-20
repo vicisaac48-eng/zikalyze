@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, Lock, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { verifyResetToken, session } = useAuth();
+  const { session, updatePassword } = useAuth();
   
   const passwordSchema = z.string().min(6, t("validation.passwordMinLength"));
   
@@ -22,37 +22,70 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
-  // Extract token and email from URL query params
-  const { token, email } = useMemo(() => {
-    const searchParams = new URLSearchParams(location.search);
-    return {
-      token: searchParams.get('token'),
-      email: searchParams.get('email')
-    };
-  }, [location.search]);
-
-  // Check if we have valid reset params or a recovery session
+  // Handle the recovery token from URL hash (Supabase adds it there)
   useEffect(() => {
-    const hasResetParams = token && email;
-    const hasRecoverySession = session?.user;
-
-    if (!hasResetParams && !hasRecoverySession) {
-      // Give it a moment to load
-      const timeout = setTimeout(() => {
-        if (!token && !email && !session) {
+    const handleRecoveryToken = async () => {
+      // Check for recovery token in the URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      
+      if (accessToken && type === 'recovery') {
+        // Set the session using the recovery token
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: hashParams.get('refresh_token') || '',
+        });
+        
+        if (error) {
+          console.error('Error setting recovery session:', error);
           toast({
             title: t("auth.invalidLink"),
             description: t("auth.requestNewLink"),
             variant: "destructive",
           });
           navigate("/auth");
+          return;
         }
-      }, 2000);
-      return () => clearTimeout(timeout);
+        
+        // Clear the hash from URL for security
+        window.history.replaceState(null, '', window.location.pathname);
+        setIsValidSession(true);
+        setIsChecking(false);
+        return;
+      }
+      
+      // Check if we already have a valid session (user came here directly)
+      if (session?.user) {
+        setIsValidSession(true);
+        setIsChecking(false);
+        return;
+      }
+      
+      // Give it a moment for auth state to load
+      setTimeout(() => {
+        setIsChecking(false);
+      }, 1500);
+    };
+
+    handleRecoveryToken();
+  }, [session, navigate, toast, t]);
+
+  // Redirect if no valid session after checking
+  useEffect(() => {
+    if (!isChecking && !isValidSession && !session) {
+      toast({
+        title: t("auth.invalidLink"),
+        description: t("auth.requestNewLink"),
+        variant: "destructive",
+      });
+      navigate("/auth");
     }
-  }, [token, email, session, navigate, toast, t]);
+  }, [isChecking, isValidSession, session, navigate, toast, t]);
 
   const validateForm = (): boolean => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
@@ -76,47 +109,46 @@ const ResetPassword = () => {
     
     setIsLoading(true);
 
-    // Use new token-based flow if we have token and email
-    if (token && email) {
-      const { error } = await verifyResetToken(token, email, password);
-      setIsLoading(false);
+    const { error } = await updatePassword(password);
+    setIsLoading(false);
 
-      if (error) {
-        toast({
-          title: t("settings.passwordUpdateFailed"),
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsSuccess(true);
+    if (error) {
       toast({
-        title: t("auth.passwordUpdated"),
-        description: t("auth.passwordResetSuccess"),
+        title: t("settings.passwordUpdateFailed"),
+        description: error.message,
+        variant: "destructive",
       });
-      
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        navigate("/auth");
-      }, 2000);
       return;
     }
 
-    // Fallback to old Supabase session-based flow
-    const { updatePassword } = await import("@/hooks/useAuth").then(m => {
-      // This won't work without a session, but keep as fallback
-      return { updatePassword: async () => ({ error: new Error("No valid reset session") }) };
-    });
-
-    setIsLoading(false);
+    setIsSuccess(true);
     toast({
-      title: t("auth.invalidLink"),
-      description: t("auth.requestNewLink"),
-      variant: "destructive",
+      title: t("auth.passwordUpdated"),
+      description: t("auth.passwordResetSuccess"),
     });
-    navigate("/auth");
+    
+    // Sign out and redirect to login
+    await supabase.auth.signOut();
+    setTimeout(() => {
+      navigate("/auth");
+    }, 2000);
   };
+
+  // Show loading while checking session
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }} />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Verifying reset link...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
