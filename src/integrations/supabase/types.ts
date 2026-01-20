@@ -344,6 +344,24 @@ export type Database = {
         }
         Relationships: []
       }
+      site_stats: {
+        Row: {
+          id: string
+          updated_at: string
+          user_count: number
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          user_count?: number
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          user_count?: number
+        }
+        Relationships: []
+      }
       user_2fa: {
         Row: {
           backup_codes: string[] | null
@@ -574,6 +592,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      decrement_user_count: { Args: never; Returns: undefined }
       get_my_login_attempts: {
         Args: { p_limit?: number }
         Returns: {
@@ -582,6 +601,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      increment_user_count: { Args: never; Returns: undefined }
       is_authenticated: { Args: never; Returns: boolean }
       record_login_attempt: {
         Args: { p_email: string; p_ip_address?: string; p_success: boolean }

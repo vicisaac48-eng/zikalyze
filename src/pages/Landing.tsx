@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { CookieConsent } from "@/components/CookieConsent";
+import { supabase } from "@/integrations/supabase/client";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 const Landing = () => {
@@ -15,6 +16,7 @@ const Landing = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [userCount, setUserCount] = useState<number | null>(null);
 
   // Handle navigation with loading state
   const handleNavigate = useCallback((path: string) => {
@@ -24,6 +26,22 @@ const Landing = () => {
       navigate(path);
     }, 400);
   }, [navigate]);
+
+  // Fetch user count from database
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      const { data, error } = await supabase
+        .from('site_stats')
+        .select('user_count')
+        .eq('id', 'global')
+        .single();
+      
+      if (!error && data) {
+        setUserCount(data.user_count);
+      }
+    };
+    fetchUserCount();
+  }, []);
 
   // Handle email verification callback
   useEffect(() => {
@@ -309,7 +327,7 @@ const Landing = () => {
         <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-4xl sm:mt-20 sm:gap-8 md:grid-cols-4 lg:mt-28 lg:gap-12 xl:max-w-5xl">
           {[
             { label: t("landing.accuracyRate"), value: "80%", icon: Activity },
-            { label: t("landing.activeUsers"), value: "25K+", icon: TrendingUp },
+            { label: t("landing.activeUsers"), value: userCount !== null ? `${Math.floor(userCount / 1000)}K+` : "25K+", icon: TrendingUp },
             { label: t("landing.predictionsPerDay"), value: "50K+", icon: Brain },
             { label: t("landing.marketsTracked"), value: "200+", icon: BarChart3 },
           ].map((stat, i) => (
