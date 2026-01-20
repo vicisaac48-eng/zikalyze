@@ -60,58 +60,35 @@ export const useAuth = () => {
     return { error };
   };
 
-  // New custom password reset using edge function
+  // Use Supabase's native password reset (built-in email delivery)
   const resetPassword = async (email: string): Promise<{ 
     error: Error | null; 
     rateLimited?: boolean; 
     retryAfter?: number 
   }> => {
     try {
-      const response = await supabase.functions.invoke('request-password-reset', {
-        body: { email }
+      // Use hash-based redirect for HashRouter compatibility
+      const redirectUrl = `${window.location.origin}/#/reset-password`;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
       });
       
-      if (response.error) {
-        return { error: response.error };
-      }
-      
-      // Check for rate limit error in response data
-      if (response.data?.error && response.data?.retryAfter) {
-        return { 
-          error: new Error(response.data.error), 
-          rateLimited: true, 
-          retryAfter: response.data.retryAfter 
-        };
-      }
-      
-      if (response.data?.error) {
-        return { error: new Error(response.data.error) };
+      if (error) {
+        // Check for rate limit errors from Supabase
+        if (error.message.includes('rate limit') || error.status === 429) {
+          return { 
+            error, 
+            rateLimited: true, 
+            retryAfter: 60 // Default 1 minute retry
+          };
+        }
+        return { error };
       }
       
       return { error: null };
     } catch (err) {
       return { error: err as Error };
-    }
-  };
-
-  // Verify reset token and set new password
-  const verifyResetToken = async (token: string, email: string, newPassword: string) => {
-    try {
-      const response = await supabase.functions.invoke('verify-reset-token', {
-        body: { token, email, newPassword }
-      });
-      
-      if (response.error) {
-        return { error: response.error, data: null };
-      }
-      
-      if (response.data?.error) {
-        return { error: new Error(response.data.error), data: null };
-      }
-      
-      return { error: null, data: response.data };
-    } catch (err) {
-      return { error: err as Error, data: null };
     }
   };
 
@@ -137,7 +114,6 @@ export const useAuth = () => {
     signIn,
     signOut,
     resetPassword,
-    verifyResetToken,
     updatePassword,
     updateEmail,
   };
