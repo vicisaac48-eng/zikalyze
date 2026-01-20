@@ -51,7 +51,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   soundVolume: 0.7,
   soundType: "chime",
   notifications: false,
-  emailAlerts: false,
+  emailAlerts: true,
   priceAlerts: false,
   language: "English",
   currency: "USD",
