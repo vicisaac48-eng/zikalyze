@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles } from "lucide-react";
+import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { useAnalysisCache } from "@/hooks/useAnalysisCache";
 import { useOnChainData } from "@/hooks/useOnChainData";
 import { useChartTrendData } from "@/hooks/useChartTrendData";
 import { useMultiTimeframeData, Timeframe } from "@/hooks/useMultiTimeframeData";
+import { useChartAPI } from "@/hooks/useChartAPI";
 import { useAILearning } from "@/hooks/useAILearning";
 import { runClientSideAnalysis, AnalysisResult } from "@/lib/zikalyze-brain";
 import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brain/types";
@@ -76,8 +77,12 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
   // 📊 Real-time 24h chart data for accurate trend analysis
   const chartTrendData = useChartTrendData(crypto);
   
+  // 📈 NEW: Enhanced Chart API with full technical indicators
+  const chartAPI = useChartAPI(crypto, '1h', true);
+  
   // 📈 Multi-timeframe analysis (15m, 1h, 4h, 1d)
   const multiTfData = useMultiTimeframeData(crypto);
+  
   // Real-time on-chain data with whale tracking - use live price for accuracy
   const { metrics: onChainMetrics, streamStatus } = useOnChainData(
     crypto, 
@@ -107,6 +112,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
     if (liveData.priceIsLive) sources.push('WebSocket');
     if (onChainMetrics && streamStatus === 'connected') sources.push('On-Chain');
     if (liveData.sentiment?.isLive) sources.push('Sentiment');
+    if (chartAPI.isLive) sources.push('ChartAPI');
     return sources.length > 0 ? sources.join(' + ') : 'Fallback';
   };
   const actualDataSource = buildDataSourceString();
@@ -219,7 +225,8 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
         low: analysisLow,
         volume: analysisVolume,
         dataAge: `${dataAgeMs}ms`,
-        source: liveData.dataSourcesSummary
+        source: liveData.dataSourcesSummary,
+        chartAPI: chartAPI.isLive ? `${chartAPI.source} (RSI: ${chartAPI.indicators?.rsi?.toFixed(1)}, Trend: ${chartAPI.analysis?.trend})` : 'loading'
       });
 
       // Use real-time on-chain data from useOnChainData hook (more comprehensive)
@@ -337,15 +344,17 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
         dataSource: actualDataSource,
         onChainData: adaptedOnChainData,
         sentimentData: adaptedSentimentData,
-        chartTrendData: chartTrendData ? {
+        // Use enhanced Chart API data when available, fallback to hook data
+        chartTrendData: chartAPI.chartTrendInput || (chartTrendData ? {
           candles: chartTrendData.candles, trend24h: chartTrendData.trend24h, trendStrength: chartTrendData.trendStrength,
           higherHighs: chartTrendData.higherHighs, higherLows: chartTrendData.higherLows,
           lowerHighs: chartTrendData.lowerHighs, lowerLows: chartTrendData.lowerLows,
           ema9: chartTrendData.ema9, ema21: chartTrendData.ema21, rsi: chartTrendData.rsi,
           volumeTrend: chartTrendData.volumeTrend, priceVelocity: chartTrendData.priceVelocity,
           isLive: chartTrendData.isLive, source: chartTrendData.source
-        } : undefined,
-        multiTimeframeData: adaptedMultiTfData
+        } : undefined),
+        // Use Chart API multi-TF when available, fallback to existing hook
+        multiTimeframeData: chartAPI.multiTimeframe || adaptedMultiTfData
       });
 
       clearInterval(stepInterval);
@@ -385,7 +394,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, useCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics]);
+  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, useCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation
