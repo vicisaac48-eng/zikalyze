@@ -89,7 +89,9 @@
     "invalidLink": "Invalid or expired link",
     "requestNewLink": "Please request a new password reset link.",
     "enterNewPasswordBelow": "Enter your new password below",
-    "tooManyResetRequests": "Too many password reset requests"
+    "tooManyResetRequests": "Too many password reset requests",
+    "accountCreated": "Account created! 🎉",
+    "welcomeEmailSent": "A welcome confirmation email has been sent to your inbox."
   },
   "dashboard": {
     "title": "Zikalyze",
