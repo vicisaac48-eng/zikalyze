@@ -1,0 +1,542 @@
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import Sidebar from "@/components/dashboard/Sidebar";
+import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, Volume2, VolumeX, BellOff, Music } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useSettings, SoundType } from "@/hooks/useSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { alertSound } from "@/lib/alertSound";
+import { toast } from "sonner";
+
+interface TriggeredAlert {
+  id: string;
+  symbol: string;
+  name: string;
+  target_price: number;
+  condition: "above" | "below";
+  triggered_at: string;
+  current_price_at_creation: number;
+}
+
+const Alerts = () => {
+  const { alerts, loading, removeAlert } = usePriceAlerts();
+  const { prices, getPriceBySymbol } = useCryptoPrices();
+  const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+  const { formatPrice } = useCurrency();
+  const { settings, saveSettings } = useSettings();
+  const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+  const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
+  const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const handleVolumeChange = (value: number[]) => {
+    saveSettings({ soundVolume: value[0], soundEnabled: value[0] > 0 });
+  };
+
+  const handleSoundTypeChange = (value: SoundType) => {
+    saveSettings({ soundType: value });
+  };
+
+  const handleToggleMute = () => {
+    saveSettings({ soundEnabled: !settings.soundEnabled });
+  };
+
+  // Fetch triggered alerts history
+  useEffect(() => {
+    const fetchTriggeredAlerts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("price_alerts")
+          .select("*")
+          .eq("is_triggered", true)
+          .order("triggered_at", { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error("Error fetching triggered alerts:", error);
+          return;
+        }
+
+        const typedData = (data || []).map((item) => ({
+          ...item,
+          condition: item.condition as "above" | "below",
+        }));
+        setTriggeredAlerts(typedData);
+      } catch (err) {
+        console.error("Error:", err);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchTriggeredAlerts();
+  }, []);
+
+  const handleOpenDeleteDialog = (alertId: string, symbol: string) => {
+    setAlertToDelete({ id: alertId, symbol });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (alertToDelete) {
+      await removeAlert(alertToDelete.id);
+      setAlertToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleRemoveAlert = (alertId: string, symbol: string) => {
+    handleOpenDeleteDialog(alertId, symbol);
+  };
+
+  const handleOpenClearHistoryDialog = () => {
+    setClearHistoryDialogOpen(true);
+  };
+
+  const handleConfirmClearHistory = async () => {
+    try {
+      const { error } = await supabase
+        .from("price_alerts")
+        .delete()
+        .eq("is_triggered", true);
+
+      if (error) {
+        console.error("Error clearing history:", error);
+        setClearHistoryDialogOpen(false);
+        return;
+      }
+
+      setTriggeredAlerts([]);
+      toast.info("Alert history cleared");
+    } catch (err) {
+      console.error("Error:", err);
+    }
+    setClearHistoryDialogOpen(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const handleTestSound = () => {
+    if (!settings.soundEnabled) {
+      toast.warning(t("alerts.soundMuted") || "Sound is muted");
+      return;
+    }
+    alertSound.playTestSound(settings.soundType);
+    toast.info(t("alerts.testSound") + "...");
+  };
+
+  const handleTogglePush = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+
+      <main className="ml-16 lg:ml-64">
+        {/* Header */}
+        <header className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center gap-3">
+            <BellRing className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">{t("alerts.title")}</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t("alerts.searchAlerts")}
+                className="w-64 bg-secondary border-border pl-10"
+              />
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </Button>
+          </div>
+        </header>
+
+        <div className="p-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-primary/20">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm text-muted-foreground">{t("alerts.activeAlerts")}</span>
+              </div>
+              <div className="text-3xl font-bold text-foreground">{alerts.length}</div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-success/20">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                </div>
+                <span className="text-sm text-muted-foreground">{t("alerts.triggeredToday")}</span>
+              </div>
+              <div className="text-3xl font-bold text-foreground">
+                {triggeredAlerts.filter(a => {
+                  const today = new Date();
+                  const triggerDate = new Date(a.triggered_at);
+                  return triggerDate.toDateString() === today.toDateString();
+                }).length}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-chart-cyan/20">
+                  <Clock className="h-5 w-5 text-chart-cyan" />
+                </div>
+                <span className="text-sm text-muted-foreground">{t("alerts.totalTriggered")}</span>
+              </div>
+              <div className="text-3xl font-bold text-foreground">{triggeredAlerts.length}</div>
+            </div>
+          </div>
+
+          {/* Tabs and Test Sound */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab("active")}
+                className={cn(
+                  "rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                  activeTab === "active"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Bell className="h-4 w-4" />
+                {t("alerts.activeAlerts")}
+                {alerts.length > 0 && (
+                  <span className="bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded text-xs">
+                    {alerts.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("history")}
+                className={cn(
+                  "rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                  activeTab === "history"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Clock className="h-4 w-4" />
+                {t("alerts.alertHistory")}
+              </button>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Sound Type Selector */}
+              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
+                <Music className="h-4 w-4 text-muted-foreground" />
+                <Select value={settings.soundType} onValueChange={handleSoundTypeChange}>
+                  <SelectTrigger className="w-24 h-7 text-xs border-0 bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="chime">Chime</SelectItem>
+                    <SelectItem value="beep">Beep</SelectItem>
+                    <SelectItem value="bell">Bell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Volume Slider with Mute Toggle */}
+              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
+                <button
+                  onClick={handleToggleMute}
+                  className="hover:text-foreground transition-colors"
+                  title={settings.soundEnabled ? "Mute" : "Unmute"}
+                >
+                  {settings.soundEnabled ? (
+                    <Volume2 className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <VolumeX className="h-4 w-4 text-destructive" />
+                  )}
+                </button>
+                <Slider
+                  value={[settings.soundEnabled ? settings.soundVolume : 0]}
+                  onValueChange={handleVolumeChange}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  className="w-24"
+                  disabled={!settings.soundEnabled}
+                />
+                <span className={cn(
+                  "text-xs w-8",
+                  settings.soundEnabled ? "text-muted-foreground" : "text-destructive"
+                )}>
+                  {settings.soundEnabled ? `${Math.round(settings.soundVolume * 100)}%` : "Off"}
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleTestSound} className="gap-2" disabled={!settings.soundEnabled}>
+                <Volume2 className="h-4 w-4" />
+                {t("alerts.testSound")}
+              </Button>
+              {isSupported && (
+                <Button 
+                  variant={isSubscribed ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={handleTogglePush}
+                  disabled={pushLoading}
+                  className="gap-2"
+                >
+                  {isSubscribed ? (
+                    <>
+                      <BellRing className="h-4 w-4" />
+                      {t("alerts.pushOn")}
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="h-4 w-4" />
+                      {t("alerts.enablePush")}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="rounded-2xl border border-border bg-card">
+            {activeTab === "active" ? (
+              <>
+                <div className="p-6 border-b border-border flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">{t("alerts.activeAlerts")}</h3>
+                  <span className="text-sm text-muted-foreground">
+                    {t("alerts.monitoring", { count: alerts.length })}
+                  </span>
+                </div>
+
+                {loading ? (
+                  <div className="p-12 flex items-center justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-foreground mb-2">{t("alerts.noActiveAlerts")}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {t("alerts.noActiveAlertsDesc")}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {alerts.map((alert) => {
+                      const crypto = getPriceBySymbol(alert.symbol);
+                      const currentPrice = crypto?.current_price || 0;
+                      const progressPercent = alert.condition === "above"
+                        ? Math.min(100, (currentPrice / alert.target_price) * 100)
+                        : Math.min(100, (alert.target_price / currentPrice) * 100);
+                      const distancePercent = alert.condition === "above"
+                        ? ((alert.target_price - currentPrice) / currentPrice) * 100
+                        : ((currentPrice - alert.target_price) / currentPrice) * 100;
+
+                      return (
+                        <div key={alert.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                          <div className="flex items-center gap-4">
+                            {crypto?.image && (
+                              <img src={crypto.image} alt={alert.name} className="w-10 h-10 rounded-full" />
+                            )}
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground">{alert.symbol}</span>
+                                <span className="text-sm text-muted-foreground">{alert.name}</span>
+                              </div>
+                              <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                <span className={cn(
+                                  "px-2 py-0.5 rounded text-xs font-medium",
+                                  alert.condition === "above" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                                )}>
+                                  {alert.condition === "above" ? `↑ ${t("alerts.above")}` : `↓ ${t("alerts.below")}`}
+                                </span>
+                                <span>{formatPrice(alert.target_price)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-6">
+                            <div className="text-right">
+                              <div className="text-sm text-muted-foreground">{t("alerts.currentPrice")}</div>
+                              <div className="font-semibold text-foreground">{formatPrice(currentPrice)}</div>
+                            </div>
+                            <div className="text-right w-20">
+                              <div className="text-sm text-muted-foreground">{t("alerts.distance")}</div>
+                              <div className={cn(
+                                "font-semibold",
+                                distancePercent > 0 ? "text-warning" : "text-success"
+                              )}>
+                                {distancePercent > 0 ? `${distancePercent.toFixed(1)}%` : t("alerts.ready")}
+                              </div>
+                            </div>
+                            <div className="w-32 hidden md:block">
+                              <div className="text-xs text-muted-foreground mb-1">{t("alerts.progress")}</div>
+                              <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary transition-all duration-500 rounded-full"
+                                  style={{ width: `${progressPercent}%` }}
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveAlert(alert.id, alert.symbol)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="p-6 border-b border-border flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">{t("alerts.triggeredHistory")}</h3>
+                  {triggeredAlerts.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={handleOpenClearHistoryDialog}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t("alerts.clearHistory")}
+                    </Button>
+                  )}
+                </div>
+
+                {historyLoading ? (
+                  <div className="p-12 flex items-center justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                ) : triggeredAlerts.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-foreground mb-2">{t("alerts.noAlertHistory")}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {t("alerts.noAlertHistoryDesc")}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {triggeredAlerts.map((alert) => (
+                      <div key={alert.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-full bg-success/20">
+                            <CheckCircle className="h-5 w-5 text-success" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground">{alert.symbol}</span>
+                              <span className="text-sm text-muted-foreground">{alert.name}</span>
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-xs font-medium",
+                                alert.condition === "above" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                              )}>
+                                {alert.condition === "above" ? `↑ ${t("alerts.above")}` : `↓ ${t("alerts.below")}`}
+                              </span>
+                              <span>{formatPrice(alert.target_price)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">{t("alerts.setAt")}</div>
+                            <div className="text-sm text-foreground">{formatPrice(alert.current_price_at_creation)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">{t("alerts.triggered")}</div>
+                            <div className="text-sm text-foreground">{formatDate(alert.triggered_at)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Delete Single Alert Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("alerts.deleteAlert") || "Delete Alert"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("alerts.deleteAlertConfirm", { symbol: alertToDelete?.symbol }) || 
+                `Are you sure you want to permanently delete the ${alertToDelete?.symbol} price alert? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete") || "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear History Confirmation Dialog */}
+      <AlertDialog open={clearHistoryDialogOpen} onOpenChange={setClearHistoryDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("alerts.clearHistoryTitle") || "Clear Alert History"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("alerts.clearHistoryConfirm") || 
+                "Are you sure you want to clear all triggered alerts from history? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmClearHistory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("alerts.clearHistory") || "Clear History"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default Alerts;
