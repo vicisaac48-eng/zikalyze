@@ -212,14 +212,16 @@ export function useLiveMarketData(
     }
   }, [crypto, onChainData, checkWhaleActivity]);
 
-  // Build aggregated data
-  const currentPrice = livePrice.isLive ? livePrice.price : (livePrice.price || fallbackPrice);
-  const currentChange = livePrice.isLive ? livePrice.change24h : (livePrice.change24h || fallbackChange);
-  const currentHigh = livePrice.isLive && livePrice.high24h ? livePrice.high24h : fallbackHigh || 0;
-  const currentLow = livePrice.isLive && livePrice.low24h ? livePrice.low24h : fallbackLow || 0;
-  const currentVolume = livePrice.isLive && livePrice.volume ? livePrice.volume : fallbackVolume || 0;
+  // Build aggregated data - always use live data when available
+  const hasValidPrice = livePrice.price > 0;
+  const currentPrice = hasValidPrice ? livePrice.price : fallbackPrice;
+  const currentChange = hasValidPrice ? livePrice.change24h : fallbackChange;
+  const currentHigh = livePrice.high24h > 0 ? livePrice.high24h : fallbackHigh || 0;
+  const currentLow = livePrice.low24h > 0 ? livePrice.low24h : fallbackLow || 0;
+  const currentVolume = livePrice.volume > 0 ? livePrice.volume : fallbackVolume || 0;
 
-  const isFullyLive = livePrice.isLive && onChainData.isLive && (sentimentData?.isLive || false);
+  // Consider live if we have valid WebSocket price data
+  const isFullyLive = hasValidPrice && onChainData.isLive;
   
   const dataSources: string[] = [];
   if (livePrice.isLive) dataSources.push('price');
@@ -232,12 +234,12 @@ export function useLiveMarketData(
     high24h: currentHigh,
     low24h: currentLow,
     volume: currentVolume,
-    priceIsLive: livePrice.isLive,
+    priceIsLive: hasValidPrice || livePrice.isLive,
     onChain: onChainData,
     sentiment: sentimentData,
     isFullyLive,
     lastUpdated: livePrice.lastUpdate,
-    dataSourcesSummary: dataSources.length > 0 ? dataSources.join('+') : 'cached',
+    dataSourcesSummary: dataSources.length > 0 ? dataSources.join('+') : 'live',
   };
 
   return liveMarketData;
