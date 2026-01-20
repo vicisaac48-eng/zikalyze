@@ -702,32 +702,6 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
                     <Database className="h-2.5 w-2.5" />
                   </div>
                 )}
-                {/* On-Chain Data Status */}
-                {onChainMetrics && streamStatus === 'connected' && (
-                  <div className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-chart-cyan/20 text-chart-cyan font-medium" title="Live on-chain data connected">
-                    <Activity className="h-2.5 w-2.5" />
-                    <span>ON-CHAIN</span>
-                  </div>
-                )}
-                {/* Chart Trend Data Status */}
-                {chartTrendData?.isLive && (
-                  <div className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-chart-orange/20 text-chart-orange font-medium" title={`24h chart: ${chartTrendData.candles.length} candles, RSI ${chartTrendData.rsi.toFixed(0)}`}>
-                    <BarChart3 className="h-2.5 w-2.5" />
-                    <span>24H CHART</span>
-                  </div>
-                )}
-                {/* Multi-Timeframe Status */}
-                {multiTfData && !multiTfData.isLoading && multiTfData.confluence.alignedTimeframes >= 2 && (
-                  <div className={cn(
-                    "flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-medium",
-                    multiTfData.confluence.overallBias === 'BULLISH' ? "bg-success/20 text-success" :
-                    multiTfData.confluence.overallBias === 'BEARISH' ? "bg-destructive/20 text-destructive" :
-                    "bg-muted/50 text-muted-foreground"
-                  )} title={`Multi-TF: ${multiTfData.confluence.recommendation}`}>
-                    <Layers className="h-2.5 w-2.5" />
-                    <span>MTF {multiTfData.confluence.alignedTimeframes}/4</span>
-                  </div>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">{displayedAccuracy.toFixed(0)}% Accuracy</span>

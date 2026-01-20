@@ -91,15 +91,6 @@ const VolumeChart = ({ crypto, coinGeckoId }: VolumeChartProps) => {
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="mb-4 flex items-center gap-2">
         <h3 className="text-lg font-semibold text-foreground">Volume</h3>
-        {isLive && dataSource && (
-          <span className={cn(
-            "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
-            "bg-success/20 text-success"
-          )}>
-            <Zap className="h-2.5 w-2.5" />
-            Live
-          </span>
-        )}
       </div>
       <div className="h-32">
         {renderContent()}

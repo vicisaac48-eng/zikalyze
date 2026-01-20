@@ -110,15 +110,6 @@ const PriceChart = ({ crypto, coinGeckoId, change24h }: PriceChartProps) => {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">Price Chart</h3>
-          {isLive && dataSource && (
-            <span className={cn(
-              "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
-              "bg-success/20 text-success"
-            )}>
-              <Zap className="h-2.5 w-2.5" />
-              Live
-            </span>
-          )}
         </div>
         {isSupported && chartData.length > 0 && (
           <div className="flex items-center gap-2">
