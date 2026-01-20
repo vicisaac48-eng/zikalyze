@@ -1,7 +1,7 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useRealtimeChartData } from "@/hooks/useRealtimeChartData";
 import { cn } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Zap } from "lucide-react";
 
 interface PriceChartProps {
   crypto: string;
@@ -10,7 +10,7 @@ interface PriceChartProps {
 }
 
 const PriceChart = ({ crypto, coinGeckoId, change24h }: PriceChartProps) => {
-  const { chartData, priceChange: chartRangeChange, isLoading, isSupported, error, dataSource } = useRealtimeChartData(crypto, coinGeckoId);
+  const { chartData, priceChange: chartRangeChange, isLoading, isSupported, error, dataSource, isLive } = useRealtimeChartData(crypto, coinGeckoId);
   
   // Use 24h change if provided, otherwise fall back to chart range change
   const displayChange = change24h !== undefined ? change24h : chartRangeChange;
@@ -31,11 +31,6 @@ const PriceChart = ({ crypto, coinGeckoId, change24h }: PriceChartProps) => {
         <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
           <AlertCircle className="h-8 w-8 text-warning" />
           <span className="text-sm">{error || `Chart not available for ${crypto}`}</span>
-          {dataSource === "coingecko" ? (
-            <span className="text-xs text-muted-foreground/70">Using delayed data</span>
-          ) : (
-            <span className="text-xs text-muted-foreground/70">Trying alternative sources…</span>
-          )}
         </div>
       );
     }
@@ -115,14 +110,13 @@ const PriceChart = ({ crypto, coinGeckoId, change24h }: PriceChartProps) => {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">Price Chart</h3>
-          {dataSource && (
+          {isLive && dataSource && (
             <span className={cn(
-              "rounded px-1.5 py-0.5 text-[10px] font-medium",
-              dataSource === "coingecko" 
-                ? "bg-warning/20 text-warning" 
-                : "bg-success/20 text-success"
+              "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
+              "bg-success/20 text-success"
             )}>
-              {dataSource === "coingecko" ? "Delayed" : "Live"}
+              <Zap className="h-2.5 w-2.5" />
+              Live
             </span>
           )}
         </div>
