@@ -5,6 +5,7 @@ import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Z
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { CookieConsent } from "@/components/CookieConsent";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 const Landing = () => {
@@ -66,6 +67,8 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
+      {/* Cookie Consent Dialog */}
+      <CookieConsent />
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:w-72 sm:h-72 lg:w-96 lg:h-96" />
