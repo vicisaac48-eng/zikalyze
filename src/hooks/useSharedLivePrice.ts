@@ -1,0 +1,67 @@
+import { useMemo } from "react";
+import { useCryptoPrices, CryptoPrice } from "./useCryptoPrices";
+
+interface SharedLivePriceData {
+  price: number;
+  change24h: number;
+  high24h: number;
+  low24h: number;
+  volume: number;
+  lastUpdate: number;
+  isLive: boolean;
+  isConnecting: boolean;
+  source: string;
+}
+
+/**
+ * Hook that provides live price data from the shared multi-exchange WebSocket system.
+ * This ensures all components (Dashboard, AIAnalyzer, etc.) use the same price source.
+ * 
+ * Falls back to provided values if the symbol isn't found in the shared data.
+ */
+export const useSharedLivePrice = (
+  symbol: string, 
+  fallbackPrice?: number, 
+  fallbackChange?: number
+): SharedLivePriceData => {
+  const { getPriceBySymbol, loading, isLive, connectedExchanges } = useCryptoPrices();
+  
+  const liveData = useMemo(() => {
+    const priceData = getPriceBySymbol(symbol);
+    
+    if (priceData && priceData.current_price > 0) {
+      // Calculate if data is fresh (updated within last 30 seconds)
+      const dataAge = priceData.lastUpdate ? Date.now() - priceData.lastUpdate : Infinity;
+      const isFresh = dataAge < 30000;
+      
+      return {
+        price: priceData.current_price,
+        change24h: priceData.price_change_percentage_24h || 0,
+        high24h: priceData.high_24h || 0,
+        low24h: priceData.low_24h || 0,
+        volume: priceData.total_volume || 0,
+        lastUpdate: priceData.lastUpdate || Date.now(),
+        isLive: isFresh && isLive,
+        isConnecting: loading,
+        source: priceData.source || (connectedExchanges.length > 0 
+          ? connectedExchanges.join('+') 
+          : 'WebSocket'),
+      };
+    }
+    
+    // No data found - return fallback
+    return {
+      price: fallbackPrice || 0,
+      change24h: fallbackChange || 0,
+      high24h: 0,
+      low24h: 0,
+      volume: 0,
+      lastUpdate: Date.now(),
+      isLive: false,
+      isConnecting: loading,
+      source: 'Fallback',
+    };
+  }, [symbol, getPriceBySymbol, loading, isLive, connectedExchanges, fallbackPrice, fallbackChange]);
+  
+  return liveData;
+};
