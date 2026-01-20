@@ -18,6 +18,9 @@ import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institu
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis } from './technical-analysis';
 
+// Re-export chart API for direct access to chart data
+export * from './chart-api';
+
 // Translation maps for multi-language support
 const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
