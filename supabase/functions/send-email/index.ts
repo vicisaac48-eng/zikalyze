@@ -4,6 +4,7 @@ import { Resend } from 'https://esm.sh/resend@4.0.0'
 import { render } from 'https://esm.sh/@react-email/render@0.0.12'
 import { VerificationEmail } from './_templates/verification.tsx'
 import { PasswordResetEmail } from './_templates/password-reset.tsx'
+import { WelcomeEmail } from './_templates/welcome.tsx'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 const hookSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET') as string
@@ -47,12 +48,23 @@ Deno.serve(async (req) => {
     // Handle different email types
     switch (email_action_type) {
       case 'signup':
+        // Send welcome confirmation email (for auto-confirm mode)
+        html = render(
+          React.createElement(WelcomeEmail, {
+            email: user.email,
+          })
+        )
+        subject = '🎉 Welcome to Zikalyze - Account Confirmed!'
+        break
+
+      case 'signup_verification':
+        // When verification is required (non auto-confirm mode)
         html = render(
           React.createElement(VerificationEmail, {
             supabase_url: supabaseUrl,
             token_hash,
             redirect_to: defaultRedirect,
-            email_action_type,
+            email_action_type: 'signup',
           })
         )
         subject = 'Verify your Zikalyze account'
