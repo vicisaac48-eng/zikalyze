@@ -1,4 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { Resend } from 'https://esm.sh/resend@4.0.0'
+import React from 'https://esm.sh/react@18.3.1'
+import { renderToStaticMarkup } from 'https://esm.sh/react-dom@18.3.1/server'
+import { PasswordChangedEmail } from '../send-email/_templates/password-changed.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +16,18 @@ async function hashToken(token: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+// Get client IP from request headers
+function getClientIP(req: Request): string {
+  const cfConnectingIP = req.headers.get('cf-connecting-ip')
+  const xForwardedFor = req.headers.get('x-forwarded-for')
+  const xRealIP = req.headers.get('x-real-ip')
+  
+  if (cfConnectingIP) return cfConnectingIP
+  if (xForwardedFor) return xForwardedFor.split(',')[0].trim()
+  if (xRealIP) return xRealIP
+  return 'Unknown'
 }
 
 Deno.serve(async (req) => {
@@ -42,6 +58,8 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Verifying reset token for: ${email}`)
+    
+    const clientIP = getClientIP(req)
 
     // Create Supabase admin client
     const supabaseAdmin = createClient(
@@ -114,6 +132,44 @@ Deno.serve(async (req) => {
       .eq('id', tokenData.id)
 
     console.log(`Password updated successfully for ${email}`)
+
+    // Send password changed notification email
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    if (resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey)
+        
+        const changedAt = new Date().toLocaleString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short'
+        })
+        
+        const html = renderToStaticMarkup(
+          React.createElement(PasswordChangedEmail, {
+            email: email,
+            changed_at: changedAt,
+            ip_address: clientIP !== 'Unknown' ? clientIP : null,
+          })
+        )
+        
+        await resend.emails.send({
+          from: 'Zikalyze Security <onboarding@resend.dev>',
+          to: [email],
+          subject: '🔐 Password Changed Successfully - Zikalyze',
+          html,
+        })
+        
+        console.log(`Password change notification sent to ${email}`)
+      } catch (emailError) {
+        // Don't fail password reset if email notification fails
+        console.error('Failed to send password change notification:', emailError)
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: 'Password updated successfully' }),
