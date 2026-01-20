@@ -96,6 +96,19 @@ export const useAuth = () => {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
+    
+    // Send password changed confirmation email if successful
+    if (!error) {
+      try {
+        await supabase.functions.invoke('send-password-changed', {
+          body: {}
+        });
+      } catch (emailError) {
+        // Don't fail the password update if email fails
+        console.warn('Failed to send password changed email:', emailError);
+      }
+    }
+    
     return { error };
   };
 
