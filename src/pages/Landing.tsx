@@ -27,7 +27,7 @@ const Landing = () => {
     }, 400);
   }, [navigate]);
 
-  // Fetch user count from database
+  // Fetch user count from database with realtime subscription
   useEffect(() => {
     const fetchUserCount = async () => {
       const { data, error } = await supabase
@@ -41,6 +41,29 @@ const Landing = () => {
       }
     };
     fetchUserCount();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('site_stats_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'site_stats',
+          filter: 'id=eq.global'
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new.user_count === 'number') {
+            setUserCount(payload.new.user_count);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Handle email verification callback
