@@ -233,13 +233,26 @@ export function useLiveMarketData(
     }
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, fallbackPrice, fallbackChange, checkSentimentShift]);
 
-  // Initial fetch
+  // Reset state and refetch when crypto changes
   useEffect(() => {
     isMountedRef.current = true;
     
-    // Fetch immediately
-    fetchOnChainData();
-    fetchSentimentData();
+    // Reset previous refs when symbol changes to avoid stale comparisons
+    prevSentimentRef.current = null;
+    prevWhaleRef.current = null;
+    
+    // Clear old data immediately when switching cryptos
+    setOnChainData(null);
+    setSentimentData(null);
+    
+    // Fetch immediately for new crypto
+    const fetchData = async () => {
+      await Promise.all([
+        fetchOnChainData(),
+        fetchSentimentData()
+      ]);
+    };
+    fetchData();
     
     // Poll for updates
     pollIntervalRef.current = setInterval(() => {
@@ -255,7 +268,7 @@ export function useLiveMarketData(
         clearInterval(pollIntervalRef.current);
       }
     };
-  }, [crypto, fetchOnChainData, fetchSentimentData]);
+  }, [crypto]); // Only depend on crypto - will re-run when symbol changes
 
   // Build aggregated data
   const currentPrice = livePrice.isLive ? livePrice.price : (livePrice.price || fallbackPrice);

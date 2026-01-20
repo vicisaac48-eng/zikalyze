@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { useCryptoPrices, CryptoPrice } from "./useCryptoPrices";
 
 interface SharedLivePriceData {
@@ -17,17 +17,30 @@ interface SharedLivePriceData {
  * Hook that provides live price data from the shared multi-exchange WebSocket system.
  * This ensures all components (Dashboard, AIAnalyzer, etc.) use the same price source.
  * 
- * Falls back to provided values if the symbol isn't found in the shared data.
+ * Fixed: Properly updates when switching between cryptos by tracking symbol changes
+ * and forcing re-computation of price data.
  */
 export const useSharedLivePrice = (
   symbol: string, 
   fallbackPrice?: number, 
   fallbackChange?: number
 ): SharedLivePriceData => {
-  const { getPriceBySymbol, loading, isLive, connectedExchanges } = useCryptoPrices();
+  const { prices, loading, isLive, connectedExchanges } = useCryptoPrices();
+  const prevSymbolRef = useRef<string>(symbol);
+  const [forceUpdate, setForceUpdate] = useState(0);
   
+  // Force re-computation when symbol changes
+  useEffect(() => {
+    if (prevSymbolRef.current !== symbol) {
+      prevSymbolRef.current = symbol;
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [symbol]);
+  
+  // Find price data directly from prices array - this ensures fresh data on symbol change
   const liveData = useMemo(() => {
-    const priceData = getPriceBySymbol(symbol);
+    const normalizedSymbol = symbol.toUpperCase();
+    const priceData = prices.find(p => p.symbol.toUpperCase() === normalizedSymbol);
     
     if (priceData && priceData.current_price > 0) {
       // Calculate if data is fresh (updated within last 30 seconds)
@@ -61,7 +74,7 @@ export const useSharedLivePrice = (
       isConnecting: loading,
       source: 'Fallback',
     };
-  }, [symbol, getPriceBySymbol, loading, isLive, connectedExchanges, fallbackPrice, fallbackChange]);
+  }, [symbol, prices, loading, isLive, connectedExchanges, fallbackPrice, fallbackChange, forceUpdate]);
   
   return liveData;
 };
