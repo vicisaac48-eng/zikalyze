@@ -676,39 +676,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
               <Brain className={cn("h-5 w-5 text-primary", isAnalyzing && "animate-spin")} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-foreground">Zikalyze AI</h3>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/20 text-primary">v11.0</span>
-                {/* Status badges - learning runs silently in background */}
-                {isOffline ? (
-                  <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium bg-destructive/20 text-destructive">
-                    <WifiOff className="h-3 w-3" />
-                    <span>OFFLINE</span>
-                  </div>
-                ) : isUsingCache ? (
-                  <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium bg-warning/20 text-warning">
-                    <Database className="h-3 w-3" />
-                    <span>CACHED</span>
-                  </div>
-                ) : liveData.priceIsLive ? (
-                    <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium bg-success/20 text-success">
-                      <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                      <span>LIVE</span>
-                    </div>
-                ) : null}
-                {/* Cache Available Indicator */}
-                {hasCache && !isUsingCache && !isOffline && (
-                  <div className="flex items-center gap-1 text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground" title={`Cached: ${getCacheAge()}`}>
-                    <Database className="h-2.5 w-2.5" />
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{displayedAccuracy.toFixed(0)}% Accuracy</span>
-                {learningStats && learningStats.total_feedback > 0 && (
-                  <span className="text-xs text-primary/70">• {learningStats.total_feedback} feedback</span>
-                )}
-              </div>
+              <h3 className="text-lg font-bold text-foreground">Zikalyze AI</h3>
             </div>
           </div>
           <div className="flex items-center gap-3">
