@@ -59,13 +59,42 @@ export const useAuth = () => {
     return { error };
   };
 
+  // New custom password reset using edge function
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/reset-password`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-    return { error };
+    try {
+      const response = await supabase.functions.invoke('request-password-reset', {
+        body: { email }
+      });
+      
+      if (response.error) {
+        return { error: response.error };
+      }
+      
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  // Verify reset token and set new password
+  const verifyResetToken = async (token: string, email: string, newPassword: string) => {
+    try {
+      const response = await supabase.functions.invoke('verify-reset-token', {
+        body: { token, email, newPassword }
+      });
+      
+      if (response.error) {
+        return { error: response.error, data: null };
+      }
+      
+      if (response.data?.error) {
+        return { error: new Error(response.data.error), data: null };
+      }
+      
+      return { error: null, data: response.data };
+    } catch (err) {
+      return { error: err as Error, data: null };
+    }
   };
 
   const updatePassword = async (newPassword: string) => {
@@ -90,6 +119,7 @@ export const useAuth = () => {
     signIn,
     signOut,
     resetPassword,
+    verifyResetToken,
     updatePassword,
     updateEmail,
   };

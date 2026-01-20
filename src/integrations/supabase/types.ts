@@ -245,6 +245,33 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           condition: string
@@ -534,6 +561,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_expired_reset_tokens: { Args: never; Returns: undefined }
       contribute_to_global_learning: {
         Args: {
           p_avg_trend_accuracy: number
