@@ -51,10 +51,4 @@ export const trackEvent = (
   }
 };
 
-// Declare global va function for TypeScript
-declare global {
-  interface Window {
-    va?: (event: string, data?: Record<string, string | number | boolean>) => void;
-    vaq?: Array<Array<string | Record<string, string | number | boolean>>>;
-  }
-}
+// Types are provided by @vercel/analytics package
