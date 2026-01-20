@@ -690,25 +690,12 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
                     <Database className="h-3 w-3" />
                     <span>CACHED</span>
                   </div>
-                ) : (
-                  <div className={cn(
-                    "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium transition-all",
-                    liveData.priceIsLive 
-                      ? "bg-success/20 text-success" 
-                      : "bg-warning/20 text-warning"
-                  )}>
-                    {liveData.priceIsLive ? (
-                      <>
-                        <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                        <span>LIVE</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="h-2 w-2 rounded-full bg-warning animate-pulse" />
-                      </>
-                    )}
-                  </div>
-                )}
+                ) : liveData.priceIsLive ? (
+                    <div className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium bg-success/20 text-success">
+                      <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                      <span>LIVE</span>
+                    </div>
+                ) : null}
                 {/* Cache Available Indicator */}
                 {hasCache && !isUsingCache && !isOffline && (
                   <div className="flex items-center gap-1 text-[9px] px-1 py-0.5 rounded bg-muted/50 text-muted-foreground" title={`Cached: ${getCacheAge()}`}>
@@ -807,17 +794,6 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
                 currentChange >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
               )}>
                 {currentChange >= 0 ? "+" : ""}{currentChange.toFixed(2)}%
-              </div>
-            </div>
-            <div className="text-right text-xs text-muted-foreground">
-              {liveData.priceIsLive && (
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-                  <span>Updated {new Date(liveData.lastUpdated).toLocaleTimeString()}</span>
-                </div>
-              )}
-              <div className="mt-1">
-                24h H: ${currentHigh?.toLocaleString() || '-'} | L: ${currentLow?.toLocaleString() || '-'}
               </div>
             </div>
           </div>
