@@ -34,7 +34,8 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    // Use hash-based redirect for HashRouter compatibility
+    const redirectUrl = `${window.location.origin}/#/dashboard`;
     
     const { error } = await supabase.auth.signUp({
       email,

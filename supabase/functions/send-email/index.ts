@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
     console.log(`Processing ${email_action_type} email for ${user.email}`)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const defaultRedirect = redirect_to || `${supabaseUrl.replace('.supabase.co', '')}/`
+    // Ensure hash-based redirect for HashRouter compatibility
+    const defaultRedirect = redirect_to || `${supabaseUrl.replace('.supabase.co', '.lovableproject.com')}/#/dashboard`
 
     let html: string
     let subject: string
@@ -83,8 +84,8 @@ Deno.serve(async (req) => {
         break
 
       case 'recovery':
-        // Extract origin from redirect_to or use Supabase URL as fallback
-        const resetRedirect = redirect_to || `${supabaseUrl.replace('.supabase.co', '.lovableproject.com')}/reset-password`;
+        // Extract origin from redirect_to or use hash-based redirect for HashRouter
+        const resetRedirect = redirect_to || `${supabaseUrl.replace('.supabase.co', '.lovableproject.com')}/#/reset-password`;
         html = render(
           React.createElement(PasswordResetEmail, {
             supabase_url: supabaseUrl,
