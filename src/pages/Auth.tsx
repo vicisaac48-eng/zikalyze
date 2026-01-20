@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, Mail, Lock, ArrowRight, Loader2, CheckCircle2, ShieldAlert } from "lucide-react";
+import { TrendingUp, Mail, Lock, ArrowRight, Loader2, CheckCircle2, ShieldAlert, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,7 @@ const Auth = () => {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [resetRateLimitError, setResetRateLimitError] = useState<{ message: string; retryAfter: number } | null>(null);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -115,8 +116,17 @@ const Auth = () => {
     navigate("/dashboard");
   };
 
+  const formatWaitTime = (seconds: number): string => {
+    if (seconds >= 60) {
+      const minutes = Math.ceil(seconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    }
+    return `${seconds} seconds`;
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setResetRateLimitError(null);
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -125,8 +135,16 @@ const Auth = () => {
     }
     
     setIsLoading(true);
-    const { error } = await resetPassword(email);
+    const { error, rateLimited, retryAfter } = await resetPassword(email);
     setIsLoading(false);
+
+    if (rateLimited && retryAfter) {
+      setResetRateLimitError({
+        message: t("auth.tooManyResetRequests"),
+        retryAfter
+      });
+      return;
+    }
 
     if (error) {
       toast({
@@ -142,6 +160,7 @@ const Auth = () => {
       description: t("auth.resetLinkSent"),
     });
     setShowForgotPassword(false);
+    setResetRateLimitError(null);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -429,6 +448,24 @@ const Auth = () => {
               <p className="text-muted-foreground mb-4">
                 {t("auth.resetPasswordDesc")}
               </p>
+              
+              {/* Rate Limit Warning */}
+              {resetRateLimitError && (
+                <div className="mb-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-warning">
+                        {resetRateLimitError.message}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t("auth.tryAgainIn", { time: formatWaitTime(resetRateLimitError.retryAfter) })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reset-email">{t("auth.email")}</Label>
@@ -442,6 +479,7 @@ const Auth = () => {
                       onChange={(e) => {
                         setEmail(e.target.value);
                         setErrors((prev) => ({ ...prev, email: undefined }));
+                        setResetRateLimitError(null);
                       }}
                       className="pl-10"
                     />
@@ -455,14 +493,17 @@ const Auth = () => {
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={() => setShowForgotPassword(false)}
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetRateLimitError(null);
+                    }}
                   >
                     {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={isLoading}
+                    disabled={isLoading || !!resetRateLimitError}
                   >
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

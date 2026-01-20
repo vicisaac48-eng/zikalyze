@@ -88,7 +88,8 @@
     "passwordResetSuccess": "Your password has been successfully reset.",
     "invalidLink": "Invalid or expired link",
     "requestNewLink": "Please request a new password reset link.",
-    "enterNewPasswordBelow": "Enter your new password below"
+    "enterNewPasswordBelow": "Enter your new password below",
+    "tooManyResetRequests": "Too many password reset requests"
   },
   "dashboard": {
     "title": "Zikalyze",
