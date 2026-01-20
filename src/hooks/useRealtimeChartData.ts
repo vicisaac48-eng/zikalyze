@@ -8,8 +8,8 @@ export interface ChartDataPoint {
   positive: boolean;
 }
 
-// Supported exchanges in priority order (CoinCap first - free, all cryptos, no limits)
-type Exchange = "coincap" | "binance" | "coinbase" | "kraken" | "coingecko";
+// Supported exchanges in priority order (WebSocket-based exchanges first for real-time data)
+type Exchange = "binance" | "kraken" | "coinbase" | "coingecko";
 
 // Map symbols to CoinCap v2 API IDs (verified correct IDs)
 // CoinCap uses lowercase names with hyphens, NOT the same as CoinGecko
@@ -422,56 +422,9 @@ const setCacheData = (symbol: string, data: ChartDataPoint[], priceChange: numbe
   dataCache.set(symbol.toUpperCase(), { data, priceChange, timestamp: Date.now(), exchange });
 };
 
-// Dynamic CoinCap ID lookup cache
-const coinCapIdCache = new Map<string, string | null>();
-
-// Search CoinCap API for asset ID by symbol
-const searchCoinCapId = async (symbol: string): Promise<string | null> => {
-  const upperSym = symbol.toUpperCase();
-  
-  // Check cache first
-  if (coinCapIdCache.has(upperSym)) {
-    return coinCapIdCache.get(upperSym) || null;
-  }
-  
-  try {
-    const response = await fetchWithTimeout(`https://api.coincap.io/v2/assets?search=${symbol.toLowerCase()}&limit=5`);
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    if (!data.data || data.data.length === 0) {
-      coinCapIdCache.set(upperSym, null);
-      return null;
-    }
-    
-    // Find exact symbol match
-    const exactMatch = data.data.find((asset: any) => 
-      asset.symbol?.toUpperCase() === upperSym
-    );
-    
-    if (exactMatch) {
-      console.log(`[CoinCap] Found ID for ${upperSym}: ${exactMatch.id}`);
-      coinCapIdCache.set(upperSym, exactMatch.id);
-      return exactMatch.id;
-    }
-    
-    // Use first result as fallback
-    const fallbackId = data.data[0].id;
-    console.log(`[CoinCap] Using fallback ID for ${upperSym}: ${fallbackId}`);
-    coinCapIdCache.set(upperSym, fallbackId);
-    return fallbackId;
-  } catch (err) {
-    console.log(`[CoinCap] Search failed for ${upperSym}:`, err);
-    coinCapIdCache.set(upperSym, null);
-    return null;
-  }
-};
-
-// Get exchange symbol
 const getExchangeSymbol = (sym: string, exchange: Exchange, coinGeckoId?: string): string | null => {
   const upperSym = sym.toUpperCase();
   switch (exchange) {
-    case "coincap": return COINCAP_ID_MAP[upperSym] || null; // Will use dynamic lookup in fetch
     case "binance": return BINANCE_SYMBOL_MAP[upperSym] || null;
     case "coinbase": return COINBASE_SYMBOL_MAP[upperSym] || null;
     case "kraken": return KRAKEN_SYMBOL_MAP[upperSym] || null;
@@ -481,71 +434,7 @@ const getExchangeSymbol = (sym: string, exchange: Exchange, coinGeckoId?: string
 };
 
 // Fetch functions (pure, no hooks)
-
-// CoinCap - free, supports all cryptos, no rate limits
-const fetchCoinCapData = async (symbol: string, coinCapId: string): Promise<ChartDataPoint[] | null> => {
-  const backoffKey = getBackoffKey(symbol, "coincap");
-  if (!canRetry(backoffKey)) {
-    console.log(`[CoinCap] ${symbol} in backoff, skipping`);
-    return null;
-  }
-  try {
-    // First get current price and 24h volume
-    console.log(`[CoinCap] Fetching ${symbol} with ID: ${coinCapId}`);
-    const assetResponse = await fetchWithTimeout(`https://api.coincap.io/v2/assets/${coinCapId}`);
-    if (!assetResponse.ok) { 
-      console.log(`[CoinCap] ${symbol} asset fetch failed: ${assetResponse.status}`);
-      recordFailure(backoffKey); 
-      return null; 
-    }
-    const assetData = await assetResponse.json();
-    if (!assetData.data) { 
-      console.log(`[CoinCap] ${symbol} no asset data`);
-      recordFailure(backoffKey); 
-      return null; 
-    }
-
-    const volume24h = parseFloat(assetData.data.volumeUsd24Hr) || 0;
-
-    // Get historical data for chart (last 20 minutes)
-    const end = Date.now();
-    const start = end - 20 * 60 * 1000;
-    const historyResponse = await fetchWithTimeout(
-      `https://api.coincap.io/v2/assets/${coinCapId}/history?interval=m1&start=${start}&end=${end}`
-    );
-    if (!historyResponse.ok) { 
-      console.log(`[CoinCap] ${symbol} history fetch failed: ${historyResponse.status}`);
-      recordFailure(backoffKey); 
-      return null; 
-    }
-    const historyData = await historyResponse.json();
-    if (!historyData.data || historyData.data.length === 0) { 
-      console.log(`[CoinCap] ${symbol} no history data`);
-      recordFailure(backoffKey); 
-      return null; 
-    }
-
-    recordSuccess(backoffKey);
-    console.log(`[CoinCap] ${symbol} success! Got ${historyData.data.length} data points`);
-    const points = historyData.data.slice(-20);
-    const volumePerPoint = volume24h / (24 * 60); // Distribute 24h volume across minutes
-
-    return points.map((point: any, index: number) => {
-      const price = parseFloat(point.priceUsd);
-      const prevPrice = index > 0 ? parseFloat(points[index - 1].priceUsd) : price;
-      return {
-        time: formatTime(new Date(point.time)),
-        price,
-        volume: volumePerPoint,
-        positive: price >= prevPrice,
-      };
-    });
-  } catch (err) { 
-    console.log(`[CoinCap] ${symbol} error:`, err);
-    recordFailure(backoffKey); 
-    return null; 
-  }
-};
+// Binance - primary exchange for real-time data
 
 const fetchBinanceData = async (symbol: string, binanceSymbol: string): Promise<ChartDataPoint[] | null> => {
   const backoffKey = getBackoffKey(symbol, "binance");
@@ -856,36 +745,27 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
     };
 
     const loadData = async () => {
-      // CoinCap first (free, all cryptos, no limits), then fallback to others
-      const exchanges: Exchange[] = ["coincap", "binance", "coinbase", "kraken", "coingecko"];
+      // WebSocket-based exchanges first for real-time data, CoinGecko as fallback
+      const exchanges: Exchange[] = ["binance", "kraken", "coinbase", "coingecko"];
 
       for (const exchange of exchanges) {
         if (!mountedRef.current) return;
 
-        let exchangeSymbol = getExchangeSymbol(symbol, exchange, coinGeckoId);
-        
-        // For CoinCap, try dynamic lookup if not in static map
-        if (exchange === "coincap" && !exchangeSymbol) {
-          console.log(`[CoinCap] ${symbol} not in map, searching...`);
-          exchangeSymbol = await searchCoinCapId(symbol);
-        }
+        const exchangeSymbol = getExchangeSymbol(symbol, exchange, coinGeckoId);
         
         if (!exchangeSymbol) continue;
 
         let data: ChartDataPoint[] | null = null;
 
         switch (exchange) {
-          case "coincap":
-            data = await fetchWithRetry(() => fetchCoinCapData(symbol, exchangeSymbol!));
-            break;
           case "binance": 
             data = await fetchWithRetry(() => fetchBinanceData(symbol, exchangeSymbol!)); 
             break;
-          case "coinbase": 
-            data = await fetchWithRetry(() => fetchCoinbaseData(symbol, exchangeSymbol!)); 
-            break;
           case "kraken": 
             data = await fetchWithRetry(() => fetchKrakenData(symbol, exchangeSymbol!)); 
+            break;
+          case "coinbase": 
+            data = await fetchWithRetry(() => fetchCoinbaseData(symbol, exchangeSymbol!)); 
             break;
           case "coingecko": 
             data = await fetchWithRetry(() => fetchCoinGeckoData(symbol, exchangeSymbol!)); 
@@ -901,11 +781,8 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
           setCacheData(symbol, data, change, exchange);
           lastPriceRef.current = data[0]?.price || null;
 
-          // Set up live updates - WebSocket for supported exchanges, polling for CoinCap/CoinGecko
-          if (exchange === "coincap") {
-            // CoinCap WebSocket for live updates
-            setupCoinCapWebSocket(exchangeSymbol);
-          } else if (exchange !== "coingecko") {
+          // Set up WebSocket for live updates
+          if (exchange !== "coingecko") {
             connectWebSocket(exchange, exchangeSymbol);
           } else {
             setupCoinGeckoRefresh(exchangeSymbol);

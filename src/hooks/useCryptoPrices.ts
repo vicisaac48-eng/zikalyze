@@ -275,8 +275,8 @@ const BYBIT_SYMBOLS: Record<string, string> = {
   SEI: 'SEIUSDT', ALGO: 'ALGOUSDT', ICP: 'ICPUSDT', HBAR: 'HBARUSDT', VET: 'VETUSDT',
 };
 
-// Altcoins that need special fast polling (direct API for 2-second updates)
-const FAST_POLL_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
+// Priority symbols for faster update throttling
+const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
 export const useCryptoPrices = () => {
   const [prices, setPrices] = useState<CryptoPrice[]>([]);
@@ -331,9 +331,9 @@ export const useCryptoPrices = () => {
       return;
     }
     
-    // Use faster throttle for special altcoins
-    const isFastPollCrypto = FAST_POLL_CRYPTOS.includes(normalizedSymbol);
-    const throttleMs = isFastPollCrypto ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
+    // Use faster throttle for priority altcoins
+    const isFastUpdateCrypto = FAST_UPDATE_CRYPTOS.includes(normalizedSymbol);
+    const throttleMs = isFastUpdateCrypto ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
     
     // Throttle updates - only update if enough time has passed
     const lastUpdate = lastUpdateTimeRef.current.get(normalizedSymbol) || 0;
@@ -875,7 +875,19 @@ export const useCryptoPrices = () => {
     }
   }, [updatePrice]);
 
-  // Connect to Kraken WebSocket with improved retry
+  // Kraken symbol mapping - only symbols Kraken actually supports
+  const KRAKEN_PAIRS: Record<string, string> = {
+    BTC: "XBT/USD", ETH: "ETH/USD", SOL: "SOL/USD", XRP: "XRP/USD", DOGE: "DOGE/USD",
+    ADA: "ADA/USD", AVAX: "AVAX/USD", DOT: "DOT/USD", LINK: "LINK/USD", LTC: "LTC/USD",
+    ATOM: "ATOM/USD", NEAR: "NEAR/USD", FIL: "FIL/USD", SHIB: "SHIB/USD",
+    TRX: "TRX/USD", XMR: "XMR/USD", ALGO: "ALGO/USD", XLM: "XLM/USD", ETC: "ETC/USD",
+    MATIC: "MATIC/USD", UNI: "UNI/USD", AAVE: "AAVE/USD", MKR: "MKR/USD", GRT: "GRT/USD",
+    SAND: "SAND/USD", MANA: "MANA/USD", AXS: "AXS/USD", APE: "APE/USD", CHZ: "CHZ/USD",
+    ENJ: "ENJ/USD", BAT: "BAT/USD", COMP: "COMP/USD", SNX: "SNX/USD", CRV: "CRV/USD",
+    KSM: "KSM/USD", FLOW: "FLOW/USD", MINA: "MINA/USD", KAVA: "KAVA/USD", ZEC: "ZEC/USD",
+  };
+
+  // Connect to Kraken WebSocket - reliable free API with many pairs
   const connectKraken = useCallback(() => {
     if (cryptoListRef.current.length === 0) return;
     
@@ -888,48 +900,81 @@ export const useCryptoPrices = () => {
       
       const connectTimeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
+          console.log(`[Kraken] Connection timeout`);
           ws.close();
         }
-      }, 10000);
+      }, 15000);
       
       ws.onopen = () => {
         clearTimeout(connectTimeout);
-        console.log(`[Kraken] Connected successfully`);
+        console.log(`[Kraken] ✓ Connected - subscribing to ticker feeds`);
         setConnectedExchanges(prev => 
           prev.includes("Kraken") ? prev : [...prev, "Kraken"]
         );
         setIsLive(true);
         
-        const pairs = cryptoListRef.current.slice(0, 20).map(c => {
-          const symbol = c.symbol === "BTC" ? "XBT" : c.symbol;
-          return `${symbol}/USD`;
+        // Subscribe only to pairs Kraken actually supports
+        const pairs: string[] = [];
+        cryptoListRef.current.forEach(c => {
+          const krakenPair = KRAKEN_PAIRS[c.symbol.toUpperCase()];
+          if (krakenPair) {
+            pairs.push(krakenPair);
+          }
         });
         
-        ws.send(JSON.stringify({
-          event: "subscribe",
-          pair: pairs,
-          subscription: { name: "ticker" },
-        }));
+        // Kraken allows max 50 pairs per subscription
+        const uniquePairs = [...new Set(pairs)].slice(0, 40);
+        
+        if (uniquePairs.length > 0) {
+          console.log(`[Kraken] Subscribing to ${uniquePairs.length} pairs`);
+          ws.send(JSON.stringify({
+            event: "subscribe",
+            pair: uniquePairs,
+            subscription: { name: "ticker" },
+          }));
+        }
       };
       
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          
+          // Handle subscription confirmations
+          if (message.event === "subscriptionStatus") {
+            if (message.status === "subscribed") {
+              console.log(`[Kraken] ✓ Subscribed to ${message.pair}`);
+            }
+            return;
+          }
+          
+          // Handle heartbeat
+          if (message.event === "heartbeat") return;
+          
+          // Handle ticker data - format: [channelID, tickerData, channelName, pair]
           if (Array.isArray(message) && message.length >= 4) {
             const ticker = message[1];
+            const channelName = message[2];
             const pair = message[3] as string;
             
-            if (ticker && pair) {
-              let symbol = pair.replace("/USD", "").replace("XBT", "BTC");
+            if (channelName === "ticker" && ticker && pair) {
+              // Convert pair to symbol: "XBT/USD" -> "BTC", "ETH/USD" -> "ETH"
+              let symbol = pair.replace("/USD", "").replace("/USDT", "");
+              if (symbol === "XBT") symbol = "BTC";
               
-              const price = parseFloat(ticker.c?.[0] || 0);
-              const baseVolume = parseFloat(ticker.v?.[1] || 0);
-              updatePrice(symbol, {
-                current_price: price,
-                high_24h: parseFloat(ticker.h?.[1] || 0),
-                low_24h: parseFloat(ticker.l?.[1] || 0),
-                total_volume: baseVolume * price,
-              }, "Kraken");
+              const price = parseFloat(ticker.c?.[0] || "0");
+              const open = parseFloat(ticker.o?.[1] || ticker.o?.[0] || price.toString());
+              const change24h = open > 0 ? ((price - open) / open) * 100 : 0;
+              const baseVolume = parseFloat(ticker.v?.[1] || "0");
+              
+              if (price > 0) {
+                updatePrice(symbol, {
+                  current_price: price,
+                  price_change_percentage_24h: change24h,
+                  high_24h: parseFloat(ticker.h?.[1] || "0"),
+                  low_24h: parseFloat(ticker.l?.[1] || "0"),
+                  total_volume: baseVolume * price,
+                }, "Kraken");
+              }
             }
           }
         } catch (e) {
@@ -937,18 +982,20 @@ export const useCryptoPrices = () => {
         }
       };
       
-      ws.onerror = () => {
+      ws.onerror = (e) => {
         clearTimeout(connectTimeout);
+        console.log(`[Kraken] WebSocket error`);
       };
       
-      ws.onclose = () => {
+      ws.onclose = (e) => {
         clearTimeout(connectTimeout);
-        setConnectedExchanges(prev => prev.filter(e => e !== "Kraken"));
+        setConnectedExchanges(prev => prev.filter(ex => ex !== "Kraken"));
         
-        const delay = Math.min(4000 + Math.random() * 2000, 10000);
+        const delay = 3000 + Math.random() * 2000;
         if (reconnectTimeoutsRef.current.kraken) {
           clearTimeout(reconnectTimeoutsRef.current.kraken);
         }
+        console.log(`[Kraken] Disconnected, reconnecting in ${Math.round(delay)}ms...`);
         reconnectTimeoutsRef.current.kraken = window.setTimeout(() => {
           connectKraken();
         }, delay);
@@ -956,6 +1003,7 @@ export const useCryptoPrices = () => {
       
       krakenWsRef.current = ws;
     } catch (err) {
+      console.log(`[Kraken] Connection failed, retrying...`);
       setTimeout(() => connectKraken(), 4000);
     }
   }, [updatePrice]);
@@ -1014,78 +1062,7 @@ export const useCryptoPrices = () => {
     }
   }, [prices, isLive, saveLivePrices]);
 
-  // Fast polling for altcoins without good WebSocket support
-  const pollAltcoinPrices = useCallback(async () => {
-    // Fetch from multiple fast APIs in parallel
-    const fetchPromises: Promise<void>[] = [];
-    
-    // Kaspa direct API
-    fetchPromises.push(
-      safeFetch("https://api.kaspa.org/info/price", { timeoutMs: 5000, maxRetries: 1 })
-        .then(async (res) => {
-          if (res?.ok) {
-            const data = await res.json();
-            if (data?.price && data.price > 0) {
-              updatePrice("kas", { current_price: data.price }, "Kaspa-API");
-            }
-          }
-        })
-        .catch(() => {})
-    );
-    
-    // CoinGecko simple price for fast altcoins (single endpoint, multiple coins)
-    const altcoinIds = ["kaspa", "hedera-hashgraph", "internet-computer", "filecoin", "algorand", "stellar", "monero", "vechain"];
-    fetchPromises.push(
-      safeFetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${altcoinIds.join(",")}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`,
-        { timeoutMs: 8000, maxRetries: 1 }
-      )
-        .then(async (res) => {
-          if (res?.ok) {
-            const data = await res.json();
-            Object.entries(data).forEach(([coinId, info]: [string, any]) => {
-              if (info?.usd && info.usd > 0) {
-                // Map CoinGecko ID to symbol
-                const symbolMap: Record<string, string> = {
-                  "kaspa": "kas",
-                  "hedera-hashgraph": "hbar",
-                  "internet-computer": "icp",
-                  "filecoin": "fil",
-                  "algorand": "algo",
-                  "stellar": "xlm",
-                  "monero": "xmr",
-                  "vechain": "vet",
-                };
-                const symbol = symbolMap[coinId];
-                if (symbol) {
-                  updatePrice(symbol, {
-                    current_price: info.usd,
-                    price_change_percentage_24h: info.usd_24h_change || 0,
-                    total_volume: info.usd_24h_vol || 0,
-                  }, "CoinGecko-Fast");
-                }
-              }
-            });
-          }
-        })
-        .catch(() => {})
-    );
-    
-    await Promise.allSettled(fetchPromises);
-  }, [updatePrice]);
-
-  // Start fast polling for altcoins
-  useEffect(() => {
-    // Initial fetch immediately
-    pollAltcoinPrices();
-    
-    // Poll every 3 seconds for fast altcoin updates (24h continuous)
-    const intervalId = setInterval(() => {
-      pollAltcoinPrices();
-    }, 3000);
-    
-    return () => clearInterval(intervalId);
-  }, [pollAltcoinPrices]);
+// All price updates now come from WebSockets - no polling needed
 
   const getPriceBySymbol = useCallback((symbol: string): CryptoPrice | undefined => {
     return prices.find((p) => p.symbol.toUpperCase() === symbol.toUpperCase());
