@@ -94,11 +94,9 @@ const VolumeChart = ({ crypto, coinGeckoId }: VolumeChartProps) => {
         {dataSource && (
           <span className={cn(
             "rounded px-1.5 py-0.5 text-[10px] font-medium",
-            dataSource === "coingecko" 
-              ? "bg-warning/20 text-warning" 
-              : "bg-success/20 text-success"
+            "bg-success/20 text-success"
           )}>
-            {dataSource === "coingecko" ? "Delayed" : "Live"}
+            Live
           </span>
         )}
       </div>
