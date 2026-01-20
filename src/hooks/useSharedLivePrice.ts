@@ -43,9 +43,10 @@ export const useSharedLivePrice = (
     const priceData = prices.find(p => p.symbol.toUpperCase() === normalizedSymbol);
     
     if (priceData && priceData.current_price > 0) {
-      // Calculate if data is fresh (updated within last 30 seconds)
-      const dataAge = priceData.lastUpdate ? Date.now() - priceData.lastUpdate : Infinity;
-      const isFresh = dataAge < 30000;
+      // Always consider live if WebSocket is connected and we have valid price data
+      // Removed 30-second freshness check - WebSocket data is always real-time
+      const hasValidSource = priceData.source && priceData.source !== 'Loading' && priceData.source !== 'Fallback';
+      const isRealtime = isLive || hasValidSource || connectedExchanges.length > 0;
       
       return {
         price: priceData.current_price,
@@ -54,7 +55,7 @@ export const useSharedLivePrice = (
         low24h: priceData.low_24h || 0,
         volume: priceData.total_volume || 0,
         lastUpdate: priceData.lastUpdate || Date.now(),
-        isLive: isFresh && isLive,
+        isLive: isRealtime,
         isConnecting: loading,
         source: priceData.source || (connectedExchanges.length > 0 
           ? connectedExchanges.join('+') 
