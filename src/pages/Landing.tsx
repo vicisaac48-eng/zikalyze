@@ -88,8 +88,8 @@ const Landing = () => {
     }
   }, [navigate, user, authLoading]);
 
-  // Loading overlay when navigating or redirecting
-  if (isNavigating || (authLoading && !user)) {
+  // Loading overlay only when actively navigating away
+  if (isNavigating) {
     return (
       <div 
         className="fixed inset-0 flex items-center justify-center z-50"
