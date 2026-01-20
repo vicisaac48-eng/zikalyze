@@ -60,7 +60,11 @@ export const useAuth = () => {
   };
 
   // New custom password reset using edge function
-  const resetPassword = async (email: string) => {
+  const resetPassword = async (email: string): Promise<{ 
+    error: Error | null; 
+    rateLimited?: boolean; 
+    retryAfter?: number 
+  }> => {
     try {
       const response = await supabase.functions.invoke('request-password-reset', {
         body: { email }
@@ -68,6 +72,19 @@ export const useAuth = () => {
       
       if (response.error) {
         return { error: response.error };
+      }
+      
+      // Check for rate limit error in response data
+      if (response.data?.error && response.data?.retryAfter) {
+        return { 
+          error: new Error(response.data.error), 
+          rateLimited: true, 
+          retryAfter: response.data.retryAfter 
+        };
+      }
+      
+      if (response.data?.error) {
+        return { error: new Error(response.data.error) };
       }
       
       return { error: null };
