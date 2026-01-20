@@ -167,13 +167,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     <>
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-foreground">Top 100 Cryptocurrencies</h3>
-            <span className="rounded bg-success/20 px-1.5 py-0.5 text-[10px] font-medium text-success flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              {t("common.live")}
-            </span>
-          </div>
+          <h3 className="text-lg font-bold text-foreground">Top 100 Cryptocurrencies</h3>
           <div className="flex items-center gap-2">
             {alerts.length > 0 && (
               <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full flex items-center gap-1">
