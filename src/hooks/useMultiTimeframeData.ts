@@ -535,8 +535,8 @@ export function useMultiTimeframeData(symbol: string): MultiTimeframeData {
     
     fetchAllTimeframes();
     
-    // Refresh every 2 minutes
-    refreshIntervalRef.current = window.setInterval(fetchAllTimeframes, 120000);
+    // Refresh every 30 seconds for real-time analysis
+    refreshIntervalRef.current = window.setInterval(fetchAllTimeframes, 30000);
     
     return () => {
       mountedRef.current = false;

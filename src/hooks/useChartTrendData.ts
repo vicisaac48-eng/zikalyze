@@ -322,8 +322,8 @@ export function useChartTrendData(symbol: string): ChartTrendData | null {
     // Initial fetch
     fetchData();
     
-    // Refresh every 60 seconds for trend updates
-    refreshIntervalRef.current = window.setInterval(fetchData, 60000);
+    // Refresh every 30 seconds for real-time trend updates
+    refreshIntervalRef.current = window.setInterval(fetchData, 30000);
     
     return () => {
       mountedRef.current = false;
