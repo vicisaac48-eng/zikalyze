@@ -682,9 +682,10 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
               <span
                 className={cn(
                   "h-2 w-2 rounded-full animate-pulse",
-                  isLive ? "bg-success" : "bg-muted-foreground"
+                  (isLive || liveData.priceIsLive || isStreaming) ? "bg-success" : "bg-muted-foreground"
                 )}
-                aria-label={isLive ? "Live" : "Not live"}
+                aria-label={(isLive || liveData.priceIsLive || isStreaming) ? "Live" : "Not live"}
+                title={`Data: ${actualDataSource}`}
               />
             </div>
           </div>
