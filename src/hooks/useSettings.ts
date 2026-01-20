@@ -34,12 +34,12 @@ export interface AppSettings {
 }
 
 const DEFAULT_NOTIFICATION_ALERTS: NotificationAlertSettings = {
-  priceAlerts: false,
-  priceSurges: false,
-  priceDrops: false,
-  sentimentShifts: false,
-  whaleActivity: false,
-  volumeSpikes: false,
+  priceAlerts: true,
+  priceSurges: true,
+  priceDrops: true,
+  sentimentShifts: true,
+  whaleActivity: true,
+  volumeSpikes: true,
   priceChangeThreshold: 5,
   volumeSpikeThreshold: 50,
   sentimentShiftThreshold: 15,
@@ -47,12 +47,12 @@ const DEFAULT_NOTIFICATION_ALERTS: NotificationAlertSettings = {
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  soundEnabled: false,
+  soundEnabled: true,
   soundVolume: 0.7,
   soundType: "chime",
-  notifications: false,
+  notifications: true,
   emailAlerts: true,
-  priceAlerts: false,
+  priceAlerts: true,
   language: "English",
   currency: "USD",
   twoFactorAuth: false,
