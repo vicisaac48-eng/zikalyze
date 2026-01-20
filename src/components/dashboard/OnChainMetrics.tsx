@@ -62,7 +62,7 @@ const OnChainMetrics = ({ crypto, price, change, volume, marketCap, coinGeckoId 
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary animate-pulse" />
-            <h3 className="font-semibold text-foreground">Premium Live On-Chain Data</h3>
+            <h3 className="font-semibold text-foreground">On-Chain Data</h3>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

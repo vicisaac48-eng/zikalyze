@@ -559,9 +559,6 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 Consider flipping short or exiting longs` : `↔️ BREAKOUT SCENARIO: Watch $${high24h.toFixed(decimals)} (up) / $${low24h.toFixed(decimals)} (down)
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧠 Zikalyze AI v11.0 • ${isLiveData ? '🟢 LIVE PRICE' : '⚪ CACHED PRICE'} • ${hasRealMultiTfData ? '📊 Real Charts' : '📊 Derived'}${hasRealOnChain ? ' • 🔗 Live On-Chain' : ''}
 `;
 
   return {
