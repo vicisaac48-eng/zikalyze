@@ -332,6 +332,13 @@ const Landing = () => {
             <span className="font-semibold text-foreground text-sm sm:text-base lg:text-lg">Zikalyze AI</span>
           </div>
           
+          {/* Legal Links */}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground sm:text-sm">
+            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <span className="text-border">•</span>
+            <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+          </div>
+          
           {/* Social Links */}
           <div className="flex items-center gap-3 sm:gap-4">
             <a
@@ -357,8 +364,10 @@ const Landing = () => {
               </svg>
             </a>
           </div>
-          
-          <p className="text-xs text-muted-foreground text-center sm:text-sm lg:text-base">
+        </div>
+        
+        <div className="max-w-6xl mx-auto mt-4 text-center xl:max-w-7xl">
+          <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">
             {t("landing.footer")}
           </p>
         </div>
