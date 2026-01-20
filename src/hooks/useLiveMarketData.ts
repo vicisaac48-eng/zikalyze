@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useBinanceLivePrice } from "./useBinanceLivePrice";
+import { useSharedLivePrice } from "./useSharedLivePrice";
 import { supabase } from "@/integrations/supabase/client";
 import { useSmartNotifications } from "./useSmartNotifications";
 
@@ -54,8 +54,8 @@ export function useLiveMarketData(
   fallbackLow?: number,
   fallbackVolume?: number
 ) {
-  // Live price from WebSocket
-  const livePrice = useBinanceLivePrice(crypto, fallbackPrice, fallbackChange);
+  // Live price from shared multi-exchange WebSocket system (same as Dashboard)
+  const livePrice = useSharedLivePrice(crypto, fallbackPrice, fallbackChange);
   
   // Smart notifications
   const { checkSentimentShift, checkWhaleActivity } = useSmartNotifications();
