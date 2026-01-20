@@ -1,8 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { Resend } from 'https://esm.sh/resend@4.0.0'
-import React from 'https://esm.sh/react@18.3.1'
-import { renderToStaticMarkup } from 'https://esm.sh/react-dom@18.3.1/server'
-import { PasswordChangedEmail } from '../send-email/_templates/password-changed.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +25,85 @@ function getClientIP(req: Request): string {
   if (xForwardedFor) return xForwardedFor.split(',')[0].trim()
   if (xRealIP) return xRealIP
   return 'Unknown'
+}
+
+// Generate password changed email HTML
+function generatePasswordChangedEmailHTML(email: string, changedAt: string, ipAddress: string | null): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Changed - Zikalyze</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0a0a0f; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #12121a; border-radius: 16px; border: 1px solid #1e1e2e; overflow: hidden;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 30px; text-align: center;">
+      <div style="display: inline-block; width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 12px; line-height: 60px; font-size: 28px;">🔐</div>
+      <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 20px 0 0 0;">Password Changed Successfully</h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 30px;">
+      <p style="color: #e5e5e5; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Your Zikalyze account password has been successfully changed. This is a confirmation that your password update was completed.
+      </p>
+
+      <!-- Details Box -->
+      <div style="background-color: #1c1c2e; border-radius: 12px; padding: 20px; border: 1px solid #2a2a3e; margin-bottom: 20px;">
+        <h3 style="color: #22c55e; font-size: 14px; font-weight: 600; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">Change Details</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="color: #9ca3af; padding: 8px 0; font-size: 14px;">Account:</td>
+            <td style="color: #e5e5e5; padding: 8px 0; font-size: 14px; text-align: right;">${email}</td>
+          </tr>
+          <tr>
+            <td style="color: #9ca3af; padding: 8px 0; font-size: 14px;">Changed At:</td>
+            <td style="color: #22d3ee; padding: 8px 0; font-size: 14px; text-align: right;">${changedAt}</td>
+          </tr>
+          ${ipAddress ? `<tr>
+            <td style="color: #9ca3af; padding: 8px 0; font-size: 14px;">IP Address:</td>
+            <td style="color: #e5e5e5; padding: 8px 0; font-size: 14px; text-align: right; font-family: monospace;">${ipAddress}</td>
+          </tr>` : ''}
+        </table>
+      </div>
+
+      <div style="background-color: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid #1e3a5f; margin-bottom: 20px;">
+        <h4 style="color: #22d3ee; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">✅ What This Means</h4>
+        <ul style="color: #9ca3af; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li>Your new password is now active</li>
+          <li>Previous password will no longer work</li>
+          <li>Active sessions remain logged in</li>
+        </ul>
+      </div>
+
+      <p style="color: #f87171; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; padding: 15px; background-color: rgba(248, 113, 113, 0.1); border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.2);">
+        <strong>⚠️ Didn't change your password?</strong><br>
+        If you didn't make this change, your account may be compromised. Please contact support immediately and secure your account.
+      </p>
+
+      <!-- Security Box -->
+      <div style="background-color: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid #1e3a5f;">
+        <h4 style="color: #22d3ee; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">🛡️ Security Recommendations</h4>
+        <ul style="color: #9ca3af; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+          <li>Enable Two-Factor Authentication for extra security</li>
+          <li>Review active sessions in your Settings</li>
+          <li>Use a unique password not used elsewhere</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top: 1px solid #1e1e2e; padding: 20px 30px; text-align: center;">
+      <p style="color: #6b7280; font-size: 12px; margin: 0;">
+        This is an automated security notification from Zikalyze.<br>
+        © ${new Date().getFullYear()} Zikalyze. AI-Powered Crypto Analytics.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
 }
 
 Deno.serve(async (req) => {
@@ -149,12 +225,10 @@ Deno.serve(async (req) => {
           timeZoneName: 'short'
         })
         
-        const html = renderToStaticMarkup(
-          React.createElement(PasswordChangedEmail, {
-            email: email,
-            changed_at: changedAt,
-            ip_address: clientIP !== 'Unknown' ? clientIP : null,
-          })
+        const html = generatePasswordChangedEmailHTML(
+          email,
+          changedAt,
+          clientIP !== 'Unknown' ? clientIP : null
         )
         
         await resend.emails.send({
