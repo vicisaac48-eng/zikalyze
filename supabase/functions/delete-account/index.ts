@@ -122,6 +122,14 @@ serve(async (req) => {
       );
     }
 
+    // Decrement user count after successful deletion
+    try {
+      await adminClient.rpc('decrement_user_count');
+      console.log("User count decremented");
+    } catch (countError) {
+      console.warn("Failed to decrement user count:", countError);
+    }
+
     return new Response(
       JSON.stringify({ success: true, message: "Account deleted successfully" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

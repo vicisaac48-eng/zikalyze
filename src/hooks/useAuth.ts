@@ -44,6 +44,16 @@ export const useAuth = () => {
         emailRedirectTo: redirectUrl
       }
     });
+    
+    // Increment user count on successful signup
+    if (!error) {
+      try {
+        await supabase.rpc('increment_user_count');
+      } catch (e) {
+        console.warn('Failed to increment user count:', e);
+      }
+    }
+    
     return { error };
   };
 
