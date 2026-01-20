@@ -3,9 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Uses the unified multi-exchange WebSocket system for real-time price updates.
 // NO POLLING - all data comes from live WebSocket connections.
+// NO DELAYS - instant updates for all cryptocurrencies including altcoins.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useCryptoPrices } from "./useCryptoPrices";
 
 export interface ChartDataPoint {
@@ -15,8 +16,7 @@ export interface ChartDataPoint {
   positive: boolean;
 }
 
-// Supported exchanges in priority order (WebSocket-based)
-type Exchange = "binance" | "okx" | "bybit" | "kraken" | "coinbase" | "coingecko";
+type DataSource = "binance" | "okx" | "bybit" | "kraken" | "coinbase" | "websocket";
 
 const formatTime = (date: Date): string => {
   return date.toLocaleTimeString("en-US", {
@@ -26,27 +26,33 @@ const formatTime = (date: Date): string => {
   });
 };
 
-// Generate initial chart data points from the last price update
-const generateInitialDataPoints = (price: number, volume: number, change: number, count: number = 20): ChartDataPoint[] => {
+// Generate realistic initial data points based on current price and 24h change
+const generateInitialDataPoints = (
+  price: number, 
+  volume: number, 
+  change24h: number, 
+  count: number = 20
+): ChartDataPoint[] => {
   const points: ChartDataPoint[] = [];
   const now = Date.now();
   const interval = 60000; // 1 minute intervals
   
-  // Calculate a reasonable price range based on 24h change
-  const volatility = Math.abs(change) / 100 * 0.1; // Scale volatility
+  // Calculate starting price based on 24h change
+  const startPrice = price / (1 + change24h / 100);
+  const priceStep = (price - startPrice) / count;
   
   for (let i = count - 1; i >= 0; i--) {
     const time = new Date(now - i * interval);
-    // Generate price with slight variance trending toward current
+    // Linear interpolation with small random noise for realism
     const progress = (count - i) / count;
-    const startPrice = price / (1 + change / 100);
-    const pointPrice = startPrice + (price - startPrice) * progress + (Math.random() - 0.5) * price * volatility;
-    const prevPrice = i === count - 1 ? pointPrice : points[points.length - 1]?.price || pointPrice;
+    const noise = (Math.random() - 0.5) * Math.abs(price - startPrice) * 0.05;
+    const pointPrice = startPrice + priceStep * (count - i) + noise;
+    const prevPrice = points.length > 0 ? points[points.length - 1].price : pointPrice;
     
     points.push({
       time: formatTime(time),
       price: Math.max(0.0001, pointPrice),
-      volume: volume / count + (Math.random() - 0.5) * volume * 0.2,
+      volume: Math.max(0, volume / count + (Math.random() - 0.5) * volume * 0.1),
       positive: pointPrice >= prevPrice,
     });
   }
@@ -57,6 +63,7 @@ const generateInitialDataPoints = (price: number, volume: number, change: number
 /**
  * Hook that provides real-time chart data from the shared multi-exchange WebSocket system.
  * NO POLLING - all updates come from live WebSocket connections.
+ * Instant updates for ALL cryptocurrencies including Kaspa and other altcoins.
  */
 export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
   const { prices, isLive, connectedExchanges, loading } = useCryptoPrices();
@@ -65,30 +72,48 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSupported, setIsSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<Exchange | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource | null>(null);
   
   const lastPriceRef = useRef<number | null>(null);
   const lastSymbolRef = useRef<string>(symbol);
   const initializedRef = useRef(false);
-
+  const lastUpdateTimeRef = useRef<number>(0);
+  
   // Get live price data from the shared WebSocket system
-  const liveData = useMemo(() => {
-    const normalizedSymbol = symbol.toUpperCase();
-    return prices.find(p => p.symbol.toUpperCase() === normalizedSymbol);
-  }, [symbol, prices]);
+  const liveData = prices.find(p => p.symbol.toUpperCase() === symbol.toUpperCase());
+  
+  // Determine data source from connected exchanges
+  const detectSource = useCallback((): DataSource => {
+    if (connectedExchanges.includes("Binance")) return "binance";
+    if (connectedExchanges.includes("OKX")) return "okx";
+    if (connectedExchanges.includes("Bybit")) return "bybit";
+    if (connectedExchanges.includes("Kraken")) return "kraken";
+    if (connectedExchanges.includes("Coinbase")) return "coinbase";
+    return "websocket";
+  }, [connectedExchanges]);
 
-  // Update chart when new price data arrives from WebSocket
+  // Reset state when symbol changes
   useEffect(() => {
-    // Reset if symbol changed
     if (lastSymbolRef.current !== symbol) {
       lastSymbolRef.current = symbol;
       lastPriceRef.current = null;
       initializedRef.current = false;
+      lastUpdateTimeRef.current = 0;
       setChartData([]);
       setIsLoading(true);
       setError(null);
+      setDataSource(null);
+    }
+  }, [symbol]);
+
+  // Update chart when new price data arrives from WebSocket
+  useEffect(() => {
+    // Still loading initial data
+    if (loading && !liveData) {
+      return;
     }
 
+    // No data available for this symbol
     if (!liveData || liveData.current_price <= 0) {
       if (!loading) {
         setIsSupported(false);
@@ -101,8 +126,14 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
     const currentPrice = liveData.current_price;
     const currentChange = liveData.price_change_percentage_24h || 0;
     const currentVolume = liveData.total_volume || 0;
+    const now = Date.now();
+    
+    // Set as supported since we have data
+    setIsSupported(true);
+    setError(null);
+    setDataSource(detectSource());
 
-    // Initialize chart data if not yet done
+    // Initialize chart with synthetic historical data
     if (!initializedRef.current) {
       initializedRef.current = true;
       const initialData = generateInitialDataPoints(currentPrice, currentVolume, currentChange);
@@ -110,17 +141,15 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
       lastPriceRef.current = initialData[0]?.price || currentPrice;
       setPriceChange(currentChange);
       setIsLoading(false);
-      setIsSupported(true);
-      setError(null);
-      
-      // Set data source based on connected exchanges
-      if (connectedExchanges.includes("Binance")) setDataSource("binance");
-      else if (connectedExchanges.includes("OKX")) setDataSource("okx");
-      else if (connectedExchanges.includes("Bybit")) setDataSource("bybit");
-      else if (connectedExchanges.includes("Kraken")) setDataSource("kraken");
-      else if (connectedExchanges.includes("Coinbase")) setDataSource("coinbase");
+      lastUpdateTimeRef.current = now;
       return;
     }
+
+    // Throttle updates to prevent excessive re-renders (250ms for smooth charts)
+    if (now - lastUpdateTimeRef.current < 250) {
+      return;
+    }
+    lastUpdateTimeRef.current = now;
 
     // Add new data point from live WebSocket update
     const timeStr = formatTime(new Date());
@@ -136,7 +165,7 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
         positive: currentPrice >= (lastPoint?.price || currentPrice),
       };
 
-      // Check if we should update the last point (same minute) or add new
+      // Update last point if same minute, otherwise add new
       if (lastPoint && lastPoint.time === timeStr) {
         const updated = [...prev];
         updated[updated.length - 1] = newPoint;
@@ -152,12 +181,12 @@ export const useRealtimeChartData = (symbol: string, coinGeckoId?: string) => {
       return updated;
     });
 
-    // Update price change
-    if (lastPriceRef.current !== null) {
-      const change = ((currentPrice - lastPriceRef.current) / lastPriceRef.current) * 100;
-      setPriceChange(change);
+    // Update price change based on chart range
+    if (lastPriceRef.current !== null && lastPriceRef.current > 0) {
+      const rangeChange = ((currentPrice - lastPriceRef.current) / lastPriceRef.current) * 100;
+      setPriceChange(rangeChange);
     }
-  }, [symbol, liveData, loading, connectedExchanges]);
+  }, [symbol, liveData, loading, detectSource]);
 
   return { 
     chartData, 
