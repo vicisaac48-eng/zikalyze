@@ -30,6 +30,8 @@ const Analyzer = lazy(() => import("./pages/Analyzer"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Alerts = lazy(() => import("./pages/Alerts"));
 const Install = lazy(() => import("./pages/Install"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -100,6 +102,8 @@ const App = () => (
                   <Route path="/dashboard/alerts" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Alerts"><Alerts /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
                   <Route path="/dashboard/settings" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Settings"><Settings /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
                   <Route path="/install" element={<Install />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
