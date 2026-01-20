@@ -223,46 +223,60 @@ const FALLBACK_CRYPTOS: CryptoPrice[] = [
   { id: "ripple", symbol: "xrp", name: "XRP", image: "https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 5, circulating_supply: 57000000000, lastUpdate: Date.now(), source: "Loading" },
 ];
 
-// Exchange WebSocket endpoints - prioritize most reliable free sources
+// Multi-exchange WebSocket endpoints - prioritize fastest and most reliable
 const EXCHANGES = {
-  // Binance combined stream - most reliable, handles 100+ symbols
+  // Binance combined stream - most reliable, handles 200+ symbols
   binance: {
     url: "wss://stream.binance.com:9443/ws",
     combinedUrl: "wss://stream.binance.com:9443/stream?streams=",
     name: "Binance",
   },
-  // Binance.US fallback for US users
-  binanceUs: {
-    url: "wss://stream.binance.us:9443/ws",
-    combinedUrl: "wss://stream.binance.us:9443/stream?streams=",
-    name: "BinanceUS",
+  // OKX - excellent coverage, supports KAS and other altcoins
+  okx: {
+    url: "wss://ws.okx.com:8443/ws/v5/public",
+    name: "OKX",
   },
-  // CoinCap - free, supports many altcoins
-  coincap: {
-    url: "wss://ws.coincap.io/prices?assets=",
-    name: "CoinCap",
+  // Bybit - fast updates, good altcoin coverage
+  bybit: {
+    url: "wss://stream.bybit.com/v5/public/spot",
+    name: "Bybit",
   },
   // Kraken - reliable for major pairs
   kraken: {
     url: "wss://ws.kraken.com",
     name: "Kraken",
   },
+  // Coinbase - US market data
+  coinbase: {
+    url: "wss://ws-feed.exchange.coinbase.com",
+    name: "Coinbase",
+  },
 };
 
-// Altcoins that need special fast polling (not on Binance or have slow WebSocket)
+// Symbols supported by OKX (includes KAS!)
+const OKX_SYMBOLS: Record<string, string> = {
+  BTC: 'BTC-USDT', ETH: 'ETH-USDT', SOL: 'SOL-USDT', XRP: 'XRP-USDT', DOGE: 'DOGE-USDT',
+  ADA: 'ADA-USDT', AVAX: 'AVAX-USDT', DOT: 'DOT-USDT', LINK: 'LINK-USDT', LTC: 'LTC-USDT',
+  ATOM: 'ATOM-USDT', NEAR: 'NEAR-USDT', APT: 'APT-USDT', FIL: 'FIL-USDT', ARB: 'ARB-USDT',
+  OP: 'OP-USDT', INJ: 'INJ-USDT', SUI: 'SUI-USDT', TIA: 'TIA-USDT', PEPE: 'PEPE-USDT',
+  SHIB: 'SHIB-USDT', TRX: 'TRX-USDT', XLM: 'XLM-USDT', HBAR: 'HBAR-USDT', VET: 'VET-USDT',
+  FTM: 'FTM-USDT', ETC: 'ETC-USDT', AAVE: 'AAVE-USDT', MKR: 'MKR-USDT', GRT: 'GRT-USDT',
+  KAS: 'KAS-USDT', TON: 'TON-USDT', TAO: 'TAO-USDT', WLD: 'WLD-USDT', ORDI: 'ORDI-USDT',
+  SEI: 'SEI-USDT', STX: 'STX-USDT', MINA: 'MINA-USDT', ALGO: 'ALGO-USDT', ICP: 'ICP-USDT',
+};
+
+// Symbols supported by Bybit
+const BYBIT_SYMBOLS: Record<string, string> = {
+  BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', XRP: 'XRPUSDT', DOGE: 'DOGEUSDT',
+  ADA: 'ADAUSDT', AVAX: 'AVAXUSDT', DOT: 'DOTUSDT', LINK: 'LINKUSDT', LTC: 'LTCUSDT',
+  ATOM: 'ATOMUSDT', NEAR: 'NEARUSDT', APT: 'APTUSDT', FIL: 'FILUSDT', ARB: 'ARBUSDT',
+  OP: 'OPUSDT', INJ: 'INJUSDT', SUI: 'SUIUSDT', TIA: 'TIAUSDT', PEPE: 'PEPEUSDT',
+  SHIB: 'SHIBUSDT', TRX: 'TRXUSDT', KAS: 'KASUSDT', TON: 'TONUSDT', WLD: 'WLDUSDT',
+  SEI: 'SEIUSDT', ALGO: 'ALGOUSDT', ICP: 'ICPUSDT', HBAR: 'HBARUSDT', VET: 'VETUSDT',
+};
+
+// Altcoins that need special fast polling (direct API for 2-second updates)
 const FAST_POLL_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
-
-// Direct REST API endpoints for altcoins not well supported by WebSockets
-const ALTCOIN_APIS: Record<string, { priceUrl: string; parser: (data: any) => { price: number; change24h?: number; volume?: number } | null }> = {
-  kas: {
-    priceUrl: "https://api.kaspa.org/info/price",
-    parser: (data) => data?.price ? { price: data.price } : null,
-  },
-  kaspa: {
-    priceUrl: "https://api.kaspa.org/info/price",
-    parser: (data) => data?.price ? { price: data.price } : null,
-  },
-};
 
 export const useCryptoPrices = () => {
   const [prices, setPrices] = useState<CryptoPrice[]>([]);
@@ -271,16 +285,17 @@ export const useCryptoPrices = () => {
   const [connectedExchanges, setConnectedExchanges] = useState<string[]>([]);
   const [isLive, setIsLive] = useState(false);
   
-  // WebSocket refs - simplified to most reliable free sources
+  // WebSocket refs - multi-exchange for maximum coverage
   const binanceWsRef = useRef<WebSocket | null>(null);
-  const coincapWsRef = useRef<WebSocket | null>(null);
+  const okxWsRef = useRef<WebSocket | null>(null);
+  const bybitWsRef = useRef<WebSocket | null>(null);
   const krakenWsRef = useRef<WebSocket | null>(null);
+  const coinbaseWsRef = useRef<WebSocket | null>(null);
   
   const reconnectTimeoutsRef = useRef<Record<string, number>>({});
   const cryptoListRef = useRef<{ symbol: string; name: string; id: string }[]>([]);
   const pricesRef = useRef<Map<string, CryptoPrice>>(new Map());
   const lastUpdateTimeRef = useRef<Map<string, number>>(new Map());
-  const coinIdMapRef = useRef<Map<string, string>>(new Map()); // CoinCap ID to symbol mapping
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
@@ -613,86 +628,90 @@ export const useCryptoPrices = () => {
     }
   }, []); // Empty deps - only run once on mount, use ref to track initialization
 
-  // Connect to CoinCap WebSocket - FREE, supports ALL cryptocurrencies
-  const connectCoinCap = useCallback(() => {
+  // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
+  const connectOKX = useCallback(() => {
     if (cryptoListRef.current.length === 0) return;
     
-    if (coincapWsRef.current) {
-      try { coincapWsRef.current.close(); } catch (e) {}
+    if (okxWsRef.current) {
+      try { okxWsRef.current.close(); } catch (e) {}
     }
 
     try {
-      // Build CoinCap asset list - convert CoinGecko IDs to CoinCap IDs
-      const coincapIds: string[] = [];
-      cryptoListRef.current.forEach(c => {
-        const coincapId = COINGECKO_TO_COINCAP[c.id] || c.id;
-        coincapIds.push(coincapId);
-        coinIdMapRef.current.set(coincapId, c.symbol.toLowerCase());
-        coinIdMapRef.current.set(c.id, c.symbol.toLowerCase());
-      });
+      const ws = new WebSocket(EXCHANGES.okx.url);
       
-      const assetIds = coincapIds.join(",");
-      const ws = new WebSocket(`wss://ws.coincap.io/prices?assets=${assetIds}`);
-      
-      // Connection timeout
       const connectTimeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
-          console.log(`[CoinCap] Connection timeout, retrying...`);
+          console.log(`[OKX] Connection timeout, retrying...`);
           ws.close();
         }
       }, 10000);
       
       ws.onopen = () => {
         clearTimeout(connectTimeout);
-        console.log(`[CoinCap] Connected successfully`);
+        console.log(`[OKX] ✓ Connected for altcoin coverage`);
         setConnectedExchanges(prev => 
-          prev.includes("CoinCap") ? prev : [...prev, "CoinCap"]
+          prev.includes("OKX") ? prev : [...prev, "OKX"]
         );
         setIsLive(true);
+        
+        // Subscribe to tickers for symbols with OKX support
+        const subscribeArgs = cryptoListRef.current
+          .filter(c => OKX_SYMBOLS[c.symbol.toUpperCase()])
+          .slice(0, 50)
+          .map(c => ({ channel: "tickers", instId: OKX_SYMBOLS[c.symbol.toUpperCase()] }));
+        
+        if (subscribeArgs.length > 0) {
+          ws.send(JSON.stringify({ op: "subscribe", args: subscribeArgs }));
+        }
       };
       
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          Object.entries(data).forEach(([coinId, priceStr]) => {
-            const symbol = coinIdMapRef.current.get(coinId);
-            if (symbol && priceStr) {
-              const price = parseFloat(priceStr as string);
-              if (!isNaN(price) && price > 0) {
-                updatePrice(symbol, {
-                  current_price: price,
-                }, "CoinCap");
-              }
+          if (data.arg?.channel === 'tickers' && data.data?.[0]) {
+            const ticker = data.data[0];
+            const symbol = ticker.instId?.replace('-USDT', '').toUpperCase();
+            if (symbol && ticker.last) {
+              const price = parseFloat(ticker.last);
+              const open = parseFloat(ticker.sodUtc8 || ticker.last);
+              const change24h = open > 0 ? ((price - open) / open) * 100 : 0;
+              
+              updatePrice(symbol, {
+                current_price: price,
+                price_change_percentage_24h: change24h,
+                high_24h: parseFloat(ticker.high24h || '0'),
+                low_24h: parseFloat(ticker.low24h || '0'),
+                total_volume: parseFloat(ticker.vol24h || '0') * price,
+              }, "OKX");
             }
-          });
+          }
         } catch (e) {
           // Silent parse errors
         }
       };
       
-      ws.onerror = (e) => {
+      ws.onerror = () => {
         clearTimeout(connectTimeout);
-        console.log(`[CoinCap] WebSocket error, will retry...`);
+        console.log(`[OKX] WebSocket error, will retry...`);
       };
       
       ws.onclose = () => {
         clearTimeout(connectTimeout);
-        setConnectedExchanges(prev => prev.filter(e => e !== "CoinCap"));
+        setConnectedExchanges(prev => prev.filter(e => e !== "OKX"));
         
-        // Exponential backoff
         const delay = Math.min(3000 + Math.random() * 2000, 8000);
-        if (reconnectTimeoutsRef.current.coincap) {
-          clearTimeout(reconnectTimeoutsRef.current.coincap);
+        if (reconnectTimeoutsRef.current.okx) {
+          clearTimeout(reconnectTimeoutsRef.current.okx);
         }
-        reconnectTimeoutsRef.current.coincap = window.setTimeout(() => {
-          connectCoinCap();
+        reconnectTimeoutsRef.current.okx = window.setTimeout(() => {
+          connectOKX();
         }, delay);
       };
       
-      coincapWsRef.current = ws;
+      okxWsRef.current = ws;
     } catch (err) {
-      console.log(`[CoinCap] Connection failed, retrying...`);
-      setTimeout(() => connectCoinCap(), 3000);
+      console.log(`[OKX] Connection failed, retrying...`);
+      setTimeout(() => connectOKX(), 3000);
     }
   }, [updatePrice]);
 
@@ -721,10 +740,10 @@ export const useCryptoPrices = () => {
       
       const connectTimeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
-          console.log(`[Binance] Connection timeout after 8s, trying fallback...`);
+          console.log(`[Binance] Connection timeout after 8s, trying Bybit fallback...`);
           ws.close();
-          // Try Binance.US as fallback
-          connectBinanceUS();
+          // Try Bybit as fallback
+          connectBybit();
         }
       }, 8000);
       
@@ -791,52 +810,69 @@ export const useCryptoPrices = () => {
       
       binanceWsRef.current = ws;
     } catch (err) {
-      console.log(`[Binance] Connection failed, trying fallback...`);
-      connectBinanceUS();
+      console.log(`[Binance] Connection failed, trying Bybit fallback...`);
+      connectBybit();
     }
   }, [updatePrice]);
 
-  // Binance.US fallback
-  const connectBinanceUS = useCallback(() => {
+  // Connect to Bybit WebSocket - Fast updates, KAS support
+  const connectBybit = useCallback(() => {
     if (cryptoListRef.current.length === 0) return;
 
-    const cryptoList = cryptoListRef.current;
-    const streams = cryptoList.slice(0, 50).map(c => `${c.symbol.toLowerCase()}usd@ticker`).join("/");
-    
+    if (bybitWsRef.current) {
+      try { bybitWsRef.current.close(); } catch (e) {}
+    }
+
     try {
-      const ws = new WebSocket(`${EXCHANGES.binanceUs.combinedUrl}${streams}`);
+      const ws = new WebSocket(EXCHANGES.bybit.url);
       
       ws.onopen = () => {
-        console.log(`[BinanceUS] ✓ Connected as fallback`);
+        console.log(`[Bybit] ✓ Connected for fast updates`);
         setConnectedExchanges(prev => 
-          prev.includes("BinanceUS") ? prev : [...prev, "BinanceUS"]
+          prev.includes("Bybit") ? prev : [...prev, "Bybit"]
         );
         setIsLive(true);
+        
+        // Subscribe to tickers
+        const symbols = cryptoListRef.current
+          .filter(c => BYBIT_SYMBOLS[c.symbol.toUpperCase()])
+          .slice(0, 30)
+          .map(c => `tickers.${BYBIT_SYMBOLS[c.symbol.toUpperCase()]}`);
+        
+        if (symbols.length > 0) {
+          ws.send(JSON.stringify({ op: "subscribe", args: symbols }));
+        }
       };
       
       ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data);
-          if (message.data) {
-            const ticker = message.data;
-            const symbol = ticker.s?.replace("USD", "");
-            
-            if (symbol && ticker.c) {
+          const data = JSON.parse(event.data);
+          if (data.topic?.startsWith('tickers.') && data.data) {
+            const ticker = data.data;
+            const symbol = ticker.symbol?.replace(/USDT$/, '').toUpperCase();
+            if (symbol && ticker.lastPrice) {
               updatePrice(symbol, {
-                current_price: parseFloat(ticker.c),
-                price_change_percentage_24h: parseFloat(ticker.P || 0),
-                high_24h: parseFloat(ticker.h || 0),
-                low_24h: parseFloat(ticker.l || 0),
-              }, "BinanceUS");
+                current_price: parseFloat(ticker.lastPrice),
+                price_change_percentage_24h: parseFloat(ticker.price24hPcnt || '0') * 100,
+                high_24h: parseFloat(ticker.highPrice24h || '0'),
+                low_24h: parseFloat(ticker.lowPrice24h || '0'),
+                total_volume: parseFloat(ticker.turnover24h || '0'),
+              }, "Bybit");
             }
           }
         } catch (e) {}
       };
       
       ws.onclose = () => {
-        setConnectedExchanges(prev => prev.filter(e => e !== "BinanceUS"));
+        setConnectedExchanges(prev => prev.filter(e => e !== "Bybit"));
+        const delay = 3000 + Math.random() * 2000;
+        reconnectTimeoutsRef.current.bybit = window.setTimeout(() => connectBybit(), delay);
       };
-    } catch (err) {}
+      
+      bybitWsRef.current = ws;
+    } catch (err) {
+      setTimeout(() => connectBybit(), 3000);
+    }
   }, [updatePrice]);
 
   // Connect to Kraken WebSocket with improved retry
@@ -929,17 +965,19 @@ export const useCryptoPrices = () => {
     fetchPrices();
   }, [fetchPrices]);
 
-  // Connect to reliable free WebSockets when crypto list is populated
+  // Connect to multi-exchange WebSockets when crypto list is populated
   useEffect(() => {
     const checkAndConnect = () => {
       if (cryptoListRef.current.length > 0 && !exchangesConnectedRef.current) {
         exchangesConnectedRef.current = true;
         
-        // Priority: Binance first (most reliable for real-time), then others as backup
-        console.log('[WebSocket] ⚡ Connecting to Binance for real-time prices...');
+        // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
+        console.log('[WebSocket] ⚡ Connecting to multiple exchanges for real-time prices...');
         connectBinance();
-        // CoinCap as backup for coins not on Binance
-        setTimeout(() => connectCoinCap(), 300);
+        // OKX for altcoin coverage (includes KAS)
+        setTimeout(() => connectOKX(), 200);
+        // Bybit for additional fast updates
+        setTimeout(() => connectBybit(), 400);
         // Kraken for additional coverage
         setTimeout(() => connectKraken(), 600);
       }
@@ -957,10 +995,12 @@ export const useCryptoPrices = () => {
       });
       
       if (binanceWsRef.current) binanceWsRef.current.close();
-      if (coincapWsRef.current) coincapWsRef.current.close();
+      if (okxWsRef.current) okxWsRef.current.close();
+      if (bybitWsRef.current) bybitWsRef.current.close();
       if (krakenWsRef.current) krakenWsRef.current.close();
+      if (coinbaseWsRef.current) coinbaseWsRef.current.close();
     };
-  }, [connectBinance, connectCoinCap, connectKraken]);
+  }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 
   // Track live status
   useEffect(() => {
