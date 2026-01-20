@@ -37,6 +37,8 @@ interface AIAnalyzerProps {
   low24h?: number;
   volume?: number;
   marketCap?: number;
+  /** Whether upstream market data is currently streaming (used for a minimal live dot) */
+  isLive?: boolean;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crypto-analyze`;
@@ -44,7 +46,7 @@ const CHARS_PER_FRAME = 12; // Much faster rendering
 const FRAME_INTERVAL = 8; // 120fps smooth
 const STREAMING_INTERVAL = 2000; // Re-process every 2 seconds when streaming
 
-const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap }: AIAnalyzerProps) => {
+const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap, isLive }: AIAnalyzerProps) => {
   const { t, i18n } = useTranslation();
   const [displayedText, setDisplayedText] = useState("");
   const [fullAnalysis, setFullAnalysis] = useState("");
@@ -675,8 +677,15 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap 
             )}>
               <Brain className={cn("h-5 w-5 text-primary", isAnalyzing && "animate-spin")} />
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <h3 className="text-lg font-bold text-foreground">Zikalyze AI</h3>
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full animate-pulse",
+                  isLive ? "bg-success" : "bg-muted-foreground"
+                )}
+                aria-label={isLive ? "Live" : "Not live"}
+              />
             </div>
           </div>
           <div className="flex items-center gap-3">

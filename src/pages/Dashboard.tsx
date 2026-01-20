@@ -46,7 +46,7 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
-  const { prices, loading, getPriceBySymbol } = useCryptoPrices();
+  const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
   const { t } = useTranslation();
 
   // Save selected crypto to localStorage whenever it changes
@@ -155,6 +155,7 @@ const Dashboard = () => {
                 low24h={liveData?.low_24h}
                 volume={liveData?.total_volume}
                 marketCap={liveData?.market_cap}
+                isLive={isLive}
               />
             </Suspense>
           </ErrorBoundary>

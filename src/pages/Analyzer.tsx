@@ -11,7 +11,7 @@ import SentimentAnalysis from "@/components/dashboard/SentimentAnalysis";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
-  const { getPriceBySymbol, loading } = useCryptoPrices();
+  const { getPriceBySymbol, loading, isLive } = useCryptoPrices();
   const { t } = useTranslation();
 
   const cryptoData: Record<string, { name: string; price: number; change: number }> = {
@@ -69,8 +69,10 @@ const Analyzer = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${loading ? "bg-warning" : "bg-success"} animate-pulse`} />
-                <span className="text-sm text-muted-foreground">{loading ? t("common.loading") : t("common.live")}</span>
+                <span
+                  className={`h-2 w-2 rounded-full ${loading ? "bg-warning" : isLive ? "bg-success" : "bg-muted-foreground"} animate-pulse`}
+                  aria-label={loading ? "Loading" : isLive ? "Live" : "Not live"}
+                />
               </div>
             </div>
 
@@ -117,6 +119,7 @@ const Analyzer = () => {
               low24h={getPriceBySymbol(selectedCrypto)?.low_24h}
               volume={getPriceBySymbol(selectedCrypto)?.total_volume}
               marketCap={getPriceBySymbol(selectedCrypto)?.market_cap}
+                isLive={isLive}
             />
             <SentimentAnalysis
               crypto={selectedCrypto}
