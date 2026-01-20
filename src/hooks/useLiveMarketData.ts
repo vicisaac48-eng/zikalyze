@@ -44,7 +44,7 @@ export interface LiveMarketData {
   dataSourcesSummary: string;
 }
 
-const ONCHAIN_POLL_INTERVAL = 10000; // 10 seconds - live only, no caching
+const ONCHAIN_POLL_INTERVAL = 5000; // 5 seconds - faster live updates for 24h operation
 
 export function useLiveMarketData(
   crypto: string,

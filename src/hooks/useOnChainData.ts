@@ -34,11 +34,12 @@ interface WebSocketState {
   reconnectTimeout: ReturnType<typeof setTimeout> | null;
 }
 
-// Real-time WebSocket constants (no polling)
-const API_TIMEOUT = 8000;
-const MAX_RECONNECT_ATTEMPTS = 3;
-const BASE_RECONNECT_DELAY = 2000;
-const CACHE_DURATION = 30000;
+// Real-time constants - faster polling for continuous updates
+const API_TIMEOUT = 6000;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1500;
+const CACHE_DURATION = 10000; // Reduced from 30s to 10s for faster updates
+const FAST_POLL_INTERVAL = 5000; // 5 second polling for chains without WebSocket
 
 // WebSocket URLs for live streaming
 const WS_ENDPOINTS: Record<string, string[]> = {
@@ -48,8 +49,12 @@ const WS_ENDPOINTS: Record<string, string[]> = {
     'wss://eth.drpc.org',
     'wss://ethereum.publicnode.com'
   ],
-  'KAS': [] // Kaspa uses fast REST polling (no public WS)
+  'SOL': [], // Uses fast REST polling
+  'KAS': [], // Kaspa uses fast REST polling via kaspa.org API
 };
+
+// Chains that should use fast REST polling
+const FAST_POLL_CHAINS = ['KAS', 'SOL', 'AVAX', 'DOT', 'NEAR', 'FTM', 'ARB', 'OP', 'SUI', 'APT'];
 
 // CoinCap ID mapping for all cryptocurrencies
 const COINCAP_ID_MAP: Record<string, string> = {
@@ -325,23 +330,34 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
         transactionVolume.tps = 15;
         source = 'eth-api';
       }
-      // KAS - Kaspa API
+      // KAS - Kaspa API (fast, direct endpoints)
       else if (currentCrypto === 'KAS') {
-        const [networkInfo, blockInfo] = await Promise.all([
+        const [networkInfo, blockInfo, coinSupply, txStats] = await Promise.all([
           cachedFetch<any>('https://api.kaspa.org/info/network', null),
           cachedFetch<any>('https://api.kaspa.org/info/virtual-chain-blue-score', null),
+          cachedFetch<any>('https://api.kaspa.org/info/coinsupply', null),
+          cachedFetch<any>('https://api.kaspa.org/info/hashrate', null),
         ]);
 
         if (networkInfo) {
-          hashRate = networkInfo.hashrate || hashRate;
+          hashRate = networkInfo.hashrate || networkInfo.networkHashrate || hashRate;
           difficulty = networkInfo.difficulty || difficulty;
+          if (networkInfo.mempoolSize) {
+            mempoolData.unconfirmedTxs = networkInfo.mempoolSize;
+          }
         }
         if (blockInfo?.blueScore) {
           blockHeight = blockInfo.blueScore;
         }
-        avgBlockTime = avgBlockTime || 1 / 60;
+        if (txStats?.hashrate) {
+          hashRate = txStats.hashrate;
+        }
+        if (coinSupply?.circulatingSupply) {
+          activeAddressesCurrent = Math.round(parseFloat(coinSupply.circulatingSupply) / 1000000); // Estimate
+        }
+        avgBlockTime = 1 / 60; // Kaspa: 1 second blocks
         transactionVolume.tps = 100;
-        source = 'kaspa-api';
+        source = 'kaspa-live';
       }
       // SOL - Solana RPC
       else if (currentCrypto === 'SOL') {
@@ -670,16 +686,35 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     setMetrics(null);
     setStreamStatus('connecting');
 
+    const cryptoUpper = crypto.toUpperCase();
+    const usesFastPolling = FAST_POLL_CHAINS.includes(cryptoUpper) || !WS_ENDPOINTS[cryptoUpper]?.length;
+
     // Initial fetch for baseline data
     fetchRestData();
 
-    // Connect WebSocket for real-time streaming
-    connectWebSocket();
+    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
 
-    // No polling - rely on WebSocket for real-time updates
+    if (usesFastPolling) {
+      // Use fast polling for chains without WebSocket support
+      console.log(`[OnChain] ${cryptoUpper} using fast REST polling (${FAST_POLL_INTERVAL}ms)`);
+      setStreamStatus('polling');
+      
+      pollIntervalId = setInterval(() => {
+        if (isMountedRef.current) {
+          fetchRestData();
+        }
+      }, FAST_POLL_INTERVAL);
+    } else {
+      // Connect WebSocket for real-time streaming
+      connectWebSocket();
+    }
 
     return () => {
       isMountedRef.current = false;
+      
+      if (pollIntervalId) {
+        clearInterval(pollIntervalId);
+      }
       
       if (wsStateRef.current.socket) {
         wsStateRef.current.socket.close();
@@ -690,7 +725,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
         wsStateRef.current.reconnectTimeout = null;
       }
     };
-  }, [crypto]);
+  }, [crypto, fetchRestData, connectWebSocket]);
 
   return { metrics, loading, error, streamStatus, refresh: fetchRestData };
 }

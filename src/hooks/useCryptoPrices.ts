@@ -249,6 +249,21 @@ const EXCHANGES = {
   },
 };
 
+// Altcoins that need special fast polling (not on Binance or have slow WebSocket)
+const FAST_POLL_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
+
+// Direct REST API endpoints for altcoins not well supported by WebSockets
+const ALTCOIN_APIS: Record<string, { priceUrl: string; parser: (data: any) => { price: number; change24h?: number; volume?: number } | null }> = {
+  kas: {
+    priceUrl: "https://api.kaspa.org/info/price",
+    parser: (data) => data?.price ? { price: data.price } : null,
+  },
+  kaspa: {
+    priceUrl: "https://api.kaspa.org/info/price",
+    parser: (data) => data?.price ? { price: data.price } : null,
+  },
+};
+
 export const useCryptoPrices = () => {
   const [prices, setPrices] = useState<CryptoPrice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -269,8 +284,10 @@ export const useCryptoPrices = () => {
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
-  // Throttle interval - minimum 2 seconds between updates per coin for readable UI
-  const UPDATE_THROTTLE_MS = 2000;
+  // Throttle interval - reduced to 1 second for faster UI updates
+  const UPDATE_THROTTLE_MS = 1000;
+  // Even faster updates for special altcoins
+  const FAST_UPDATE_THROTTLE_MS = 500;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
@@ -299,9 +316,13 @@ export const useCryptoPrices = () => {
       return;
     }
     
+    // Use faster throttle for special altcoins
+    const isFastPollCrypto = FAST_POLL_CRYPTOS.includes(normalizedSymbol);
+    const throttleMs = isFastPollCrypto ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
+    
     // Throttle updates - only update if enough time has passed
     const lastUpdate = lastUpdateTimeRef.current.get(normalizedSymbol) || 0;
-    if (now - lastUpdate < UPDATE_THROTTLE_MS) {
+    if (now - lastUpdate < throttleMs) {
       return; // Skip this update, too soon
     }
     
@@ -953,8 +974,78 @@ export const useCryptoPrices = () => {
     }
   }, [prices, isLive, saveLivePrices]);
 
-  // No polling - rely on real-time WebSocket data for 24h updates
-  // Initial fetch provides market cap and other static data
+  // Fast polling for altcoins without good WebSocket support
+  const pollAltcoinPrices = useCallback(async () => {
+    // Fetch from multiple fast APIs in parallel
+    const fetchPromises: Promise<void>[] = [];
+    
+    // Kaspa direct API
+    fetchPromises.push(
+      safeFetch("https://api.kaspa.org/info/price", { timeoutMs: 5000, maxRetries: 1 })
+        .then(async (res) => {
+          if (res?.ok) {
+            const data = await res.json();
+            if (data?.price && data.price > 0) {
+              updatePrice("kas", { current_price: data.price }, "Kaspa-API");
+            }
+          }
+        })
+        .catch(() => {})
+    );
+    
+    // CoinGecko simple price for fast altcoins (single endpoint, multiple coins)
+    const altcoinIds = ["kaspa", "hedera-hashgraph", "internet-computer", "filecoin", "algorand", "stellar", "monero", "vechain"];
+    fetchPromises.push(
+      safeFetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${altcoinIds.join(",")}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`,
+        { timeoutMs: 8000, maxRetries: 1 }
+      )
+        .then(async (res) => {
+          if (res?.ok) {
+            const data = await res.json();
+            Object.entries(data).forEach(([coinId, info]: [string, any]) => {
+              if (info?.usd && info.usd > 0) {
+                // Map CoinGecko ID to symbol
+                const symbolMap: Record<string, string> = {
+                  "kaspa": "kas",
+                  "hedera-hashgraph": "hbar",
+                  "internet-computer": "icp",
+                  "filecoin": "fil",
+                  "algorand": "algo",
+                  "stellar": "xlm",
+                  "monero": "xmr",
+                  "vechain": "vet",
+                };
+                const symbol = symbolMap[coinId];
+                if (symbol) {
+                  updatePrice(symbol, {
+                    current_price: info.usd,
+                    price_change_percentage_24h: info.usd_24h_change || 0,
+                    total_volume: info.usd_24h_vol || 0,
+                  }, "CoinGecko-Fast");
+                }
+              }
+            });
+          }
+        })
+        .catch(() => {})
+    );
+    
+    await Promise.allSettled(fetchPromises);
+  }, [updatePrice]);
+
+  // Start fast polling for altcoins
+  useEffect(() => {
+    // Initial fetch immediately
+    pollAltcoinPrices();
+    
+    // Poll every 3 seconds for fast altcoin updates (24h continuous)
+    const intervalId = setInterval(() => {
+      pollAltcoinPrices();
+    }, 3000);
+    
+    return () => clearInterval(intervalId);
+  }, [pollAltcoinPrices]);
 
   const getPriceBySymbol = useCallback((symbol: string): CryptoPrice | undefined => {
     return prices.find((p) => p.symbol.toUpperCase() === symbol.toUpperCase());
