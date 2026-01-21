@@ -378,6 +378,8 @@ const Landing = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <span className="text-border">•</span>
             <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <span className="text-border">•</span>
+            <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
           
           {/* Social Links */}
