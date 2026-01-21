@@ -160,7 +160,7 @@ const ResetPassword = () => {
 
         <div className="relative z-10 w-full max-w-md">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary glow-cyan">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
               <TrendingUp className="h-7 w-7 text-primary-foreground" />
             </div>
             <span className="text-3xl font-bold text-foreground">Zikalyze</span>
@@ -196,7 +196,7 @@ const ResetPassword = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary glow-cyan">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
             <TrendingUp className="h-7 w-7 text-primary-foreground" />
           </div>
           <span className="text-3xl font-bold text-foreground">Zikalyze</span>
@@ -254,7 +254,7 @@ const ResetPassword = () => {
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 glow-cyan"
+              className="w-full bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
               {isLoading ? (

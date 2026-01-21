@@ -57,7 +57,7 @@ const Sidebar = () => {
     <aside className="fixed left-0 top-0 z-40 flex h-[100dvh] w-16 flex-col items-center border-r border-border bg-card pt-4 pb-20 lg:w-64 lg:pt-6 lg:pb-24 safe-area-inset-top">
       {/* Logo */}
       <Link to="/dashboard" className="mb-6 flex items-center gap-3 lg:mb-8">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary glow-purple lg:h-10 lg:w-10">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary lg:h-10 lg:w-10">
           <TrendingUp className="h-4 w-4 text-primary-foreground lg:h-5 lg:w-5" />
         </div>
         <span className="hidden text-lg font-bold text-foreground lg:block lg:text-xl">
@@ -76,7 +76,7 @@ const Sidebar = () => {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-all lg:rounded-xl lg:px-3 lg:py-3",
                 isActive
-                  ? "bg-primary text-primary-foreground glow-cyan"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95"
               )}
             >

@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: false, // Manual registration in main.tsx prevents render-blocking
-      includeAssets: ["favicon.ico", "offline.html"],
+      includeAssets: ["favicon.ico", "favicon.png", "offline.html"],
       manifest: {
         name: "Zikalyze - AI Crypto Trading Analysis",
         short_name: "Zikalyze",
@@ -26,22 +26,32 @@ export default defineConfig(({ mode }) => ({
         theme_color: "#0a0f1a",
         background_color: "#0a0f1a",
         display: "standalone",
-        orientation: "portrait",
+        orientation: "portrait-primary",
         scope: "./",
         start_url: "./",
+        id: "zikalyze-pwa",
+        categories: ["finance", "cryptocurrency", "trading"],
         icons: [
           {
-            src: "/pwa-192x192.png",
+            src: "./pwa-192x192.png",
             sizes: "192x192",
-            type: "image/png"
+            type: "image/png",
+            purpose: "any"
           },
           {
-            src: "/pwa-512x512.png",
+            src: "./pwa-512x512.png",
             sizes: "512x512",
-            type: "image/png"
+            type: "image/png",
+            purpose: "any"
           },
           {
-            src: "/pwa-512x512.png",
+            src: "./favicon.png",
+            sizes: "180x180",
+            type: "image/png",
+            purpose: "apple-touch-icon"
+          },
+          {
+            src: "./pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable"

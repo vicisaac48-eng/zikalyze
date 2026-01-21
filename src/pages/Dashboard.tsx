@@ -121,7 +121,7 @@ const Dashboard = () => {
                 key={time}
                 className={`rounded-lg px-2.5 py-1 text-xs whitespace-nowrap transition-all sm:px-3 sm:text-sm ${
                   time === "1m"
-                    ? "bg-primary text-primary-foreground glow-cyan"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                 }`}
               >
