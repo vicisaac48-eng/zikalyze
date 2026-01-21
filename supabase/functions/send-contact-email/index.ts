@@ -12,6 +12,48 @@ interface ContactFormRequest {
   email: string
   subject: string
   message: string
+  turnstileToken: string
+}
+
+interface TurnstileVerifyResponse {
+  success: boolean
+  'error-codes'?: string[]
+  challenge_ts?: string
+  hostname?: string
+}
+
+async function verifyTurnstileToken(token: string): Promise<boolean> {
+  const secretKey = Deno.env.get('TURNSTILE_SECRET_KEY')
+  
+  if (!secretKey) {
+    console.error('TURNSTILE_SECRET_KEY not configured')
+    return false
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+    })
+
+    const result: TurnstileVerifyResponse = await response.json()
+    console.log('Turnstile verification result:', result.success ? 'passed' : 'failed')
+    
+    if (!result.success) {
+      console.error('Turnstile error codes:', result['error-codes'])
+    }
+    
+    return result.success
+  } catch (error) {
+    console.error('Turnstile verification error:', error)
+    return false
+  }
 }
 
 Deno.serve(async (req) => {
@@ -28,9 +70,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email, subject, message }: ContactFormRequest = await req.json()
+    const { name, email, subject, message, turnstileToken }: ContactFormRequest = await req.json()
 
     console.log(`Received contact form submission from ${email}`)
+
+    // Verify Turnstile token first
+    if (!turnstileToken) {
+      console.error('No Turnstile token provided')
+      return new Response(
+        JSON.stringify({ error: 'Verification required' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    const isValidToken = await verifyTurnstileToken(turnstileToken)
+    if (!isValidToken) {
+      console.error('Turnstile verification failed for submission from:', email)
+      return new Response(
+        JSON.stringify({ error: 'Verification failed' }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     // Validate inputs
     if (!name || !email || !subject || !message) {
@@ -105,6 +171,11 @@ Deno.serve(async (req) => {
                 <p style="color: #9ca3af; font-size: 14px; margin: 0 0 8px 0;">Message</p>
                 <p style="color: #e5e7eb; font-size: 15px; margin: 0; line-height: 1.6;">${sanitizedMessage}</p>
               </div>
+              <div style="margin-top: 24px; padding: 12px; background-color: #064e3b; border-radius: 8px;">
+                <p style="color: #6ee7b7; font-size: 12px; margin: 0; display: flex; align-items: center; gap: 6px;">
+                  ✓ Verified by Cloudflare Turnstile
+                </p>
+              </div>
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #1f2937; text-align: center;">
                 <p style="color: #6b7280; font-size: 12px; margin: 0;">
                   This message was sent via the Zikalyze contact form.
@@ -176,7 +247,7 @@ Deno.serve(async (req) => {
       html: confirmationHtml,
     })
 
-    console.log(`Successfully sent contact emails for ${email}`)
+    console.log(`Successfully sent contact emails for ${email} (Turnstile verified)`)
 
     return new Response(
       JSON.stringify({ success: true, message: 'Message sent successfully' }),
