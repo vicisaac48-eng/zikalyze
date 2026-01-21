@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRateLimit } from "@/hooks/useRateLimit";
+import { usePasswordStrength } from "@/hooks/usePasswordStrength";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 import { z } from "zod";
@@ -20,9 +22,6 @@ const Auth = () => {
   const { user, loading: authLoading, signIn, signUp, resetPassword } = useAuth();
   const { checkRateLimit, recordLoginAttempt, formatRetryAfter } = useRateLimit();
   
-  const emailSchema = z.string().email(t("validation.invalidEmail"));
-  const passwordSchema = z.string().min(6, t("validation.passwordMinLength"));
-  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +31,18 @@ const Auth = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [resetRateLimitError, setResetRateLimitError] = useState<{ message: string; retryAfter: number } | null>(null);
+  const [isSignUp, setIsSignUp] = useState(false);
+  
+  const passwordStrength = usePasswordStrength(password);
+  
+  const emailSchema = z.string().email(t("validation.invalidEmail"));
+  const passwordSchema = z.string().min(6, t("validation.passwordMinLength"));
+  const strongPasswordSchema = z.string()
+    .min(12, "Password must be at least 12 characters")
+    .regex(/[a-z]/, "Password must contain a lowercase letter")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/\d/, "Password must contain a number")
+    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, "Password must contain a special character");
 
   // Redirect if already logged in
   useEffect(() => {
@@ -40,7 +51,7 @@ const Auth = () => {
     }
   }, [user, authLoading, navigate]);
 
-  const validateForm = (): boolean => {
+  const validateForm = (forSignUp: boolean = false): boolean => {
     const newErrors: { email?: string; password?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
@@ -48,9 +59,16 @@ const Auth = () => {
       newErrors.email = emailResult.error.errors[0].message;
     }
     
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    // Use strong password validation for signup
+    if (forSignUp) {
+      if (!passwordStrength.isValid) {
+        newErrors.password = "Password doesn't meet security requirements";
+      }
+    } else {
+      const passwordResult = passwordSchema.safeParse(password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.errors[0].message;
+      }
     }
     
     setErrors(newErrors);
@@ -165,7 +183,7 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm(true)) return;
     
     setIsLoading(true);
     const { error } = await signUp(email, password);
@@ -365,6 +383,7 @@ const Auth = () => {
                       className="pl-10"
                     />
                   </div>
+                  <PasswordStrengthMeter password={password} />
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password}</p>
                   )}
