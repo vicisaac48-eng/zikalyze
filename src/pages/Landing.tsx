@@ -120,14 +120,14 @@ const Landing = () => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12 lg:px-16 xl:px-24">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-cyan sm:h-12 sm:w-12 sm:rounded-xl lg:h-14 lg:w-14">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary sm:h-12 sm:w-12 sm:rounded-xl lg:h-14 lg:w-14">
             <TrendingUp className="h-4 w-4 text-primary-foreground sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
           </div>
           <span className="text-xl font-bold text-foreground sm:text-2xl lg:text-3xl">Zikalyze</span>
         </div>
         <Button 
           onClick={() => handleNavigate("/auth")}
-          className="bg-primary hover:bg-primary/90 glow-cyan text-primary-foreground text-xs h-8 px-3 sm:text-sm sm:h-10 sm:px-4 lg:h-11 lg:px-6 lg:text-base"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-3 sm:text-sm sm:h-10 sm:px-4 lg:h-11 lg:px-6 lg:text-base"
         >
           {t("common.getStarted")} <ArrowRight className="ml-1.5 h-3 w-3 sm:ml-2 sm:h-4 sm:w-4" />
         </Button>
@@ -153,7 +153,7 @@ const Landing = () => {
           <Button 
             size="lg" 
             onClick={() => handleNavigate("/auth")}
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90 glow-cyan text-primary-foreground px-6 sm:px-8 lg:px-10 lg:h-14 lg:text-lg"
+            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 lg:px-10 lg:h-14 lg:text-lg"
           >
             {t("landing.startFreeTrial")} <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -304,7 +304,7 @@ const Landing = () => {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:glow-cyan transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
               <Brain className="h-5 w-5 text-primary sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
             </div>
             <h3 className="mb-1.5 text-lg font-semibold text-foreground sm:mb-2 sm:text-xl lg:text-2xl">{t("landing.smartMoneyConcepts")}</h3>
@@ -320,7 +320,7 @@ const Landing = () => {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20 group-hover:glow-purple transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20 group-hover:bg-accent/30 transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
               <BarChart3 className="h-5 w-5 text-accent sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
             </div>
             <h3 className="mb-1.5 text-lg font-semibold text-foreground sm:mb-2 sm:text-xl lg:text-2xl">{t("landing.vwapAnalysis")}</h3>
@@ -336,7 +336,7 @@ const Landing = () => {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:glow-cyan transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-all sm:mb-4 sm:h-12 sm:w-12 lg:mb-5 lg:h-16 lg:w-16 sm:rounded-xl">
               <Shield className="h-5 w-5 text-primary sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
             </div>
             <h3 className="mb-1.5 text-lg font-semibold text-foreground sm:mb-2 sm:text-xl lg:text-2xl">{t("landing.riskManagement")}</h3>
