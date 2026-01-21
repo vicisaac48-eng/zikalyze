@@ -56,8 +56,8 @@ const PrivacyPolicy = () => {
           <section>
             <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">2. Data Controller</h2>
             <p className="text-muted-foreground mt-4">
-              Zikalyze is the data controller responsible for your personal data. For any questions about this Privacy Policy 
-              or our data practices, please contact us at: <span className="text-primary">privacy@zikalyze.com</span>
+            Zikalyze is the data controller responsible for your personal data. For any questions about this Privacy Policy 
+            or our data practices, please contact us at: <span className="text-primary">privacyzikalyze@gmail.com</span>
             </p>
           </section>
 
@@ -150,7 +150,7 @@ const PrivacyPolicy = () => {
               <li><strong className="text-foreground">Right to Withdraw Consent:</strong> Withdraw consent at any time where processing is based on consent</li>
             </ul>
             <p className="text-muted-foreground mt-3">
-              To exercise these rights, please contact us at <span className="text-primary">privacy@zikalyze.com</span> or use the 
+              To exercise these rights, please contact us at <span className="text-primary">privacyzikalyze@gmail.com</span> or use the 
               account deletion feature in Settings.
             </p>
           </section>
@@ -229,7 +229,7 @@ const PrivacyPolicy = () => {
             </p>
             <div className="mt-3 p-4 rounded-lg bg-muted/30 border border-border">
               <p className="text-foreground font-medium">Zikalyze Data Protection</p>
-              <p className="text-muted-foreground">Email: <span className="text-primary">privacy@zikalyze.com</span></p>
+              <p className="text-muted-foreground">Email: <span className="text-primary">privacyzikalyze@gmail.com</span></p>
               <p className="text-muted-foreground mt-2">
                 You also have the right to lodge a complaint with your local data protection authority if you believe 
                 your rights have been violated.

@@ -287,7 +287,7 @@ const TermsOfService = () => {
             </p>
             <div className="mt-3 p-4 rounded-lg bg-muted/30 border border-border">
               <p className="text-foreground font-medium">Zikalyze Legal</p>
-              <p className="text-muted-foreground">Email: <span className="text-primary">legal@zikalyze.com</span></p>
+              <p className="text-muted-foreground">Email: <span className="text-primary">privacyzikalyze@gmail.com</span></p>
             </div>
           </section>
         </div>

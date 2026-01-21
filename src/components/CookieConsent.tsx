@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Cookie, Shield, BarChart3, Target } from "lucide-react";
+import { Cookie, Shield, BarChart3, Target, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const COOKIE_CONSENT_KEY = "zikalyze_cookie_consent";
 
@@ -58,84 +59,135 @@ export function CookieConsent() {
   };
 
   const cookieTypes = [
-    { id: "necessary", icon: Shield, title: "Essential", required: true },
-    { id: "analytics", icon: BarChart3, title: "Analytics", required: false },
-    { id: "marketing", icon: Target, title: "Marketing", required: false },
-    { id: "preferences", icon: Cookie, title: "Preferences", required: false },
+    { 
+      id: "necessary", 
+      icon: Shield, 
+      title: "Essential", 
+      description: "Required for the website to function properly",
+      required: true 
+    },
+    { 
+      id: "analytics", 
+      icon: BarChart3, 
+      title: "Analytics", 
+      description: "Help us understand how you use our website",
+      required: false 
+    },
+    { 
+      id: "marketing", 
+      icon: Target, 
+      title: "Marketing", 
+      description: "Used to deliver personalized advertisements",
+      required: false 
+    },
+    { 
+      id: "preferences", 
+      icon: Cookie, 
+      title: "Preferences", 
+      description: "Remember your settings and preferences",
+      required: false 
+    },
   ];
 
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-3 animate-in slide-in-from-bottom-5 duration-300">
-      <div className="max-w-2xl mx-auto bg-background/95 backdrop-blur-xl border border-border/50 rounded-lg shadow-lg px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Cookie className="h-4 w-4 text-primary shrink-0" />
-          
-          <div className="flex-1 min-w-0">
-            {showDetails ? (
-              <div className="flex items-center gap-4 flex-wrap">
-                {cookieTypes.map((cookie) => (
-                  <div key={cookie.id} className="flex items-center gap-1.5">
-                    <Label htmlFor={cookie.id} className="text-xs text-muted-foreground cursor-pointer">
-                      {cookie.title}
-                    </Label>
-                    <Switch
-                      id={cookie.id}
-                      checked={preferences[cookie.id as keyof CookiePreferences]}
-                      onCheckedChange={(checked) =>
-                        setPreferences((prev) => ({ ...prev, [cookie.id]: checked }))
-                      }
-                      disabled={cookie.required}
-                      className="scale-75"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                We use cookies to enhance your experience and analyze traffic.
-              </p>
-            )}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="w-full max-w-lg mx-4 bg-card border border-border rounded-xl shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+        {/* Header */}
+        <div className="p-6 pb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Cookie className="h-5 w-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Cookie Preferences</h2>
           </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Zikalyze uses cookies for our website to function properly; some are optional and help deliver a personalized and enhanced experience. 
+            By clicking "Accept All", you consent to store cookies on your device in accordance with our{" "}
+            <Link to="/privacy" className="text-primary hover:underline">Cookie Statement</Link>. 
+            We may collect anonymized data from your browser independent of your cookie preferences. 
+            Preferences can be updated at any time.
+          </p>
+        </div>
+
+        {/* Cookie Settings Panel */}
+        {showDetails && (
+          <div className="px-6 pb-4 space-y-3 border-t border-border pt-4">
+            {cookieTypes.map((cookie) => {
+              const Icon = cookie.icon;
+              return (
+                <div 
+                  key={cookie.id} 
+                  className="flex items-start justify-between gap-4 p-3 rounded-lg bg-muted/30 border border-border/50"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <Label 
+                        htmlFor={cookie.id} 
+                        className="text-sm font-medium text-foreground cursor-pointer"
+                      >
+                        {cookie.title}
+                        {cookie.required && (
+                          <span className="ml-2 text-xs text-muted-foreground">(Required)</span>
+                        )}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">{cookie.description}</p>
+                    </div>
+                  </div>
+                  <Switch
+                    id={cookie.id}
+                    checked={preferences[cookie.id as keyof CookiePreferences]}
+                    onCheckedChange={(checked) =>
+                      setPreferences((prev) => ({ ...prev, [cookie.id]: checked }))
+                    }
+                    disabled={cookie.required}
+                    className="shrink-0"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="p-6 pt-4 border-t border-border space-y-2">
+          <Button
+            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+            onClick={handleAcceptAll}
+          >
+            Accept All
+          </Button>
           
-          <div className="flex items-center gap-1.5 shrink-0">
+          {showDetails ? (
             <Button
-              variant="default"
-              size="sm"
-              className="h-7 px-3 text-xs"
-              onClick={handleAcceptAll}
+              variant="outline"
+              className="w-full h-11 border-border hover:bg-muted"
+              onClick={handleAcceptSelected}
             >
-              Accept
+              Save Preferences
             </Button>
-            {showDetails ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-7 px-3 text-xs"
-                onClick={handleAcceptSelected}
-              >
-                Save
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={() => setShowDetails(true)}
-              >
-                Settings
-              </Button>
-            )}
+          ) : (
             <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground"
+              variant="outline"
+              className="w-full h-11 border-border hover:bg-muted"
               onClick={handleRejectAll}
             >
-              Reject
+              Reject Optional
             </Button>
-          </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            className="w-full h-10 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            {showDetails ? "Hide Settings" : "Customize Settings"}
+          </Button>
         </div>
       </div>
     </div>
