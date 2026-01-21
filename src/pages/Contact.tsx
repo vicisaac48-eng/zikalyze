@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, MessageSquare, Send, TrendingUp, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, MessageSquare, Send, TrendingUp, CheckCircle, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,10 +18,32 @@ const contactSchema = z.object({
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: {
+        sitekey: string;
+        callback: (token: string) => void;
+        'expired-callback'?: () => void;
+        'error-callback'?: () => void;
+        theme?: 'light' | 'dark' | 'auto';
+        size?: 'normal' | 'compact';
+      }) => string;
+      reset: (widgetId: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
@@ -30,9 +52,81 @@ const Contact = () => {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
 
+  const renderTurnstile = useCallback((siteKey: string) => {
+    if (turnstileRef.current && window.turnstile && !widgetIdRef.current) {
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: siteKey,
+        callback: (token: string) => {
+          setTurnstileToken(token);
+          setTurnstileError(false);
+        },
+        'expired-callback': () => {
+          setTurnstileToken(null);
+        },
+        'error-callback': () => {
+          setTurnstileError(true);
+          setTurnstileToken(null);
+        },
+        theme: 'dark',
+        size: 'normal',
+      });
+    }
+  }, []);
+
+  // Fetch Turnstile site key and load script
+  useEffect(() => {
+    const fetchConfigAndLoadScript = async () => {
+      try {
+        // Fetch the site key from edge function
+        const { data, error } = await supabase.functions.invoke('get-turnstile-config');
+        
+        if (error || !data?.siteKey) {
+          console.error('Failed to fetch Turnstile config:', error);
+          return;
+        }
+
+        setTurnstileSiteKey(data.siteKey);
+
+        // Load Turnstile script
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          // Wait a bit for turnstile to be fully initialized
+          setTimeout(() => renderTurnstile(data.siteKey), 100);
+        };
+        document.head.appendChild(script);
+      } catch (err) {
+        console.error('Error loading Turnstile:', err);
+      }
+    };
+
+    fetchConfigAndLoadScript();
+
+    return () => {
+      // Cleanup
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+      // Remove script
+      const existingScript = document.querySelector('script[src*="turnstile"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, [renderTurnstile]);
+
+  const resetTurnstile = useCallback(() => {
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+      setTurnstileToken(null);
+    }
+  }, []);
+
   const handleChange = (field: keyof ContactFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -41,6 +135,16 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    // Validate Turnstile token
+    if (!turnstileToken) {
+      toast({
+        title: "Verification required",
+        description: "Please complete the security check before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validate form
     const result = contactSchema.safeParse(formData);
@@ -59,10 +163,27 @@ const Contact = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("send-contact-email", {
-        body: result.data,
+        body: {
+          ...result.data,
+          turnstileToken,
+        },
       });
 
       if (error) throw error;
+
+      if (data?.error) {
+        // Handle specific error from edge function
+        if (data.error === 'Verification failed') {
+          toast({
+            title: "Verification failed",
+            description: "Please refresh the page and try again.",
+            variant: "destructive",
+          });
+          resetTurnstile();
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       setIsSubmitted(true);
       toast({
@@ -76,6 +197,7 @@ const Contact = () => {
         description: "Please try again later or email us directly.",
         variant: "destructive",
       });
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +239,15 @@ const Contact = () => {
               <Button asChild>
                 <Link to="/">Return Home</Link>
               </Button>
-              <Button variant="outline" onClick={() => setIsSubmitted(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsSubmitted(false);
+                setFormData({ name: "", email: "", subject: "", message: "" });
+                setTurnstileToken(null);
+                // Re-render turnstile after state reset
+                if (turnstileSiteKey) {
+                  setTimeout(() => renderTurnstile(turnstileSiteKey), 100);
+                }
+              }}>
                 Send Another Message
               </Button>
             </div>
@@ -274,10 +404,33 @@ const Contact = () => {
                 </div>
               </div>
 
+              {/* Turnstile Widget */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Security verification</span>
+                </div>
+                <div 
+                  ref={turnstileRef} 
+                  className="cf-turnstile"
+                />
+                {turnstileError && (
+                  <p className="text-xs text-destructive">
+                    Verification failed. Please refresh the page and try again.
+                  </p>
+                )}
+                {turnstileToken && (
+                  <p className="text-xs text-primary flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Verification complete
+                  </p>
+                )}
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full sm:w-auto"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
               >
                 {isSubmitting ? (
                   <>
