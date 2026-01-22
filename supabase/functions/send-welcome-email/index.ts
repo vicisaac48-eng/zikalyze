@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     const html = generateWelcomeEmailHTML(email)
 
     const { error } = await resend.emails.send({
-      from: 'Zikalyze <onboarding@resend.dev>',
+      from: 'Zikalyze <noreply@zikalyze.app>',
       to: [email],
       subject: '🎉 Welcome to Zikalyze - Your Account is Ready!',
       html,
