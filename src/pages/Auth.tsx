@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRateLimit } from "@/hooks/useRateLimit";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { supabase } from "@/integrations/supabase/client";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 import { z } from "zod";
@@ -187,9 +188,9 @@ const Auth = () => {
     
     setIsLoading(true);
     const { error } = await signUp(email, password);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes("already registered")) {
         toast({
           title: t("auth.accountExists"),
@@ -205,6 +206,24 @@ const Auth = () => {
       }
       return;
     }
+
+    // Send welcome email directly via edge function
+    try {
+      const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
+        body: { email }
+      });
+      
+      if (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't block signup if email fails
+      } else {
+        console.log('Welcome email sent successfully');
+      }
+    } catch (emailErr) {
+      console.error('Error sending welcome email:', emailErr);
+    }
+    
+    setIsLoading(false);
 
     // Show success toast with email confirmation
     toast({
