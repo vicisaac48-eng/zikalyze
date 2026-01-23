@@ -107,23 +107,23 @@ All colors MUST be HSL.
 
   /* Glow effects - GPU accelerated */
   .glow-cyan {
-    box-shadow: 0 0 20px hsl(168 76% 73% / 0.4), 0 0 40px hsl(168 76% 73% / 0.2);
-    -webkit-box-shadow: 0 0 20px hsl(168 76% 73% / 0.4), 0 0 40px hsl(168 76% 73% / 0.2);
+    box-shadow: none;
+    -webkit-box-shadow: none;
   }
   
   .glow-purple {
-    box-shadow: 0 0 20px hsl(267 84% 81% / 0.4), 0 0 40px hsl(267 84% 81% / 0.2);
-    -webkit-box-shadow: 0 0 20px hsl(267 84% 81% / 0.4), 0 0 40px hsl(267 84% 81% / 0.2);
+    box-shadow: none;
+    -webkit-box-shadow: none;
   }
 
   .glow-success {
-    box-shadow: 0 0 15px hsl(142 76% 46% / 0.4), 0 0 30px hsl(142 76% 46% / 0.2);
-    -webkit-box-shadow: 0 0 15px hsl(142 76% 46% / 0.4), 0 0 30px hsl(142 76% 46% / 0.2);
+    box-shadow: none;
+    -webkit-box-shadow: none;
   }
 
   .glow-warning {
-    box-shadow: 0 0 15px hsl(38 92% 50% / 0.4), 0 0 30px hsl(38 92% 50% / 0.2);
-    -webkit-box-shadow: 0 0 15px hsl(38 92% 50% / 0.4), 0 0 30px hsl(38 92% 50% / 0.2);
+    box-shadow: none;
+    -webkit-box-shadow: none;
   }
   
   /* Gradient utilities - Cross-browser compatible */
