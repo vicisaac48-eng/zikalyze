@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     )
 
     const { error: emailError } = await resend.emails.send({
-      from: 'Zikalyze Security <onboarding@resend.dev>',
+      from: 'Zikalyze Security <security@zikalyze.app>',
       to: [user.email!],
       subject: '🔐 Your Zikalyze password has been changed',
       html,

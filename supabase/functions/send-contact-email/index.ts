@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
 
     // Send email to the support address
     const { error: sendError } = await resend.emails.send({
-      from: 'Zikalyze Contact <onboarding@resend.dev>',
+      from: 'Zikalyze Contact <contact@zikalyze.app>',
       to: ['privacyzikalyze@gmail.com'],
       replyTo: email,
       subject: `[Zikalyze Contact] ${subject}`,
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
     `
 
     await resend.emails.send({
-      from: 'Zikalyze <onboarding@resend.dev>',
+      from: 'Zikalyze <noreply@zikalyze.app>',
       to: [email],
       subject: 'We received your message - Zikalyze',
       html: confirmationHtml,
