@@ -171,4 +171,7 @@ export interface AnalysisResult {
   scenarios: IfThenScenario[];
   timestamp: string;
   source: 'client-side-wasm';
+  // Optional attention outputs from the brain (per-timepoint importance)
+  attentionHeatmap?: number[];
+  attentionVector?: number[];
 }

@@ -923,6 +923,10 @@ interface PredictiveMemory {
   predictionAccuracy: number;
   trendConsistency: number;
   futurePredictions: { target: number; probability: number; timeframe: string; basis: string }[];
+  // Attention heatmap over `priceHistory` (weights for each past entry)
+  attentionHeatmap?: number[];
+  // Average cross-entropy loss over recent prediction samples (lower is better)
+  crossEntropyLoss?: number;
 }
 
 interface MarketMemory {
@@ -1002,6 +1006,117 @@ interface AdaptiveLearning {
   adaptiveAdjustments: string[];
   learningVelocity: number; // How fast the model adapts (0-100)
   patternSuccessRates: Record<string, { wins: number; losses: number; accuracy: number }>;
+}
+
+// =====================
+// Lightweight weight persistence and training utilities
+// =====================
+
+interface Weights {
+  W1: number[][];
+  b1: number[];
+  W2: number[][];
+  b2: number[];
+  lr: number;
+}
+
+const WEIGHTS_PATH = './crypto_analyzer_weights.json';
+
+function initRandomWeights(d_k = 2, hiddenSize = 8): Weights {
+  const rand = () => (Math.random() - 0.5) * 0.02;
+  const W1 = Array.from({ length: hiddenSize }, () => Array.from({ length: d_k }, () => rand()));
+  const b1 = Array.from({ length: hiddenSize }, () => 0);
+  const W2 = Array.from({ length: 2 }, () => Array.from({ length: hiddenSize }, () => rand()));
+  const b2 = [0, 0];
+  return { W1, b1, W2, b2, lr: 0.01 };
+}
+
+function loadWeightsSync(expected_dk = 2, expectedHidden = 8): Weights {
+  try {
+    const raw = Deno.readTextFileSync(WEIGHTS_PATH);
+    const parsed = JSON.parse(raw) as Weights;
+    if (!parsed || !parsed.W1 || !parsed.W2) return initRandomWeights(expected_dk, expectedHidden);
+    return parsed;
+  } catch {
+    const w = initRandomWeights(expected_dk, expectedHidden);
+    try { Deno.writeTextFileSync(WEIGHTS_PATH, JSON.stringify(w)); } catch { /* ignore write errors */ }
+    return w;
+  }
+}
+
+function saveWeightsSync(weights: Weights) {
+  try {
+    Deno.writeTextFileSync(WEIGHTS_PATH, JSON.stringify(weights));
+  } catch (e) {
+    console.log('Failed to save weights:', e);
+  }
+}
+
+// Small training loop using analytical gradients (ReLU + softmax)
+function trainOnMemory(weights: Weights, samples: { x: number[]; label: number }[], epochs = 5) {
+  const d_k = samples.length > 0 ? samples[0].x.length : (weights.W1[0]?.length || 2);
+  const hiddenSize = weights.W1.length;
+  const lr = weights.lr || 0.01;
+
+  const relu = (v: number) => Math.max(0, v);
+
+  for (let e = 0; e < epochs; e++) {
+    // simple SGD over samples
+    for (const s of samples) {
+      const x = s.x;
+      const y = s.label; // 0 or 1
+
+      // forward
+      const preHidden = new Array(hiddenSize).fill(0);
+      for (let i = 0; i < hiddenSize; i++) {
+        let sum = weights.b1[i] || 0;
+        for (let j = 0; j < d_k; j++) sum += (weights.W1[i][j] || 0) * (x[j] || 0);
+        preHidden[i] = sum;
+      }
+      const hidden = preHidden.map(relu);
+
+      const logits = new Array(2).fill(0);
+      for (let i = 0; i < 2; i++) {
+        let ssum = weights.b2[i] || 0;
+        for (let j = 0; j < hiddenSize; j++) ssum += (weights.W2[i][j] || 0) * hidden[j];
+        logits[i] = ssum;
+      }
+      const maxLog = Math.max(...logits);
+      const exps = logits.map(v => Math.exp(v - maxLog));
+      const sumExps = exps.reduce((a, b) => a + b, 0) || 1;
+      const probs = exps.map(v => v / sumExps);
+
+      // gradients
+      const dZ = [probs[0] - (y === 0 ? 1 : 0), probs[1] - (y === 1 ? 1 : 0)];
+
+      // dW2 and db2
+      const dW2 = Array.from({ length: 2 }, () => new Array(hiddenSize).fill(0));
+      const db2 = [dZ[0], dZ[1]];
+      for (let i = 0; i < 2; i++) for (let j = 0; j < hiddenSize; j++) dW2[i][j] = dZ[i] * hidden[j];
+
+      // dhidden
+      const dhidden = new Array(hiddenSize).fill(0);
+      for (let j = 0; j < hiddenSize; j++) for (let i = 0; i < 2; i++) dhidden[j] += (weights.W2[i][j] || 0) * dZ[i];
+
+      // dpreHidden = dhidden * relu'(preHidden)
+      const dpre = preHidden.map((v, idx) => (v > 0 ? dhidden[idx] : 0));
+
+      // dW1 and db1
+      const dW1 = Array.from({ length: hiddenSize }, () => new Array(d_k).fill(0));
+      const db1 = new Array(hiddenSize).fill(0);
+      for (let i = 0; i < hiddenSize; i++) {
+        db1[i] = dpre[i];
+        for (let j = 0; j < d_k; j++) dW1[i][j] = dpre[i] * (x[j] || 0);
+      }
+
+      // Update weights (in-place)
+      for (let i = 0; i < 2; i++) for (let j = 0; j < hiddenSize; j++) weights.W2[i][j] -= lr * dW2[i][j];
+      for (let i = 0; i < 2; i++) weights.b2[i] -= lr * db2[i];
+      for (let i = 0; i < hiddenSize; i++) for (let j = 0; j < d_k; j++) weights.W1[i][j] -= lr * dW1[i][j];
+      for (let i = 0; i < hiddenSize; i++) weights.b1[i] -= lr * db1[i];
+    }
+  }
+  return weights;
 }
 
 // Pre-trained scenario database — learned from historical market behavior
@@ -1916,11 +2031,10 @@ async function fetchMultiTimeframeData(crypto: string): Promise<MultiTimeframeAn
 function buildPredictiveMemory(memory: MarketMemory[], currentPrice: number, currentChange: number): PredictiveMemory {
   // Analyze past patterns and their outcomes
   const pastPatterns: { pattern: string; outcome: 'WIN' | 'LOSS' | 'PENDING'; priceChange: number }[] = [];
-  
   for (let i = 0; i < Math.min(memory.length - 1, 20); i++) {
     const current = memory[i];
     const next = memory[i + 1];
-    
+
     if (current.wasCorrect !== undefined) {
       pastPatterns.push({
         pattern: `${current.bias} at ${current.confidence || 50}% confidence`,
@@ -1929,21 +2043,136 @@ function buildPredictiveMemory(memory: MarketMemory[], currentPrice: number, cur
       });
     }
   }
-  
-  // Build price history
-  const priceHistory = memory.slice(0, 30).map(m => ({
-    price: m.price,
-    timestamp: m.timestamp
-  }));
-  
-  // Calculate prediction accuracy
+
+  // Build price history (recent up to 30 entries)
+  const priceHistory = memory.slice(0, 30).map(m => ({ price: m.price, timestamp: m.timestamp }));
+
+  // Helper math functions for attention + small MLP
+  const softmax = (arr: number[]) => {
+    const max = Math.max(...arr);
+    const exps = arr.map(a => Math.exp(a - max));
+    const sum = exps.reduce((s, v) => s + v, 0) || 1;
+    return exps.map(e => e / sum);
+  };
+  const relu = (x: number) => Math.max(0, x);
+
+  // Create simple feature vectors for each memory entry: [normalized change, normalized price delta]
+  const features: number[][] = memory.slice(0, 30).map((m, idx, arr) => {
+    const prev = idx + 1 < arr.length ? arr[idx + 1] : m;
+    const change = m.change || 0;
+    const priceDelta = prev ? (m.price - prev.price) : 0;
+    return [change, priceDelta];
+  });
+
+  const seqLen = features.length;
+  const d_k = features.length > 0 ? features[0].length : 1;
+
+  // Attention(Q,K,V) with identity linear maps (Q=features, K=features, V=features)
+  // Compute attention scores matrix: for each i,j -> dot(features[i], features[j]) / sqrt(d_k)
+  const scores: number[][] = Array.from({ length: seqLen }, () => Array(seqLen).fill(0));
+  for (let i = 0; i < seqLen; i++) {
+    for (let j = 0; j < seqLen; j++) {
+      let dot = 0;
+      for (let k = 0; k < d_k; k++) dot += features[i][k] * features[j][k];
+      scores[i][j] = dot / Math.sqrt(Math.max(1, d_k));
+    }
+  }
+
+  // For a single global context vector, average the attention distributions over query positions
+  const attentionHeatmap: number[] = Array(seqLen).fill(0);
+  for (let i = 0; i < seqLen; i++) {
+    const row = softmax(scores[i]);
+    for (let j = 0; j < seqLen; j++) attentionHeatmap[j] += row[j];
+  }
+  // Normalize heatmap
+  if (seqLen > 0) {
+    for (let j = 0; j < seqLen; j++) attentionHeatmap[j] = attentionHeatmap[j] / seqLen;
+  }
+
+  // Compute global context as weighted sum of V (features) using the heatmap
+  const context: number[] = Array(d_k).fill(0);
+  for (let j = 0; j < seqLen; j++) {
+    for (let k = 0; k < d_k; k++) {
+      context[k] += attentionHeatmap[j] * features[j][k];
+    }
+  }
+
+  // Small MLP with one hidden layer using ReLU
+  // weight matrices chosen as simple heuristics to avoid external dependencies
+  const hiddenSize = Math.max(4, d_k * 4);
+  // Load persistent weights if available (sized to d_k & hiddenSize)
+  const persisted = loadWeightsSync(d_k, hiddenSize);
+  // If persisted weights have different hidden size, fall back to init
+  const useWeights = (persisted.W1.length === hiddenSize && (persisted.W1[0]?.length || 0) === d_k)
+    ? persisted
+    : initRandomWeights(d_k, hiddenSize);
+  const W1: number[][] = useWeights.W1;
+  const b1: number[] = useWeights.b1;
+  const W2: number[][] = useWeights.W2;
+  const b2: number[] = useWeights.b2;
+
+  const hidden: number[] = W1.map((row, i) => {
+    const sum = row.reduce((s, w, idx) => s + w * context[idx], 0) + b1[i];
+    return relu(sum);
+  });
+
+  const logits: number[] = W2.map((row, i) => row.reduce((s, w, idx) => s + w * hidden[idx], 0) + b2[i]);
+  const probs = softmax(logits); // [p_down_like, p_up_like]
+  const probUp = probs[1];
+
+  // Cross-entropy loss evaluation over recent samples where next exists
+  const losses: number[] = [];
+  for (let i = 0; i < Math.min(memory.length - 1, 30); i++) {
+    const cur = memory[i];
+    const nxt = memory[i + 1];
+    const label = nxt.price > cur.price ? 1 : 0; // 1 = UP, 0 = DOWN
+
+    // Build local features for this sample (same scheme)
+    const sampleFeatures = [cur.change || 0, (cur.price - nxt.price) || 0];
+
+    // Compute attention-like single weight for this sample against context (dot)
+    let sim = 0;
+    for (let k = 0; k < d_k; k++) sim += sampleFeatures[k] * context[k];
+    const sampleHidden: number[] = W1.map((row, i) => relu(row.reduce((s, w, idx) => s + w * sampleFeatures[idx], 0) + b1[i]));
+    const sampleLogits: number[] = W2.map((row, i) => row.reduce((s, w, idx) => s + w * sampleHidden[idx], 0) + b2[i]);
+    const sampleProbs = softmax(sampleLogits);
+    const p = Math.max(1e-9, Math.min(1 - 1e-9, sampleProbs[1]));
+    const ce = -(label * Math.log(p) + (1 - label) * Math.log(1 - p));
+    losses.push(ce);
+  }
+  const crossEntropyLoss = losses.length > 0 ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
+
+  // Now create future predictions using the attention-driven probability for up
+  const futurePredictions: { target: number; probability: number; timeframe: string; basis: string }[] = [];
+  if (memory.length >= 3) {
+    const avgChange = memory.slice(0, 5).reduce((a, m) => a + m.change, 0) / Math.min(memory.length, 5);
+    const shortTermTarget = currentPrice * (1 + (avgChange * 0.5) / 100);
+    futurePredictions.push({ target: shortTermTarget, probability: Math.round(probUp * 100), timeframe: '24H', basis: 'Attention-weighted recent context' });
+  }
+  if (memory.length >= 7) {
+    const weeklyAvg = memory.slice(0, 7).reduce((a, m) => a + m.price, 0) / 7;
+    const projectedChange = ((currentPrice - weeklyAvg) / weeklyAvg) * 0.5;
+    const mediumTermTarget = currentPrice * (1 + projectedChange);
+    futurePredictions.push({ target: mediumTermTarget, probability: Math.round(probUp * 100 * 0.9), timeframe: '7D', basis: 'Attention + weekly context' });
+  }
+  if (memory.length >= 20) {
+    const monthlyHigh = Math.max(...memory.slice(0, 20).map(m => m.price));
+    const monthlyLow = Math.min(...memory.slice(0, 20).map(m => m.price));
+    const monthlyRange = monthlyHigh - monthlyLow || 1;
+    const positionInRange = ((currentPrice - monthlyLow) / monthlyRange) * 100;
+    let longTermTarget: number;
+    if (positionInRange < 30) longTermTarget = currentPrice + monthlyRange * 0.5;
+    else if (positionInRange > 70) longTermTarget = currentPrice - monthlyRange * 0.3;
+    else longTermTarget = currentPrice + monthlyRange * 0.25;
+    futurePredictions.push({ target: longTermTarget, probability: Math.round(probUp * 100 * 0.8), timeframe: '30D', basis: 'Attention + monthly range' });
+  }
+
+  // Calculate prediction accuracy as before but keep it consistent with attention outputs
   const feedbackRecords = memory.filter(m => m.wasCorrect !== undefined);
   const correctCount = feedbackRecords.filter(m => m.wasCorrect).length;
-  const predictionAccuracy = feedbackRecords.length >= 3 
-    ? Math.round((correctCount / feedbackRecords.length) * 100)
-    : 50;
-  
-  // Calculate trend consistency (how often bias matches actual direction)
+  const predictionAccuracy = feedbackRecords.length >= 3 ? Math.round((correctCount / feedbackRecords.length) * 100) : Math.round((1 - crossEntropyLoss) * 100);
+
+  // Trend consistency (unchanged)
   let consistentCount = 0;
   for (let i = 0; i < Math.min(memory.length - 1, 10); i++) {
     const m = memory[i];
@@ -1951,79 +2180,16 @@ function buildPredictiveMemory(memory: MarketMemory[], currentPrice: number, cur
     const actualDirection = m.price > nextM.price ? 'LONG' : 'SHORT';
     if (m.bias === actualDirection) consistentCount++;
   }
-  const trendConsistency = memory.length >= 2 
-    ? Math.round((consistentCount / Math.min(memory.length - 1, 10)) * 100)
-    : 50;
-  
-  // Generate future predictions based on patterns
-  const futurePredictions: { target: number; probability: number; timeframe: string; basis: string }[] = [];
-  
-  // Short-term prediction (24h)
-  if (memory.length >= 3) {
-    const avgChange = memory.slice(0, 5).reduce((a, m) => a + m.change, 0) / Math.min(memory.length, 5);
-    const momentum = currentChange > avgChange ? 'accelerating' : 'decelerating';
-    
-    const shortTermTarget = currentPrice * (1 + (avgChange * 0.5) / 100);
-    futurePredictions.push({
-      target: shortTermTarget,
-      probability: Math.min(75, 50 + predictionAccuracy * 0.25),
-      timeframe: '24H',
-      basis: `Momentum ${momentum}, avg daily change ${avgChange.toFixed(2)}%`
-    });
-  }
-  
-  // Medium-term prediction (7D)
-  if (memory.length >= 7) {
-    const weeklyAvg = memory.slice(0, 7).reduce((a, m) => a + m.price, 0) / 7;
-    const weeklyTrend = currentPrice > weeklyAvg ? 'above' : 'below';
-    const weeklyMomentum = ((currentPrice - weeklyAvg) / weeklyAvg) * 100;
-    
-    const projectedChange = weeklyMomentum * 0.5; // Mean reversion factor
-    const mediumTermTarget = currentPrice * (1 + projectedChange / 100);
-    
-    futurePredictions.push({
-      target: mediumTermTarget,
-      probability: Math.min(65, 45 + trendConsistency * 0.2),
-      timeframe: '7D',
-      basis: `Price ${weeklyTrend} weekly average, ${weeklyMomentum > 0 ? '+' : ''}${weeklyMomentum.toFixed(2)}% deviation`
-    });
-  }
-  
-  // Long-term prediction (30D)
-  if (memory.length >= 20) {
-    const monthlyHigh = Math.max(...memory.slice(0, 20).map(m => m.price));
-    const monthlyLow = Math.min(...memory.slice(0, 20).map(m => m.price));
-    const monthlyRange = monthlyHigh - monthlyLow;
-    const positionInRange = ((currentPrice - monthlyLow) / monthlyRange) * 100;
-    
-    let longTermTarget: number;
-    let basis: string;
-    
-    if (positionInRange < 30) {
-      longTermTarget = currentPrice + monthlyRange * 0.5;
-      basis = 'Near monthly lows — mean reversion likely';
-    } else if (positionInRange > 70) {
-      longTermTarget = currentPrice - monthlyRange * 0.3;
-      basis = 'Near monthly highs — pullback possible';
-    } else {
-      longTermTarget = currentPrice + monthlyRange * 0.25;
-      basis = 'Mid-range — continuation of trend expected';
-    }
-    
-    futurePredictions.push({
-      target: longTermTarget,
-      probability: Math.min(60, 40 + predictionAccuracy * 0.15),
-      timeframe: '30D',
-      basis
-    });
-  }
-  
+  const trendConsistency = memory.length >= 2 ? Math.round((consistentCount / Math.min(memory.length - 1, 10)) * 100) : 50;
+
   return {
     pastPatterns,
     priceHistory,
     predictionAccuracy,
     trendConsistency,
-    futurePredictions
+    futurePredictions,
+    attentionHeatmap: attentionHeatmap,
+    crossEntropyLoss
   };
 }
 
@@ -4313,6 +4479,34 @@ serve(async (req) => {
           
           const feedbackRecords = historyData.filter(h => h.was_correct !== null);
           totalFeedback = feedbackRecords.length;
+        // If client requested training, run a tiny training loop on recent memory and return result
+        try {
+          const anyBody: any = body as any;
+          if (anyBody && anyBody.train) {
+            const epochs = typeof anyBody.epochs === 'number' ? Math.max(1, Math.min(100, anyBody.epochs)) : 5;
+            // Prepare samples from memory
+            const samples: { x: number[]; label: number }[] = [];
+            for (let i = 0; i < Math.min(memory.length - 1, 30); i++) {
+              const cur = memory[i];
+              const nxt = memory[i + 1];
+              const x = [cur.change || 0, (cur.price - nxt.price) || 0];
+              const label = nxt.price > cur.price ? 1 : 0;
+              samples.push({ x, label });
+            }
+            const baseDk = samples.length > 0 ? samples[0].x.length : 2;
+            const weights = loadWeightsSync(baseDk, Math.max(4, baseDk * 4));
+            trainOnMemory(weights, samples, epochs);
+            saveWeightsSync(weights);
+            const trainingSummary = { trained: true, epochs, samples: samples.length };
+            return new Response(JSON.stringify({ ok: true, training: trainingSummary }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
+            });
+          }
+        } catch (e) {
+          console.log('Training route error:', e);
+        }
+
           
           // Calculate time-weighted accuracy (recent feedback weighted more heavily)
           if (totalFeedback >= 1) {
@@ -5221,6 +5415,20 @@ ${finalBias === 'LONG' ? '🟢' : finalBias === 'SHORT' ? '🔴' : '⚪'} ${fina
     
     const stream = new ReadableStream({
       start(controller) {
+        // Send a meta event with attention heatmap and prediction probabilities
+        try {
+          const metaPayload = JSON.stringify({
+            predictiveMemory: {
+              attentionHeatmap: predictiveMemory.attentionHeatmap || [],
+              crossEntropyLoss: predictiveMemory.crossEntropyLoss || 0,
+              futurePredictions: predictiveMemory.futurePredictions || []
+            }
+          });
+          controller.enqueue(encoder.encode(`data: ${metaPayload}\n\n`));
+        } catch (e) {
+          // ignore meta send errors
+        }
+
         const words = analysis.split(' ');
         let index = 0;
         

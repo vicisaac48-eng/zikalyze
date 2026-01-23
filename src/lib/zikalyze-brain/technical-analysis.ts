@@ -31,6 +31,77 @@ export interface TopDownAnalysis {
   confluenceScore: number; // 0-100 (how aligned are all TFs)
   tradeableDirection: 'LONG' | 'SHORT' | 'NO_TRADE';
   reasoning: string[];
+  // Optional attention outputs — per-timepoint importance (0..1)
+  attentionHeatmap?: number[];
+  // Aggregated attention vector (useful for downstream features)
+  attentionVector?: number[];
+}
+
+// ---------- Small NN helpers (deterministic, lightweight) ----------
+function relu(z: number): number { return Math.max(0, z); }
+
+function dot(a: number[], b: number[]): number {
+  let s = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) s += a[i] * b[i];
+  return s;
+}
+
+function softmaxScaled(scores: number[], scale: number): number[] {
+  const scaled = scores.map(s => s / scale);
+  const max = Math.max(...scaled);
+  const exps = scaled.map(s => Math.exp(s - max));
+  const sum = exps.reduce((p, c) => p + c, 0) + 1e-12;
+  return exps.map(e => e / sum);
+}
+
+function computeSelfAttention(seq: number[][]): { attended: number[][]; heatmap: number[]; vector: number[] } {
+  const L = seq.length;
+  if (L === 0) return { attended: [], heatmap: [], vector: [] };
+  const d = seq[0].length;
+  const scale = Math.sqrt(d);
+
+  // Query=Key=Value = seq (self-attention)
+  const weights: number[][] = Array.from({ length: L }, () => Array(L).fill(0));
+  const attended: number[][] = Array.from({ length: L }, () => Array(d).fill(0));
+
+  for (let i = 0; i < L; i++) {
+    const scores: number[] = [];
+    for (let j = 0; j < L; j++) scores.push(dot(seq[i], seq[j]));
+    const probs = softmaxScaled(scores, scale);
+    weights[i] = probs;
+    for (let k = 0; k < L; k++) {
+      const p = probs[k];
+      for (let m = 0; m < d; m++) {
+        attended[i][m] += p * seq[k][m];
+      }
+    }
+  }
+
+  // Heatmap: average importance of each key across all queries
+  const heatmap: number[] = Array(L).fill(0);
+  for (let j = 0; j < L; j++) {
+    let s = 0;
+    for (let i = 0; i < L; i++) s += weights[i][j];
+    heatmap[j] = s / L;
+  }
+
+  // Aggregate attended vectors into a single vector (mean), apply ReLU as hidden activation
+  const vector: number[] = Array(d).fill(0);
+  for (let i = 0; i < L; i++) for (let m = 0; m < d; m++) vector[m] += attended[i][m];
+  for (let m = 0; m < d; m++) vector[m] = relu(vector[m] / L);
+
+  return { attended, heatmap, vector };
+}
+
+// Cross-entropy loss helper for classification labels
+export function crossEntropyLoss(target: number[], pred: number[]): number {
+  // assume pred is probabilities and target is one-hot or probability distribution
+  const eps = 1e-12;
+  let loss = 0;
+  for (let i = 0; i < target.length; i++) {
+    loss -= target[i] * Math.log(Math.max(eps, pred[i]));
+  }
+  return loss;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -144,6 +215,47 @@ export function performTopDownAnalysis(
 ): TopDownAnalysis {
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
+
+  // Compute attention over recent time windows (multi-TF or chart candles)
+  let attentionHeatmap: number[] = [];
+  let attentionVector: number[] = [];
+  try {
+    const seq: number[][] = [];
+    if (multiTfData) {
+      const order: Array<'15m' | '1h' | '4h' | '1d'> = ['15m', '1h', '4h', '1d'];
+      for (const k of order) {
+        const tf = multiTfData[k];
+        if (!tf) {
+          seq.push([0.5, 0, 0]);
+          continue;
+        }
+        const strength = (tf.trendStrength || 50) / 100; // 0..1
+        const trendNum = tf.trend === 'BULLISH' ? 1 : tf.trend === 'BEARISH' ? -1 : 0;
+        const vol = tf.volumeTrend === 'INCREASING' ? 1 : tf.volumeTrend === 'DECREASING' ? -1 : 0;
+        seq.push([strength, trendNum, vol]);
+      }
+    } else if (chartData && chartData.candles && chartData.candles.length >= 6) {
+      // Use last N candles as a short sequence (normalized pct change, volume)
+      const start = Math.max(0, chartData.candles.length - 12);
+      for (let i = start; i < chartData.candles.length; i++) {
+        const c = chartData.candles[i];
+        const pct = c.open > 0 ? (c.close - c.open) / c.open : 0;
+        const vol = c.volume || 0;
+        seq.push([pct, Math.log10(1 + vol || 1) / 10, 0]);
+      }
+    }
+
+    if (seq.length > 0) {
+      const normalized = seq.map(v => v.map(x => typeof x === 'number' ? x : 0));
+      const att = computeSelfAttention(normalized);
+      attentionHeatmap = att.heatmap;
+      attentionVector = att.vector;
+    }
+  } catch (e) {
+    // non-fatal — attention is an enhancement only
+    attentionHeatmap = [];
+    attentionVector = [];
+  }
   
   // ═══════════════════════════════════════════════════════════════════════════
   // 📊 USE MULTI-TIMEFRAME DATA when available — Most accurate analysis
@@ -299,7 +411,9 @@ export function performTopDownAnalysis(
       overallBias,
       confluenceScore: Math.max(confluenceScore, multiTfData.confluence.strength),
       tradeableDirection,
-      reasoning
+      reasoning,
+      attentionHeatmap,
+      attentionVector
     };
   }
   
@@ -546,6 +660,7 @@ export function performTopDownAnalysis(
     confluenceScore,
     tradeableDirection,
     reasoning
+    , attentionHeatmap, attentionVector
   };
 }
 
