@@ -703,7 +703,7 @@ export function performTopDownAnalysis(
       confluenceScore: Math.max(confluenceScore, multiTfData.confluence.strength),
       tradeableDirection,
       reasoning,
-      attentionHeatmap,
+      attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : attentionHeatmap.slice(0, 4),
       attentionVector
     };
   }
@@ -950,8 +950,11 @@ export function performTopDownAnalysis(
     overallBias,
     confluenceScore,
     tradeableDirection,
-    reasoning
-    , attentionHeatmap, attentionVector
+    reasoning,
+    attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : 
+      attentionHeatmap.length > 4 ? attentionHeatmap.slice(0, 4) : 
+      [...attentionHeatmap, ...Array(4 - attentionHeatmap.length).fill(0.25)],
+    attentionVector
   };
 }
 
