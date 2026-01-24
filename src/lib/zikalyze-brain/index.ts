@@ -573,8 +573,9 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
     scenarios,
     timestamp: new Date().toISOString(),
     source: 'client-side-wasm',
-    attentionHeatmap: topDownAnalysis.attentionHeatmap,
-    attentionVector: topDownAnalysis.attentionVector
+    attentionHeatmap: topDownAnalysis.attentionHeatmap || [],
+    attentionVector: topDownAnalysis.attentionVector || [],
+    attentionEntropyLoss: 0
   };
 }
 
