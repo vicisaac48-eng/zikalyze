@@ -17,6 +17,7 @@ import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brai
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import AISummaryCard from "./AISummaryCard";
+import AttentionHeatmap from "@/components/AttentionHeatmap";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -756,6 +757,19 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
             crypto={crypto}
             isVisible={true}
           />
+        )}
+
+        {/* 🧠 Attention Heatmap - Shows which timeframes the AI focuses on */}
+        {analysisResult && hasAnalyzed && analysisResult.attentionHeatmap && analysisResult.attentionHeatmap.length > 0 && (
+          <div className="mb-4">
+            <AttentionHeatmap 
+              heatmap={analysisResult.attentionHeatmap}
+              labels={['15m', '1h', '4h', '1d']}
+              title="🧠 AI Attention Focus"
+              showValues={true}
+              compact={false}
+            />
+          </div>
         )}
 
         {/* Offline/Cache Status Banner */}

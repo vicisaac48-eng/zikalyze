@@ -171,7 +171,8 @@ export interface AnalysisResult {
   scenarios: IfThenScenario[];
   timestamp: string;
   source: 'client-side-wasm';
-  // Optional attention outputs from the brain (per-timepoint importance)
-  attentionHeatmap?: number[];
-  attentionVector?: number[];
+  // Attention mechanism outputs
+  attentionHeatmap?: number[];   // Per-timeframe importance weights [0..1]
+  attentionVector?: number[];    // Aggregated context vector after attention + ReLU
+  attentionEntropyLoss?: number; // Cross-entropy loss for training signal: L = -Σ y_i log(ŷ_i)
 }
