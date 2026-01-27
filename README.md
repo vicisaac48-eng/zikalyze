@@ -31,3 +31,12 @@ npm install
 
 Start the development server:
 npm run dev
+
+
+
+How to Edit
+There are several ways to refine and evolve Zikalyze AI:
+
+Edit in GitHub: Navigate to the desired files and use the "Edit" (pencil icon) to make direct code changes.
+GitHub Codespaces: Launch a cloud-based development environment directly from the repository.
+​
