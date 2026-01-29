@@ -60,18 +60,7 @@ const keyData = {
 
 fs.writeFileSync(outputPath, JSON.stringify(keyData, null, 2), { mode: 0o600 });
 
-const mask = (value) => {
-  if (!value || value.length <= 8) return '********';
-  return value.slice(0, 4) + '...' + value.slice(-4);
-};
-
-console.log('VAPID_PUBLIC_KEY:');
-console.log(vapidKeys.publicKey);
-console.log('\nVAPID_PRIVATE_KEY (masked):');
-console.log(mask(vapidKeys.privateKey));
-console.log('\nTOTP_ENCRYPTION_KEY (masked):');
-console.log(mask(totpKey));
-
+console.log('VAPID keys and TOTP encryption key have been generated and stored securely.');
 console.log('\n================================');
 console.log(`\n✅ Full key material has been written to "${outputPath}" with restricted permissions (0600).`);
 console.log('   Copy these values from that file into your secrets store.\n');
