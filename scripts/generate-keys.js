@@ -66,10 +66,6 @@ const mask = (value) => {
   return value.slice(0, 4) + '...' + value.slice(-4);
 };
 
-console.log('VAPID_PUBLIC_KEY:');
-console.log(vapidKeys.publicKey);
-console.log('\nVAPID_PRIVATE_KEY (masked):');
-console.log(mask(vapidKeys.privateKey));
 console.log('\nTOTP_ENCRYPTION_KEY (masked):');
 console.log(mask(totpKey));
 
