@@ -37,38 +37,148 @@ export interface TopDownAnalysis {
   attentionVector?: number[];
 }
 
-// ---------- Small NN helpers (deterministic, lightweight) ----------
-function relu(z: number): number { return Math.max(0, z); }
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 NEURAL NETWORK PRIMITIVES — Attention, ReLU, Cross-Entropy
+// ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * ReLU activation function: max(0, z)
+ * Used in hidden layers for non-linearity
+ */
+export function relu(z: number): number { 
+  return Math.max(0, z); 
+}
+
+/**
+ * Vectorized ReLU for arrays
+ */
+export function reluVec(vec: number[]): number[] {
+  return vec.map(z => Math.max(0, z));
+}
+
+/**
+ * Dot product of two vectors
+ */
 function dot(a: number[], b: number[]): number {
   let s = 0;
-  for (let i = 0; i < Math.min(a.length, b.length); i++) s += a[i] * b[i];
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) s += a[i] * b[i];
   return s;
 }
 
+/**
+ * Matrix-vector multiplication: mat @ vec
+ */
+function matVecMul(mat: number[][], vec: number[]): number[] {
+  return mat.map(row => dot(row, vec));
+}
+
+/**
+ * Softmax with temperature scaling for numerical stability
+ * softmax(x_i / T) = exp(x_i / T) / Σ exp(x_j / T)
+ */
 function softmaxScaled(scores: number[], scale: number): number[] {
-  const scaled = scores.map(s => s / scale);
+  const scaled = scores.map(s => s / Math.max(scale, 1e-6));
   const max = Math.max(...scaled);
   const exps = scaled.map(s => Math.exp(s - max));
   const sum = exps.reduce((p, c) => p + c, 0) + 1e-12;
   return exps.map(e => e / sum);
 }
 
-function computeSelfAttention(seq: number[][]): { attended: number[][]; heatmap: number[]; vector: number[] } {
-  const L = seq.length;
-  if (L === 0) return { attended: [], heatmap: [], vector: [] };
-  const d = seq[0].length;
-  const scale = Math.sqrt(d);
+/**
+ * Standard softmax without scaling
+ */
+export function softmax(logits: number[]): number[] {
+  const max = Math.max(...logits);
+  const exps = logits.map(l => Math.exp(l - max));
+  const sum = exps.reduce((a, b) => a + b, 0) + 1e-12;
+  return exps.map(e => e / sum);
+}
 
-  // Query=Key=Value = seq (self-attention)
+/**
+ * Cross-entropy loss: L = -Σ y_i log(ŷ_i)
+ * Used for classification training signal
+ * @param target - One-hot or probability distribution (ground truth)
+ * @param pred - Predicted probabilities (must be in [0,1])
+ * @returns Scalar loss value
+ */
+export function crossEntropyLoss(target: number[], pred: number[]): number {
+  const eps = 1e-12;
+  let loss = 0;
+  for (let i = 0; i < target.length; i++) {
+    loss -= target[i] * Math.log(Math.max(eps, pred[i]));
+  }
+  return loss;
+}
+
+/**
+ * Binary cross-entropy for single-label classification
+ */
+export function binaryCrossEntropy(y: number, yHat: number): number {
+  const eps = 1e-12;
+  const p = Math.max(eps, Math.min(1 - eps, yHat));
+  return -(y * Math.log(p) + (1 - y) * Math.log(1 - p));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 SCALED DOT-PRODUCT ATTENTION
+// Attention(Q, K, V) = softmax(QK^T / √d_k) · V
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface AttentionOutput {
+  attended: number[][];    // Context vectors after attention
+  heatmap: number[];       // Per-position importance scores [0..1]
+  vector: number[];        // Aggregated context vector (mean-pooled + ReLU)
+  weights: number[][];     // Full attention weight matrix (for debugging)
+  entropyLoss: number;     // Cross-entropy loss for training signal
+}
+
+/**
+ * Scaled Dot-Product Self-Attention
+ * 
+ * Formula: Attention(Q,K,V) = softmax(QK^T/√d_k)·V
+ * 
+ * In self-attention, Q = K = V = input sequence
+ * 
+ * @param seq - Input sequence of shape [L, d] where L = length, d = features
+ * @param targetLabels - Optional target distribution for computing loss
+ * @returns Attention outputs including heatmap and aggregated vector
+ */
+export function computeSelfAttention(
+  seq: number[][], 
+  targetLabels?: number[]
+): AttentionOutput {
+  const L = seq.length;
+  if (L === 0) {
+    return { 
+      attended: [], 
+      heatmap: [], 
+      vector: [], 
+      weights: [],
+      entropyLoss: 0 
+    };
+  }
+  
+  const d = seq[0].length;
+  const scale = Math.sqrt(d); // √d_k for scaling
+
+  // Initialize attention weight matrix and attended vectors
   const weights: number[][] = Array.from({ length: L }, () => Array(L).fill(0));
   const attended: number[][] = Array.from({ length: L }, () => Array(d).fill(0));
 
+  // Compute attention scores and apply softmax per query position
   for (let i = 0; i < L; i++) {
+    // Compute QK^T / √d_k for this query
     const scores: number[] = [];
-    for (let j = 0; j < L; j++) scores.push(dot(seq[i], seq[j]));
+    for (let j = 0; j < L; j++) {
+      scores.push(dot(seq[i], seq[j])); // Q_i · K_j^T
+    }
+    
+    // Apply softmax to get attention weights
     const probs = softmaxScaled(scores, scale);
     weights[i] = probs;
+    
+    // Apply attention to values: weighted sum of V
     for (let k = 0; k < L; k++) {
       const p = probs[k];
       for (let m = 0; m < d; m++) {
@@ -77,31 +187,171 @@ function computeSelfAttention(seq: number[][]): { attended: number[][]; heatmap:
     }
   }
 
-  // Heatmap: average importance of each key across all queries
+  // Heatmap: average importance of each key position across all queries
+  // This shows which past timepoints the model focuses on most
   const heatmap: number[] = Array(L).fill(0);
   for (let j = 0; j < L; j++) {
     let s = 0;
     for (let i = 0; i < L; i++) s += weights[i][j];
-    heatmap[j] = s / L;
+    heatmap[j] = s / L; // Normalize to [0, 1]
   }
 
-  // Aggregate attended vectors into a single vector (mean), apply ReLU as hidden activation
-  const vector: number[] = Array(d).fill(0);
-  for (let i = 0; i < L; i++) for (let m = 0; m < d; m++) vector[m] += attended[i][m];
-  for (let m = 0; m < d; m++) vector[m] = relu(vector[m] / L);
+  // Aggregate attended vectors into single context vector (mean pooling)
+  // Then apply ReLU activation: max(0, z)
+  const rawVector: number[] = Array(d).fill(0);
+  for (let i = 0; i < L; i++) {
+    for (let m = 0; m < d; m++) {
+      rawVector[m] += attended[i][m];
+    }
+  }
+  
+  // Apply ReLU activation to hidden representation
+  const vector: number[] = rawVector.map(v => relu(v / L));
 
-  return { attended, heatmap, vector };
+  // Compute cross-entropy loss if target labels provided
+  let entropyLoss = 0;
+  if (targetLabels && targetLabels.length === L) {
+    // Use heatmap as predicted distribution, target as ground truth
+    const normalizedHeatmap = softmax(heatmap);
+    entropyLoss = crossEntropyLoss(targetLabels, normalizedHeatmap);
+  }
+
+  return { attended, heatmap, vector, weights, entropyLoss };
 }
 
-// Cross-entropy loss helper for classification labels
-export function crossEntropyLoss(target: number[], pred: number[]): number {
-  // assume pred is probabilities and target is one-hot or probability distribution
-  const eps = 1e-12;
-  let loss = 0;
-  for (let i = 0; i < target.length; i++) {
-    loss -= target[i] * Math.log(Math.max(eps, pred[i]));
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔮 MULTI-HEAD ATTENTION (Simplified for client-side inference)
+// MultiHead(Q,K,V) = Concat(head_1, ..., head_h) · W_O
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MultiHeadAttentionOutput {
+  output: number[];           // Final aggregated vector
+  headHeatmaps: number[][];   // Heatmap per attention head
+  combinedHeatmap: number[];  // Average heatmap across all heads
+  entropyLoss: number;        // Combined cross-entropy loss
+}
+
+/**
+ * Multi-Head Self-Attention (2 heads)
+ * 
+ * Splits the feature dimension and runs parallel attention heads
+ * 
+ * @param seq - Input sequence of shape [L, d]
+ * @param targetLabels - Optional target for loss computation
+ * @returns Multi-head attention outputs with combined heatmap
+ */
+export function computeMultiHeadAttention(
+  seq: number[][],
+  targetLabels?: number[]
+): MultiHeadAttentionOutput {
+  const L = seq.length;
+  if (L === 0) {
+    return { 
+      output: [], 
+      headHeatmaps: [], 
+      combinedHeatmap: [],
+      entropyLoss: 0 
+    };
   }
-  return loss;
+  
+  const d = seq[0].length;
+  const numHeads = 2;
+  const headDim = Math.max(1, Math.floor(d / numHeads));
+  
+  const headHeatmaps: number[][] = [];
+  const headVectors: number[][] = [];
+  let totalLoss = 0;
+  
+  // Split features across heads and run separate attention
+  for (let h = 0; h < numHeads; h++) {
+    const startIdx = h * headDim;
+    const endIdx = Math.min(startIdx + headDim, d);
+    
+    // Extract features for this head
+    const headSeq = seq.map(row => row.slice(startIdx, endIdx));
+    
+    // Pad if necessary
+    if (headSeq[0].length === 0) {
+      headSeq.forEach(row => row.push(0));
+    }
+    
+    const { heatmap, vector, entropyLoss } = computeSelfAttention(headSeq, targetLabels);
+    headHeatmaps.push(heatmap);
+    headVectors.push(vector);
+    totalLoss += entropyLoss;
+  }
+  
+  // Combine head outputs with ReLU activation
+  const combinedDim = headVectors.reduce((sum, v) => sum + v.length, 0);
+  const output: number[] = [];
+  for (const hv of headVectors) {
+    for (const v of hv) {
+      output.push(relu(v)); // ReLU activation on concatenated output
+    }
+  }
+  
+  // Average heatmaps across heads for visualization
+  const combinedHeatmap: number[] = Array(L).fill(0);
+  for (let j = 0; j < L; j++) {
+    for (let h = 0; h < numHeads; h++) {
+      if (headHeatmaps[h] && headHeatmaps[h][j] !== undefined) {
+        combinedHeatmap[j] += headHeatmaps[h][j];
+      }
+    }
+    combinedHeatmap[j] /= numHeads;
+  }
+  
+  return {
+    output,
+    headHeatmaps,
+    combinedHeatmap,
+    entropyLoss: totalLoss / numHeads
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 FEED-FORWARD NETWORK WITH RELU
+// FFN(x) = ReLU(x · W1 + b1) · W2 + b2
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Simple 2-layer feed-forward network with ReLU
+ * Applies after attention for non-linear transformation
+ */
+export function feedForwardNetwork(
+  input: number[], 
+  hiddenSize: number = 8
+): number[] {
+  const inputSize = input.length;
+  if (inputSize === 0) return [];
+  
+  // Initialize deterministic weights (seeded by input statistics)
+  const seed = input.reduce((s, v) => s + Math.abs(v), 0.1);
+  
+  // Hidden layer: ReLU(x · W1)
+  const hidden: number[] = [];
+  for (let i = 0; i < hiddenSize; i++) {
+    let h = 0;
+    for (let j = 0; j < inputSize; j++) {
+      // Pseudo-random weight based on position
+      const w = Math.sin(seed * (i + 1) * (j + 1) * 0.1) * 0.5;
+      h += input[j] * w;
+    }
+    hidden.push(relu(h)); // ReLU activation
+  }
+  
+  // Output layer (same size as hidden for simplicity)
+  const output: number[] = [];
+  for (let i = 0; i < hiddenSize; i++) {
+    let o = 0;
+    for (let j = 0; j < hiddenSize; j++) {
+      const w = Math.cos(seed * (i + 1) * (j + 1) * 0.1) * 0.5;
+      o += hidden[j] * w;
+    }
+    output.push(relu(o)); // Final ReLU
+  }
+  
+  return output;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -216,43 +466,84 @@ export function performTopDownAnalysis(
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
 
-  // Compute attention over recent time windows (multi-TF or chart candles)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🧠 ATTENTION MECHANISM: Compute attention over timeframes
+  // Formula: Attention(Q,K,V) = softmax(QK^T/√d_k)·V with ReLU activation
+  // ═══════════════════════════════════════════════════════════════════════════
+  
   let attentionHeatmap: number[] = [];
   let attentionVector: number[] = [];
+  let attentionEntropyLoss = 0;
+  
   try {
     const seq: number[][] = [];
+    const tfLabels: string[] = [];
+    
     if (multiTfData) {
+      // Build feature sequence from multi-timeframe data
+      // Each timeframe contributes: [strength, trend_direction, volume_direction, rsi_norm, momentum]
       const order: Array<'15m' | '1h' | '4h' | '1d'> = ['15m', '1h', '4h', '1d'];
       for (const k of order) {
         const tf = multiTfData[k];
+        tfLabels.push(k);
+        
         if (!tf) {
-          seq.push([0.5, 0, 0]);
+          // Neutral placeholder for missing timeframes
+          seq.push([0.5, 0, 0, 0.5, 0]);
           continue;
         }
-        const strength = (tf.trendStrength || 50) / 100; // 0..1
-        const trendNum = tf.trend === 'BULLISH' ? 1 : tf.trend === 'BEARISH' ? -1 : 0;
-        const vol = tf.volumeTrend === 'INCREASING' ? 1 : tf.volumeTrend === 'DECREASING' ? -1 : 0;
-        seq.push([strength, trendNum, vol]);
+        
+        // Normalize features to [-1, 1] or [0, 1] range
+        const strength = (tf.trendStrength || 50) / 100; // [0, 1]
+        const trendNum = tf.trend === 'BULLISH' ? 1 : tf.trend === 'BEARISH' ? -1 : 0; // [-1, 1]
+        const volNum = tf.volumeTrend === 'INCREASING' ? 1 : tf.volumeTrend === 'DECREASING' ? -1 : 0;
+        const rsiNorm = (tf.rsi || 50) / 100; // [0, 1]
+        const momentum = tf.higherHighs && tf.higherLows ? 1 : 
+                        tf.lowerHighs && tf.lowerLows ? -1 : 0;
+        
+        seq.push([strength, trendNum, volNum, rsiNorm, momentum]);
       }
     } else if (chartData && chartData.candles && chartData.candles.length >= 6) {
-      // Use last N candles as a short sequence (normalized pct change, volume)
+      // Use last N candles when multi-TF not available
       const start = Math.max(0, chartData.candles.length - 12);
       for (let i = start; i < chartData.candles.length; i++) {
         const c = chartData.candles[i];
         const pct = c.open > 0 ? (c.close - c.open) / c.open : 0;
         const vol = c.volume || 0;
-        seq.push([pct, Math.log10(1 + vol || 1) / 10, 0]);
+        const volNorm = Math.log10(1 + vol) / 12; // Normalize volume
+        const range = c.high - c.low;
+        const bodyRatio = range > 0 ? Math.abs(c.close - c.open) / range : 0.5;
+        tfLabels.push(`C${i - start + 1}`);
+        seq.push([pct * 10, volNorm, bodyRatio, 0.5, 0]); // Scale pct for better gradients
       }
     }
 
     if (seq.length > 0) {
-      const normalized = seq.map(v => v.map(x => typeof x === 'number' ? x : 0));
-      const att = computeSelfAttention(normalized);
-      attentionHeatmap = att.heatmap;
-      attentionVector = att.vector;
+      // Sanitize sequence for numerical stability
+      const sanitizedSeq = seq.map(v => 
+        v.map(x => typeof x === 'number' && isFinite(x) ? x : 0)
+      );
+      
+      // Use multi-head attention for richer representation
+      const multiHeadResult = computeMultiHeadAttention(sanitizedSeq);
+      attentionHeatmap = multiHeadResult.combinedHeatmap;
+      attentionVector = multiHeadResult.output;
+      attentionEntropyLoss = multiHeadResult.entropyLoss;
+      
+      // Apply feed-forward network with ReLU for final features
+      if (attentionVector.length > 0) {
+        attentionVector = feedForwardNetwork(attentionVector, 4);
+      }
+      
+      // Log attention focus for debugging
+      if (tfLabels.length > 0 && attentionHeatmap.length > 0) {
+        const maxIdx = attentionHeatmap.indexOf(Math.max(...attentionHeatmap));
+        console.log(`[AI Attention] Focus: ${tfLabels[maxIdx]} (${(attentionHeatmap[maxIdx] * 100).toFixed(1)}%), CE Loss: ${attentionEntropyLoss.toFixed(4)}`);
+      }
     }
   } catch (e) {
-    // non-fatal — attention is an enhancement only
+    // Non-fatal — attention is an enhancement only
+    console.warn('[AI Attention] Computation failed, using fallback:', e);
     attentionHeatmap = [];
     attentionVector = [];
   }
@@ -412,7 +703,7 @@ export function performTopDownAnalysis(
       confluenceScore: Math.max(confluenceScore, multiTfData.confluence.strength),
       tradeableDirection,
       reasoning,
-      attentionHeatmap,
+      attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : attentionHeatmap.slice(0, 4),
       attentionVector
     };
   }
@@ -659,8 +950,11 @@ export function performTopDownAnalysis(
     overallBias,
     confluenceScore,
     tradeableDirection,
-    reasoning
-    , attentionHeatmap, attentionVector
+    reasoning,
+    attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : 
+      attentionHeatmap.length > 4 ? attentionHeatmap.slice(0, 4) : 
+      [...attentionHeatmap, ...Array(4 - attentionHeatmap.length).fill(0.25)],
+    attentionVector
   };
 }
 

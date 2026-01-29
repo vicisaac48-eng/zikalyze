@@ -573,8 +573,9 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
     scenarios,
     timestamp: new Date().toISOString(),
     source: 'client-side-wasm',
-    attentionHeatmap: topDownAnalysis.attentionHeatmap,
-    attentionVector: topDownAnalysis.attentionVector
+    attentionHeatmap: topDownAnalysis.attentionHeatmap || [],
+    attentionVector: topDownAnalysis.attentionVector || [],
+    attentionEntropyLoss: 0
   };
 }
 
@@ -584,4 +585,4 @@ export { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss } from './technical-analysis';
+export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork } from './technical-analysis';

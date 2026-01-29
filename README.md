@@ -1,73 +1,54 @@
-# Welcome to your Lovable project
+Zikalyze AI is a professional-grade cryptocurrency analysis platform designed to transform complex market data into actionable, high-signal insights. Built as a "personal trading assistant," it utilizes agentic AI to synthesize technical indicators, on-chain whale activity, and macro catalysts into a scannable, business-grade dashboard.
+Project URL:https://zikalyze.com
 
-## Project info
+✨ Key Features 
+Multi-Timeframe Confluence: Automatically scans trends across Weekly, Daily, 4H, 1H, and 15M charts to identify trend alignment.
+Whale & Exchange Tracking: Monitors real-time whale accumulation and exchange inflows/outflows to gauge institutional sentiment.
+Precision Entry Signals: Generates clear Entry Zones, Targets, and Invalidation points for every analyzed asset.
+Macro Awareness: Integrates major economic catalysts (e.g., FOMC meetings, CPI data) directly into the technical verdict.
+"Vibecode" Formatting: Delivers data in a highly scannable, UI-optimized text format perfect for social sharing and rapid decision-making.
 
-**URL**: https://lovable.dev/projects/c7281c68-fabe-4ddd-9f1b-d98328b6e932
 
-## How can I edit this code?
+🛠️ Tech Stack
+This project is built with a modern, high-performance stack:
+Vite: For ultra-fast frontend tooling and development.
+TypeScript: Ensuring type-safe, robust code.
+React: Powering the interactive and dynamic user interface.
+shadcn/ui: For beautiful, accessible, and consistent UI components.
+Tailwind CSS: For rapid, responsive utility-first styling.
 
-There are several ways of editing your application.
+Zikalyze ai brain 🧠 
+/src/lib/zikalyze-brain
 
-**Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c7281c68-fabe-4ddd-9f1b-d98328b6e932) and start prompting.
+💻 Local Development
+Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Clone the repository:
+git clone <https://github.com/vicisaac48-eng/zikalyze>
 
-Follow these steps:
+Navigate to the project directory:
+cd ZIKALYZE
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Install dependencies:
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Start the development server:
 npm run dev
-```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+How to Edit
+There are several ways to refine and evolve Zikalyze AI:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Edit in GitHub: 
+Navigate to the desired files and use the "Edit" (pencil icon) to make direct code changes.
 
-## What technologies are used for this project?
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c7281c68-fabe-4ddd-9f1b-d98328b6e932) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+GitHub Codespaces: 
+Launch a cloud-based development environment directly from the repository.
+​

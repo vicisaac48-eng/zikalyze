@@ -4,6 +4,7 @@
  */
 
 const crypto = require('crypto');
+const fs = require('fs');
 
 // Generate VAPID keys using Web Crypto compatible approach
 function generateVAPIDKeys() {
@@ -48,14 +49,26 @@ console.log('\n🔑 Generated Keys for Zikalyze\n');
 console.log('================================\n');
 
 const vapidKeys = generateVAPIDKeys();
-console.log('VAPID_PUBLIC_KEY:');
-console.log(vapidKeys.publicKey);
-console.log('\nVAPID_PRIVATE_KEY:');
-console.log(vapidKeys.privateKey);
-
 const totpKey = generateTOTPKey();
-console.log('\nTOTP_ENCRYPTION_KEY:');
-console.log(totpKey);
+
+// Persist sensitive keys to a local file with restricted permissions instead of logging them
+const outputPath = 'generated-keys.json';
+const keyData = {
+  VAPID_PUBLIC_KEY: vapidKeys.publicKey,
+  VAPID_PRIVATE_KEY: vapidKeys.privateKey,
+  TOTP_ENCRYPTION_KEY: totpKey
+};
+
+fs.writeFileSync(outputPath, JSON.stringify(keyData, null, 2), { mode: 0o600 });
+
+const mask = (value) => {
+  if (!value || value.length <= 8) return '********';
+  return value.slice(0, 4) + '...' + value.slice(-4);
+};
+
+console.log('\nTOTP_ENCRYPTION_KEY (masked):');
+console.log(mask(totpKey));
 
 console.log('\n================================');
-console.log('\n✅ Copy these values to your secrets!\n');
+console.log(`\n✅ Full key material has been written to "${outputPath}" with restricted permissions (0600).`);
+console.log('   Copy these values from that file into your secrets store.\n');
