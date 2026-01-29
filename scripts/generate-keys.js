@@ -5,6 +5,7 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+
 // Generate VAPID keys using Web Crypto compatible approach
 function generateVAPIDKeys() {
   const { generateKeyPairSync } = require('crypto');
