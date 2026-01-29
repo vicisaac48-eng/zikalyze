@@ -5,6 +5,7 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+
 // Generate VAPID keys using Web Crypto compatible approach
 function generateVAPIDKeys() {
   const { generateKeyPairSync } = require('crypto');
@@ -60,7 +61,14 @@ const keyData = {
 
 fs.writeFileSync(outputPath, JSON.stringify(keyData, null, 2), { mode: 0o600 });
 
-console.log('VAPID keys and TOTP encryption key have been generated and stored securely.');
+const mask = (value) => {
+  if (!value || value.length <= 8) return '********';
+  return value.slice(0, 4) + '...' + value.slice(-4);
+};
+
+console.log('\nTOTP_ENCRYPTION_KEY (masked):');
+console.log(mask(totpKey));
+
 console.log('\n================================');
 console.log(`\n✅ Full key material has been written to "${outputPath}" with restricted permissions (0600).`);
 console.log('   Copy these values from that file into your secrets store.\n');
