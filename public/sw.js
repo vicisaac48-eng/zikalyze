@@ -138,8 +138,79 @@ async function backgroundLearn() {
     
     console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
     
+    // Check for price alerts
+    await checkPriceAlerts(prices);
+    
   } catch (e) {
     console.error('[SW Brain] Learning error:', e);
+  }
+}
+
+// Check price alerts and trigger notifications
+async function checkPriceAlerts(currentPrices) {
+  try {
+    const db = await initSWDB();
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    
+    request.onsuccess = () => {
+      const allData = request.result || [];
+      const alerts = allData.filter(item => item.type === 'price_alert' && !item.triggered);
+      
+      for (const alert of alerts) {
+        const cryptoId = alert.crypto.toLowerCase();
+        const priceData = currentPrices[cryptoId];
+        
+        if (!priceData) continue;
+        
+        const currentPrice = priceData.usd;
+        let shouldTrigger = false;
+        
+        if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
+          shouldTrigger = true;
+        } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
+          shouldTrigger = true;
+        }
+        
+        if (shouldTrigger) {
+          // Show notification
+          const direction = alert.condition === 'above' ? '📈' : '📉';
+          const title = `${direction} ${alert.crypto.toUpperCase()} Price Alert`;
+          const body = alert.message || `${alert.crypto.toUpperCase()} has ${alert.condition === 'above' ? 'risen above' : 'dropped below'} $${alert.targetPrice.toLocaleString()}. Current: $${currentPrice.toLocaleString()}`;
+          
+          self.registration.showNotification(title, {
+            body,
+            icon: './pwa-192x192.png',
+            badge: './favicon.ico',
+            vibrate: [200, 100, 200, 100, 200],
+            tag: `price-alert-${alert.crypto}-${Date.now()}`,
+            renotify: true,
+            requireInteraction: true,
+            timestamp: Date.now(),
+            data: {
+              url: `/dashboard?crypto=${alert.crypto.toLowerCase()}`,
+              symbol: alert.crypto,
+              type: 'price_alert'
+            },
+            actions: [
+              { action: 'view', title: `📊 Analyze ${alert.crypto}` },
+              { action: 'dismiss', title: 'Dismiss' }
+            ]
+          });
+          
+          // Mark as triggered
+          alert.triggered = true;
+          alert.triggeredAt = Date.now();
+          alert.triggeredPrice = currentPrice;
+          store.put(alert);
+          
+          console.log(`[SW Brain] 🔔 Price alert triggered for ${alert.crypto}: $${currentPrice}`);
+        }
+      }
+    };
+  } catch (e) {
+    console.error('[SW Brain] Error checking price alerts:', e);
   }
 }
 
@@ -263,6 +334,66 @@ self.addEventListener('message', (event) => {
         interval: BACKGROUND_LEARNING_INTERVAL,
         cryptosTracked: TOP_CRYPTOS.length
       });
+      break;
+      
+    case 'SHOW_LOCAL_NOTIFICATION':
+      // Show local notification from the app (works even when browser is in background)
+      if (data) {
+        const notifOptions = {
+          body: data.body || 'Zikalyze Alert',
+          icon: './pwa-192x192.png',
+          badge: './favicon.ico',
+          vibrate: [200, 100, 200],
+          tag: data.tag || `local-${Date.now()}`,
+          renotify: true,
+          requireInteraction: data.requireInteraction || false,
+          timestamp: Date.now(),
+          data: {
+            url: data.url || '/dashboard',
+            symbol: data.symbol,
+            type: data.type || 'local'
+          },
+          actions: data.actions || [
+            { action: 'view', title: 'View' },
+            { action: 'dismiss', title: 'Dismiss' }
+          ]
+        };
+        
+        self.registration.showNotification(data.title || 'Zikalyze', notifOptions)
+          .then(() => {
+            event.source?.postMessage({ type: 'NOTIFICATION_SHOWN', success: true });
+          })
+          .catch(err => {
+            console.error('[SW] Failed to show notification:', err);
+            event.source?.postMessage({ type: 'NOTIFICATION_SHOWN', success: false, error: err.message });
+          });
+      }
+      break;
+      
+    case 'SCHEDULE_PRICE_ALERT':
+      // Store price alert for background checking
+      if (data?.symbol && data?.targetPrice) {
+        initSWDB().then(db => {
+          const transaction = db.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          const alertKey = `alert_${data.symbol}_${data.condition}`;
+          
+          store.put({
+            symbol: alertKey,
+            type: 'price_alert',
+            crypto: data.symbol,
+            targetPrice: data.targetPrice,
+            condition: data.condition, // 'above' or 'below'
+            message: data.message,
+            createdAt: Date.now(),
+            triggered: false
+          });
+          
+          event.source?.postMessage({ type: 'ALERT_SCHEDULED', success: true, symbol: data.symbol });
+        }).catch(e => {
+          console.error('[SW] Failed to schedule alert:', e);
+        });
+      }
       break;
   }
 });
