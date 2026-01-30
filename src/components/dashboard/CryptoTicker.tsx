@@ -1,20 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
-
-// Fallback prices for immediate display when live data is unavailable
-const FALLBACK_PRICES: Record<string, { price: number; change: number }> = {
-  BTC: { price: 83000, change: 0.5 },
-  ETH: { price: 2700, change: -1.2 },
-  SOL: { price: 117, change: -0.8 },
-  XRP: { price: 1.75, change: -0.5 },
-  DOGE: { price: 0.18, change: 1.2 },
-  KAS: { price: 0.085, change: 2.5 },
-  ADA: { price: 0.65, change: -0.3 },
-  AVAX: { price: 25, change: 0.8 },
-  LINK: { price: 15, change: -0.6 },
-  DOT: { price: 5.5, change: 0.2 },
-};
+import { useTickerLiveStream } from "@/hooks/useTickerLiveStream";
 
 const cryptoMeta = [
   { symbol: "BTC", name: "Bitcoin", color: "text-warning" },
@@ -38,26 +25,33 @@ interface CryptoTickerProps {
 
 const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoTickerProps) => {
   const { formatPrice } = useCurrency();
+  // Use dedicated live stream for real-time prices
+  const { getPrice, isConnected, sources } = useTickerLiveStream();
   
   return (
     <div className="flex flex-wrap gap-3">
       {cryptoMeta.map((crypto) => {
-        const livePrice = getPriceBySymbol(crypto.symbol);
-        // Use live price if available, otherwise use fallback
-        const fallback = FALLBACK_PRICES[crypto.symbol];
-        const price = (livePrice?.current_price && livePrice.current_price > 0) 
-          ? livePrice.current_price 
-          : fallback?.price || 0;
-        const change = (livePrice?.current_price && livePrice.current_price > 0)
-          ? livePrice.price_change_percentage_24h 
-          : fallback?.change || 0;
+        // Priority: Live stream > CryptoPrice from parent
+        const liveStreamPrice = getPrice(crypto.symbol);
+        const parentPrice = getPriceBySymbol(crypto.symbol);
+        
+        // Use live stream price if available, else parent's price
+        const price = liveStreamPrice?.price && liveStreamPrice.price > 0
+          ? liveStreamPrice.price
+          : parentPrice?.current_price || 0;
+        
+        const change = liveStreamPrice?.price && liveStreamPrice.price > 0
+          ? liveStreamPrice.change24h
+          : parentPrice?.price_change_percentage_24h || 0;
+        
+        const isLive = liveStreamPrice?.lastUpdate && (Date.now() - liveStreamPrice.lastUpdate < 5000);
         
         return (
           <button
             key={crypto.symbol}
             onClick={() => onSelect(crypto.symbol)}
             className={cn(
-              "flex flex-col gap-1 rounded-xl border px-4 py-3 transition-all",
+              "flex flex-col gap-1 rounded-xl border px-4 py-3 transition-all relative",
               selected === crypto.symbol
                 ? "border-primary bg-primary/10"
                 : "border-border bg-card hover:border-primary/50"
@@ -65,6 +59,9 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
           >
             <div className="flex items-center gap-2">
               <span className={cn("font-bold", crypto.color)}>{crypto.symbol}</span>
+              {isLive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title={`Live from ${liveStreamPrice?.source}`} />
+              )}
               <span
                 className={cn(
                   "text-xs",
@@ -74,8 +71,11 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
                 {change >= 0 ? "↗" : "↘"} {Math.abs(change).toFixed(2)}%
               </span>
             </div>
-            <span className="text-lg font-semibold text-foreground">
-              {loading ? "..." : formatPrice(price)}
+            <span className={cn(
+              "text-lg font-semibold text-foreground transition-colors",
+              isLive ? "text-foreground" : "text-muted-foreground"
+            )}>
+              {loading && !isConnected ? "..." : (price > 0 ? formatPrice(price) : "---")}
             </span>
           </button>
         );
