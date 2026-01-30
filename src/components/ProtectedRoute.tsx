@@ -6,9 +6,6 @@ import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import SessionTimeoutModal from "@/components/SessionTimeoutModal";
 import { toast } from "sonner";
 
-// Check if Clerk is configured
-const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -30,9 +27,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   });
 
   useEffect(() => {
-    // Only redirect to auth if Clerk is configured and user is not logged in
-    if (!loading && !user && isClerkConfigured) {
-      navigate("/auth");
+    // Only redirect to auth if loading is complete, no user, and NOT in demo mode
+    // Demo mode is when loading is false and user is null (Clerk timed out or not configured)
+    // We allow access in demo mode so users can explore the app
+    if (!loading && !user) {
+      // User not logged in - allow demo mode access, don't redirect
+      // The auth page is available via the nav menu if they want to sign in
     }
   }, [user, loading, navigate]);
 
@@ -54,14 +54,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // If Clerk is not configured, allow access in demo mode
-  if (!user && isClerkConfigured) return null;
-
+  // Always allow access - demo mode when not logged in
   return (
     <>
       {children}
       <SessionTimeoutModal
-        open={showWarning}
+        open={showWarning && !!user}
         remainingTime={remainingTime}
         onExtend={extendSession}
       />

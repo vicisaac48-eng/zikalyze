@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
 
 // User type compatible with both Clerk and components expecting Supabase-like user
@@ -15,8 +16,15 @@ export interface ClerkUserLike {
 // Check if Clerk is configured at module load time
 const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+// Timeout for Clerk to load (10 seconds) - falls back to demo mode if exceeded
+const CLERK_LOAD_TIMEOUT = 10000;
+
 // Hook implementation
 export const useAuth = () => {
+  // Track if we've timed out waiting for Clerk
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [clerkTimedOut, setClerkTimedOut] = useState(false);
+  
   // When Clerk is not configured, return a static fallback
   // This avoids calling Clerk hooks which would throw without ClerkProvider
   if (!isClerkConfigured) {
@@ -50,6 +58,21 @@ export const useAuth = () => {
   const { signOut: clerkSignOut } = useClerk();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const { isLoaded: authLoaded } = useClerkAuth();
+  
+  // Set a timeout for Clerk loading - if it fails, allow demo mode access
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (isLoaded && authLoaded) return; // Already loaded
+    
+    const timeout = setTimeout(() => {
+      if (!isLoaded || !authLoaded) {
+        console.warn("[useAuth] Clerk failed to load within timeout. Falling back to demo mode.");
+        setClerkTimedOut(true);
+      }
+    }, CLERK_LOAD_TIMEOUT);
+    
+    return () => clearTimeout(timeout);
+  }, [isLoaded, authLoaded]);
 
   // Map Clerk user to a compatible format
   const user: ClerkUserLike | null = clerkUser
@@ -63,7 +86,8 @@ export const useAuth = () => {
       }
     : null;
 
-  const loading = !isLoaded || !authLoaded;
+  // If Clerk timed out, treat as loaded (demo mode)
+  const loading = clerkTimedOut ? false : (!isLoaded || !authLoaded);
 
   // Clerk handles sign up through its components, these are stubs for compatibility
   const signUp = async (_email: string, _password: string) => {
@@ -105,7 +129,7 @@ export const useAuth = () => {
     user,
     session: isSignedIn ? { user } : null,
     loading,
-    isSignedIn,
+    isSignedIn: clerkTimedOut ? false : isSignedIn,
     signUp,
     signIn,
     signOut,
