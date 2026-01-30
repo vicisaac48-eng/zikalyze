@@ -83,56 +83,67 @@ const Auth = () => {
     setRateLimitError(null);
     setIsLoading(true);
     
-    // Check rate limit before attempting sign in
-    const rateLimitResult = await checkRateLimit(email);
-    if (!rateLimitResult.allowed) {
+    try {
+      // Check rate limit before attempting sign in
+      const rateLimitResult = await checkRateLimit(email);
+      if (!rateLimitResult.allowed) {
+        setIsLoading(false);
+        setRateLimitError(
+          t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) })
+        );
+        toast({
+          title: t("auth.tooManyAttempts"),
+          description: t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) }),
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        // Record failed attempt
+        await recordLoginAttempt(email, false);
+        setIsLoading(false);
+        
+        const errorMessage = error.message || error.toString() || "An error occurred during sign in";
+        if (errorMessage.includes("Invalid login credentials")) {
+          const remainingAttempts = rateLimitResult.max_attempts - rateLimitResult.attempts - 1;
+          toast({
+            title: t("auth.invalidCredentials"),
+            description: remainingAttempts > 0 
+              ? t("auth.checkCredentials", { attempts: remainingAttempts })
+              : t("auth.checkCredentials", { attempts: 0 }),
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: t("auth.signInFailed"),
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      // Record successful attempt (clears failed attempts)
+      await recordLoginAttempt(email, true);
       setIsLoading(false);
-      setRateLimitError(
-        t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) })
-      );
+
       toast({
-        title: t("auth.tooManyAttempts"),
-        description: t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) }),
+        title: t("auth.welcomeBack"),
+        description: t("auth.signInSuccess"),
+      });
+      navigate("/dashboard");
+    } catch (err) {
+      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      toast({
+        title: t("auth.signInFailed"),
+        description: errorMessage,
         variant: "destructive",
       });
-      return;
     }
-    
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      // Record failed attempt
-      await recordLoginAttempt(email, false);
-      setIsLoading(false);
-      
-      if (error.message.includes("Invalid login credentials")) {
-        const remainingAttempts = rateLimitResult.max_attempts - rateLimitResult.attempts - 1;
-        toast({
-          title: t("auth.invalidCredentials"),
-          description: remainingAttempts > 0 
-            ? t("auth.checkCredentials", { attempts: remainingAttempts })
-            : t("auth.checkCredentials", { attempts: 0 }),
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: t("auth.signInFailed"),
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-      return;
-    }
-
-    // Record successful attempt (clears failed attempts)
-    await recordLoginAttempt(email, true);
-    setIsLoading(false);
-
-    toast({
-      title: t("auth.welcomeBack"),
-      description: t("auth.signInSuccess"),
-    });
-    navigate("/dashboard");
   };
 
   const formatWaitTime = (seconds: number): string => {
@@ -154,32 +165,44 @@ const Auth = () => {
     }
     
     setIsLoading(true);
-    const { error, rateLimited, retryAfter } = await resetPassword(email);
-    setIsLoading(false);
+    
+    try {
+      const { error, rateLimited, retryAfter } = await resetPassword(email);
+      setIsLoading(false);
 
-    if (rateLimited && retryAfter) {
-      setResetRateLimitError({
-        message: t("auth.tooManyResetRequests"),
-        retryAfter
+      if (rateLimited && retryAfter) {
+        setResetRateLimitError({
+          message: t("auth.tooManyResetRequests"),
+          retryAfter
+        });
+        return;
+      }
+
+      if (error) {
+        const errorMessage = error.message || error.toString() || "An error occurred";
+        toast({
+          title: t("auth.resetFailed"),
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: t("auth.checkEmailForReset"),
+        description: t("auth.resetLinkSent"),
       });
-      return;
-    }
-
-    if (error) {
+      setShowForgotPassword(false);
+      setResetRateLimitError(null);
+    } catch (err) {
+      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       toast({
         title: t("auth.resetFailed"),
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: t("auth.checkEmailForReset"),
-      description: t("auth.resetLinkSent"),
-    });
-    setShowForgotPassword(false);
-    setResetRateLimitError(null);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -187,72 +210,96 @@ const Auth = () => {
     if (!validateForm(true)) return;
     
     setIsLoading(true);
-    const { error } = await signUp(email, password);
-
-    if (error) {
-      setIsLoading(false);
-      if (error.message.includes("already registered")) {
-        toast({
-          title: t("auth.accountExists"),
-          description: t("auth.accountExistsDesc"),
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: t("auth.signUpFailed"),
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-      return;
-    }
-
-    // Send welcome email directly via edge function
-    try {
-      const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
-        body: { email }
-      });
-      
-      if (emailError) {
-        console.error('Failed to send welcome email:', emailError);
-        // Don't block signup if email fails
-      } else {
-        console.log('Welcome email sent successfully');
-      }
-    } catch (emailErr) {
-      console.error('Error sending welcome email:', emailErr);
-    }
     
-    setIsLoading(false);
+    try {
+      const { error } = await signUp(email, password);
 
-    // Show success toast with email confirmation
-    toast({
-      title: t("auth.accountCreated"),
-      description: t("auth.welcomeEmailSent"),
-    });
+      if (error) {
+        setIsLoading(false);
+        const errorMessage = error.message || error.toString() || "An error occurred during sign up";
+        if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
+          toast({
+            title: t("auth.accountExists"),
+            description: t("auth.accountExistsDesc"),
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: t("auth.signUpFailed"),
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
 
-    // Show email confirmation screen
-    setShowEmailConfirmation(true);
+      // Send welcome email directly via edge function
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
+          body: { email }
+        });
+        
+        if (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't block signup if email fails
+        } else {
+          console.log('Welcome email sent successfully');
+        }
+      } catch (emailErr) {
+        console.error('Error sending welcome email:', emailErr);
+      }
+      
+      setIsLoading(false);
+
+      // Show success toast with email confirmation
+      toast({
+        title: t("auth.accountCreated"),
+        description: t("auth.welcomeEmailSent"),
+      });
+
+      // Show email confirmation screen
+      setShowEmailConfirmation(true);
+    } catch (err) {
+      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      toast({
+        title: t("auth.signUpFailed"),
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleResendVerification = async () => {
     setIsResending(true);
-    const { error } = await signUp(email, password);
-    setIsResending(false);
+    
+    try {
+      const { error } = await signUp(email, password);
+      setIsResending(false);
 
-    if (error) {
+      if (error) {
+        const errorMessage = error.message || error.toString() || "An error occurred";
+        toast({
+          title: t("auth.failedToResend"),
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: t("auth.emailSent"),
+        description: t("auth.anotherVerificationSent"),
+      });
+    } catch (err) {
+      setIsResending(false);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       toast({
         title: t("auth.failedToResend"),
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: t("auth.emailSent"),
-      description: t("auth.anotherVerificationSent"),
-    });
   };
 
   // Redirect immediately if already logged in (no blocking loading state)

@@ -34,35 +34,45 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    // Use hash-based redirect for HashRouter compatibility
-    const redirectUrl = `${window.location.origin}/#/dashboard`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+    try {
+      // Use hash-based redirect for HashRouter compatibility
+      const redirectUrl = `${window.location.origin}/#/dashboard`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+      
+      // Increment user count on successful signup
+      if (!error) {
+        try {
+          await supabase.rpc('increment_user_count');
+        } catch (e) {
+          console.warn('Failed to increment user count:', e);
+        }
       }
-    });
-    
-    // Increment user count on successful signup
-    if (!error) {
-      try {
-        await supabase.rpc('increment_user_count');
-      } catch (e) {
-        console.warn('Failed to increment user count:', e);
-      }
+      
+      return { error };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign up');
+      return { error };
     }
-    
-    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign in');
+      return { error };
+    }
   };
 
   const signOut = async () => {
@@ -86,7 +96,8 @@ export const useAuth = () => {
       
       if (error) {
         // Check for rate limit errors from Supabase
-        if (error.message.includes('rate limit') || error.status === 429) {
+        const errorMessage = error.message || error.toString() || '';
+        if (errorMessage.includes('rate limit') || error.status === 429) {
           return { 
             error, 
             rateLimited: true, 

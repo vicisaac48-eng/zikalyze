@@ -1,5 +1,6 @@
+/// <reference path="./types.d.ts" />
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'https://esm.sh/resend@lastest'
+import { Resend } from 'https://esm.sh/resend@latest'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -106,7 +107,7 @@ function generatePasswordChangedEmailHTML(email: string, changedAt: string, ipAd
 </html>`
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -180,7 +181,9 @@ Deno.serve(async (req) => {
       throw new Error('Failed to process request')
     }
 
-    const user = userData.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+    const user = userData.users.find((u: { id: string; email?: string | null }) =>
+      u.email?.toLowerCase() === email.toLowerCase()
+    )
     
     if (!user) {
       console.log('User not found')
