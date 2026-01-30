@@ -197,6 +197,11 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   }, [currency, rates]);
 
   const formatPrice = useCallback((usdPrice: number, decimals?: number): string => {
+    // Handle loading/invalid price states
+    if (usdPrice === 0 || usdPrice === null || usdPrice === undefined || isNaN(usdPrice)) {
+      return "---";
+    }
+    
     const converted = convertPrice(usdPrice);
     const sym = CURRENCY_SYMBOLS[currency] || "$";
     
