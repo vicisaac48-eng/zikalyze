@@ -12,6 +12,33 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Build optimizations for speed and stability
+  build: {
+    // Increase chunk size limit to reduce warnings
+    chunkSizeWarningLimit: 600,
+    // Optimize chunking for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - split large dependencies
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
+        }
+      }
+    },
+    // Enable source maps for debugging in production
+    sourcemap: false,
+    // Minify for smaller bundle size
+    minify: 'esbuild',
+    // Target modern browsers for smaller bundles
+    target: 'es2020'
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
