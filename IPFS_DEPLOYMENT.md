@@ -48,9 +48,11 @@ You can also deploy manually using the deployment script:
 export PINATA_API_KEY=your_api_key
 export PINATA_SECRET_KEY=your_secret_key
 
-# Run the deployment script
+# Run the deployment script (will build if needed)
 node scripts/deploy-ipfs.js
 ```
+
+The script will automatically build the project if the `dist` directory doesn't exist. If you've already built the project (e.g., via `npm run build`), the script will skip the build step and use the existing build, making deployment faster in CI/CD environments.
 
 ## Accessing Your Deployed App
 
