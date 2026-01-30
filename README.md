@@ -61,5 +61,3 @@ This project supports automatic deployment to IPFS (InterPlanetary File System) 
 1. Get API keys from [Pinata Cloud](https://app.pinata.cloud/keys)
 2. Add `PINATA_API_KEY` and `PINATA_SECRET_KEY` as GitHub repository secrets
 3. Push to `main` branch to trigger automatic deployment
-
-​

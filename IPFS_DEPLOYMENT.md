@@ -18,7 +18,7 @@ To enable IPFS deployment, you need to configure Pinata API credentials as GitHu
 
 ### Step 2: Add Secrets to GitHub Repository
 
-1. Go to your repository settings: `https://github.com/vicisaac48-eng/zikalyze/settings/secrets/actions`
+1. Go to your repository settings: `https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions`
 2. Click "New repository secret"
 3. Add the following secrets:
 
