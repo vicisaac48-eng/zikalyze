@@ -310,115 +310,250 @@ const Landing = () => {
             </p>
           </div>
 
+          {/* Interactive Video Demo Preview */}
+          <div className="mb-12 sm:mb-16 lg:mb-20">
+            <div 
+              className="group relative mx-auto max-w-4xl rounded-2xl border-2 border-border bg-gradient-to-b from-card to-background p-1 shadow-2xl shadow-primary/10 cursor-pointer overflow-hidden sm:rounded-3xl sm:p-1.5"
+              onClick={() => handleNavigate("/auth")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
+            >
+              {/* Browser Chrome Header */}
+              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-t-xl border-b border-border sm:px-4 sm:py-2.5">
+                <div className="flex gap-1.5 sm:gap-2">
+                  <div className="h-2.5 w-2.5 rounded-full bg-destructive/70 sm:h-3 sm:w-3" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-warning/70 sm:h-3 sm:w-3" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-success/70 sm:h-3 sm:w-3" />
+                </div>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="flex items-center gap-2 bg-background/50 rounded-lg px-3 py-1 text-xs text-muted-foreground sm:px-4 sm:py-1.5 sm:text-sm">
+                    <Shield className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
+                    <span>zikalyze.com</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Demo Content - Simulated App Interface */}
+              <div className="relative bg-background rounded-b-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                {/* Live Demo Animation */}
+                <div className="absolute inset-0 flex">
+                  {/* Sidebar */}
+                  <div className="hidden sm:flex w-16 lg:w-20 bg-card/50 flex-col items-center py-4 gap-4 border-r border-border">
+                    <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center lg:h-10 lg:w-10">
+                      <BarChart3 className="h-4 w-4 text-primary lg:h-5 lg:w-5" />
+                    </div>
+                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center lg:h-10 lg:w-10">
+                      <Brain className="h-4 w-4 text-muted-foreground lg:h-5 lg:w-5" />
+                    </div>
+                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center lg:h-10 lg:w-10">
+                      <Bell className="h-4 w-4 text-muted-foreground lg:h-5 lg:w-5" />
+                    </div>
+                  </div>
+                  
+                  {/* Main Content */}
+                  <div className="flex-1 p-3 sm:p-4 lg:p-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <img src={zikalyzeLogo} alt="Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
+                        <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg">Dashboard</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                        <span className="text-[10px] text-success sm:text-xs">LIVE</span>
+                      </div>
+                    </div>
+                    
+                    {/* Demo Cards Grid */}
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 lg:grid-cols-3">
+                      {/* BTC Card */}
+                      <div className="rounded-lg bg-card/80 border border-border p-2 sm:p-3 lg:p-4">
+                        <div className="flex items-center gap-1.5 mb-1 sm:gap-2 sm:mb-2">
+                          <div className="h-5 w-5 rounded-full bg-[#f7931a] flex items-center justify-center sm:h-6 sm:w-6 lg:h-8 lg:w-8">
+                            <span className="text-[8px] font-bold text-white sm:text-[10px] lg:text-xs">₿</span>
+                          </div>
+                          <span className="text-[10px] font-medium text-foreground sm:text-xs lg:text-sm">Bitcoin</span>
+                        </div>
+                        <div className="text-sm font-bold text-foreground sm:text-base lg:text-xl">$104,521</div>
+                        <div className="text-[10px] text-success sm:text-xs">↗ +2.34%</div>
+                      </div>
+                      
+                      {/* ETH Card */}
+                      <div className="rounded-lg bg-card/80 border border-border p-2 sm:p-3 lg:p-4">
+                        <div className="flex items-center gap-1.5 mb-1 sm:gap-2 sm:mb-2">
+                          <div className="h-5 w-5 rounded-full bg-[#627eea] flex items-center justify-center sm:h-6 sm:w-6 lg:h-8 lg:w-8">
+                            <span className="text-[8px] font-bold text-white sm:text-[10px] lg:text-xs">Ξ</span>
+                          </div>
+                          <span className="text-[10px] font-medium text-foreground sm:text-xs lg:text-sm">Ethereum</span>
+                        </div>
+                        <div className="text-sm font-bold text-foreground sm:text-base lg:text-xl">$3,284</div>
+                        <div className="text-[10px] text-success sm:text-xs">↗ +1.87%</div>
+                      </div>
+                      
+                      {/* AI Analysis Card */}
+                      <div className="col-span-2 lg:col-span-1 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/30 p-2 sm:p-3 lg:p-4">
+                        <div className="flex items-center gap-1.5 mb-1 sm:gap-2 sm:mb-2">
+                          <Brain className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+                          <span className="text-[10px] font-medium text-primary sm:text-xs lg:text-sm">AI Analysis</span>
+                        </div>
+                        <div className="text-[10px] text-foreground sm:text-xs lg:text-sm">
+                          <span className="text-success font-medium">Bullish</span> sentiment detected
+                        </div>
+                        <div className="mt-1 flex items-center gap-1">
+                          <div className="h-1 flex-1 rounded-full bg-muted overflow-hidden sm:h-1.5">
+                            <div className="h-full w-3/4 bg-gradient-to-r from-primary to-success rounded-full" />
+                          </div>
+                          <span className="text-[8px] text-muted-foreground sm:text-[10px]">75%</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Live Chart Preview */}
+                    <div className="mt-2 rounded-lg bg-card/80 border border-border p-2 sm:mt-3 sm:p-3 lg:mt-4 lg:p-4">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <span className="text-[10px] font-medium text-foreground sm:text-xs lg:text-sm">BTC/USDT Live Chart</span>
+                        <div className="flex gap-1">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground sm:text-[10px] sm:px-2">1H</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/20 text-primary sm:text-[10px] sm:px-2">4H</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground sm:text-[10px] sm:px-2">1D</span>
+                        </div>
+                      </div>
+                      <div className="h-16 flex items-end gap-0.5 sm:h-24 lg:h-32">
+                        {[65, 70, 60, 75, 68, 80, 72, 85, 78, 90, 82, 88, 95, 87, 92].map((h, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 rounded-t bg-gradient-to-t from-primary/50 to-primary transition-all duration-300"
+                            style={{ height: `${h}%`, animationDelay: `${i * 100}ms` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Play Button Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <div className="flex flex-col items-center gap-3 sm:gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition-transform group-hover:scale-110 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
+                      <PlayCircle className="h-8 w-8 text-primary-foreground sm:h-10 sm:w-10 lg:h-12 lg:w-12" />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg">{t("landing.tryItNow")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Tutorial Steps */}
           <div className="relative">
             {/* Connection Line */}
-            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 -translate-y-1/2 z-0" />
+            <div className="hidden lg:block absolute top-1/2 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 -translate-y-1/2 z-0" />
             
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 relative z-10 sm:gap-6">
               {/* Step 1: Sign Up */}
               <div 
-                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg hover:shadow-primary/5 cursor-pointer sm:rounded-2xl sm:p-6"
                 onClick={() => handleNavigate("/auth")}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-md sm:h-7 sm:w-7 sm:text-xs sm:-top-3.5">
                   1
                 </div>
-                <div className="flex flex-col items-center text-center pt-3">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
-                    <UserPlus className="h-7 w-7 text-primary sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                <div className="flex flex-col items-center text-center pt-2 sm:pt-4">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:mb-4 sm:h-16 sm:w-16">
+                    <UserPlus className="h-6 w-6 text-primary sm:h-8 sm:w-8" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step1Title")}</h3>
-                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step1Desc")}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-1 sm:text-base lg:text-lg sm:mb-2">{t("landing.step1Title")}</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-xs lg:text-sm">{t("landing.step1Desc")}</p>
                 </div>
               </div>
 
               {/* Step 2: Select Crypto */}
               <div 
-                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-accent/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 transition-all hover:border-accent/50 hover:bg-card hover:shadow-lg hover:shadow-accent/5 cursor-pointer sm:rounded-2xl sm:p-6"
                 onClick={() => handleNavigate("/auth")}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-[10px] font-bold shadow-md sm:h-7 sm:w-7 sm:text-xs sm:-top-3.5">
                   2
                 </div>
-                <div className="flex flex-col items-center text-center pt-3">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
-                    <ChartCandlestick className="h-7 w-7 text-accent sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                <div className="flex flex-col items-center text-center pt-2 sm:pt-4">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:mb-4 sm:h-16 sm:w-16">
+                    <ChartCandlestick className="h-6 w-6 text-accent sm:h-8 sm:w-8" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step2Title")}</h3>
-                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step2Desc")}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-1 sm:text-base lg:text-lg sm:mb-2">{t("landing.step2Title")}</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-xs lg:text-sm">{t("landing.step2Desc")}</p>
                 </div>
               </div>
 
               {/* Step 3: AI Analysis */}
               <div 
-                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 transition-all hover:border-primary/50 hover:bg-card hover:shadow-lg hover:shadow-primary/5 cursor-pointer sm:rounded-2xl sm:p-6"
                 onClick={() => handleNavigate("/auth")}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-md sm:h-7 sm:w-7 sm:text-xs sm:-top-3.5">
                   3
                 </div>
-                <div className="flex flex-col items-center text-center pt-3">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
-                    <Brain className="h-7 w-7 text-primary sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                <div className="flex flex-col items-center text-center pt-2 sm:pt-4">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:mb-4 sm:h-16 sm:w-16">
+                    <Brain className="h-6 w-6 text-primary sm:h-8 sm:w-8" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step3Title")}</h3>
-                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step3Desc")}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-1 sm:text-base lg:text-lg sm:mb-2">{t("landing.step3Title")}</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-xs lg:text-sm">{t("landing.step3Desc")}</p>
                 </div>
               </div>
 
               {/* Step 4: Get Alerts */}
               <div 
-                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-accent/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 transition-all hover:border-accent/50 hover:bg-card hover:shadow-lg hover:shadow-accent/5 cursor-pointer sm:rounded-2xl sm:p-6"
                 onClick={() => handleNavigate("/auth")}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-[10px] font-bold shadow-md sm:h-7 sm:w-7 sm:text-xs sm:-top-3.5">
                   4
                 </div>
-                <div className="flex flex-col items-center text-center pt-3">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
-                    <Bell className="h-7 w-7 text-accent sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                <div className="flex flex-col items-center text-center pt-2 sm:pt-4">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:mb-4 sm:h-16 sm:w-16">
+                    <Bell className="h-6 w-6 text-accent sm:h-8 sm:w-8" />
                   </div>
-                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step4Title")}</h3>
-                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step4Desc")}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-1 sm:text-base lg:text-lg sm:mb-2">{t("landing.step4Title")}</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-xs lg:text-sm">{t("landing.step4Desc")}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Quick Start CTA */}
-          <div className="mt-10 text-center sm:mt-14 lg:mt-16">
+          <div className="mt-8 text-center sm:mt-12 lg:mt-14">
             <Button 
               size="lg" 
               onClick={() => handleNavigate("/auth")}
-              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground px-8 sm:px-10 lg:px-12 lg:h-14 lg:text-lg"
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground px-6 h-11 text-sm shadow-lg shadow-primary/20 sm:px-10 sm:h-12 sm:text-base lg:px-12 lg:h-14 lg:text-lg"
             >
               <Rocket className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               {t("landing.startNow")}
             </Button>
-            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground sm:text-sm lg:text-base">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[10px] text-muted-foreground sm:gap-4 sm:text-xs lg:text-sm">
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
                 <span>{t("landing.freeTrial")}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
                 <span>{t("landing.noCardRequired")}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
                 <span>{t("landing.instantAccess")}</span>
               </div>
             </div>

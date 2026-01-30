@@ -55,7 +55,8 @@
     "startNow": "Start Now - It's Free",
     "freeTrial": "Free Forever Plan",
     "noCardRequired": "No Card Required",
-    "instantAccess": "Instant Access"
+    "instantAccess": "Instant Access",
+    "tryItNow": "Try It Now"
   },
   "auth": {
     "signIn": "Sign In",
