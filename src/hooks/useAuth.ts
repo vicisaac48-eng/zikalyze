@@ -28,6 +28,9 @@ export const useAuth = () => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
       setLoading(false);
+    }).catch((error) => {
+      console.error('Failed to get session:', error);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -76,8 +79,13 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      const { error } = await supabase.auth.signOut();
+      return { error };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign out');
+      return { error };
+    }
   };
 
   // Use Supabase's native password reset (built-in email delivery)
@@ -114,30 +122,40 @@ export const useAuth = () => {
   };
 
   const updatePassword = async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    
-    // Send password changed confirmation email if successful
-    if (!error) {
-      try {
-        await supabase.functions.invoke('send-password-changed', {
-          body: {}
-        });
-      } catch (emailError) {
-        // Don't fail the password update if email fails
-        console.warn('Failed to send password changed email:', emailError);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      // Send password changed confirmation email if successful
+      if (!error) {
+        try {
+          await supabase.functions.invoke('send-password-changed', {
+            body: {}
+          });
+        } catch (emailError) {
+          // Don't fail the password update if email fails
+          console.warn('Failed to send password changed email:', emailError);
+        }
       }
+      
+      return { error };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('An unexpected error occurred while updating password');
+      return { error };
     }
-    
-    return { error };
   };
 
   const updateEmail = async (newEmail: string) => {
-    const { error } = await supabase.auth.updateUser({
-      email: newEmail,
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      });
+      return { error };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('An unexpected error occurred while updating email');
+      return { error };
+    }
   };
 
   return {

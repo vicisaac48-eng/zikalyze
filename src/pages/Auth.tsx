@@ -274,7 +274,13 @@ const Auth = () => {
     setIsResending(true);
     
     try {
-      const { error } = await signUp(email, password);
+      // Use Supabase's resend method for email verification
+      // This won't create a duplicate account
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      
       setIsResending(false);
 
       if (error) {
