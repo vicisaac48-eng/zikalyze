@@ -1859,7 +1859,6 @@ export interface UnifiedBrainOutput {
   // Metadata
   timestamp: string;
   processingTimeMs: number;
-  version: string;
 }
 
 /**
@@ -1871,8 +1870,6 @@ export interface UnifiedBrainOutput {
  * - Strict verification before output
  */
 export class UnifiedBrain extends SelfLearningBrainPipeline {
-  private readonly unifiedVersion = 'latest';
-  
   constructor() {
     super();
     console.log('[UnifiedBrain] Initialized — Most Advanced Crypto AI');
@@ -2035,8 +2032,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       
       // Metadata
       timestamp: new Date().toISOString(),
-      processingTimeMs,
-      version: this.unifiedVersion
+      processingTimeMs
     };
   }
   
@@ -2167,7 +2163,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     
     let analysis = `
 ╔══════════════════════════════════════════════════════════════════╗
-║  🧠 ZIKALYZE UNIFIED BRAIN                                       ║
+║  🧠 ZIKALYZE UNIFIED BRAIN                                        ║
 ║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
 ╚══════════════════════════════════════════════════════════════════╝
 
