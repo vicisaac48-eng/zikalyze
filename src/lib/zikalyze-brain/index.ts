@@ -586,3 +586,22 @@ export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork } from './technical-analysis';
+export { 
+  ZikalyzeBrainPipeline, 
+  ActiveCryptoSource, 
+  AIAnalyzer, 
+  AttentionAlgorithm, 
+  HiddenDataStorageManager, 
+  DoubleVerificationLoop 
+} from './brain-pipeline';
+export type { 
+  RawCryptoData, 
+  AnalyzedData, 
+  AttentionVerifiedData, 
+  BrainPipelineOutput, 
+  DataQuality,
+  HiddenDataStorage,
+  VerifiedDataRecord,
+  FilteredDataRecord,
+  LearningSignal
+} from './brain-pipeline';
