@@ -17,15 +17,16 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+          cache: 'npm'
       
-      - name: Install Pinata CLI
-        run: npm install -g pinata-upload-cli
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
       
       - name: Deploy to Pinata IPFS
         env:
-          PINATA_JWT: ${{ secrets.PINATA_JWT_TOKEN }}
-        run: |
-          npx pinata-upload-cli ./
-          
-      - name: Save IPFS Hash
-        run: echo "Deployment successful!"
+          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+          PINATA_SECRET_KEY: ${{ secrets.PINATA_SECRET_KEY }}
+        run: node scripts/deploy-ipfs.js
