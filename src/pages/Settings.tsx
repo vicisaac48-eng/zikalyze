@@ -11,7 +11,6 @@ import { useTheme } from "next-themes";
 import { useSettings } from "@/hooks/useSettings";
 import { alertSound } from "@/lib/alertSound";
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import EmailDigestSettings from "@/components/settings/EmailDigestSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrivateKey } from "@/lib/crypto";
@@ -310,11 +309,6 @@ const Settings = () => {
                   {/* Push Notification Settings */}
                   <div className="border-t border-border pt-6">
                     <NotificationSettings />
-                  </div>
-
-                  {/* Email Digest Settings */}
-                  <div className="border-t border-border pt-6">
-                    <EmailDigestSettings />
                   </div>
                 </div>
               )}

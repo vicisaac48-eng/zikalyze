@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +74,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState(60);
 
-  const fetchSentiment = async (isAutoRefresh = false) => {
+  const fetchSentiment = useCallback(async (isAutoRefresh = false) => {
     if (!isAutoRefresh) setLoading(true);
     setError(null);
 
@@ -99,12 +99,12 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [crypto, price, change]);
 
   // Initial fetch and when crypto changes
   useEffect(() => {
     fetchSentiment();
-  }, [crypto]);
+  }, [fetchSentiment]);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
@@ -113,7 +113,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     }, 60000);
 
     return () => clearInterval(refreshInterval);
-  }, [crypto, price, change]);
+  }, [fetchSentiment]);
 
   // Countdown timer
   useEffect(() => {
