@@ -87,7 +87,10 @@
     "passwordResetSuccess": "Votre mot de passe a été réinitialisé avec succès.",
     "invalidLink": "Lien invalide ou expiré",
     "requestNewLink": "Veuillez demander un nouveau lien de réinitialisation.",
-    "enterNewPasswordBelow": "Entrez votre nouveau mot de passe ci-dessous"
+    "enterNewPasswordBelow": "Entrez votre nouveau mot de passe ci-dessous",
+    "accountCreated": "Compte créé ! 🎉",
+    "welcomeEmailSent": "Un e-mail de confirmation de bienvenue a été envoyé dans votre boîte de réception.",
+    "signInEmailSent": "Une notification de connexion a été envoyée à votre e-mail."
   },
   "dashboard": {
     "title": "Zikalyze",

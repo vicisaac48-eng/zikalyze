@@ -91,7 +91,8 @@
     "enterNewPasswordBelow": "Enter your new password below",
     "tooManyResetRequests": "Too many password reset requests",
     "accountCreated": "Account created! 🎉",
-    "welcomeEmailSent": "A welcome confirmation email has been sent to your inbox."
+    "welcomeEmailSent": "A welcome confirmation email has been sent to your inbox.",
+    "signInEmailSent": "A sign-in notification has been sent to your email."
   },
   "dashboard": {
     "title": "Zikalyze",
