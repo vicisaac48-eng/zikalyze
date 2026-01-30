@@ -1,167 +1,89 @@
-import { useState, useEffect, useRef } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
+
+// User type compatible with both Clerk and components expecting Supabase-like user
+export interface ClerkUserLike {
+  id: string;
+  email?: string;
+  created_at?: string;
+  primaryEmailAddress?: {
+    emailAddress: string;
+  };
+}
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const { signOut: clerkSignOut } = useClerk();
+  const { isLoaded: authLoaded } = useClerkAuth();
 
-  useEffect(() => {
-    // Prevent double initialization in strict mode
-    if (initialized.current) return;
-    initialized.current = true;
-
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        // Update state synchronously
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setLoading(false);
+  // Map Clerk user to a compatible format
+  const user: ClerkUserLike | null = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress,
+        created_at: clerkUser.createdAt?.toISOString(),
+        primaryEmailAddress: clerkUser.primaryEmailAddress
+          ? { emailAddress: clerkUser.primaryEmailAddress.emailAddress }
+          : undefined,
       }
-    );
+    : null;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      setLoading(false);
-    }).catch((error) => {
-      console.warn('Supabase session unavailable:', error);
-      setLoading(false);
-    });
+  const loading = !isLoaded || !authLoaded;
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string) => {
-    try {
-      // Use hash-based redirect for HashRouter compatibility
-      const redirectUrl = `${window.location.origin}/#/dashboard`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-      
-      // Increment user count on successful signup
-      if (!error) {
-        try {
-          await supabase.rpc('increment_user_count');
-        } catch (e) {
-          console.warn('Failed to increment user count:', e);
-        }
-      }
-      
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign up');
-      return { error };
-    }
+  // Clerk handles sign up through its components, these are stubs for compatibility
+  const signUp = async (_email: string, _password: string) => {
+    // Clerk handles sign up via <SignUp /> component
+    // This is a stub for API compatibility
+    return { error: new Error("Use Clerk SignUp component instead") };
   };
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign in');
-      return { error };
-    }
+  const signIn = async (_email: string, _password: string) => {
+    // Clerk handles sign in via <SignIn /> component
+    // This is a stub for API compatibility
+    return { error: new Error("Use Clerk SignIn component instead") };
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign out');
-      return { error };
-    }
-  };
-
-  // Use Supabase's native password reset (built-in email delivery)
-  const resetPassword = async (email: string): Promise<{ 
-    error: Error | null; 
-    rateLimited?: boolean; 
-    retryAfter?: number 
-  }> => {
-    try {
-      // Use hash-based redirect for HashRouter compatibility
-      const redirectUrl = `${window.location.origin}/#/reset-password`;
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
-      });
-      
-      if (error) {
-        // Check for rate limit errors from Supabase
-        const errorMessage = error.message || error.toString() || '';
-        if (errorMessage.includes('rate limit') || error.status === 429) {
-          return { 
-            error, 
-            rateLimited: true, 
-            retryAfter: 60 // Default 1 minute retry
-          };
-        }
-        return { error };
-      }
-      
+      await clerkSignOut();
       return { error: null };
     } catch (err) {
-      return { error: err as Error };
-    }
-  };
-
-  const updatePassword = async (newPassword: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      
-      // Send password changed confirmation email if successful
-      if (!error) {
-        try {
-          await supabase.functions.invoke('send-password-changed', {
-            body: {}
-          });
-        } catch (emailError) {
-          // Don't fail the password update if email fails
-          console.warn('Failed to send password changed email:', emailError);
-        }
-      }
-      
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred while updating password');
+      const error =
+        err instanceof Error
+          ? err
+          : new Error("An unexpected error occurred during sign out");
       return { error };
     }
   };
 
-  const updateEmail = async (newEmail: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail,
-      });
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred while updating email');
-      return { error };
-    }
+  // Clerk handles password reset through its components
+  const resetPassword = async (
+    _email: string
+  ): Promise<{
+    error: Error | null;
+    rateLimited?: boolean;
+    retryAfter?: number;
+  }> => {
+    // Clerk handles password reset via its built-in UI
+    return { error: new Error("Use Clerk's built-in password reset flow") };
+  };
+
+  // Clerk handles password updates through user profile
+  const updatePassword = async (_newPassword: string) => {
+    // Password updates are handled via Clerk's user profile
+    return { error: new Error("Use Clerk's built-in password update flow") };
+  };
+
+  // Clerk handles email updates through user profile
+  const updateEmail = async (_newEmail: string) => {
+    // Email updates are handled via Clerk's user profile
+    return { error: new Error("Use Clerk's built-in email update flow") };
   };
 
   return {
     user,
-    session,
+    session: isSignedIn ? { user } : null,
     loading,
+    isSignedIn,
     signUp,
     signIn,
     signOut,
