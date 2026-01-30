@@ -25,15 +25,24 @@ jobs:
       - name: Build project
         run: npm run build
       
+      - name: Check Pinata credentials
+        id: check_credentials
+        run: |
+          if [ -n "${{ secrets.PINATA_API_KEY }}" ] && [ -n "${{ secrets.PINATA_SECRET_KEY }}" ]; then
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Deploy to Pinata IPFS
-        if: ${{ secrets.PINATA_API_KEY != '' && secrets.PINATA_SECRET_KEY != '' }}
+        if: steps.check_credentials.outputs.has_credentials == 'true'
         env:
           PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
           PINATA_SECRET_KEY: ${{ secrets.PINATA_SECRET_KEY }}
         run: node scripts/deploy-ipfs.js
       
       - name: Skip deployment (missing credentials)
-        if: ${{ secrets.PINATA_API_KEY == '' || secrets.PINATA_SECRET_KEY == '' }}
+        if: steps.check_credentials.outputs.has_credentials == 'false'
         run: |
           echo "⚠️  IPFS deployment skipped: Pinata credentials not configured"
           echo ""
