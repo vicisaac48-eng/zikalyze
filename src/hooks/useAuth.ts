@@ -12,9 +12,43 @@ export interface ClerkUserLike {
   };
 }
 
+// Check if Clerk is configured at module load time
+const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Hook implementation
 export const useAuth = () => {
+  // When Clerk is not configured, return a static fallback
+  // This avoids calling Clerk hooks which would throw without ClerkProvider
+  if (!isClerkConfigured) {
+    return {
+      user: null,
+      session: null,
+      loading: false,
+      isSignedIn: false,
+      signUp: async (_email: string, _password: string) => {
+        console.warn("[useAuth] Clerk is not configured. Set VITE_CLERK_PUBLISHABLE_KEY.");
+        return { error: new Error("Clerk is not configured") };
+      },
+      signIn: async (_email: string, _password: string) => {
+        console.warn("[useAuth] Clerk is not configured. Set VITE_CLERK_PUBLISHABLE_KEY.");
+        return { error: new Error("Clerk is not configured") };
+      },
+      signOut: async () => ({ error: null }),
+      resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => 
+        ({ error: new Error("Clerk is not configured") }),
+      updatePassword: async (_newPassword: string) => 
+        ({ error: new Error("Clerk is not configured") }),
+      updateEmail: async (_newEmail: string) => 
+        ({ error: new Error("Clerk is not configured") }),
+    };
+  }
+
+  // Clerk hooks - only called when Clerk is configured
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { signOut: clerkSignOut } = useClerk();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { isLoaded: authLoaded } = useClerkAuth();
 
   // Map Clerk user to a compatible format
@@ -32,7 +66,6 @@ export const useAuth = () => {
   const loading = !isLoaded || !authLoaded;
 
   // Clerk handles sign up through its components, these are stubs for compatibility
-  // If called, log a warning to help developers identify code that needs updating
   const signUp = async (_email: string, _password: string) => {
     console.warn("[useAuth] signUp() is deprecated. Use Clerk's <SignUp /> component instead.");
     return { error: new Error("Use Clerk SignUp component instead") };
@@ -48,33 +81,21 @@ export const useAuth = () => {
       await clerkSignOut();
       return { error: null };
     } catch (err) {
-      const error =
-        err instanceof Error
-          ? err
-          : new Error("An unexpected error occurred during sign out");
+      const error = err instanceof Error ? err : new Error("An unexpected error occurred during sign out");
       return { error };
     }
   };
 
-  // Clerk handles password reset through its components
-  const resetPassword = async (
-    _email: string
-  ): Promise<{
-    error: Error | null;
-    rateLimited?: boolean;
-    retryAfter?: number;
-  }> => {
+  const resetPassword = async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => {
     console.warn("[useAuth] resetPassword() is deprecated. Use Clerk's built-in password reset flow instead.");
     return { error: new Error("Use Clerk's built-in password reset flow") };
   };
 
-  // Clerk handles password updates through user profile
   const updatePassword = async (_newPassword: string) => {
     console.warn("[useAuth] updatePassword() is deprecated. Use Clerk's <UserProfile /> component instead.");
     return { error: new Error("Use Clerk's built-in password update flow") };
   };
 
-  // Clerk handles email updates through user profile
   const updateEmail = async (_newEmail: string) => {
     console.warn("[useAuth] updateEmail() is deprecated. Use Clerk's <UserProfile /> component instead.");
     return { error: new Error("Use Clerk's built-in email update flow") };

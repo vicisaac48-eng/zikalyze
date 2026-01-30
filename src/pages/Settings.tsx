@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { UserProfile, useUser } from "@clerk/clerk-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,12 +14,29 @@ import NotificationSettings from "@/components/settings/NotificationSettings";
 import EmailDigestSettings from "@/components/settings/EmailDigestSettings";
 import { languageCodes } from "@/i18n/config";
 
+// Check if Clerk is configured
+const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Get Clerk components dynamically to avoid import errors when not configured
+const getClerkComponents = () => {
+  if (!isClerkConfigured) return { UserProfile: null, user: null };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const clerkReact = require("@clerk/clerk-react");
+  return clerkReact;
+};
+
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
-  const { user } = useUser();
+  
+  // Get Clerk user data only if configured
+  const clerkComponents = getClerkComponents();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const clerkUserData = isClerkConfigured && clerkComponents.useUser ? clerkComponents.useUser() : { user: null };
+  const { user } = clerkUserData;
+  const UserProfile = clerkComponents.UserProfile;
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -139,7 +155,7 @@ const Settings = () => {
                         </div>
                         <div>
                           <div className="font-medium text-foreground">
-                            {user?.primaryEmailAddress?.emailAddress || "No email"}
+                            {user?.primaryEmailAddress?.emailAddress || "No email (Demo Mode)"}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
@@ -155,24 +171,36 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground mb-4">
                       Update your email, password, and security settings below.
                     </p>
-                    <div className="flex justify-center">
-                      <UserProfile 
-                        routing="hash"
-                        appearance={{
-                          elements: {
-                            rootBox: "w-full",
-                            card: "bg-transparent shadow-none border-0 p-0",
-                            navbar: "hidden",
-                            pageScrollBox: "p-0",
-                            formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-                            formFieldInput: "bg-secondary border-border text-foreground",
-                            formFieldLabel: "text-foreground",
-                            headerTitle: "text-foreground",
-                            headerSubtitle: "text-muted-foreground",
-                          }
-                        }}
-                      />
-                    </div>
+                    {isClerkConfigured && UserProfile ? (
+                      <div className="flex justify-center">
+                        <UserProfile 
+                          routing="hash"
+                          appearance={{
+                            elements: {
+                              rootBox: "w-full",
+                              card: "bg-transparent shadow-none border-0 p-0",
+                              navbar: "hidden",
+                              pageScrollBox: "p-0",
+                              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+                              formFieldInput: "bg-secondary border-border text-foreground",
+                              formFieldLabel: "text-foreground",
+                              headerTitle: "text-foreground",
+                              headerSubtitle: "text-muted-foreground",
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3 mb-2">
+                          <AlertCircle className="h-5 w-5 text-warning" />
+                          <span className="font-medium text-foreground">Authentication Not Configured</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Set VITE_CLERK_PUBLISHABLE_KEY in your environment to enable account management features.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

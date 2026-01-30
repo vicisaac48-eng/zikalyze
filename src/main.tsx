@@ -33,10 +33,17 @@ if ('serviceWorker' in navigator) {
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 
+// Conditionally wrap with ClerkProvider only if key is available
+const AppWithProviders = CLERK_PUBLISHABLE_KEY ? (
+  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <App />
+  </ClerkProvider>
+) : (
+  <App />
+);
+
 root.render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY || ""}>
-      <App />
-    </ClerkProvider>
+    {AppWithProviders}
   </React.StrictMode>
 );
