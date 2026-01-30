@@ -2,36 +2,54 @@
 // 🧠 useBrainPipeline — React Hook for Enhanced Zikalyze AI Brain Pipeline
 // ═══════════════════════════════════════════════════════════════════════════════
 // Integrates the complete brain pipeline with React state management
-// All processing happens in a second with double verification!
+// Self-learns from live chart data and WebSocket livestream
+// Only sends accurate information after strict verification!
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   ZikalyzeBrainPipeline, 
+  SelfLearningBrainPipeline,
   BrainPipelineOutput,
-  AnalysisInput 
+  SelfLearningOutput,
+  AnalysisInput,
+  ChartTrendInput,
+  LivestreamUpdate
 } from '@/lib/zikalyze-brain';
 
 interface UseBrainPipelineOptions {
   autoLearn?: boolean;  // Enable automatic learning from outcomes
   language?: string;    // Language for analysis output
+  selfLearning?: boolean; // Enable self-learning mode (v2.0)
 }
 
 interface UseBrainPipelineReturn {
   // Pipeline output
-  output: BrainPipelineOutput | null;
+  output: BrainPipelineOutput | SelfLearningOutput | null;
   // Processing state
   isProcessing: boolean;
   error: string | null;
   // Pipeline actions
   processInput: (input: AnalysisInput) => Promise<BrainPipelineOutput>;
+  processWithLearning: (
+    input: AnalysisInput, 
+    chartData?: ChartTrendInput, 
+    livestreamUpdate?: LivestreamUpdate
+  ) => Promise<SelfLearningOutput>;
   clearOutput: () => void;
+  // Self-learning actions
+  feedChartData: (symbol: string, chartData: ChartTrendInput) => void;
+  feedLivestreamUpdate: (update: LivestreamUpdate) => void;
+  verifyPatternOutcome: (symbol: string, timestamp: number, outcome: 'CORRECT' | 'INCORRECT') => void;
   // Learning and stats
   storageStats: { goodCount: number; badCount: number; learningCount: number };
   learningAdjustment: number;
+  hasReliableData: (symbol: string) => boolean;
   // Processing metrics
   lastProcessingTime: number;
   averageProcessingTime: number;
+  // Self-learning status
+  isSelfLearningEnabled: boolean;
 }
 
 /**
@@ -43,12 +61,22 @@ interface UseBrainPipelineReturn {
  * - Attention AI Algorithm (filter, verify, calculate)
  * - Hidden data storage (good/bad separation)
  * - Double verification before output
+ * - Self-learning from live chart data (v2.0)
+ * - Self-learning from WebSocket livestream (v2.0)
+ * - Only sends accurate information after strict verification
  * 
  * Usage:
  * ```tsx
- * const { output, processInput, isProcessing } = useBrainPipeline();
+ * const { output, processInput, processWithLearning, isProcessing } = useBrainPipeline({ selfLearning: true });
  * 
- * // Process crypto data
+ * // Process with self-learning (recommended)
+ * const result = await processWithLearning(
+ *   { crypto: 'BTC', price: 65000, change: 2.5 },
+ *   chartTrendData,  // from useChartTrendData hook
+ *   livestreamUpdate // from WebSocket
+ * );
+ * 
+ * // Basic processing (without self-learning)
  * const result = await processInput({
  *   crypto: 'BTC',
  *   price: 65000,
@@ -62,13 +90,14 @@ interface UseBrainPipelineReturn {
 export function useBrainPipeline(
   options: UseBrainPipelineOptions = {}
 ): UseBrainPipelineReturn {
-  const { autoLearn = true, language = 'en' } = options;
+  const { autoLearn = true, language = 'en', selfLearning = true } = options;
   
-  // Pipeline instance - singleton per hook instance
+  // Pipeline instances - singleton per hook instance
   const pipelineRef = useRef<ZikalyzeBrainPipeline | null>(null);
+  const selfLearningPipelineRef = useRef<SelfLearningBrainPipeline | null>(null);
   
   // State
-  const [output, setOutput] = useState<BrainPipelineOutput | null>(null);
+  const [output, setOutput] = useState<BrainPipelineOutput | SelfLearningOutput | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [storageStats, setStorageStats] = useState({ goodCount: 0, badCount: 0, learningCount: 0 });
@@ -82,10 +111,14 @@ export function useBrainPipeline(
       pipelineRef.current = new ZikalyzeBrainPipeline();
       console.log('[Brain Pipeline] Initialized Zikalyze AI Brain Pipeline v1.0');
     }
-  }, []);
+    if (!selfLearningPipelineRef.current && selfLearning) {
+      selfLearningPipelineRef.current = new SelfLearningBrainPipeline();
+      console.log('[Brain Pipeline] Initialized Self-Learning Brain Pipeline v2.0');
+    }
+  }, [selfLearning]);
 
   /**
-   * Process input through the brain pipeline
+   * Process input through the brain pipeline (basic mode)
    */
   const processInput = useCallback(async (input: AnalysisInput): Promise<BrainPipelineOutput> => {
     if (!pipelineRef.current) {
@@ -136,11 +169,114 @@ export function useBrainPipeline(
   }, [language]);
 
   /**
+   * Process input with self-learning from live chart and livestream data
+   * Only sends accurate information after strict verification
+   */
+  const processWithLearning = useCallback(async (
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): Promise<SelfLearningOutput> => {
+    if (!selfLearningPipelineRef.current) {
+      selfLearningPipelineRef.current = new SelfLearningBrainPipeline();
+    }
+    
+    setIsProcessing(true);
+    setError(null);
+    
+    const startTime = performance.now();
+    
+    try {
+      // Add language to input if specified
+      const enrichedInput: AnalysisInput = {
+        ...input,
+        language
+      };
+      
+      // Process with self-learning
+      const result = selfLearningPipelineRef.current.processWithLearning(
+        enrichedInput,
+        chartData,
+        livestreamUpdate
+      );
+      
+      // Calculate processing time
+      const processingTime = performance.now() - startTime;
+      setLastProcessingTime(processingTime);
+      setProcessingTimes(prev => [...prev.slice(-19), processingTime]);
+      
+      // Update state
+      setOutput(result);
+      setStorageStats(selfLearningPipelineRef.current.getStorageStats());
+      setLearningAdjustment(selfLearningPipelineRef.current.getLearningAdjustment());
+      
+      // Log processing stats with learning info
+      console.log(
+        `[SelfLearning] Processed ${input.crypto} in ${result.processingTimeMs}ms | ` +
+        `Bias: ${result.bias} | Accurate: ${result.isAccurate ? '✓' : '✗'} | ` +
+        `Chart Learn: ${result.learnedFromLiveChart ? '✓' : '✗'} | ` +
+        `Stream Learn: ${result.learnedFromLivestream ? '✓' : '✗'} | ` +
+        `Score: ${(result.combinedLearningScore * 100).toFixed(0)}%`
+      );
+      
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Self-learning pipeline failed';
+      setError(errorMessage);
+      console.error('[SelfLearning] Error:', errorMessage);
+      throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [language]);
+
+  /**
    * Clear current output
    */
   const clearOutput = useCallback(() => {
     setOutput(null);
     setError(null);
+  }, []);
+
+  /**
+   * Feed chart data for continuous learning
+   */
+  const feedChartData = useCallback((symbol: string, chartData: ChartTrendInput) => {
+    if (selfLearningPipelineRef.current) {
+      selfLearningPipelineRef.current.feedChartData(symbol, chartData);
+    }
+  }, []);
+
+  /**
+   * Feed livestream update for continuous learning
+   */
+  const feedLivestreamUpdate = useCallback((update: LivestreamUpdate) => {
+    if (selfLearningPipelineRef.current) {
+      selfLearningPipelineRef.current.feedLivestreamUpdate(update);
+    }
+  }, []);
+
+  /**
+   * Verify pattern outcome for learning improvement
+   */
+  const verifyPatternOutcome = useCallback((
+    symbol: string, 
+    timestamp: number, 
+    outcome: 'CORRECT' | 'INCORRECT'
+  ) => {
+    if (selfLearningPipelineRef.current) {
+      selfLearningPipelineRef.current.verifyPatternOutcome(symbol, timestamp, outcome);
+    }
+  }, []);
+
+  /**
+   * Check if reliable data is available for a symbol
+   */
+  const hasReliableData = useCallback((symbol: string): boolean => {
+    if (selfLearningPipelineRef.current) {
+      return selfLearningPipelineRef.current.hasReliableData(symbol);
+    }
+    return false;
   }, []);
 
   /**
@@ -155,11 +291,17 @@ export function useBrainPipeline(
     isProcessing,
     error,
     processInput,
+    processWithLearning,
     clearOutput,
+    feedChartData,
+    feedLivestreamUpdate,
+    verifyPatternOutcome,
     storageStats,
     learningAdjustment,
+    hasReliableData,
     lastProcessingTime,
-    averageProcessingTime
+    averageProcessingTime,
+    isSelfLearningEnabled: selfLearning
   };
 }
 

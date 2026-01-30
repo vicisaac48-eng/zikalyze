@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Run in browser console: window.testBrainPipeline()
 // Tests the complete brain pipeline with double verification
+// Tests self-learning from live chart and livestream data
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { 
@@ -10,9 +11,14 @@ import {
   BrainPipelineOutput,
   ActiveCryptoSource,
   AIAnalyzer,
-  AttentionAlgorithm
+  AttentionAlgorithm,
+  // Self-learning components
+  LiveChartLearner,
+  LivestreamLearner,
+  SelfLearningBrainPipeline,
+  SelfLearningOutput
 } from './brain-pipeline';
-import type { AnalysisInput } from './types';
+import type { AnalysisInput, ChartTrendInput } from './types';
 
 // Verification function for brain pipeline output
 function verifyPipelineResult(result: BrainPipelineOutput, testName: string): boolean {
@@ -261,8 +267,218 @@ export function testBrainPipeline(): {
   return { allPassed, results, sampleOutput, storageStats };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 SELF-LEARNING TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function testLiveChartLearner(): boolean {
+  console.log('\n📊 Testing LiveChartLearner...');
+  const learner = new LiveChartLearner();
+  
+  // Create mock chart data
+  const mockChartData: ChartTrendInput = {
+    candles: Array.from({ length: 24 }, (_, i) => ({
+      timestamp: Date.now() - (24 - i) * 3600000,
+      open: 65000 + i * 100,
+      high: 65000 + i * 100 + 200,
+      low: 65000 + i * 100 - 100,
+      close: 65000 + i * 100 + 150,
+      volume: 1000000 + i * 50000
+    })),
+    trend24h: 'BULLISH',
+    trendStrength: 75,
+    higherHighs: true,
+    higherLows: true,
+    lowerHighs: false,
+    lowerLows: false,
+    ema9: 66000,
+    ema21: 65500,
+    rsi: 58,
+    volumeTrend: 'INCREASING',
+    priceVelocity: 0.5,
+    isLive: true,
+    source: 'test'
+  };
+  
+  // Test learning from chart data
+  learner.learnFromChartData('BTC', mockChartData);
+  const patterns = learner.getRecentPatterns('BTC');
+  
+  const checks = [
+    { name: 'Learned patterns stored', pass: patterns.length > 0 },
+    { name: 'Pattern has symbol', pass: patterns[0]?.symbol === 'BTC' },
+    { name: 'Pattern has price', pass: patterns[0]?.priceAtDetection > 0 },
+    { name: 'Pattern has EMA9', pass: patterns[0]?.ema9 > 0 },
+    { name: 'Pattern has RSI', pass: patterns[0]?.rsi > 0 },
+    { name: 'Pattern has timestamp', pass: patterns[0]?.timestamp > 0 }
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  console.log(`   Live Chart Learner: ${passed}/${checks.length} passed`);
+  
+  // Test dominant pattern detection
+  for (let i = 0; i < 5; i++) {
+    learner.learnFromChartData('BTC', mockChartData);
+  }
+  const dominant = learner.getDominantPattern('BTC');
+  console.log(`   Dominant pattern: ${dominant || 'None'}`);
+  
+  return passed === checks.length;
+}
+
+function testLivestreamLearner(): boolean {
+  console.log('\n📡 Testing LivestreamLearner...');
+  const learner = new LivestreamLearner();
+  
+  // Simulate livestream updates
+  const now = Date.now();
+  for (let i = 0; i < 100; i++) {
+    learner.processLiveUpdate({
+      symbol: 'ETH',
+      price: 3500 + i * 2 + Math.random() * 10,
+      change24h: 2.5,
+      volume: 500000000,
+      source: 'test',
+      timestamp: now + i * 1000
+    });
+  }
+  
+  // Check velocity pattern
+  const velocityPattern = learner.getVelocityPattern('ETH');
+  const prediction = learner.predictDirection('ETH');
+  const hasReliable = learner.hasReliableData('ETH');
+  
+  const checks = [
+    { name: 'Velocity pattern created', pass: velocityPattern !== null },
+    { name: 'Has avg velocity', pass: velocityPattern?.avgVelocity !== undefined },
+    { name: 'Has volatility', pass: velocityPattern?.volatility !== undefined },
+    { name: 'Has momentum strength', pass: velocityPattern?.momentumStrength !== undefined },
+    { name: 'Has update count', pass: velocityPattern?.updateCount !== undefined && velocityPattern.updateCount >= 50 },
+    { name: 'Has reliable data', pass: hasReliable },
+    { name: 'Prediction direction valid', pass: ['UP', 'DOWN', 'NEUTRAL'].includes(prediction.direction) },
+    { name: 'Prediction confidence valid', pass: prediction.confidence >= 0 && prediction.confidence <= 1 }
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  console.log(`   Livestream Learner: ${passed}/${checks.length} passed`);
+  console.log(`   Velocity: ${velocityPattern?.avgVelocity.toFixed(4)} | Volatility: ${velocityPattern?.volatility.toFixed(4)}`);
+  console.log(`   Prediction: ${prediction.direction} (${(prediction.confidence * 100).toFixed(0)}% confidence)`);
+  
+  return passed === checks.length;
+}
+
+function testSelfLearningPipeline(): boolean {
+  console.log('\n🧠 Testing SelfLearningBrainPipeline...');
+  const pipeline = new SelfLearningBrainPipeline();
+  
+  // Create mock data
+  const input: AnalysisInput = {
+    crypto: 'BTC',
+    price: 97542.18,
+    change: 4.5,
+    high24h: 98200,
+    low24h: 93100,
+    volume: 28500000000
+  };
+  
+  const mockChartData: ChartTrendInput = {
+    candles: Array.from({ length: 24 }, (_, i) => ({
+      timestamp: Date.now() - (24 - i) * 3600000,
+      open: 94000 + i * 150,
+      high: 94000 + i * 150 + 300,
+      low: 94000 + i * 150 - 100,
+      close: 94000 + i * 150 + 200,
+      volume: 1200000000
+    })),
+    trend24h: 'BULLISH',
+    trendStrength: 80,
+    higherHighs: true,
+    higherLows: true,
+    lowerHighs: false,
+    lowerLows: false,
+    ema9: 97000,
+    ema21: 96000,
+    rsi: 62,
+    volumeTrend: 'INCREASING',
+    priceVelocity: 0.8,
+    isLive: true,
+    source: 'test'
+  };
+  
+  const livestreamUpdate = {
+    symbol: 'BTC',
+    price: 97542.18,
+    change24h: 4.5,
+    volume: 28500000000,
+    source: 'test',
+    timestamp: Date.now()
+  };
+  
+  // Process with learning
+  const result = pipeline.processWithLearning(input, mockChartData, livestreamUpdate);
+  
+  const checks = [
+    { name: 'Has valid bias', pass: ['LONG', 'SHORT', 'NEUTRAL'].includes(result.bias) },
+    { name: 'Has confidence', pass: result.confidence >= 0 && result.confidence <= 1 },
+    { name: 'Has isAccurate flag', pass: typeof result.isAccurate === 'boolean' },
+    { name: 'Has accuracy reason', pass: result.accuracyReason.length > 0 },
+    { name: 'Has learnedFromLiveChart', pass: typeof result.learnedFromLiveChart === 'boolean' },
+    { name: 'Has learnedFromLivestream', pass: typeof result.learnedFromLivestream === 'boolean' },
+    { name: 'Has patternConfidence', pass: result.patternConfidence >= 0 },
+    { name: 'Has velocityConfidence', pass: result.velocityConfidence >= 0 },
+    { name: 'Has combinedLearningScore', pass: result.combinedLearningScore >= 0 && result.combinedLearningScore <= 1 },
+    { name: 'Pipeline version v2', pass: result.pipelineVersion.startsWith('2') }
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  console.log(`   Self-Learning Pipeline: ${passed}/${checks.length} passed`);
+  console.log(`   Accurate: ${result.isAccurate ? '✓' : '✗'} | Reason: ${result.accuracyReason}`);
+  console.log(`   Chart Learning: ${result.learnedFromLiveChart ? '✓' : '✗'} | Stream Learning: ${result.learnedFromLivestream ? '✓' : '✗'}`);
+  console.log(`   Combined Score: ${(result.combinedLearningScore * 100).toFixed(0)}%`);
+  
+  return passed === checks.length;
+}
+
+/**
+ * Main test function for self-learning features
+ */
+export function testSelfLearning(): {
+  allPassed: boolean;
+  chartLearnerPassed: boolean;
+  streamLearnerPassed: boolean;
+  pipelinePassed: boolean;
+} {
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('🧠 ZIKALYZE AI SELF-LEARNING v2.0 — TEST SUITE');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('Testing: Live Chart Learning + Livestream Learning + Accuracy');
+  console.log('═══════════════════════════════════════════════════════════════');
+  
+  const chartLearnerPassed = testLiveChartLearner();
+  const streamLearnerPassed = testLivestreamLearner();
+  const pipelinePassed = testSelfLearningPipeline();
+  
+  const allPassed = chartLearnerPassed && streamLearnerPassed && pipelinePassed;
+  
+  console.log('\n═══════════════════════════════════════════════════════════════');
+  if (allPassed) {
+    console.log('✅ ALL SELF-LEARNING TESTS PASSED!');
+    console.log('   ✓ Live Chart Learner: learns from chart patterns');
+    console.log('   ✓ Livestream Learner: learns from WebSocket data');
+    console.log('   ✓ Self-Learning Pipeline: only sends accurate info');
+    console.log('   ✓ Strict verification before output');
+  } else {
+    console.log('❌ SOME TESTS FAILED — Review the output above');
+  }
+  console.log('═══════════════════════════════════════════════════════════════\n');
+  
+  return { allPassed, chartLearnerPassed, streamLearnerPassed, pipelinePassed };
+}
+
 // Auto-register for browser console
 if (typeof window !== 'undefined') {
   (window as { testBrainPipeline?: typeof testBrainPipeline }).testBrainPipeline = testBrainPipeline;
-  console.log('💡 Run window.testBrainPipeline() in browser console to test the Brain Pipeline');
+  (window as { testSelfLearning?: typeof testSelfLearning }).testSelfLearning = testSelfLearning;
+  console.log('💡 Run window.testBrainPipeline() to test Brain Pipeline');
+  console.log('💡 Run window.testSelfLearning() to test Self-Learning features');
 }

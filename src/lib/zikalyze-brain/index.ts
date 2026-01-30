@@ -592,7 +592,11 @@ export {
   AIAnalyzer, 
   AttentionAlgorithm, 
   HiddenDataStorageManager, 
-  DoubleVerificationLoop 
+  DoubleVerificationLoop,
+  // Self-learning components
+  LiveChartLearner,
+  LivestreamLearner,
+  SelfLearningBrainPipeline
 } from './brain-pipeline';
 export type { 
   RawCryptoData, 
@@ -603,5 +607,10 @@ export type {
   HiddenDataStorage,
   VerifiedDataRecord,
   FilteredDataRecord,
-  LearningSignal
+  LearningSignal,
+  // Self-learning types
+  ChartPattern,
+  LivestreamUpdate,
+  VelocityPattern,
+  SelfLearningOutput
 } from './brain-pipeline';
