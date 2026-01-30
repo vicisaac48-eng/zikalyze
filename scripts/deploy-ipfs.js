@@ -138,14 +138,21 @@ async function main() {
   log('╚══════════════════════════════════════════════════╝', 'cyan');
 
   try {
-    // Step 1: Build the project
-    logStep('1/4', 'Building production bundle...');
-    execSync('npm run build', { stdio: 'inherit' });
-    log('✓ Build completed successfully', 'green');
+    const distPath = join(process.cwd(), 'dist');
+    
+    // Step 1: Build the project (if needed)
+    const { existsSync } = await import('fs');
+    if (!existsSync(distPath)) {
+      logStep('1/4', 'Building production bundle...');
+      execSync('npm run build', { stdio: 'inherit' });
+      log('✓ Build completed successfully', 'green');
+    } else {
+      logStep('1/4', 'Using existing build...');
+      log('✓ Build directory found, skipping build step', 'green');
+    }
 
     // Step 2: Calculate bundle info
     logStep('2/4', 'Analyzing bundle...');
-    const distPath = join(process.cwd(), 'dist');
     const files = getAllFiles(distPath);
     const totalSize = getDirSize(distPath);
     log(`  Files: ${files.length}`, 'reset');

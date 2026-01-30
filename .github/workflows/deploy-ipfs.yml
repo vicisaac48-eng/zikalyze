@@ -26,7 +26,21 @@ jobs:
         run: npm run build
       
       - name: Deploy to Pinata IPFS
+        if: ${{ secrets.PINATA_API_KEY && secrets.PINATA_SECRET_KEY }}
         env:
           PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
           PINATA_SECRET_KEY: ${{ secrets.PINATA_SECRET_KEY }}
         run: node scripts/deploy-ipfs.js
+      
+      - name: Skip deployment (missing credentials)
+        if: ${{ !secrets.PINATA_API_KEY || !secrets.PINATA_SECRET_KEY }}
+        run: |
+          echo "⚠️  IPFS deployment skipped: Pinata credentials not configured"
+          echo ""
+          echo "To enable IPFS deployment, add the following secrets to your repository:"
+          echo "  - PINATA_API_KEY"
+          echo "  - PINATA_SECRET_KEY"
+          echo ""
+          echo "Get your API keys at: https://app.pinata.cloud/keys"
+          echo ""
+          echo "Add secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
