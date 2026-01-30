@@ -1,17 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App.tsx";
 import "./index.css";
 import "./i18n/config";
 import { initializeAnalytics } from "./lib/analytics";
-
-// Clerk publishable key from environment
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!CLERK_PUBLISHABLE_KEY) {
-  console.error("Missing VITE_CLERK_PUBLISHABLE_KEY - Authentication will not function. Please set this environment variable in your .env file.");
-}
 
 // Initialize Vercel Web Analytics
 initializeAnalytics();
@@ -33,17 +25,8 @@ if ('serviceWorker' in navigator) {
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 
-// Conditionally wrap with ClerkProvider only if key is available
-const AppWithProviders = CLERK_PUBLISHABLE_KEY ? (
-  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-    <App />
-  </ClerkProvider>
-) : (
-  <App />
-);
-
 root.render(
   <React.StrictMode>
-    {AppWithProviders}
+    <App />
   </React.StrictMode>
 );

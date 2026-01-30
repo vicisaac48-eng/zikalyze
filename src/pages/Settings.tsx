@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { UserProfile, useUser } from "@clerk/clerk-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, AlertCircle } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Key, Copy, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -14,21 +13,19 @@ import { alertSound } from "@/lib/alertSound";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import EmailDigestSettings from "@/components/settings/EmailDigestSettings";
 import { languageCodes } from "@/i18n/config";
-
-// Check if Clerk is configured
-const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+import { useAuth } from "@/hooks/useAuth";
+import { formatPrivateKey } from "@/lib/crypto";
 
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
+  const { user } = useAuth();
   
-  // Only call useUser hook when Clerk is configured (app is wrapped with ClerkProvider)
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { user } = isClerkConfigured ? useUser() : { user: null };
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [keyCopied, setKeyCopied] = useState(false);
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -145,53 +142,73 @@ const Settings = () => {
                         </div>
                         <div>
                           <div className="font-medium text-foreground">
-                            {user?.primaryEmailAddress?.emailAddress || "No email (Demo Mode)"}
+                            {user?.username || "Guest User"}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                            Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Clerk User Profile - handles email, password, 2FA, etc. */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Manage Account</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Update your email, password, and security settings below.
-                    </p>
-                    {isClerkConfigured && UserProfile ? (
-                      <div className="flex justify-center">
-                        <UserProfile 
-                          routing="hash"
-                          appearance={{
-                            elements: {
-                              rootBox: "w-full",
-                              card: "bg-transparent shadow-none border-0 p-0",
-                              navbar: "hidden",
-                              pageScrollBox: "p-0",
-                              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-                              formFieldInput: "bg-secondary border-border text-foreground",
-                              formFieldLabel: "text-foreground",
-                              headerTitle: "text-foreground",
-                              headerSubtitle: "text-muted-foreground",
+                  {/* Private Key Display */}
+                  {user?.privateKey && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-4">Your Private Key</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Use this key to login. Keep it secure and never share it.
+                      </p>
+                      <div className="relative p-4 rounded-xl bg-secondary/50 border border-border">
+                        <div className="font-mono text-sm break-all pr-12">
+                          {formatPrivateKey(user.privateKey)}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-3 right-3"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(formatPrivateKey(user.privateKey || ""));
+                              setKeyCopied(true);
+                              toast({
+                                title: "Copied!",
+                                description: "Private key copied to clipboard",
+                              });
+                              setTimeout(() => setKeyCopied(false), 3000);
+                            } catch {
+                              toast({
+                                title: "Copy failed",
+                                description: "Please manually copy the key",
+                                variant: "destructive",
+                              });
                             }
                           }}
-                        />
+                        >
+                          {keyCopied ? (
+                            <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                        <div className="flex items-center gap-3 mb-2">
-                          <AlertCircle className="h-5 w-5 text-warning" />
-                          <span className="font-medium text-foreground">Authentication Not Configured</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Set VITE_CLERK_PUBLISHABLE_KEY in your environment to enable account management features.
-                        </p>
+                      <p className="text-xs text-warning mt-2">
+                        ⚠️ Never share your private key with anyone!
+                      </p>
+                    </div>
+                  )}
+
+                  {!user && (
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Key className="h-5 w-5 text-primary" />
+                        <span className="font-medium text-foreground">Demo Mode</span>
                       </div>
-                    )}
-                  </div>
+                      <p className="text-sm text-muted-foreground">
+                        Sign up to create your account and get your unique private key.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -340,19 +357,29 @@ const Settings = () => {
                   
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="font-medium text-foreground mb-2">Account Security</div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Key className="h-5 w-5 text-primary" />
+                        <div className="font-medium text-foreground">Private Key Security</div>
+                      </div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Manage your password, two-factor authentication, and active sessions through your profile.
+                        Your private key is your identity. Keep it secure and never share it with anyone.
                       </div>
                       <Button variant="outline" onClick={() => setActiveTab("profile")}>
-                        Go to Profile Settings
+                        View Private Key
                       </Button>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                      <div className="font-medium text-foreground mb-2">Delete Account</div>
+                    <div className="p-4 rounded-xl bg-secondary/50">
+                      <div className="font-medium text-foreground mb-2">Session Security</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        To delete your account, go to your profile settings above and use the account management options provided by Clerk.
+                        Your session expires after 24 hours of inactivity. You'll be automatically logged out after 15 minutes of inactivity on protected pages.
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="font-medium text-foreground mb-2">Clear Account Data</div>
+                      <div className="text-sm text-muted-foreground mb-3">
+                        To remove your account data from this device, clear your browser's local storage and session storage.
                       </div>
                     </div>
                   </div>
