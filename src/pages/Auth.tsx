@@ -1,15 +1,65 @@
-import { useEffect } from "react";
+import { useEffect, useState, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
-import { TrendingUp, AlertCircle } from "lucide-react";
+import { TrendingUp, AlertCircle, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 // Check if Clerk is configured
 const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Fallback component when Clerk is not configured
+// Error boundary for Clerk components
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ClerkErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("[Auth] Clerk error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+// Demo mode component - used when Clerk is not configured or fails
+const DemoModeAuth = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="text-center py-8">
+      <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">Welcome to Zikalyze</h3>
+      <p className="text-muted-foreground mb-4">
+        Experience the smartest trading companion with real-time analysis.
+      </p>
+      <Button 
+        onClick={() => navigate("/dashboard")}
+        className="bg-primary hover:bg-primary/90"
+      >
+        Explore Dashboard
+      </Button>
+      <p className="text-xs text-muted-foreground mt-4">
+        No sign-up required for demo mode
+      </p>
+    </div>
+  );
+};
+
+// Fallback component when Clerk has issues
 const ClerkNotConfigured = () => {
   const navigate = useNavigate();
   
@@ -27,83 +77,139 @@ const ClerkNotConfigured = () => {
   );
 };
 
-// Auth component with Clerk - only rendered when Clerk is configured
+// Lazy loaded Clerk components with error handling
 const AuthWithClerk = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isLoaded } = useUser();
+  const [ClerkComponents, setClerkComponents] = useState<{
+    SignIn: React.ComponentType<Record<string, unknown>>;
+    SignUp: React.ComponentType<Record<string, unknown>>;
+    useUser: () => { user: unknown; isLoaded: boolean };
+  } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Redirect if already logged in
+  // Dynamically import Clerk components
   useEffect(() => {
-    if (isLoaded && user) {
-      navigate("/dashboard");
-    }
-  }, [user, isLoaded, navigate]);
+    let mounted = true;
+    
+    const loadClerk = async () => {
+      try {
+        const clerk = await import("@clerk/clerk-react");
+        if (mounted) {
+          setClerkComponents({
+            SignIn: clerk.SignIn as React.ComponentType<Record<string, unknown>>,
+            SignUp: clerk.SignUp as React.ComponentType<Record<string, unknown>>,
+            useUser: clerk.useUser,
+          });
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("[Auth] Failed to load Clerk:", err);
+        if (mounted) {
+          setLoadError(true);
+          setLoading(false);
+        }
+      }
+    };
 
-  // Redirect immediately if already logged in
-  if (user) {
-    return null;
+    // Timeout for loading
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("[Auth] Clerk load timeout");
+        setLoadError(true);
+        setLoading(false);
+      }
+    }, 8000);
+
+    loadClerk();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, [loading]);
+
+  // Check if user is already logged in via Clerk global
+  useEffect(() => {
+    const checkUser = () => {
+      try {
+        const clerkInstance = (window as unknown as { Clerk?: { user?: unknown } }).Clerk;
+        if (clerkInstance?.user) {
+          navigate("/dashboard");
+        }
+      } catch {
+        // Ignore
+      }
+    };
+    
+    checkUser();
+    const interval = setInterval(checkUser, 1000);
+    return () => clearInterval(interval);
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading authentication...</p>
+      </div>
+    );
   }
 
+  if (loadError || !ClerkComponents) {
+    return <DemoModeAuth />;
+  }
+
+  const { SignIn, SignUp } = ClerkComponents;
+
+  const clerkAppearance = {
+    elements: {
+      rootBox: "w-full",
+      card: "bg-transparent shadow-none p-0",
+      headerTitle: "hidden",
+      headerSubtitle: "hidden",
+      socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-secondary/80",
+      formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+      formFieldInput: "bg-secondary border-border text-foreground",
+      formFieldLabel: "text-foreground",
+      footerActionLink: "text-primary hover:text-primary/80",
+      identityPreviewText: "text-foreground",
+      identityPreviewEditButton: "text-primary",
+      formFieldInputShowPasswordButton: "text-muted-foreground",
+      footer: "hidden",
+    }
+  };
+
   return (
-    <Tabs defaultValue="signin" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
-        <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
-      </TabsList>
+    <ClerkErrorBoundary fallback={<DemoModeAuth />}>
+      <Tabs defaultValue="signin" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
+          <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="signin">
-        <div className="flex justify-center">
-          <SignIn 
-            routing="hash"
-            forceRedirectUrl="/dashboard"
-            appearance={{
-              elements: {
-                rootBox: "w-full",
-                card: "bg-transparent shadow-none p-0",
-                headerTitle: "hidden",
-                headerSubtitle: "hidden",
-                socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-secondary/80",
-                formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-                formFieldInput: "bg-secondary border-border text-foreground",
-                formFieldLabel: "text-foreground",
-                footerActionLink: "text-primary hover:text-primary/80",
-                identityPreviewText: "text-foreground",
-                identityPreviewEditButton: "text-primary",
-                formFieldInputShowPasswordButton: "text-muted-foreground",
-                footer: "hidden",
-              }
-            }}
-          />
-        </div>
-      </TabsContent>
+        <TabsContent value="signin">
+          <div className="flex justify-center">
+            <SignIn 
+              routing="hash"
+              forceRedirectUrl="/dashboard"
+              appearance={clerkAppearance}
+            />
+          </div>
+        </TabsContent>
 
-      <TabsContent value="signup">
-        <div className="flex justify-center">
-          <SignUp 
-            routing="hash"
-            forceRedirectUrl="/dashboard"
-            appearance={{
-              elements: {
-                rootBox: "w-full",
-                card: "bg-transparent shadow-none p-0",
-                headerTitle: "hidden",
-                headerSubtitle: "hidden",
-                socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-secondary/80",
-                formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-                formFieldInput: "bg-secondary border-border text-foreground",
-                formFieldLabel: "text-foreground",
-                footerActionLink: "text-primary hover:text-primary/80",
-                identityPreviewText: "text-foreground",
-                identityPreviewEditButton: "text-primary",
-                formFieldInputShowPasswordButton: "text-muted-foreground",
-                footer: "hidden",
-              }
-            }}
-          />
-        </div>
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="signup">
+          <div className="flex justify-center">
+            <SignUp 
+              routing="hash"
+              forceRedirectUrl="/dashboard"
+              appearance={clerkAppearance}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </ClerkErrorBoundary>
   );
 };
 

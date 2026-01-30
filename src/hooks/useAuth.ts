@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
-import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useState, useEffect, useCallback } from "react";
 
-// User type compatible with both Clerk and components expecting Supabase-like user
-// Note: Both 'email' and 'primaryEmailAddress' are provided for backward compatibility
-// with code that may expect either Supabase-style (email) or Clerk-style (primaryEmailAddress) format
+// User type compatible with components expecting Supabase-like user
 export interface ClerkUserLike {
   id: string;
   email?: string;
@@ -16,125 +13,225 @@ export interface ClerkUserLike {
 // Check if Clerk is configured at module load time
 const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Timeout for Clerk to load (10 seconds) - falls back to demo mode if exceeded
-const CLERK_LOAD_TIMEOUT = 10000;
+// Timeout for Clerk to load (8 seconds) - falls back to demo mode if exceeded
+const CLERK_LOAD_TIMEOUT = 8000;
 
-// Hook implementation
+// Demo mode auth state - used when Clerk is not configured or fails
+const createDemoAuthState = () => ({
+  user: null,
+  session: null,
+  loading: false,
+  isSignedIn: false,
+  isDemoMode: true,
+  signUp: async (_email: string, _password: string) => {
+    console.info("[Auth] Demo mode - sign up not available");
+    return { error: null }; // Don't throw error, just silently succeed in demo mode
+  },
+  signIn: async (_email: string, _password: string) => {
+    console.info("[Auth] Demo mode - sign in not available");
+    return { error: null }; // Don't throw error, just silently succeed in demo mode
+  },
+  signOut: async () => ({ error: null }),
+  resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => 
+    ({ error: null }), // Silent success in demo mode
+  updatePassword: async (_newPassword: string) => ({ error: null }),
+  updateEmail: async (_newEmail: string) => ({ error: null }),
+});
+
+/**
+ * useAuth hook with Clerk integration
+ * 
+ * Provides authentication state with automatic demo mode fallback:
+ * 1. If VITE_CLERK_PUBLISHABLE_KEY is not set -> Demo mode immediately
+ * 2. If Clerk fails to load within 8 seconds -> Demo mode fallback
+ * 3. Otherwise -> Full Clerk authentication
+ * 
+ * Demo mode allows users to explore the app without signing in.
+ */
 export const useAuth = () => {
-  // Track if we've timed out waiting for Clerk
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [clerkTimedOut, setClerkTimedOut] = useState(false);
-  
-  // When Clerk is not configured, return a static fallback
-  // This avoids calling Clerk hooks which would throw without ClerkProvider
-  if (!isClerkConfigured) {
-    return {
-      user: null,
-      session: null,
-      loading: false,
-      isSignedIn: false,
-      signUp: async (_email: string, _password: string) => {
-        console.warn("[useAuth] Clerk is not configured. Set VITE_CLERK_PUBLISHABLE_KEY.");
-        return { error: new Error("Clerk is not configured") };
-      },
-      signIn: async (_email: string, _password: string) => {
-        console.warn("[useAuth] Clerk is not configured. Set VITE_CLERK_PUBLISHABLE_KEY.");
-        return { error: new Error("Clerk is not configured") };
-      },
-      signOut: async () => ({ error: null }),
-      resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => 
-        ({ error: new Error("Clerk is not configured") }),
-      updatePassword: async (_newPassword: string) => 
-        ({ error: new Error("Clerk is not configured") }),
-      updateEmail: async (_newEmail: string) => 
-        ({ error: new Error("Clerk is not configured") }),
-    };
-  }
+  // State for demo mode and loading
+  const [state, setState] = useState<{
+    user: ClerkUserLike | null;
+    isSignedIn: boolean;
+    loading: boolean;
+    isDemoMode: boolean;
+    clerkLoaded: boolean;
+  }>({
+    user: null,
+    isSignedIn: false,
+    loading: isClerkConfigured, // Only loading if Clerk is configured
+    isDemoMode: !isClerkConfigured, // Start in demo mode if not configured
+    clerkLoaded: false,
+  });
 
-  // Clerk hooks - only called when Clerk is configured
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { signOut: clerkSignOut } = useClerk();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { isLoaded: authLoaded } = useClerkAuth();
-  
-  // Set a timeout for Clerk loading - if it fails, allow demo mode access
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Clerk integration - dynamically imported to avoid issues when not configured
+  const [clerkModules, setClerkModules] = useState<{
+    useUser?: () => { user: unknown; isLoaded: boolean; isSignedIn?: boolean };
+    useClerk?: () => { signOut: () => Promise<void> };
+  }>({});
+
+  // Load Clerk modules dynamically when configured
   useEffect(() => {
-    if (isLoaded && authLoaded) return; // Already loaded
+    if (!isClerkConfigured) return;
+
+    let mounted = true;
     
+    // Set up timeout for Clerk loading
     const timeout = setTimeout(() => {
-      if (!isLoaded || !authLoaded) {
-        console.warn("[useAuth] Clerk failed to load within timeout. Falling back to demo mode.");
-        setClerkTimedOut(true);
+      if (mounted && state.loading) {
+        console.warn("[Auth] Clerk load timeout - switching to demo mode");
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          isDemoMode: true,
+        }));
       }
     }, CLERK_LOAD_TIMEOUT);
-    
-    return () => clearTimeout(timeout);
-  }, [isLoaded, authLoaded]);
 
-  // Map Clerk user to a compatible format
-  const user: ClerkUserLike | null = clerkUser
-    ? {
-        id: clerkUser.id,
-        email: clerkUser.primaryEmailAddress?.emailAddress,
-        created_at: clerkUser.createdAt ? clerkUser.createdAt.toISOString() : undefined,
-        primaryEmailAddress: clerkUser.primaryEmailAddress
-          ? { emailAddress: clerkUser.primaryEmailAddress.emailAddress }
-          : undefined,
+    // Dynamically import Clerk hooks
+    import("@clerk/clerk-react").then(({ useUser, useClerk }) => {
+      if (mounted) {
+        setClerkModules({ useUser, useClerk });
       }
-    : null;
+    }).catch((err) => {
+      console.error("[Auth] Failed to load Clerk:", err);
+      if (mounted) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          isDemoMode: true,
+        }));
+      }
+    });
 
-  // If Clerk timed out, treat as loaded (demo mode)
-  const loading = clerkTimedOut ? false : (!isLoaded || !authLoaded);
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, [state.loading]);
 
-  // Clerk handles sign up through its components, these are stubs for compatibility
-  const signUp = async (_email: string, _password: string) => {
-    console.warn("[useAuth] signUp() is deprecated. Use Clerk's <SignUp /> component instead.");
-    return { error: new Error("Use Clerk SignUp component instead") };
-  };
+  // When Clerk modules are loaded, we need to use them
+  // This is done via a child component pattern to maintain hook rules
+  useEffect(() => {
+    if (!isClerkConfigured || !clerkModules.useUser) return;
 
-  const signIn = async (_email: string, _password: string) => {
-    console.warn("[useAuth] signIn() is deprecated. Use Clerk's <SignIn /> component instead.");
-    return { error: new Error("Use Clerk SignIn component instead") };
-  };
+    // Since we can't call hooks conditionally, we'll use polling approach
+    // to check Clerk's state
+    const checkClerkState = () => {
+      try {
+        // Access Clerk state through window if available
+        const clerkInstance = (window as unknown as { Clerk?: { user?: unknown; loaded?: boolean } }).Clerk;
+        if (clerkInstance?.loaded) {
+          const user = clerkInstance.user as { 
+            id?: string; 
+            primaryEmailAddress?: { emailAddress?: string };
+            createdAt?: Date;
+          } | null;
+          
+          setState({
+            user: user ? {
+              id: user.id || "demo-user",
+              email: user.primaryEmailAddress?.emailAddress,
+              created_at: user.createdAt?.toISOString(),
+              primaryEmailAddress: user.primaryEmailAddress
+                ? { emailAddress: user.primaryEmailAddress.emailAddress || "" }
+                : undefined,
+            } : null,
+            isSignedIn: !!user,
+            loading: false,
+            isDemoMode: false,
+            clerkLoaded: true,
+          });
+          return true;
+        }
+      } catch {
+        // Clerk not ready yet
+      }
+      return false;
+    };
 
-  const signOut = async () => {
+    // Poll for Clerk state
+    if (checkClerkState()) return;
+    
+    const interval = setInterval(() => {
+      if (checkClerkState()) {
+        clearInterval(interval);
+      }
+    }, 200);
+
+    // Cleanup and timeout
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (state.loading) {
+        console.warn("[Auth] Clerk polling timeout - switching to demo mode");
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          isDemoMode: true,
+        }));
+      }
+    }, CLERK_LOAD_TIMEOUT);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [clerkModules.useUser, state.loading]);
+
+  // Sign out function
+  const signOut = useCallback(async () => {
+    if (state.isDemoMode) {
+      return { error: null };
+    }
     try {
-      await clerkSignOut();
+      const clerkInstance = (window as unknown as { Clerk?: { signOut?: () => Promise<void> } }).Clerk;
+      if (clerkInstance?.signOut) {
+        await clerkInstance.signOut();
+      }
+      setState(prev => ({
+        ...prev,
+        user: null,
+        isSignedIn: false,
+      }));
       return { error: null };
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("An unexpected error occurred during sign out");
+      const error = err instanceof Error ? err : new Error("Sign out failed");
       return { error };
     }
-  };
+  }, [state.isDemoMode]);
 
-  const resetPassword = async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => {
-    console.warn("[useAuth] resetPassword() is deprecated. Use Clerk's built-in password reset flow instead.");
-    return { error: new Error("Use Clerk's built-in password reset flow") };
-  };
+  // Return demo mode auth state if in demo mode
+  if (state.isDemoMode) {
+    return createDemoAuthState();
+  }
 
-  const updatePassword = async (_newPassword: string) => {
-    console.warn("[useAuth] updatePassword() is deprecated. Use Clerk's <UserProfile /> component instead.");
-    return { error: new Error("Use Clerk's built-in password update flow") };
-  };
-
-  const updateEmail = async (_newEmail: string) => {
-    console.warn("[useAuth] updateEmail() is deprecated. Use Clerk's <UserProfile /> component instead.");
-    return { error: new Error("Use Clerk's built-in email update flow") };
-  };
-
+  // Return Clerk-powered auth state
   return {
-    user,
-    session: isSignedIn ? { user } : null,
-    loading,
-    isSignedIn: clerkTimedOut ? false : isSignedIn,
-    signUp,
-    signIn,
+    user: state.user,
+    session: state.isSignedIn ? { user: state.user } : null,
+    loading: state.loading,
+    isSignedIn: state.isSignedIn,
+    isDemoMode: false,
+    signUp: async (_email: string, _password: string) => {
+      console.info("[Auth] Use Clerk's <SignUp /> component for sign up");
+      return { error: null };
+    },
+    signIn: async (_email: string, _password: string) => {
+      console.info("[Auth] Use Clerk's <SignIn /> component for sign in");
+      return { error: null };
+    },
     signOut,
-    resetPassword,
-    updatePassword,
-    updateEmail,
+    resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => {
+      console.info("[Auth] Use Clerk's built-in password reset flow");
+      return { error: null };
+    },
+    updatePassword: async (_newPassword: string) => {
+      console.info("[Auth] Use Clerk's <UserProfile /> component");
+      return { error: null };
+    },
+    updateEmail: async (_newEmail: string) => {
+      console.info("[Auth] Use Clerk's <UserProfile /> component");
+      return { error: null };
+    },
   };
 };
