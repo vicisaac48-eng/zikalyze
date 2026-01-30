@@ -4,7 +4,7 @@
 // Integrates the complete brain pipeline with React state management
 // Self-learns from live chart data and WebSocket livestream
 // ICT/SMC analysis with multi-timeframe confluence
-// Unified Brain v3.0 - Most advanced crypto AI
+// Unified Brain - Most advanced crypto AI
 // Only sends accurate information after strict verification!
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -25,8 +25,8 @@ import {
 interface UseBrainPipelineOptions {
   autoLearn?: boolean;  // Enable automatic learning from outcomes
   language?: string;    // Language for analysis output
-  selfLearning?: boolean; // Enable self-learning mode (v2.0)
-  unified?: boolean;    // Enable unified brain v3.0 (default: true)
+  selfLearning?: boolean; // Enable self-learning mode
+  unified?: boolean;    // Enable unified brain (default: true)
 }
 
 interface UseBrainPipelineReturn {
@@ -47,7 +47,7 @@ interface UseBrainPipelineReturn {
     chartData?: ChartTrendInput, 
     livestreamUpdate?: LivestreamUpdate
   ) => Promise<SelfLearningOutput>;
-  // Unified Brain v3.0
+  // Unified Brain
   analyze: (
     input: AnalysisInput,
     chartData?: ChartTrendInput,
@@ -79,8 +79,8 @@ interface UseBrainPipelineReturn {
  * - Attention AI Algorithm (filter, verify, calculate)
  * - Hidden data storage (good/bad separation)
  * - Double verification before output
- * - Self-learning from live chart data (v2.0)
- * - Self-learning from WebSocket livestream (v2.0)
+ * - Self-learning from live chart data
+ * - Self-learning from WebSocket livestream
  * - Only sends accurate information after strict verification
  * 
  * Usage:
@@ -131,15 +131,15 @@ export function useBrainPipeline(
   useEffect(() => {
     if (!pipelineRef.current) {
       pipelineRef.current = new ZikalyzeBrainPipeline();
-      console.log('[Brain Pipeline] Initialized Zikalyze AI Brain Pipeline v1.0');
+      console.log('[Brain Pipeline] Initialized Zikalyze AI Brain Pipeline');
     }
     if (!selfLearningPipelineRef.current && selfLearning) {
       selfLearningPipelineRef.current = new SelfLearningBrainPipeline();
-      console.log('[Brain Pipeline] Initialized Self-Learning Brain Pipeline v2.0');
+      console.log('[Brain Pipeline] Initialized Self-Learning Brain Pipeline');
     }
     if (!unifiedBrainRef.current && unified) {
       unifiedBrainRef.current = new UnifiedBrain();
-      console.log('[Brain Pipeline] Initialized Unified Brain v3.0');
+      console.log('[Brain Pipeline] Initialized Unified Brain');
     }
   }, [selfLearning, unified]);
 
@@ -275,7 +275,7 @@ export function useBrainPipeline(
   }, []);
 
   /**
-   * Run unified brain analysis (v3.0) - Most comprehensive analysis
+   * Run unified brain analysis - Most comprehensive analysis
    * Combines ETF, Macro, Sentiment, On-Chain, ICT/SMC, and Self-Learning
    */
   const analyze = useCallback(async (
@@ -324,7 +324,7 @@ export function useBrainPipeline(
       
       // Log unified brain stats
       console.log(
-        `[UnifiedBrain v3.0] Processed ${input.crypto} in ${result.processingTimeMs}ms | ` +
+        `[UnifiedBrain] Processed ${input.crypto} in ${result.processingTimeMs}ms | ` +
         `Bias: ${result.bias} | Accuracy: ${result.accuracyScore.toFixed(0)}% | ` +
         `ICT: ${result.hasICTSetup ? '✓' : '✗'} | Macro: ${result.macroImpact} | ` +
         `Verified: ${result.isVerified ? '✓' : '✗'}`

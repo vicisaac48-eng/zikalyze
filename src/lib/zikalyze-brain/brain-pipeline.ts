@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.0 — Self-Learning from Live Data
+// 🧠 ZIKALYZE AI BRAIN PIPELINE — Self-Learning from Live Data
 // ═══════════════════════════════════════════════════════════════════════════════
 // ⚡ Active Crypto Direct Source → AI Analyzer → Attention Algorithm → Double Verify
 // 🔗 All processing happens in a second with deterministic, verifiable steps
@@ -1707,7 +1707,7 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
     
     return original.replace(
       '🧠 ZIKALYZE AI BRAIN PIPELINE',
-      `🧠 ZIKALYZE AI BRAIN PIPELINE v2.0\n│  ${learningBadge} | Learning Score: ${(score * 100).toFixed(0)}%`
+      `🧠 ZIKALYZE AI BRAIN PIPELINE\n│  ${learningBadge} | Learning Score: ${(score * 100).toFixed(0)}%`
     );
   }
   
@@ -1783,7 +1783,7 @@ Please wait for the next analysis cycle with better data.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 UNIFIED BRAIN v3.0 — Merges v10 + v2 + ICT/SMC
+// 🧠 UNIFIED BRAIN — Merges All Analysis Systems
 // ═══════════════════════════════════════════════════════════════════════════════
 // The most advanced, accurate, and intelligent crypto analysis system
 // Combines: ETF, Macro, Sentiment, On-Chain, ICT/SMC, Self-Learning
@@ -1863,19 +1863,19 @@ export interface UnifiedBrainOutput {
 }
 
 /**
- * Unified Brain v3.0
+ * Unified Brain
  * The most advanced crypto analysis engine combining:
- * - v10.0 comprehensive analysis (ETF, macro, sentiment, on-chain)
- * - v2.0 self-learning (chart, livestream)
+ * - Comprehensive analysis (ETF, macro, sentiment, on-chain)
+ * - Self-learning (chart, livestream)
  * - ICT/SMC multi-timeframe confluence
  * - Strict verification before output
  */
 export class UnifiedBrain extends SelfLearningBrainPipeline {
-  private readonly unifiedVersion = '3.0.0';
+  private readonly unifiedVersion = 'latest';
   
   constructor() {
     super();
-    console.log('[UnifiedBrain] Initialized v3.0 — Most Advanced Crypto AI');
+    console.log('[UnifiedBrain] Initialized — Most Advanced Crypto AI');
   }
   
   /**
@@ -1890,7 +1890,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     const startTime = Date.now();
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 1: Run Self-Learning Pipeline (v2.0 features)
+    // STEP 1: Run Self-Learning Pipeline
     // ═══════════════════════════════════════════════════════════════════════
     const selfLearningOutput = this.processWithLearning(input, chartData, livestreamUpdate);
     
@@ -2167,7 +2167,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     
     let analysis = `
 ╔══════════════════════════════════════════════════════════════════╗
-║  🧠 ZIKALYZE UNIFIED BRAIN v3.0                                  ║
+║  🧠 ZIKALYZE UNIFIED BRAIN                                       ║
 ║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
 ╚══════════════════════════════════════════════════════════════════╝
 
@@ -2236,7 +2236,7 @@ ${upcomingMacro.map(m => `  📅 ${m}`).join('\n')}
   ✅ Verified: ${output.isAccurate ? '✓ YES' : '✗ Pending verification'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Powered by Zikalyze Unified Brain v3.0 | ${output.processingTimeMs}ms
+  Powered by Zikalyze Unified Brain | ${output.processingTimeMs}ms
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 

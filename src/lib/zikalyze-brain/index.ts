@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN v10.0 — MAIN ANALYSIS ENGINE
+// 🧠 ZIKALYZE AI BRAIN — MAIN ANALYSIS ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
 // ⚡ 100% CLIENT-SIDE — Runs entirely in the browser
 // 🔗 No external AI dependencies — Pure algorithmic intelligence
@@ -36,7 +36,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     precisionEntry: '15-Minute Precision Entry',
     keyInsights: 'Key Insights',
     scenarios: 'If-Then Scenarios',
-    poweredBy: 'Powered by Zikalyze AI v10.0'
+    poweredBy: 'Powered by Zikalyze AI'
   },
   es: {
     quickAnalysis: 'Análisis Rápido',
@@ -51,7 +51,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     precisionEntry: 'Entrada de Precisión 15M',
     keyInsights: 'Ideas Clave',
     scenarios: 'Escenarios Si-Entonces',
-    poweredBy: 'Potenciado por Zikalyze AI v10.0'
+    poweredBy: 'Potenciado por Zikalyze AI'
   },
   // Add more languages as needed
 };
@@ -621,7 +621,7 @@ export {
   LiveChartLearner,
   LivestreamLearner,
   SelfLearningBrainPipeline,
-  // Unified Brain v3.0
+  // Unified Brain
   UnifiedBrain
 } from './brain-pipeline';
 export type { 
