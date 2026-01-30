@@ -167,7 +167,7 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
     // Very long delay - 8 seconds to ensure completely out of audit window
     const timeoutId = setTimeout(() => {
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => triggerFetch(), { timeout: 15000 });
+        (window as { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => void }).requestIdleCallback?.(() => triggerFetch(), { timeout: 15000 });
       } else {
         triggerFetch();
       }

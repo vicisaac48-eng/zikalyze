@@ -132,7 +132,10 @@ export interface TickerUpdate {
   source: string;
 }
 
-export const parseBinanceTicker = (data: any): TickerUpdate | null => {
+// Generic WebSocket message data type for ticker parsing
+type WebSocketTickerData = Record<string, unknown>;
+
+export const parseBinanceTicker = (data: WebSocketTickerData): TickerUpdate | null => {
   try {
     const ticker = data.data || data;
     if (!ticker?.s || !ticker?.c) return null;
@@ -152,20 +155,21 @@ export const parseBinanceTicker = (data: any): TickerUpdate | null => {
   }
 };
 
-export const parseOKXTicker = (data: any): TickerUpdate | null => {
+export const parseOKXTicker = (data: WebSocketTickerData): TickerUpdate | null => {
   try {
-    if (data.arg?.channel !== 'tickers' || !data.data?.[0]) return null;
-    const ticker = data.data[0];
-    const symbol = ticker.instId?.replace('-USDT', '').toUpperCase();
+    const dataWithArg = data as { arg?: { channel?: string }; data?: Array<Record<string, unknown>> };
+    if (dataWithArg.arg?.channel !== 'tickers' || !dataWithArg.data?.[0]) return null;
+    const ticker = dataWithArg.data[0];
+    const symbol = (ticker.instId as string)?.replace('-USDT', '').toUpperCase();
     if (!symbol) return null;
     
     return {
       symbol,
-      price: parseFloat(ticker.last),
-      change24h: parseFloat(ticker.sodUtc8) ? ((parseFloat(ticker.last) - parseFloat(ticker.sodUtc8)) / parseFloat(ticker.sodUtc8)) * 100 : 0,
-      high24h: parseFloat(ticker.high24h || '0'),
-      low24h: parseFloat(ticker.low24h || '0'),
-      volume: parseFloat(ticker.vol24h || '0') * parseFloat(ticker.last || '1'),
+      price: parseFloat(ticker.last as string),
+      change24h: parseFloat(ticker.sodUtc8 as string) ? ((parseFloat(ticker.last as string) - parseFloat(ticker.sodUtc8 as string)) / parseFloat(ticker.sodUtc8 as string)) * 100 : 0,
+      high24h: parseFloat((ticker.high24h as string) || '0'),
+      low24h: parseFloat((ticker.low24h as string) || '0'),
+      volume: parseFloat((ticker.vol24h as string) || '0') * parseFloat((ticker.last as string) || '1'),
       source: 'OKX',
     };
   } catch {
@@ -173,20 +177,21 @@ export const parseOKXTicker = (data: any): TickerUpdate | null => {
   }
 };
 
-export const parseBybitTicker = (data: any): TickerUpdate | null => {
+export const parseBybitTicker = (data: WebSocketTickerData): TickerUpdate | null => {
   try {
-    if (data.topic !== 'tickers' || !data.data) return null;
-    const ticker = data.data;
-    const symbol = ticker.symbol?.replace(/USDT$/, '').toUpperCase();
+    const typedData = data as { topic?: string; data?: Record<string, unknown> };
+    if (typedData.topic !== 'tickers' || !typedData.data) return null;
+    const ticker = typedData.data;
+    const symbol = (ticker.symbol as string)?.replace(/USDT$/, '').toUpperCase();
     if (!symbol) return null;
     
     return {
       symbol,
-      price: parseFloat(ticker.lastPrice),
-      change24h: parseFloat(ticker.price24hPcnt || '0') * 100,
-      high24h: parseFloat(ticker.highPrice24h || '0'),
-      low24h: parseFloat(ticker.lowPrice24h || '0'),
-      volume: parseFloat(ticker.turnover24h || '0'),
+      price: parseFloat(ticker.lastPrice as string),
+      change24h: parseFloat((ticker.price24hPcnt as string) || '0') * 100,
+      high24h: parseFloat((ticker.highPrice24h as string) || '0'),
+      low24h: parseFloat((ticker.lowPrice24h as string) || '0'),
+      volume: parseFloat((ticker.turnover24h as string) || '0'),
       source: 'Bybit',
     };
   } catch {
@@ -194,24 +199,24 @@ export const parseBybitTicker = (data: any): TickerUpdate | null => {
   }
 };
 
-export const parseKrakenTicker = (data: any): TickerUpdate | null => {
+export const parseKrakenTicker = (data: unknown): TickerUpdate | null => {
   try {
     if (!Array.isArray(data) || data.length < 4) return null;
-    const ticker = data[1];
+    const ticker = data[1] as Record<string, unknown[]> | undefined;
     const pair = data[3] as string;
     if (!ticker || !pair) return null;
     
     const symbol = pair.replace('/USD', '').replace('XBT', 'BTC').toUpperCase();
-    const price = parseFloat(ticker.c?.[0] || '0');
-    const open = parseFloat(ticker.o?.[1] || price.toString());
+    const price = parseFloat((ticker.c?.[0] as string) || '0');
+    const open = parseFloat((ticker.o?.[1] as string) || price.toString());
     
     return {
       symbol,
       price,
       change24h: open > 0 ? ((price - open) / open) * 100 : 0,
-      high24h: parseFloat(ticker.h?.[1] || '0'),
-      low24h: parseFloat(ticker.l?.[1] || '0'),
-      volume: parseFloat(ticker.v?.[1] || '0') * price,
+      high24h: parseFloat((ticker.h?.[1] as string) || '0'),
+      low24h: parseFloat((ticker.l?.[1] as string) || '0'),
+      volume: parseFloat((ticker.v?.[1] as string) || '0') * price,
       source: 'Kraken',
     };
   } catch {
@@ -219,22 +224,22 @@ export const parseKrakenTicker = (data: any): TickerUpdate | null => {
   }
 };
 
-export const parseCoinbaseTicker = (data: any): TickerUpdate | null => {
+export const parseCoinbaseTicker = (data: WebSocketTickerData): TickerUpdate | null => {
   try {
     if (data.type !== 'ticker' || !data.price) return null;
-    const symbol = data.product_id?.replace('-USD', '').toUpperCase();
+    const symbol = (data.product_id as string)?.replace('-USD', '').toUpperCase();
     if (!symbol) return null;
     
-    const price = parseFloat(data.price);
-    const open = parseFloat(data.open_24h || price.toString());
+    const price = parseFloat(data.price as string);
+    const open = parseFloat((data.open_24h as string) || price.toString());
     
     return {
       symbol,
       price,
       change24h: open > 0 ? ((price - open) / open) * 100 : 0,
-      high24h: parseFloat(data.high_24h || '0'),
-      low24h: parseFloat(data.low_24h || '0'),
-      volume: parseFloat(data.volume_24h || '0') * price,
+      high24h: parseFloat((data.high_24h as string) || '0'),
+      low24h: parseFloat((data.low_24h as string) || '0'),
+      volume: parseFloat((data.volume_24h as string) || '0') * price,
       source: 'Coinbase',
     };
   } catch {
@@ -243,13 +248,14 @@ export const parseCoinbaseTicker = (data: any): TickerUpdate | null => {
 };
 
 // Parse ticker from any exchange
-export const parseTickerUpdate = (exchange: string, data: any): TickerUpdate | null => {
+export const parseTickerUpdate = (exchange: string, data: unknown): TickerUpdate | null => {
+  const tickerData = data as WebSocketTickerData;
   switch (exchange) {
-    case 'binance': return parseBinanceTicker(data);
-    case 'okx': return parseOKXTicker(data);
-    case 'bybit': return parseBybitTicker(data);
+    case 'binance': return parseBinanceTicker(tickerData);
+    case 'okx': return parseOKXTicker(tickerData);
+    case 'bybit': return parseBybitTicker(tickerData);
     case 'kraken': return parseKrakenTicker(data);
-    case 'coinbase': return parseCoinbaseTicker(data);
+    case 'coinbase': return parseCoinbaseTicker(tickerData);
     default: return null;
   }
 };
