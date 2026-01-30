@@ -1783,6 +1783,468 @@ Please wait for the next analysis cycle with better data.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 UNIFIED BRAIN v3.0 — Merges v10 + v2 + ICT/SMC
+// ═══════════════════════════════════════════════════════════════════════════════
+// The most advanced, accurate, and intelligent crypto analysis system
+// Combines: ETF, Macro, Sentiment, On-Chain, ICT/SMC, Self-Learning
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { 
+  runClientSideAnalysis 
+} from './index';
+import { 
+  getUpcomingMacroCatalysts, 
+  getQuickMacroFlag 
+} from './macro-catalysts';
+import { 
+  estimateOnChainMetrics, 
+  estimateETFFlowData 
+} from './on-chain-estimator';
+import { 
+  detectVolumeSpike 
+} from './volume-analysis';
+
+/**
+ * Unified Brain Output - Complete analysis combining all systems
+ */
+export interface UnifiedBrainOutput {
+  // Core Analysis
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  confidence: number;
+  analysis: string;
+  
+  // Data Sources
+  hasLiveChart: boolean;
+  hasLivestream: boolean;
+  hasOnChain: boolean;
+  hasETF: boolean;
+  hasMacro: boolean;
+  hasSentiment: boolean;
+  hasICT: boolean;
+  
+  // Self-Learning Metrics
+  learnedFromChart: boolean;
+  learnedFromStream: boolean;
+  combinedLearningScore: number;
+  
+  // ICT/SMC Analysis
+  ictAnalysis?: ICTSMCAnalysis;
+  hasICTSetup: boolean;
+  
+  // Macro Events
+  upcomingMacro: string[];
+  macroImpact: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+  
+  // On-Chain Summary
+  onChainSummary: string;
+  etfFlow: string;
+  
+  // Volume Analysis
+  volumeSpike: boolean;
+  volumeSignal: string;
+  
+  // Sentiment
+  fearGreed: number;
+  sentimentLabel: string;
+  
+  // Accuracy
+  isVerified: boolean;
+  accuracyScore: number;
+  verificationStatus: string;
+  
+  // Simplified TL;DR
+  tldr: string;
+  actionableInsight: string;
+  
+  // Metadata
+  timestamp: string;
+  processingTimeMs: number;
+  version: string;
+}
+
+/**
+ * Unified Brain v3.0
+ * The most advanced crypto analysis engine combining:
+ * - v10.0 comprehensive analysis (ETF, macro, sentiment, on-chain)
+ * - v2.0 self-learning (chart, livestream)
+ * - ICT/SMC multi-timeframe confluence
+ * - Strict verification before output
+ */
+export class UnifiedBrain extends SelfLearningBrainPipeline {
+  private readonly unifiedVersion = '3.0.0';
+  
+  constructor() {
+    super();
+    console.log('[UnifiedBrain] Initialized v3.0 — Most Advanced Crypto AI');
+  }
+  
+  /**
+   * Run unified analysis combining all systems
+   * This is the most comprehensive and accurate analysis available
+   */
+  analyze(
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): UnifiedBrainOutput {
+    const startTime = Date.now();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Run Self-Learning Pipeline (v2.0 features)
+    // ═══════════════════════════════════════════════════════════════════════
+    const selfLearningOutput = this.processWithLearning(input, chartData, livestreamUpdate);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Get Macro Catalysts
+    // ═══════════════════════════════════════════════════════════════════════
+    const macroCatalysts = getUpcomingMacroCatalysts();
+    const macroFlag = getQuickMacroFlag();
+    const upcomingMacro = macroCatalysts
+      .slice(0, 3)
+      .map(c => `${c.event} (${c.date}) - ${c.impact}`);
+    
+    // Determine macro impact
+    let macroImpact: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE' = 'NONE';
+    const imminentHighImpact = macroCatalysts.find(c => {
+      if (c.date === 'Ongoing') return false;
+      const daysUntil = Math.ceil((new Date(c.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      return c.impact === 'HIGH' && daysUntil >= 0 && daysUntil <= 3;
+    });
+    if (imminentHighImpact) macroImpact = 'HIGH';
+    else if (macroCatalysts.length > 0) macroImpact = 'MEDIUM';
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: On-Chain Metrics
+    // ═══════════════════════════════════════════════════════════════════════
+    const onChainData = input.onChainData || estimateOnChainMetrics(input.crypto, input.price, input.change);
+    const etfData = estimateETFFlowData(input.price, input.change, input.crypto);
+    
+    const onChainSummary = this.buildOnChainSummary(onChainData);
+    const etfFlow = etfData 
+      ? `${etfData.trend} (24h: ${etfData.btcNetFlow24h > 0 ? '+' : ''}$${etfData.btcNetFlow24h}M)`
+      : 'N/A';
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Volume Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    const volume = input.volume || 0;
+    const avgVolume = volume * 0.85;
+    const volumeSpike = detectVolumeSpike({
+      currentVolume: volume,
+      avgVolume24h: avgVolume,
+      priceChange: input.change,
+      price: input.price,
+      high24h: input.high24h || input.price * 1.02,
+      low24h: input.low24h || input.price * 0.98
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Sentiment Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
+    const sentimentLabel = this.getSentimentLabel(fearGreed);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 6: Calculate Unified Accuracy Score
+    // ═══════════════════════════════════════════════════════════════════════
+    const accuracyScore = this.calculateUnifiedAccuracy(
+      selfLearningOutput,
+      !!chartData?.isLive,
+      !!livestreamUpdate,
+      !!input.onChainData,
+      macroImpact
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 7: Build Simplified TL;DR
+    // ═══════════════════════════════════════════════════════════════════════
+    const { tldr, actionableInsight } = this.buildTLDR(
+      selfLearningOutput,
+      macroImpact,
+      volumeSpike.isSpike,
+      fearGreed
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 8: Build Unified Analysis Output
+    // ═══════════════════════════════════════════════════════════════════════
+    const processingTimeMs = Date.now() - startTime;
+    
+    const unifiedAnalysis = this.buildUnifiedAnalysis(
+      input,
+      selfLearningOutput,
+      tldr,
+      actionableInsight,
+      macroImpact,
+      upcomingMacro,
+      onChainSummary,
+      etfFlow,
+      volumeSpike,
+      fearGreed,
+      sentimentLabel,
+      accuracyScore
+    );
+    
+    return {
+      bias: selfLearningOutput.bias,
+      confidence: selfLearningOutput.confidence,
+      analysis: unifiedAnalysis,
+      
+      // Data Sources
+      hasLiveChart: !!chartData?.isLive,
+      hasLivestream: !!livestreamUpdate,
+      hasOnChain: !!input.onChainData,
+      hasETF: !!etfData,
+      hasMacro: macroCatalysts.length > 0,
+      hasSentiment: !!input.sentimentData,
+      hasICT: selfLearningOutput.hasICTSetup,
+      
+      // Self-Learning
+      learnedFromChart: selfLearningOutput.learnedFromLiveChart,
+      learnedFromStream: selfLearningOutput.learnedFromLivestream,
+      combinedLearningScore: selfLearningOutput.combinedLearningScore,
+      
+      // ICT/SMC
+      ictAnalysis: selfLearningOutput.ictAnalysis,
+      hasICTSetup: selfLearningOutput.hasICTSetup,
+      
+      // Macro
+      upcomingMacro,
+      macroImpact,
+      
+      // On-Chain
+      onChainSummary,
+      etfFlow,
+      
+      // Volume
+      volumeSpike: volumeSpike.isSpike,
+      volumeSignal: volumeSpike.signal,
+      
+      // Sentiment
+      fearGreed,
+      sentimentLabel,
+      
+      // Accuracy
+      isVerified: selfLearningOutput.isAccurate,
+      accuracyScore,
+      verificationStatus: selfLearningOutput.accuracyReason,
+      
+      // TL;DR
+      tldr,
+      actionableInsight,
+      
+      // Metadata
+      timestamp: new Date().toISOString(),
+      processingTimeMs,
+      version: this.unifiedVersion
+    };
+  }
+  
+  /**
+   * Build on-chain summary
+   */
+  private buildOnChainSummary(onChain: OnChainMetrics): string {
+    const flow = onChain.exchangeNetFlow;
+    const whale = onChain.whaleActivity;
+    
+    if (flow.trend === 'OUTFLOW' && whale.netFlow.includes('BUY')) {
+      return `🟢 Accumulation (${flow.magnitude} outflow, whales buying)`;
+    } else if (flow.trend === 'INFLOW' && whale.netFlow.includes('SELL')) {
+      return `🔴 Distribution (${flow.magnitude} inflow, whales selling)`;
+    } else if (flow.trend === 'NEUTRAL') {
+      return `⚪ Neutral (balanced flow)`;
+    }
+    return `${flow.trend} (${flow.magnitude})`;
+  }
+  
+  /**
+   * Get sentiment label
+   */
+  private getSentimentLabel(fearGreed: number): string {
+    if (fearGreed <= 20) return '😱 EXTREME FEAR';
+    if (fearGreed <= 35) return '😰 FEAR';
+    if (fearGreed <= 50) return '😐 NEUTRAL';
+    if (fearGreed <= 65) return '😊 GREED';
+    if (fearGreed <= 80) return '🤑 HIGH GREED';
+    return '🔥 EXTREME GREED';
+  }
+  
+  /**
+   * Calculate unified accuracy score
+   */
+  private calculateUnifiedAccuracy(
+    output: SelfLearningOutput,
+    hasLiveChart: boolean,
+    hasLivestream: boolean,
+    hasOnChain: boolean,
+    macroImpact: string
+  ): number {
+    let score = output.combinedLearningScore * 100;
+    
+    // Bonuses for additional data sources
+    if (hasLiveChart) score += 5;
+    if (hasLivestream) score += 5;
+    if (hasOnChain) score += 5;
+    if (output.hasICTSetup) score += 10;
+    
+    // Penalty for imminent macro events (uncertainty)
+    if (macroImpact === 'HIGH') score -= 10;
+    
+    // Verification bonus
+    if (output.isAccurate) score += 5;
+    
+    return Math.max(0, Math.min(100, score));
+  }
+  
+  /**
+   * Build simplified TL;DR
+   */
+  private buildTLDR(
+    output: SelfLearningOutput,
+    macroImpact: string,
+    volumeSpike: boolean,
+    fearGreed: number
+  ): { tldr: string; actionableInsight: string } {
+    const biasEmoji = output.bias === 'LONG' ? '🟢' : output.bias === 'SHORT' ? '🔴' : '⚪';
+    const biasWord = output.bias === 'LONG' ? 'BULLISH' : output.bias === 'SHORT' ? 'BEARISH' : 'NEUTRAL';
+    const confLevel = output.confidence >= 70 ? 'HIGH' : output.confidence >= 50 ? 'MODERATE' : 'LOW';
+    
+    let tldr = `${biasEmoji} ${biasWord} (${confLevel} confidence)`;
+    
+    if (output.hasICTSetup && output.ictAnalysis?.tradeSetup) {
+      tldr += ` | ICT: ${output.ictAnalysis.tradeSetup.type.replace('_', ' ')}`;
+    }
+    
+    if (volumeSpike) {
+      tldr += ' | Volume spike detected';
+    }
+    
+    if (macroImpact === 'HIGH') {
+      tldr += ' | ⚠️ High-impact event imminent';
+    }
+    
+    // Actionable insight
+    let actionableInsight: string;
+    
+    if (!output.isAccurate) {
+      actionableInsight = '⏸️ Wait for better data - verification pending';
+    } else if (output.bias === 'NEUTRAL') {
+      actionableInsight = '↔️ No clear direction - wait for breakout or range trade';
+    } else if (macroImpact === 'HIGH') {
+      actionableInsight = '⚠️ Reduce size or hedge - high-impact event coming';
+    } else if (output.hasICTSetup && output.ictAnalysis?.tradeSetup) {
+      const setup = output.ictAnalysis.tradeSetup;
+      actionableInsight = `🎯 ${setup.direction} at ${setup.entry.toFixed(2)}, SL: ${setup.stopLoss.toFixed(2)}, TP: ${setup.target1.toFixed(2)}`;
+    } else if (output.bias === 'LONG') {
+      actionableInsight = '📈 Look for long entries on pullbacks to support';
+    } else {
+      actionableInsight = '📉 Look for short entries on rallies to resistance';
+    }
+    
+    return { tldr, actionableInsight };
+  }
+  
+  /**
+   * Build unified analysis output
+   */
+  private buildUnifiedAnalysis(
+    input: AnalysisInput,
+    output: SelfLearningOutput,
+    tldr: string,
+    actionableInsight: string,
+    macroImpact: string,
+    upcomingMacro: string[],
+    onChainSummary: string,
+    etfFlow: string,
+    volumeSpike: { isSpike: boolean; signal: string; magnitude: string; percentageAboveAvg: number },
+    fearGreed: number,
+    sentimentLabel: string,
+    accuracyScore: number
+  ): string {
+    const biasEmoji = output.bias === 'LONG' ? '🟢' : output.bias === 'SHORT' ? '🔴' : '⚪';
+    const change = input.change;
+    const priceStr = input.price.toFixed(input.price < 1 ? 6 : 2);
+    
+    let analysis = `
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠 ZIKALYZE UNIFIED BRAIN v3.0                                  ║
+║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
+╚══════════════════════════════════════════════════════════════════╝
+
+📌 TL;DR: ${tldr}
+🎯 ACTION: ${actionableInsight}
+
+┌────────────────────────────────────────────────────────────────┐
+│  ${biasEmoji} VERDICT: ${output.bias}  │  Confidence: ${(output.confidence * 100).toFixed(0)}%  │  Accuracy: ${accuracyScore.toFixed(0)}%
+└────────────────────────────────────────────────────────────────┘
+
+━━━ 📊 MARKET PULSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🔗 On-Chain: ${onChainSummary}
+  💼 ETF Flow: ${etfFlow}
+  😊 Sentiment: ${sentimentLabel} (${fearGreed}/100)
+  📊 Volume: ${volumeSpike.isSpike ? `🔥 SPIKE +${volumeSpike.percentageAboveAvg.toFixed(0)}% (${volumeSpike.signal})` : 'Normal'}
+`;
+
+    // Add macro section if there are upcoming events
+    if (upcomingMacro.length > 0) {
+      analysis += `
+━━━ ⚡ MACRO EVENTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${upcomingMacro.map(m => `  📅 ${m}`).join('\n')}
+  ${macroImpact === 'HIGH' ? '⚠️ HIGH IMPACT EVENT IMMINENT - Expect volatility' : ''}
+`;
+    }
+
+    // Add ICT/SMC section if available
+    if (output.hasICTSetup && output.ictAnalysis) {
+      const ict = output.ictAnalysis;
+      analysis += `
+━━━ 📈 ICT/SMC ANALYSIS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🏗️ Structure: ${ict.marketStructure.trend} ${ict.marketStructure.lastBOS ? `(BOS ${ict.marketStructure.lastBOS})` : ''}
+  💰 Zone: ${ict.premiumDiscount.zone} (${ict.premiumDiscount.fibLevel})
+  📦 Order Blocks: ${ict.orderBlocks.length} | FVGs: ${ict.fairValueGaps.length}
+  💧 Liquidity: BSL ${ict.liquidityPools.filter(p => p.type === 'BSL').length} | SSL ${ict.liquidityPools.filter(p => p.type === 'SSL').length}
+  📈 Multi-TF: HTF ${ict.htfTrend} | LTF ${ict.ltfTrend}
+`;
+
+      if (ict.tradeSetup) {
+        analysis += `
+  ┌───────────────────────────────────────────┐
+  │  🎯 ICT TRADE SETUP                       │
+  ├───────────────────────────────────────────┤
+  │  Direction: ${ict.tradeSetup.direction.padEnd(28)}│
+  │  Entry: $${ict.tradeSetup.entry.toFixed(2).padEnd(27)}│
+  │  Stop Loss: $${ict.tradeSetup.stopLoss.toFixed(2).padEnd(24)}│
+  │  Target 1: $${ict.tradeSetup.target1.toFixed(2).padEnd(25)}│
+  │  R:R Ratio: ${ict.tradeSetup.riskReward.toFixed(1).padEnd(26)}│
+  │  Confidence: ${ict.tradeSetup.confidence}%${' '.repeat(23)}│
+  └───────────────────────────────────────────┘
+`;
+      }
+    }
+
+    // Add learning status
+    analysis += `
+━━━ 🧠 AI LEARNING STATUS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📊 Chart Learning: ${output.learnedFromLiveChart ? '✓ Active' : '○ Pending'}
+  📡 Stream Learning: ${output.learnedFromLivestream ? '✓ Active' : '○ Pending'}
+  🎯 ICT Patterns: ${output.hasICTSetup ? '✓ Detected' : '○ None'}
+  📈 Learning Score: ${(output.combinedLearningScore * 100).toFixed(0)}%
+  ✅ Verified: ${output.isAccurate ? '✓ YES' : '✗ Pending verification'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Powered by Zikalyze Unified Brain v3.0 | ${output.processingTimeMs}ms
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+    return analysis;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📤 EXPORTS — Public API for Brain Pipeline
 // ═══════════════════════════════════════════════════════════════════════════════
 

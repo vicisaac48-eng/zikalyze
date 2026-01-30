@@ -4,6 +4,7 @@
 // Integrates the complete brain pipeline with React state management
 // Self-learns from live chart data and WebSocket livestream
 // ICT/SMC analysis with multi-timeframe confluence
+// Unified Brain v3.0 - Most advanced crypto AI
 // Only sends accurate information after strict verification!
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -11,8 +12,10 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   ZikalyzeBrainPipeline, 
   SelfLearningBrainPipeline,
+  UnifiedBrain,
   BrainPipelineOutput,
   SelfLearningOutput,
+  UnifiedBrainOutput,
   AnalysisInput,
   ChartTrendInput,
   LivestreamUpdate,
@@ -23,11 +26,14 @@ interface UseBrainPipelineOptions {
   autoLearn?: boolean;  // Enable automatic learning from outcomes
   language?: string;    // Language for analysis output
   selfLearning?: boolean; // Enable self-learning mode (v2.0)
+  unified?: boolean;    // Enable unified brain v3.0 (default: true)
 }
 
 interface UseBrainPipelineReturn {
   // Pipeline output
   output: BrainPipelineOutput | SelfLearningOutput | null;
+  // Unified Brain output
+  unifiedOutput: UnifiedBrainOutput | null;
   // ICT/SMC Analysis
   ictAnalysis: ICTSMCAnalysis | null;
   hasICTSetup: boolean;
@@ -41,6 +47,12 @@ interface UseBrainPipelineReturn {
     chartData?: ChartTrendInput, 
     livestreamUpdate?: LivestreamUpdate
   ) => Promise<SelfLearningOutput>;
+  // Unified Brain v3.0
+  analyze: (
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ) => Promise<UnifiedBrainOutput>;
   clearOutput: () => void;
   // Self-learning actions
   feedChartData: (symbol: string, chartData: ChartTrendInput) => void;
@@ -55,6 +67,7 @@ interface UseBrainPipelineReturn {
   averageProcessingTime: number;
   // Self-learning status
   isSelfLearningEnabled: boolean;
+  isUnifiedBrainEnabled: boolean;
 }
 
 /**
@@ -95,14 +108,16 @@ interface UseBrainPipelineReturn {
 export function useBrainPipeline(
   options: UseBrainPipelineOptions = {}
 ): UseBrainPipelineReturn {
-  const { autoLearn = true, language = 'en', selfLearning = true } = options;
+  const { autoLearn = true, language = 'en', selfLearning = true, unified = true } = options;
   
   // Pipeline instances - singleton per hook instance
   const pipelineRef = useRef<ZikalyzeBrainPipeline | null>(null);
   const selfLearningPipelineRef = useRef<SelfLearningBrainPipeline | null>(null);
+  const unifiedBrainRef = useRef<UnifiedBrain | null>(null);
   
   // State
   const [output, setOutput] = useState<BrainPipelineOutput | SelfLearningOutput | null>(null);
+  const [unifiedOutput, setUnifiedOutput] = useState<UnifiedBrainOutput | null>(null);
   const [ictAnalysis, setIctAnalysis] = useState<ICTSMCAnalysis | null>(null);
   const [hasICTSetup, setHasICTSetup] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -122,7 +137,11 @@ export function useBrainPipeline(
       selfLearningPipelineRef.current = new SelfLearningBrainPipeline();
       console.log('[Brain Pipeline] Initialized Self-Learning Brain Pipeline v2.0');
     }
-  }, [selfLearning]);
+    if (!unifiedBrainRef.current && unified) {
+      unifiedBrainRef.current = new UnifiedBrain();
+      console.log('[Brain Pipeline] Initialized Unified Brain v3.0');
+    }
+  }, [selfLearning, unified]);
 
   /**
    * Process input through the brain pipeline (basic mode)
@@ -249,10 +268,78 @@ export function useBrainPipeline(
    */
   const clearOutput = useCallback(() => {
     setOutput(null);
+    setUnifiedOutput(null);
     setError(null);
     setIctAnalysis(null);
     setHasICTSetup(false);
   }, []);
+
+  /**
+   * Run unified brain analysis (v3.0) - Most comprehensive analysis
+   * Combines ETF, Macro, Sentiment, On-Chain, ICT/SMC, and Self-Learning
+   */
+  const analyze = useCallback(async (
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): Promise<UnifiedBrainOutput> => {
+    if (!unifiedBrainRef.current) {
+      unifiedBrainRef.current = new UnifiedBrain();
+    }
+    
+    setIsProcessing(true);
+    setError(null);
+    
+    const startTime = performance.now();
+    
+    try {
+      // Add language to input if specified
+      const enrichedInput: AnalysisInput = {
+        ...input,
+        language
+      };
+      
+      // Run unified brain analysis
+      const result = unifiedBrainRef.current.analyze(
+        enrichedInput,
+        chartData,
+        livestreamUpdate
+      );
+      
+      // Calculate processing time
+      const processingTime = performance.now() - startTime;
+      setLastProcessingTime(processingTime);
+      setProcessingTimes(prev => [...prev.slice(-19), processingTime]);
+      
+      // Update state
+      setUnifiedOutput(result);
+      setStorageStats(unifiedBrainRef.current.getStorageStats());
+      setLearningAdjustment(unifiedBrainRef.current.getLearningAdjustment());
+      
+      // Update ICT analysis state
+      if (result.ictAnalysis) {
+        setIctAnalysis(result.ictAnalysis);
+        setHasICTSetup(result.hasICTSetup);
+      }
+      
+      // Log unified brain stats
+      console.log(
+        `[UnifiedBrain v3.0] Processed ${input.crypto} in ${result.processingTimeMs}ms | ` +
+        `Bias: ${result.bias} | Accuracy: ${result.accuracyScore.toFixed(0)}% | ` +
+        `ICT: ${result.hasICTSetup ? '✓' : '✗'} | Macro: ${result.macroImpact} | ` +
+        `Verified: ${result.isVerified ? '✓' : '✗'}`
+      );
+      
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unified brain analysis failed';
+      setError(errorMessage);
+      console.error('[UnifiedBrain] Error:', errorMessage);
+      throw err;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [language]);
 
   /**
    * Feed chart data for continuous learning
@@ -260,6 +347,9 @@ export function useBrainPipeline(
   const feedChartData = useCallback((symbol: string, chartData: ChartTrendInput) => {
     if (selfLearningPipelineRef.current) {
       selfLearningPipelineRef.current.feedChartData(symbol, chartData);
+    }
+    if (unifiedBrainRef.current) {
+      unifiedBrainRef.current.feedChartData(symbol, chartData);
     }
   }, []);
 
@@ -269,6 +359,9 @@ export function useBrainPipeline(
   const feedLivestreamUpdate = useCallback((update: LivestreamUpdate) => {
     if (selfLearningPipelineRef.current) {
       selfLearningPipelineRef.current.feedLivestreamUpdate(update);
+    }
+    if (unifiedBrainRef.current) {
+      unifiedBrainRef.current.feedLivestreamUpdate(update);
     }
   }, []);
 
@@ -283,12 +376,18 @@ export function useBrainPipeline(
     if (selfLearningPipelineRef.current) {
       selfLearningPipelineRef.current.verifyPatternOutcome(symbol, timestamp, outcome);
     }
+    if (unifiedBrainRef.current) {
+      unifiedBrainRef.current.verifyPatternOutcome(symbol, timestamp, outcome);
+    }
   }, []);
 
   /**
    * Check if reliable data is available for a symbol
    */
   const hasReliableData = useCallback((symbol: string): boolean => {
+    if (unifiedBrainRef.current) {
+      return unifiedBrainRef.current.hasReliableData(symbol);
+    }
     if (selfLearningPipelineRef.current) {
       return selfLearningPipelineRef.current.hasReliableData(symbol);
     }
@@ -304,12 +403,14 @@ export function useBrainPipeline(
 
   return {
     output,
+    unifiedOutput,
     ictAnalysis,
     hasICTSetup,
     isProcessing,
     error,
     processInput,
     processWithLearning,
+    analyze,
     clearOutput,
     feedChartData,
     feedLivestreamUpdate,
@@ -319,7 +420,8 @@ export function useBrainPipeline(
     hasReliableData,
     lastProcessingTime,
     averageProcessingTime,
-    isSelfLearningEnabled: selfLearning
+    isSelfLearningEnabled: selfLearning,
+    isUnifiedBrainEnabled: unified
   };
 }
 

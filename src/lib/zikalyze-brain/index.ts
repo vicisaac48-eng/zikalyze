@@ -620,7 +620,9 @@ export {
   // Self-learning components
   LiveChartLearner,
   LivestreamLearner,
-  SelfLearningBrainPipeline
+  SelfLearningBrainPipeline,
+  // Unified Brain v3.0
+  UnifiedBrain
 } from './brain-pipeline';
 export type { 
   RawCryptoData, 
@@ -636,5 +638,7 @@ export type {
   ChartPattern,
   LivestreamUpdate,
   VelocityPattern,
-  SelfLearningOutput
+  SelfLearningOutput,
+  // Unified Brain types
+  UnifiedBrainOutput
 } from './brain-pipeline';
