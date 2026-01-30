@@ -34,6 +34,7 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+<<<<<<< HEAD
     try {
       // Use hash-based redirect for HashRouter compatibility
       const redirectUrl = `${window.location.origin}/#/dashboard`;
@@ -59,10 +60,35 @@ export const useAuth = () => {
     } catch (err) {
       const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign up');
       return { error };
+=======
+    // Use hash-based redirect for HashRouter compatibility
+    const redirectUrl = `${window.location.origin}/#/dashboard`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
+    });
+    
+    // Enhanced Error Logging
+    if (error) {
+      console.error("Sign-Up Error:", error);
+      return { error };
+    }
+    
+    // Increment user count on successful signup
+    try {
+      await supabase.rpc('increment_user_count');
+    } catch (rpcError) {
+      console.warn('Failed to increment user count:', rpcError);
+>>>>>>> 2d8b144e879efd5a5c1160299222e6f9c412846d
     }
   };
 
   const signIn = async (email: string, password: string) => {
+<<<<<<< HEAD
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -73,6 +99,19 @@ export const useAuth = () => {
       const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign in');
       return { error };
     }
+=======
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    // Improved Error Handling
+    if (error) {
+      console.error("Sign-In Error:", error);
+    }
+    
+    return { error };
+>>>>>>> 2d8b144e879efd5a5c1160299222e6f9c412846d
   };
 
   const signOut = async () => {
