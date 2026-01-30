@@ -51,7 +51,6 @@ const Auth = () => {
               <div className="flex justify-center">
                 <SignIn 
                   routing="hash"
-                  signUpUrl="/auth#signup"
                   forceRedirectUrl="/dashboard"
                   appearance={{
                     elements: {
@@ -67,6 +66,7 @@ const Auth = () => {
                       identityPreviewText: "text-foreground",
                       identityPreviewEditButton: "text-primary",
                       formFieldInputShowPasswordButton: "text-muted-foreground",
+                      footer: "hidden", // Hide Clerk's footer since we have our own tabs
                     }
                   }}
                 />
@@ -77,7 +77,6 @@ const Auth = () => {
               <div className="flex justify-center">
                 <SignUp 
                   routing="hash"
-                  signInUrl="/auth#signin"
                   forceRedirectUrl="/dashboard"
                   appearance={{
                     elements: {
@@ -93,6 +92,7 @@ const Auth = () => {
                       identityPreviewText: "text-foreground",
                       identityPreviewEditButton: "text-primary",
                       formFieldInputShowPasswordButton: "text-muted-foreground",
+                      footer: "hidden", // Hide Clerk's footer since we have our own tabs
                     }
                   }}
                 />

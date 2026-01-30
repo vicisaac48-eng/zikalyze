@@ -10,7 +10,7 @@ import { initializeAnalytics } from "./lib/analytics";
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!CLERK_PUBLISHABLE_KEY) {
-  console.warn("Missing VITE_CLERK_PUBLISHABLE_KEY - Authentication will not work");
+  console.error("Missing VITE_CLERK_PUBLISHABLE_KEY - Authentication will not function. Please set this environment variable in your .env file.");
 }
 
 // Initialize Vercel Web Analytics

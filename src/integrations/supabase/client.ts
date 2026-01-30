@@ -1,9 +1,17 @@
 // Minimal Supabase client stub for database operations
-// Authentication is now handled by Clerk
-// This stub provides a minimal implementation for existing database features
+// Authentication is now handled by Clerk - see src/hooks/useAuth.ts
+// 
+// IMPORTANT: This is a NON-FUNCTIONAL stub that returns null/empty data for all operations.
+// If your application relies on Supabase database features (alerts, analytics, etc.),
+// you will need to:
+// 1. Re-add @supabase/supabase-js package for database operations
+// 2. Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables
+// 3. Replace this stub with a proper Supabase client initialization
+//
+// This stub exists solely to prevent build errors during the authentication migration.
 
 // Create a stub that returns empty/null results for all operations
-// This allows the app to build while database features can be configured later
+// Console warnings are logged to help identify code that needs migration
 
 const stubResult = { data: null, error: null };
 const stubSessionResult = { data: { session: null }, error: null };

@@ -1,6 +1,8 @@
 import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
 
 // User type compatible with both Clerk and components expecting Supabase-like user
+// Note: Both 'email' and 'primaryEmailAddress' are provided for backward compatibility
+// with code that may expect either Supabase-style (email) or Clerk-style (primaryEmailAddress) format
 export interface ClerkUserLike {
   id: string;
   email?: string;
@@ -20,7 +22,7 @@ export const useAuth = () => {
     ? {
         id: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress,
-        created_at: clerkUser.createdAt?.toISOString(),
+        created_at: clerkUser.createdAt ? clerkUser.createdAt.toISOString() : undefined,
         primaryEmailAddress: clerkUser.primaryEmailAddress
           ? { emailAddress: clerkUser.primaryEmailAddress.emailAddress }
           : undefined,
@@ -30,15 +32,14 @@ export const useAuth = () => {
   const loading = !isLoaded || !authLoaded;
 
   // Clerk handles sign up through its components, these are stubs for compatibility
+  // If called, log a warning to help developers identify code that needs updating
   const signUp = async (_email: string, _password: string) => {
-    // Clerk handles sign up via <SignUp /> component
-    // This is a stub for API compatibility
+    console.warn("[useAuth] signUp() is deprecated. Use Clerk's <SignUp /> component instead.");
     return { error: new Error("Use Clerk SignUp component instead") };
   };
 
   const signIn = async (_email: string, _password: string) => {
-    // Clerk handles sign in via <SignIn /> component
-    // This is a stub for API compatibility
+    console.warn("[useAuth] signIn() is deprecated. Use Clerk's <SignIn /> component instead.");
     return { error: new Error("Use Clerk SignIn component instead") };
   };
 
@@ -63,19 +64,19 @@ export const useAuth = () => {
     rateLimited?: boolean;
     retryAfter?: number;
   }> => {
-    // Clerk handles password reset via its built-in UI
+    console.warn("[useAuth] resetPassword() is deprecated. Use Clerk's built-in password reset flow instead.");
     return { error: new Error("Use Clerk's built-in password reset flow") };
   };
 
   // Clerk handles password updates through user profile
   const updatePassword = async (_newPassword: string) => {
-    // Password updates are handled via Clerk's user profile
+    console.warn("[useAuth] updatePassword() is deprecated. Use Clerk's <UserProfile /> component instead.");
     return { error: new Error("Use Clerk's built-in password update flow") };
   };
 
   // Clerk handles email updates through user profile
   const updateEmail = async (_newEmail: string) => {
-    // Email updates are handled via Clerk's user profile
+    console.warn("[useAuth] updateEmail() is deprecated. Use Clerk's <UserProfile /> component instead.");
     return { error: new Error("Use Clerk's built-in email update flow") };
   };
 
