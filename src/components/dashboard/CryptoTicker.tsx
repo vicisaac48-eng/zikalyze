@@ -2,6 +2,20 @@ import { cn } from "@/lib/utils";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
 
+// Fallback prices for immediate display when live data is unavailable
+const FALLBACK_PRICES: Record<string, { price: number; change: number }> = {
+  BTC: { price: 83000, change: 0.5 },
+  ETH: { price: 2700, change: -1.2 },
+  SOL: { price: 117, change: -0.8 },
+  XRP: { price: 1.75, change: -0.5 },
+  DOGE: { price: 0.18, change: 1.2 },
+  KAS: { price: 0.085, change: 2.5 },
+  ADA: { price: 0.65, change: -0.3 },
+  AVAX: { price: 25, change: 0.8 },
+  LINK: { price: 15, change: -0.6 },
+  DOT: { price: 5.5, change: 0.2 },
+};
+
 const cryptoMeta = [
   { symbol: "BTC", name: "Bitcoin", color: "text-warning" },
   { symbol: "ETH", name: "Ethereum", color: "text-muted-foreground" },
@@ -29,8 +43,14 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
     <div className="flex flex-wrap gap-3">
       {cryptoMeta.map((crypto) => {
         const livePrice = getPriceBySymbol(crypto.symbol);
-        const price = livePrice?.current_price || 0;
-        const change = livePrice?.price_change_percentage_24h || 0;
+        // Use live price if available, otherwise use fallback
+        const fallback = FALLBACK_PRICES[crypto.symbol];
+        const price = (livePrice?.current_price && livePrice.current_price > 0) 
+          ? livePrice.current_price 
+          : fallback?.price || 0;
+        const change = (livePrice?.current_price && livePrice.current_price > 0)
+          ? livePrice.price_change_percentage_24h 
+          : fallback?.change || 0;
         
         return (
           <button
