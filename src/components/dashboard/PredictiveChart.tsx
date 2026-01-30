@@ -81,7 +81,7 @@ const PredictiveChart = () => {
                 borderRadius: "8px",
                 color: "hsl(210, 40%, 98%)",
               }}
-              formatter={(value: number, name: string, props: any) => [
+              formatter={(value: number, name: string, props: { payload: { volume: number } }) => [
                 formatVolume(props.payload.volume),
                 "24h Volume"
               ]}

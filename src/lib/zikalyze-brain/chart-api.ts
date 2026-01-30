@@ -390,7 +390,7 @@ export async function analyzeChart(
   limit: number = 100
 ): Promise<ChartAnalysisResult | null> {
   // Try primary source (edge function)
-  let response = await fetchCandles(symbol, interval, limit);
+  const response = await fetchCandles(symbol, interval, limit);
   let source = response?.source || 'unknown';
   let candles = response?.candles;
   

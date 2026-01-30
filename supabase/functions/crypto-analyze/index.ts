@@ -93,7 +93,7 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
   let exchangeNetFlow: OnChainMetrics['exchangeNetFlow'] = { value: 0, trend: 'NEUTRAL', magnitude: 'LOW' };
   let activeAddresses: OnChainMetrics['activeAddresses'] = { current: 0, change24h: 0, trend: 'STABLE' };
   let transactionVolume = { value: 0, change24h: 0 };
-  let mempoolData = { unconfirmedTxs: 0, mempoolSize: 0, avgFeeRate: 0 };
+  const mempoolData = { unconfirmedTxs: 0, mempoolSize: 0, avgFeeRate: 0 };
   let source = 'live-apis';
   
   // Parallel API calls for maximum efficiency
@@ -2802,8 +2802,8 @@ function analyzeMarketStructure(data: {
   const { price, high, low, change, rangePercent, memory } = data;
   
   let higherHighs = false;
-  let higherLows = false;
-  let lowerHighs = false;
+  const higherLows = false;
+  const lowerHighs = false;
   let lowerLows = false;
   let lastBOS: 'BULLISH' | 'BEARISH' | null = null;
   let lastCHoCH: 'BULLISH' | 'BEARISH' | null = null;
@@ -5396,7 +5396,7 @@ ${onChainMetrics.whaleActivity.netFlow.includes('MIXED') || onChainMetrics.whale
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 💡 ${t.topInsights}
-${allInsights.slice(0, 3).map((ins, i) => `${i + 1}. ${ins.replace(/[🔗💎📈📉🌐💬⚡🎯✓⚠️📊📡💼]/g, '').trim()}`).join('\n')}
+${allInsights.slice(0, 3).map((ins, i) => `${i + 1}. ${ins.replace(/[🔗💎📈📉🌐💬⚡🎯✓⚠️📊📡💼]/gu, '').trim()}`).join('\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

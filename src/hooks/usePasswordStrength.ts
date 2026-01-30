@@ -92,7 +92,7 @@ export const usePasswordStrength = (password: string): PasswordStrengthResult =>
     }
 
     // Check for special characters
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) {
       feedback.push("Add special characters (!@#$%^&*)");
     } else {
       score += 0.5;
@@ -154,7 +154,7 @@ export const usePasswordStrength = (password: string): PasswordStrengthResult =>
                     /[a-z]/.test(password) && 
                     /[A-Z]/.test(password) && 
                     /\d/.test(password) && 
-                    /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password) &&
+                    /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password) &&
                     !COMMON_PASSWORDS.has(lowerPassword);
 
     return {

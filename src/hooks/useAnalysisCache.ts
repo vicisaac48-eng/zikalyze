@@ -32,7 +32,7 @@ export function useAnalysisCache(symbol: string) {
     // No caching - real-time only
   }, []);
 
-  const useCachedAnalysis = useCallback(() => {
+  const getCachedAnalysis = useCallback(() => {
     return null; // No cache
   }, []);
 
@@ -54,7 +54,7 @@ export function useAnalysisCache(symbol: string) {
     isUsingCache: false,
     lastCacheTime: null,
     cacheAnalysis,
-    useCachedAnalysis,
+    getCachedAnalysis,
     clearCache,
     markFreshData,
     getCacheAge,

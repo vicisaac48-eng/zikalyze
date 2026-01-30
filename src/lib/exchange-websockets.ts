@@ -201,7 +201,7 @@ export const parseKrakenTicker = (data: any): TickerUpdate | null => {
     const pair = data[3] as string;
     if (!ticker || !pair) return null;
     
-    let symbol = pair.replace('/USD', '').replace('XBT', 'BTC').toUpperCase();
+    const symbol = pair.replace('/USD', '').replace('XBT', 'BTC').toUpperCase();
     const price = parseFloat(ticker.c?.[0] || '0');
     const open = parseFloat(ticker.o?.[1] || price.toString());
     

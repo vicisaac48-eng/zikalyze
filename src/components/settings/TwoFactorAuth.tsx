@@ -71,10 +71,11 @@ const TwoFactorAuth = () => {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid code. Please try again.";
       toast({
         title: "Verification failed",
-        description: error.message || "Invalid code. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -109,10 +110,11 @@ const TwoFactorAuth = () => {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid code. Please try again.";
       toast({
         title: "Failed to disable",
-        description: error.message || "Invalid code. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

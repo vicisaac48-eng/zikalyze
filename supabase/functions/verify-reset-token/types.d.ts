@@ -1,5 +1,5 @@
 declare module "https://esm.sh/@supabase/supabase-js@2" {
-  export const createClient: (...args: unknown[]) => any
+  export const createClient: (...args: unknown[]) => unknown
 }
 
 declare module "https://esm.sh/resend@latest" {

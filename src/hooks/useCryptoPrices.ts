@@ -347,7 +347,7 @@ export const useCryptoPrices = () => {
       if (coin.symbol === normalizedSymbol) {
         // Smart volume handling: WebSocket gives single-exchange volume which is always lower
         // than CoinGecko's aggregated multi-exchange volume
-        let finalUpdates = { ...updates };
+        const finalUpdates = { ...updates };
         
         if (updates.total_volume !== undefined && coin.total_volume > 0) {
           const volumeRatio = updates.total_volume / coin.total_volume;
@@ -633,7 +633,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
     
     if (okxWsRef.current) {
-      try { okxWsRef.current.close(); } catch (e) {}
+      try { okxWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {
@@ -721,7 +721,7 @@ export const useCryptoPrices = () => {
 
     // Close existing connection
     if (binanceWsRef.current) {
-      try { binanceWsRef.current.close(); } catch (e) {}
+      try { binanceWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     const cryptoList = cryptoListRef.current;
@@ -820,7 +820,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
 
     if (bybitWsRef.current) {
-      try { bybitWsRef.current.close(); } catch (e) {}
+      try { bybitWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {
@@ -860,7 +860,7 @@ export const useCryptoPrices = () => {
               }, "Bybit");
             }
           }
-        } catch (e) {}
+        } catch { /* Ignore parse errors */ }
       };
       
       ws.onclose = () => {
@@ -892,7 +892,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
     
     if (krakenWsRef.current) {
-      try { krakenWsRef.current.close(); } catch (e) {}
+      try { krakenWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {

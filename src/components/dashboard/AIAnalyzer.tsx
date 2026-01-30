@@ -143,7 +143,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     isOffline, 
     isUsingCache, 
     cacheAnalysis, 
-    useCachedAnalysis, 
+    getCachedAnalysis, 
     getCacheAge, 
     hasCache,
     markFreshData 
@@ -383,7 +383,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       console.error("Analysis error:", error);
       
       // On error, try to use cached analysis as fallback
-      const cached = useCachedAnalysis();
+      const cached = getCachedAnalysis();
       if (cached) {
         setFullAnalysis(cached.analysis);
         setDisplayedText(cached.analysis);
@@ -397,7 +397,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, useCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData]);
+  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation

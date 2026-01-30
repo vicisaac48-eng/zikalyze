@@ -729,7 +729,7 @@ export function performTopDownAnalysis(
                     chartData.rsi < 45 ? 'BEARISH' : 'NEUTRAL';
     
     // Combine chart signals
-    let chartTrend: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = chartData.trend24h;
+    const chartTrend: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = chartData.trend24h;
     let chartStrength = chartData.trendStrength;
     
     // Boost strength if EMA confirms trend
