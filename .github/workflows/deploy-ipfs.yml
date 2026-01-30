@@ -26,7 +26,7 @@ jobs:
         run: npm run build
       
       - name: Deploy to Pinata IPFS
-        if: secrets.PINATA_API_KEY && secrets.PINATA_SECRET_KEY
+        if: ${{ secrets.PINATA_API_KEY && secrets.PINATA_SECRET_KEY }}
         env:
           PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
           PINATA_SECRET_KEY: ${{ secrets.PINATA_SECRET_KEY }}
