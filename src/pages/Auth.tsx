@@ -182,19 +182,19 @@ const Auth = () => {
   };
 
   // Copy key to clipboard
-  const copyKey = async (key: string, setcopied: (v: boolean) => void) => {
+  const copyKey = async (key: string, setCopied: (v: boolean) => void) => {
     try {
       await navigator.clipboard.writeText(formatPrivateKey(key));
-      setcopied(true);
+      setCopied(true);
       toast({
         title: "Copied!",
         description: "Private key copied to clipboard",
       });
-      setTimeout(() => setcopied(false), 3000);
+      setTimeout(() => setCopied(false), 3000);
     } catch {
       toast({
         title: "Copy failed",
-        description: "Please manually copy the key",
+        description: "Please select and copy the key manually, or check your browser permissions.",
         variant: "destructive",
       });
     }
@@ -260,7 +260,7 @@ const Auth = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-warning">
-                  ⚠️ Store this key securely! You cannot recover your account without it.
+                  ⚠️ Store this key securely! You can also recover it using your username and password from the "Recover" tab.
                 </p>
               </div>
 
@@ -330,12 +330,12 @@ const Auth = () => {
                     <Input
                       id="signup-password"
                       type={showSignupPassword ? "text" : "password"}
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 8 characters)"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       className="pl-10 pr-10"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                     <button
                       type="button"

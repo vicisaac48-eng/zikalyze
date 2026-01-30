@@ -5,7 +5,17 @@
  * - Private key generation from username (deterministic)
  * - Password-based encryption for credential storage
  * - Secure local storage with encryption
+ * 
+ * SECURITY NOTE: This is a client-side only authentication system.
+ * Credentials are encrypted in localStorage for defense-in-depth against
+ * casual access. For production systems with server backends, use proper
+ * key management systems.
  */
+
+// Constants for encryption and hashing
+const SALT_PREFIX = "zikalyze-web3-auth-v1";
+const MASTER_STORAGE_KEY = "zikalyze-master-storage-key";
+const SESSION_ENCRYPTION_KEY = "zikalyze-session-key";
 
 // Convert string to Uint8Array
 const textEncoder = new TextEncoder();
@@ -16,12 +26,20 @@ const textDecoder = new TextDecoder();
  * Uses SHA-256 to create a 256-bit key from the username
  */
 export async function generatePrivateKeyFromUsername(username: string): Promise<string> {
+  // Validate input
+  if (!username || typeof username !== 'string') {
+    throw new Error("Username is required");
+  }
+  
   // Normalize username (lowercase, trim)
   const normalizedUsername = username.toLowerCase().trim();
   
+  if (normalizedUsername.length === 0) {
+    throw new Error("Username cannot be empty");
+  }
+  
   // Create a deterministic seed by hashing username with a salt
-  const salt = "zikalyze-web3-auth-v1";
-  const data = textEncoder.encode(`${salt}:${normalizedUsername}`);
+  const data = textEncoder.encode(`${SALT_PREFIX}:${normalizedUsername}`);
   
   // Hash to create the private key
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -63,6 +81,11 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promis
  * Encrypt data using AES-GCM with a password-derived key
  */
 export async function encryptWithPassword(data: string, password: string): Promise<string> {
+  // Validate input
+  if (!password || password.length === 0) {
+    throw new Error("Password cannot be empty");
+  }
+  
   // Generate random salt and IV
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -161,8 +184,8 @@ export async function storeCredentials(
   try {
     const existing = localStorage.getItem(STORAGE_KEY);
     if (existing) {
-      // Try to decrypt with a master key (derived from a constant for simplicity)
-      const decrypted = await decryptWithPassword(existing, 'zikalyze-master-storage-key');
+      // Try to decrypt with a master key
+      const decrypted = await decryptWithPassword(existing, MASTER_STORAGE_KEY);
       allCredentials = JSON.parse(decrypted);
     }
   } catch {
@@ -194,7 +217,7 @@ export async function storeCredentials(
   // Encrypt and store
   const encrypted = await encryptWithPassword(
     JSON.stringify(allCredentials),
-    'zikalyze-master-storage-key'
+    MASTER_STORAGE_KEY
   );
   
   localStorage.setItem(STORAGE_KEY, encrypted);
@@ -208,7 +231,7 @@ export async function findCredentialsByUsername(username: string): Promise<Store
     const existing = localStorage.getItem(STORAGE_KEY);
     if (!existing) return null;
     
-    const decrypted = await decryptWithPassword(existing, 'zikalyze-master-storage-key');
+    const decrypted = await decryptWithPassword(existing, MASTER_STORAGE_KEY);
     const allCredentials: StoredCredentials[] = JSON.parse(decrypted);
     
     return allCredentials.find(c => c.username.toLowerCase() === username.toLowerCase().trim()) || null;
@@ -225,7 +248,7 @@ export async function findCredentialsByPrivateKey(privateKey: string): Promise<S
     const existing = localStorage.getItem(STORAGE_KEY);
     if (!existing) return null;
     
-    const decrypted = await decryptWithPassword(existing, 'zikalyze-master-storage-key');
+    const decrypted = await decryptWithPassword(existing, MASTER_STORAGE_KEY);
     const allCredentials: StoredCredentials[] = JSON.parse(decrypted);
     
     return allCredentials.find(c => c.privateKey === privateKey) || null;
@@ -260,7 +283,7 @@ export async function createSession(username: string, privateKey: string): Promi
   // Encrypt session data
   const encrypted = await encryptWithPassword(
     JSON.stringify(sessionData),
-    'zikalyze-session-key'
+    SESSION_ENCRYPTION_KEY
   );
   
   sessionStorage.setItem(SESSION_KEY, encrypted);
@@ -276,7 +299,7 @@ export async function getSession(): Promise<SessionData | null> {
     const encrypted = sessionStorage.getItem(SESSION_KEY);
     if (!encrypted) return null;
     
-    const decrypted = await decryptWithPassword(encrypted, 'zikalyze-session-key');
+    const decrypted = await decryptWithPassword(encrypted, SESSION_ENCRYPTION_KEY);
     const session: SessionData = JSON.parse(decrypted);
     
     // Check if session has expired

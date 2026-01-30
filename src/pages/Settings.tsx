@@ -179,7 +179,7 @@ const Settings = () => {
                             } catch {
                               toast({
                                 title: "Copy failed",
-                                description: "Please manually copy the key",
+                                description: "Please select and copy the key manually, or check your browser permissions.",
                                 variant: "destructive",
                               });
                             }

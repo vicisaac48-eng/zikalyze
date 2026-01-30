@@ -118,8 +118,8 @@ export const useWeb3Auth = () => {
       if (!username || username.trim().length < 3) {
         return { error: new Error("Username must be at least 3 characters") };
       }
-      if (!password || password.length < 6) {
-        return { error: new Error("Password must be at least 6 characters") };
+      if (!password || password.length < 8) {
+        return { error: new Error("Password must be at least 8 characters") };
       }
 
       // Check if username already exists
