@@ -87,7 +87,10 @@
     "passwordResetSuccess": "Ihr Passwort wurde erfolgreich zurückgesetzt.",
     "invalidLink": "Ungültiger oder abgelaufener Link",
     "requestNewLink": "Bitte fordern Sie einen neuen Zurücksetzungslink an.",
-    "enterNewPasswordBelow": "Geben Sie unten Ihr neues Passwort ein"
+    "enterNewPasswordBelow": "Geben Sie unten Ihr neues Passwort ein",
+    "accountCreated": "Konto erstellt! 🎉",
+    "welcomeEmailSent": "Eine Willkommensbestätigungsmail wurde an Ihren Posteingang gesendet.",
+    "signInEmailSent": "Eine Anmeldebenachrichtigung wurde an Ihre E-Mail gesendet."
   },
   "dashboard": {
     "title": "Zikalyze",

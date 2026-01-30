@@ -128,6 +128,23 @@ const Auth = () => {
 
       // Record successful attempt (clears failed attempts)
       await recordLoginAttempt(email, true);
+
+      // Send sign-in notification email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-signin-email', {
+          body: { email }
+        });
+        
+        if (emailError) {
+          console.error('Failed to send sign-in notification email:', emailError);
+          // Don't block sign in if email fails
+        } else {
+          console.log('Sign-in notification email sent successfully');
+        }
+      } catch (emailErr) {
+        console.error('Error sending sign-in notification email:', emailErr);
+      }
+      
       setIsLoading(false);
 
       toast({

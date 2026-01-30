@@ -87,7 +87,10 @@
     "passwordResetSuccess": "Tu contraseña ha sido restablecida exitosamente.",
     "invalidLink": "Enlace inválido o expirado",
     "requestNewLink": "Por favor solicita un nuevo enlace de restablecimiento.",
-    "enterNewPasswordBelow": "Ingresa tu nueva contraseña abajo"
+    "enterNewPasswordBelow": "Ingresa tu nueva contraseña abajo",
+    "accountCreated": "¡Cuenta creada! 🎉",
+    "welcomeEmailSent": "Se ha enviado un correo de confirmación de bienvenida a tu bandeja de entrada.",
+    "signInEmailSent": "Se ha enviado una notificación de inicio de sesión a tu correo electrónico."
   },
   "dashboard": {
     "title": "Zikalyze",
