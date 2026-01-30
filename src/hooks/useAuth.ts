@@ -29,7 +29,7 @@ export const useAuth = () => {
       setUser(existingSession?.user ?? null);
       setLoading(false);
     }).catch((error) => {
-      console.error('Failed to get session:', error);
+      console.warn('Supabase session unavailable:', error);
       setLoading(false);
     });
 

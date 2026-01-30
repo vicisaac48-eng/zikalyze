@@ -239,7 +239,7 @@ export const usePriceAlerts = () => {
             try {
               const notification = new Notification(`🎯 ${alert.symbol} Price Alert Triggered!`, {
                 body: `${alert.symbol} is now ${alert.condition === "above" ? "above" : "below"} $${alert.target_price.toLocaleString()} • Current: $${currentPrice.toLocaleString()}`,
-                icon: "/pwa-192x192.png",
+                icon: `${import.meta.env.BASE_URL}pwa-192x192.png`,
                 tag: alert.id,
                 requireInteraction: false, // Auto-dismiss
               });

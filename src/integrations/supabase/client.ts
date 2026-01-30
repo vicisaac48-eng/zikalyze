@@ -5,22 +5,71 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Validate environment variables
-if (!SUPABASE_URL) {
-  throw new Error('Missing VITE_SUPABASE_URL environment variable');
-}
-
-if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing VITE_SUPABASE_PUBLISHABLE_KEY environment variable');
-}
+const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+const supabaseStubError = new Error(
+  'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.'
+);
+const supabaseStubResult = { data: null, error: supabaseStubError };
+const supabaseStubSessionResult = { data: { session: null }, error: supabaseStubError };
+const supabaseStubUserResult = { data: { user: null }, error: supabaseStubError };
+const supabaseStubAuthResult = { data: { user: null, session: null }, error: supabaseStubError };
+
+const createSupabaseQueryStub = () => {
+  const resultPromise = Promise.resolve(supabaseStubResult);
+  const query = {
+    select: () => query,
+    eq: () => query,
+    single: () => resultPromise,
+    maybeSingle: () => resultPromise,
+    insert: () => resultPromise,
+    update: () => query,
+    delete: () => query,
+    upsert: () => resultPromise,
+    order: () => query,
+    limit: () => query,
+    then: (onFulfilled: (value: typeof supabaseStubResult) => unknown, onRejected?: (reason: unknown) => unknown) =>
+      resultPromise.then(onFulfilled, onRejected),
+    catch: (onRejected: (reason: unknown) => unknown) => resultPromise.catch(onRejected),
+    finally: (onFinally: () => void) => resultPromise.finally(onFinally),
+  };
+  return query;
+};
+
+const createSupabaseStub = (): ReturnType<typeof createClient<Database>> => ({
   auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+    getSession: () => Promise.resolve(supabaseStubSessionResult),
+    getUser: () => Promise.resolve(supabaseStubUserResult),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } } }),
+    signUp: () => Promise.resolve(supabaseStubAuthResult),
+    signInWithPassword: () => Promise.resolve(supabaseStubAuthResult),
+    signOut: () => Promise.resolve(supabaseStubResult),
+    resetPasswordForEmail: () => Promise.resolve(supabaseStubResult),
+    updateUser: () => Promise.resolve(supabaseStubUserResult),
+    setSession: () => Promise.resolve(supabaseStubSessionResult),
+    resend: () => Promise.resolve(supabaseStubResult),
+  },
+  from: () => createSupabaseQueryStub(),
+  rpc: () => Promise.resolve(supabaseStubResult),
+  functions: {
+    invoke: () => Promise.resolve(supabaseStubResult),
+  },
+  channel: () => ({
+    on: () => ({ subscribe: () => ({}) }),
+    subscribe: () => ({}),
+  }),
+  removeChannel: () => undefined,
+} as unknown as ReturnType<typeof createClient<Database>>);
+
+export const supabase = isSupabaseConfigured
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    })
+  : createSupabaseStub();
