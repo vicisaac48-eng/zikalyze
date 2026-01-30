@@ -97,7 +97,7 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
   let source = 'live-apis';
   
   // Parallel API calls for maximum efficiency
-  const apiCalls: Promise<any>[] = [];
+  const apiCalls: Promise<unknown>[] = [];
   
   // 1. Blockchain.info - Real BTC on-chain stats (no API key needed)
   if (isBTC) {
@@ -175,9 +175,9 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
       
       if (mempoolBlocks && Array.isArray(mempoolBlocks) && mempoolBlocks.length > 0) {
         // Calculate average fee rate from mempool blocks
-        const totalFees = mempoolBlocks.reduce((acc: number, block: any) => acc + (block.medianFee || 0), 0);
+        const totalFees = mempoolBlocks.reduce((acc: number, block: Record<string, number>) => acc + (block.medianFee || 0), 0);
         mempoolData.avgFeeRate = Math.round(totalFees / mempoolBlocks.length);
-        mempoolData.mempoolSize = mempoolBlocks.reduce((acc: number, block: any) => acc + (block.blockSize || 0), 0);
+        mempoolData.mempoolSize = mempoolBlocks.reduce((acc: number, block: Record<string, number>) => acc + (block.blockSize || 0), 0);
       }
       
       if (unconfirmedCount) {
@@ -193,8 +193,8 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
       
       if (recentBlocks && Array.isArray(recentBlocks) && recentBlocks.length >= 2) {
         // Calculate transaction trend from recent blocks
-        const avgTxRecent = recentBlocks.slice(0, 3).reduce((acc: number, b: any) => acc + (b.tx_count || 0), 0) / 3;
-        const avgTxOlder = recentBlocks.slice(3, 6).reduce((acc: number, b: any) => acc + (b.tx_count || 0), 0) / 3;
+        const avgTxRecent = recentBlocks.slice(0, 3).reduce((acc: number, b: Record<string, number>) => acc + (b.tx_count || 0), 0) / 3;
+        const avgTxOlder = recentBlocks.slice(3, 6).reduce((acc: number, b: Record<string, number>) => acc + (b.tx_count || 0), 0) / 3;
         
         if (avgTxOlder > 0) {
           const txChange = ((avgTxRecent - avgTxOlder) / avgTxOlder) * 100;
@@ -2813,7 +2813,7 @@ function analyzeMarketStructure(data: {
     const recentPrices = memory.slice(0, 5).map(m => m.price);
     
     // Check for higher highs / higher lows
-    let hhCount = 0, hlCount = 0, lhCount = 0, llCount = 0;
+    let hhCount = 0; let llCount = 0;
     for (let i = 0; i < recentPrices.length - 1; i++) {
       if (recentPrices[i] > recentPrices[i + 1]) hhCount++;
       else if (recentPrices[i] < recentPrices[i + 1]) llCount++;
@@ -4320,29 +4320,29 @@ serve(async (req) => {
     let sentimentData: SentimentData | null = null;
     
     // Use live sentiment data from client if available, otherwise fetch fresh
-    if (liveSentiment && typeof liveSentiment === 'object' && (liveSentiment as any).isLive) {
-      const liveData = liveSentiment as any;
-      console.log(`🌐 Using LIVE sentiment data from client (F&G: ${liveData.fearGreedValue})`);
+    const liveSentimentObj = liveSentiment as { isLive?: boolean; fearGreedValue?: number; fearGreedLabel?: string; socialMentions?: number; sentimentScore?: number; overallSentiment?: string; trendingTopics?: string[] } | null;
+    if (liveSentimentObj && typeof liveSentimentObj === 'object' && liveSentimentObj.isLive) {
+      console.log(`🌐 Using LIVE sentiment data from client (F&G: ${liveSentimentObj.fearGreedValue})`);
       sentimentData = {
         fearGreed: { 
-          value: liveData.fearGreedValue || 50, 
-          label: liveData.fearGreedLabel || 'Neutral',
-          previousValue: liveData.fearGreedValue || 50,
-          previousLabel: liveData.fearGreedLabel || 'Neutral'
+          value: liveSentimentObj.fearGreedValue || 50, 
+          label: liveSentimentObj.fearGreedLabel || 'Neutral',
+          previousValue: liveSentimentObj.fearGreedValue || 50,
+          previousLabel: liveSentimentObj.fearGreedLabel || 'Neutral'
         },
         social: {
-          twitter: { mentions: liveData.socialMentions || 0, sentiment: liveData.sentimentScore || 50, trending: false },
-          reddit: { mentions: 0, sentiment: liveData.sentimentScore || 50, activeThreads: 0 },
-          telegram: { mentions: 0, sentiment: liveData.sentimentScore || 50 },
-          overall: { score: liveData.sentimentScore || 50, label: liveData.overallSentiment || 'Neutral', change24h: 0 },
-          trendingTopics: liveData.trendingTopics || [],
+          twitter: { mentions: liveSentimentObj.socialMentions || 0, sentiment: liveSentimentObj.sentimentScore || 50, trending: false },
+          reddit: { mentions: 0, sentiment: liveSentimentObj.sentimentScore || 50, activeThreads: 0 },
+          telegram: { mentions: 0, sentiment: liveSentimentObj.sentimentScore || 50 },
+          overall: { score: liveSentimentObj.sentimentScore || 50, label: liveSentimentObj.overallSentiment || 'Neutral', change24h: 0 },
+          trendingTopics: liveSentimentObj.trendingTopics || [],
           influencerMentions: []
         },
         summary: { 
-          overallSentiment: liveData.overallSentiment || 'Neutral', 
-          sentimentScore: liveData.sentimentScore || 50, 
-          totalMentions: liveData.socialMentions || 0, 
-          marketMood: liveData.overallSentiment || 'Neutral' 
+          overallSentiment: liveSentimentObj.overallSentiment || 'Neutral', 
+          sentimentScore: liveSentimentObj.sentimentScore || 50, 
+          totalMentions: liveSentimentObj.socialMentions || 0, 
+          marketMood: liveSentimentObj.overallSentiment || 'Neutral' 
         }
       };
     } else {
@@ -4380,21 +4380,29 @@ serve(async (req) => {
     
     // Use live on-chain data from client if available, otherwise fetch fresh
     let onChainMetrics: OnChainMetrics;
-    if (liveOnChain && typeof liveOnChain === 'object' && (liveOnChain as any).isLive) {
-      const liveData = liveOnChain as any;
+    interface LiveOnChainData {
+      isLive?: boolean;
+      exchangeNetFlow?: { value: number; trend: string; magnitude: string };
+      whaleActivity?: { buying?: number; selling?: number; netFlow?: string };
+      activeAddresses?: { current: number; change24h: number; trend: string };
+      transactionVolume?: { value: number; change24h: number };
+      mempoolData?: unknown;
+    }
+    const liveOnChainObj = liveOnChain as LiveOnChainData | null;
+    if (liveOnChainObj && typeof liveOnChainObj === 'object' && liveOnChainObj.isLive) {
       console.log(`📡 Using LIVE on-chain data from client (${dataSource || 'live'})`);
       onChainMetrics = {
-        exchangeNetFlow: liveData.exchangeNetFlow || { value: 0, trend: 'NEUTRAL', magnitude: 'LOW' },
+        exchangeNetFlow: liveOnChainObj.exchangeNetFlow || { value: 0, trend: 'NEUTRAL', magnitude: 'LOW' },
         whaleActivity: { 
-          buying: liveData.whaleActivity?.buying || 50, 
-          selling: liveData.whaleActivity?.selling || 50, 
-          netFlow: liveData.whaleActivity?.netFlow || 'BALANCED' 
+          buying: liveOnChainObj.whaleActivity?.buying || 50, 
+          selling: liveOnChainObj.whaleActivity?.selling || 50, 
+          netFlow: liveOnChainObj.whaleActivity?.netFlow || 'BALANCED' 
         },
         longTermHolders: { accumulating: validatedChange > 0, change7d: validatedChange * 0.5, sentiment: validatedChange > 0 ? 'ACCUMULATING' : 'HOLDING' },
         shortTermHolders: { behavior: validatedChange > 3 ? 'FOMO BUYING' : validatedChange < -3 ? 'PANIC SELLING' : 'NEUTRAL', profitLoss: validatedChange },
-        activeAddresses: liveData.activeAddresses || { current: 0, change24h: 0, trend: 'STABLE' },
-        transactionVolume: liveData.transactionVolume || { value: 0, change24h: 0 },
-        mempoolData: liveData.mempoolData,
+        activeAddresses: liveOnChainObj.activeAddresses || { current: 0, change24h: 0, trend: 'STABLE' },
+        transactionVolume: liveOnChainObj.transactionVolume || { value: 0, change24h: 0 },
+        mempoolData: liveOnChainObj.mempoolData,
         source: 'client-live'
       };
     } else {
@@ -4481,9 +4489,9 @@ serve(async (req) => {
           totalFeedback = feedbackRecords.length;
         // If client requested training, run a tiny training loop on recent memory and return result
         try {
-          const anyBody: any = body as any;
-          if (anyBody && anyBody.train) {
-            const epochs = typeof anyBody.epochs === 'number' ? Math.max(1, Math.min(100, anyBody.epochs)) : 5;
+          const typedBody = body as { train?: boolean; epochs?: number } | null;
+          if (typedBody && typedBody.train) {
+            const epochs = typeof typedBody.epochs === 'number' ? Math.max(1, Math.min(100, typedBody.epochs)) : 5;
             // Prepare samples from memory
             const samples: { x: number[]; label: number }[] = [];
             for (let i = 0; i < Math.min(memory.length - 1, 30); i++) {
@@ -5396,7 +5404,7 @@ ${onChainMetrics.whaleActivity.netFlow.includes('MIXED') || onChainMetrics.whale
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 💡 ${t.topInsights}
-${allInsights.slice(0, 3).map((ins, i) => `${i + 1}. ${ins.replace(/[🔗💎📈📉🌐💬⚡🎯✓⚠️📊📡💼]/gu, '').trim()}`).join('\n')}
+${allInsights.slice(0, 3).map((ins, i) => `${i + 1}. ${ins.replace(/[\p{Emoji}]/gu, '').trim()}`).join('\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
