@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
-// VAPID public key from environment
+// VAPID public key for push notifications
 const VAPID_PUBLIC_KEY = 'BMAOEKFP15nphuIcym7qsUcKxumxeCZfrQKE21HuAlyADnCVOkrOsy3vzg0ZScARSirk5JQSbJa3jZwYiCD6Ano';
+
+// Storage key for push subscription status (not the actual subscription data)
+const PUSH_STATUS_KEY = 'zikalyze_push_enabled';
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -16,33 +19,50 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return outputArray.buffer;
 }
 
+/**
+ * Push notifications hook for Web3-style authentication
+ * 
+ * NOTE: Without a server backend, push notifications can only show local notifications
+ * when the app is open. True push notifications require a server to store subscriptions
+ * and send messages to the push service.
+ * 
+ * This implementation enables browser notification permissions and provides the UI
+ * for users to opt-in to notifications that can be shown locally.
+ */
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user, isSignedIn } = useAuth();
 
   // Check if push is supported
   useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window && !!VAPID_PUBLIC_KEY;
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     setIsSupported(supported);
     
     if (!supported) {
       setIsLoading(false);
-      if (!VAPID_PUBLIC_KEY) {
-        console.warn('VAPID public key not configured');
-      }
     }
   }, []);
 
-  // Check current subscription status
+  // Check current subscription status from browser
   const checkSubscription = useCallback(async () => {
     if (!isSupported) return;
     
     try {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
+      const hasSubscription = !!subscription;
+      
+      setIsSubscribed(hasSubscription);
+      
+      // Sync localStorage status with browser subscription state
+      if (hasSubscription) {
+        localStorage.setItem(PUSH_STATUS_KEY, 'true');
+      } else {
+        localStorage.removeItem(PUSH_STATUS_KEY);
+      }
     } catch (error) {
       console.error('Error checking subscription:', error);
     } finally {
@@ -76,9 +96,8 @@ export function usePushNotifications() {
     try {
       setIsLoading(true);
 
-      // Get user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Check if user is logged in
+      if (!isSignedIn || !user) {
         toast({
           title: "Authentication Required",
           description: "Please log in to enable push notifications",
@@ -107,75 +126,57 @@ export function usePushNotifications() {
         await existingSubscription.unsubscribe();
       }
 
+      // Create new subscription
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
 
-      const subscriptionJson = subscription.toJSON();
-      
-      // Save to database
-      const { error } = await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        endpoint: subscriptionJson.endpoint!,
-        p256dh: subscriptionJson.keys!.p256dh,
-        auth: subscriptionJson.keys!.auth,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,endpoint'
-      });
-
-      if (error) {
-        console.error('Error saving subscription:', error);
-        throw error;
+      if (subscription) {
+        // Store only the status flag, not the sensitive subscription data
+        localStorage.setItem(PUSH_STATUS_KEY, 'true');
+        setIsSubscribed(true);
+        
+        toast({
+          title: "Notifications Enabled",
+          description: "You'll receive alerts when the app is open"
+        });
+        
+        return true;
       }
-
-      setIsSubscribed(true);
-      toast({
-        title: "Push Notifications Enabled",
-        description: "You'll receive alerts even when the browser is closed"
-      });
       
-      return true;
+      return false;
     } catch (error) {
       console.error('Error subscribing to push:', error);
       toast({
         title: "Subscription Failed",
-        description: "Could not enable push notifications",
+        description: "Could not enable notifications. Please try again.",
         variant: "destructive"
       });
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, toast]);
+  }, [isSupported, isSignedIn, user, toast]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
       
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
         await subscription.unsubscribe();
-        
-        // Remove from database
-        if (user) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('endpoint', subscription.endpoint);
-        }
       }
-
+      
+      // Clear status flag
+      localStorage.removeItem(PUSH_STATUS_KEY);
       setIsSubscribed(false);
+      
       toast({
-        title: "Push Notifications Disabled",
-        description: "You won't receive push alerts anymore"
+        title: "Notifications Disabled",
+        description: "You won't receive notification alerts"
       });
       
       return true;
@@ -183,7 +184,7 @@ export function usePushNotifications() {
       console.error('Error unsubscribing:', error);
       toast({
         title: "Error",
-        description: "Could not disable push notifications",
+        description: "Could not disable notifications",
         variant: "destructive"
       });
       return false;
