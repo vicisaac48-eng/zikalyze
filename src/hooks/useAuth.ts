@@ -45,13 +45,17 @@ export const useAuth = () => {
       }
     });
     
+    // Enhanced Error Logging
+    if (error) {
+      console.error("Sign-Up Error:", error);
+      return { error };
+    }
+    
     // Increment user count on successful signup
-    if (!error) {
-      try {
-        await supabase.rpc('increment_user_count');
-      } catch (e) {
-        console.warn('Failed to increment user count:', e);
-      }
+    try {
+      await supabase.rpc('increment_user_count');
+    } catch (rpcError) {
+      console.warn('Failed to increment user count:', rpcError);
     }
     
     return { error };
@@ -62,6 +66,12 @@ export const useAuth = () => {
       email,
       password,
     });
+    
+    // Improved Error Handling
+    if (error) {
+      console.error("Sign-In Error:", error);
+    }
+    
     return { error };
   };
 
