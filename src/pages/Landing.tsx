@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Zap, LineChart } from "lucide-react";
+import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Zap, LineChart, PlayCircle, UserPlus, ChartCandlestick, Bell, Rocket, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -290,6 +290,136 @@ const Landing = () => {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tutorial Guide Section - How It Works */}
+        <div className="mt-16 w-full max-w-6xl sm:mt-24 lg:mt-32 xl:max-w-7xl">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 backdrop-blur-sm mb-4 sm:mb-6 sm:px-4 sm:py-2">
+              <PlayCircle className="h-3 w-3 text-accent sm:h-4 sm:w-4" />
+              <span className="text-xs text-accent sm:text-sm lg:text-base">{t("landing.tutorialBadge")}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-3 sm:text-3xl lg:text-4xl xl:text-5xl">
+              {t("landing.tutorialTitle")}
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto sm:text-base lg:text-lg">
+              {t("landing.tutorialDesc")}
+            </p>
+          </div>
+
+          {/* Tutorial Steps */}
+          <div className="relative">
+            {/* Connection Line */}
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 -translate-y-1/2 z-0" />
+            
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+              {/* Step 1: Sign Up */}
+              <div 
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                onClick={() => handleNavigate("/auth")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                  1
+                </div>
+                <div className="flex flex-col items-center text-center pt-3">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
+                    <UserPlus className="h-7 w-7 text-primary sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step1Title")}</h3>
+                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step1Desc")}</p>
+                </div>
+              </div>
+
+              {/* Step 2: Select Crypto */}
+              <div 
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-accent/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                onClick={() => handleNavigate("/auth")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                  2
+                </div>
+                <div className="flex flex-col items-center text-center pt-3">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
+                    <ChartCandlestick className="h-7 w-7 text-accent sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step2Title")}</h3>
+                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step2Desc")}</p>
+                </div>
+              </div>
+
+              {/* Step 3: AI Analysis */}
+              <div 
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-primary/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                onClick={() => handleNavigate("/auth")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                  3
+                </div>
+                <div className="flex flex-col items-center text-center pt-3">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
+                    <Brain className="h-7 w-7 text-primary sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step3Title")}</h3>
+                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step3Desc")}</p>
+                </div>
+              </div>
+
+              {/* Step 4: Get Alerts */}
+              <div 
+                className="group relative rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5 transition-all hover:border-accent/50 hover:bg-card cursor-pointer sm:rounded-2xl sm:p-6 lg:p-8"
+                onClick={() => handleNavigate("/auth")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold sm:h-8 sm:w-8 sm:text-sm">
+                  4
+                </div>
+                <div className="flex flex-col items-center text-center pt-3">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/20 group-hover:bg-accent/30 transition-all sm:h-16 sm:w-16 lg:h-20 lg:w-20">
+                    <Bell className="h-7 w-7 text-accent sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground mb-2 sm:text-lg lg:text-xl">{t("landing.step4Title")}</h3>
+                  <p className="text-xs text-muted-foreground sm:text-sm lg:text-base">{t("landing.step4Desc")}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Start CTA */}
+          <div className="mt-10 text-center sm:mt-14 lg:mt-16">
+            <Button 
+              size="lg" 
+              onClick={() => handleNavigate("/auth")}
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground px-8 sm:px-10 lg:px-12 lg:h-14 lg:text-lg"
+            >
+              <Rocket className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+              {t("landing.startNow")}
+            </Button>
+            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground sm:text-sm lg:text-base">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+                <span>{t("landing.freeTrial")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+                <span>{t("landing.noCardRequired")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success sm:h-4 sm:w-4" />
+                <span>{t("landing.instantAccess")}</span>
               </div>
             </div>
           </div>

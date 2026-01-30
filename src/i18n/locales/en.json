@@ -40,7 +40,22 @@
     "footer": "© 2025 Zikalyze. AI-Powered Crypto Analysis.",
     "emailVerified": "Email verified! 🎉",
     "emailVerifiedDesc": "Your account has been verified. Welcome to Zikalyze!",
-    "welcome": "Welcome to Zikalyze AI..."
+    "welcome": "Welcome to Zikalyze AI...",
+    "tutorialBadge": "Quick Start Guide",
+    "tutorialTitle": "How It Works",
+    "tutorialDesc": "Get started with Zikalyze in 4 simple steps. Our AI does the heavy lifting while you make informed trading decisions.",
+    "step1Title": "Create Account",
+    "step1Desc": "Sign up in seconds with email or social login. No credit card required.",
+    "step2Title": "Select Crypto",
+    "step2Desc": "Choose from 200+ cryptocurrencies and view real-time price charts.",
+    "step3Title": "AI Analysis",
+    "step3Desc": "Get instant ICT/SMC analysis with order blocks, FVGs, and key levels.",
+    "step4Title": "Get Alerts",
+    "step4Desc": "Receive push notifications for price targets and trading opportunities.",
+    "startNow": "Start Now - It's Free",
+    "freeTrial": "Free Forever Plan",
+    "noCardRequired": "No Card Required",
+    "instantAccess": "Instant Access"
   },
   "auth": {
     "signIn": "Sign In",
