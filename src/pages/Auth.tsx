@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
 import { TrendingUp, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -26,19 +27,13 @@ const ClerkNotConfigured = () => {
   );
 };
 
-// Auth component with Clerk - only loaded when Clerk is configured
+// Auth component with Clerk - only rendered when Clerk is configured
 const AuthWithClerk = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
-  // Dynamic import of Clerk hooks to avoid import errors when not configured
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { SignIn, SignUp, useUser } = require("@clerk/clerk-react");
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { user, isLoaded } = useUser();
 
   // Redirect if already logged in
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (isLoaded && user) {
       navigate("/dashboard");

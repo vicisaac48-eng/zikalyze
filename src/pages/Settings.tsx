@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { UserProfile, useUser } from "@clerk/clerk-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -17,26 +18,15 @@ import { languageCodes } from "@/i18n/config";
 // Check if Clerk is configured
 const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Get Clerk components dynamically to avoid import errors when not configured
-const getClerkComponents = () => {
-  if (!isClerkConfigured) return { UserProfile: null, user: null };
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const clerkReact = require("@clerk/clerk-react");
-  return clerkReact;
-};
-
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
   
-  // Get Clerk user data only if configured
-  const clerkComponents = getClerkComponents();
+  // Only call useUser hook when Clerk is configured (app is wrapped with ClerkProvider)
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const clerkUserData = isClerkConfigured && clerkComponents.useUser ? clerkComponents.useUser() : { user: null };
-  const { user } = clerkUserData;
-  const UserProfile = clerkComponents.UserProfile;
+  const { user } = isClerkConfigured ? useUser() : { user: null };
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
