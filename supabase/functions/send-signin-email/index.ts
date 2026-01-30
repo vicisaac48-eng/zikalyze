@@ -1,4 +1,5 @@
 import { Resend } from 'https://esm.sh/resend@4.0.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.89.0'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 
@@ -92,12 +93,45 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create Supabase client to verify the JWT and get the authenticated user
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    })
+
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { email } = await req.json()
 
     if (!email || typeof email !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Verify that the email matches the authenticated user's email
+    if (email.toLowerCase() !== user.email?.toLowerCase()) {
+      return new Response(
+        JSON.stringify({ error: 'Email mismatch' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -112,16 +146,8 @@ Deno.serve(async (req) => {
 
     console.log(`Sending sign-in notification email to: ${email}`)
 
-    // Format the current time
-    const signInTime = new Date().toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    })
+    // Format the current time in UTC
+    const signInTime = new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC')
 
     const html = generateSignInEmailHTML(email, signInTime)
 

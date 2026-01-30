@@ -4,7 +4,7 @@ project_id = "rjkgxkruvfjutgejrjbq"
 verify_jwt = false
 
 [functions.send-signin-email]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-email]
 verify_jwt = false
