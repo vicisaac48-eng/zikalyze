@@ -586,6 +586,30 @@ export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork } from './technical-analysis';
+// ICT/SMC Analysis with multi-timeframe
+export {
+  performICTSMCAnalysis,
+  detectOrderBlocks,
+  detectFairValueGaps,
+  detectLiquidityPools,
+  detectStructureShifts,
+  calculatePremiumDiscount,
+  calculateOTE,
+  detectDisplacement,
+  ICTLearner
+} from './ict-smc-analysis';
+export type {
+  OrderBlock,
+  FairValueGap,
+  LiquidityPool,
+  StructureShift,
+  PremiumDiscountZone,
+  OptimalTradeEntry,
+  Displacement,
+  ICTSMCAnalysis,
+  ICTTradeSetup,
+  ICTPatternRecord
+} from './ict-smc-analysis';
 export { 
   ZikalyzeBrainPipeline, 
   ActiveCryptoSource, 

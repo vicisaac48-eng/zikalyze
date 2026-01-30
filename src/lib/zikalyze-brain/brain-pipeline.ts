@@ -5,6 +5,7 @@
 // 🔗 All processing happens in a second with deterministic, verifiable steps
 // 🛡️ Filters bad/unnecessary data, verifies before output
 // 📊 Self-learns from live chart data and WebSocket livestream
+// 📈 ICT/SMC analysis with multi-timeframe confluence
 // ✅ Only sends accurate information after strict verification
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -16,6 +17,7 @@ import {
 } from './types';
 import { computeSelfAttention, softmax, relu, crossEntropyLoss } from './technical-analysis';
 import { estimateOnChainMetrics } from './on-chain-estimator';
+import { performICTSMCAnalysis, ICTSMCAnalysis, ICTLearner } from './ict-smc-analysis';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📊 TYPES FOR BRAIN PIPELINE
@@ -1396,6 +1398,10 @@ export interface SelfLearningOutput extends BrainPipelineOutput {
   // Only accurate verified information
   isAccurate: boolean;
   accuracyReason: string;
+  // ICT/SMC Analysis
+  ictAnalysis?: ICTSMCAnalysis;
+  hasICTSetup: boolean;
+  ictConfidence: number;
 }
 
 /**
@@ -1408,6 +1414,7 @@ export interface SelfLearningOutput extends BrainPipelineOutput {
 export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
   private chartLearner: LiveChartLearner;
   private streamLearner: LivestreamLearner;
+  private ictLearner: ICTLearner;
   private readonly accuracyThreshold = 0.65; // Minimum accuracy to release output
   private readonly version2 = '2.0.0';
   
@@ -1415,7 +1422,8 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
     super();
     this.chartLearner = new LiveChartLearner();
     this.streamLearner = new LivestreamLearner();
-    console.log('[SelfLearningBrain] Initialized with live chart and stream learning');
+    this.ictLearner = new ICTLearner();
+    console.log('[SelfLearningBrain] Initialized with live chart, stream, and ICT/SMC learning');
   }
   
   /**
@@ -1457,22 +1465,53 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 3: Run Base Pipeline Processing
+    // STEP 3: ICT/SMC Multi-Timeframe Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    let ictAnalysis: ICTSMCAnalysis | undefined;
+    let hasICTSetup = false;
+    let ictConfidence = 0;
+    
+    if (chartData && chartData.candles.length >= 10) {
+      const high24h = input.high24h || Math.max(...chartData.candles.map(c => c.high));
+      const low24h = input.low24h || Math.min(...chartData.candles.map(c => c.low));
+      
+      ictAnalysis = performICTSMCAnalysis(
+        chartData.candles,
+        input.price,
+        high24h,
+        low24h,
+        '1h',
+        input.multiTimeframeData
+      );
+      
+      hasICTSetup = ictAnalysis.tradeSetup !== null;
+      ictConfidence = ictAnalysis.confidence / 100;
+      
+      // Learn from ICT patterns
+      if (ictAnalysis.tradeSetup) {
+        this.ictLearner.recordPattern(ictAnalysis);
+        console.log(`[SelfLearningBrain] ICT Setup: ${ictAnalysis.tradeSetup.type} ${ictAnalysis.tradeSetup.direction}`);
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Run Base Pipeline Processing
     // ═══════════════════════════════════════════════════════════════════════
     const baseOutput = this.process(input);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 4: Calculate Combined Learning Score
+    // STEP 5: Calculate Combined Learning Score (with ICT)
     // ═══════════════════════════════════════════════════════════════════════
-    const combinedLearningScore = this.calculateCombinedScore(
+    const combinedLearningScore = this.calculateCombinedScoreWithICT(
       baseOutput.confidence,
       patternConfidence,
       velocityConfidence,
+      ictConfidence,
       baseOutput.doubleVerified
     );
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Strict Accuracy Verification
+    // STEP 6: Strict Accuracy Verification
     // ═══════════════════════════════════════════════════════════════════════
     const { isAccurate, reason } = this.verifyAccuracy(
       baseOutput,
@@ -1482,18 +1521,25 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
     );
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Build Final Output (Only Accurate Information)
+    // STEP 7: Build Final Output (Only Accurate Information)
     // ═══════════════════════════════════════════════════════════════════════
     const processingTimeMs = Date.now() - startTime;
+    
+    // Enhance analysis with ICT insights if available
+    let enhancedAnalysis = isAccurate 
+      ? this.enhanceOutputWithLearning(baseOutput.humanReadableAnalysis, combinedLearningScore)
+      : this.buildInaccurateWarning(input.crypto, reason);
+    
+    if (ictAnalysis && isAccurate) {
+      enhancedAnalysis = this.appendICTAnalysis(enhancedAnalysis, ictAnalysis);
+    }
     
     return {
       ...baseOutput,
       // If not accurate, force neutral bias with low confidence
       bias: isAccurate ? baseOutput.bias : 'NEUTRAL',
       confidence: isAccurate ? baseOutput.confidence : baseOutput.confidence * 0.3,
-      humanReadableAnalysis: isAccurate 
-        ? this.enhanceOutputWithLearning(baseOutput.humanReadableAnalysis, combinedLearningScore)
-        : this.buildInaccurateWarning(input.crypto, reason),
+      humanReadableAnalysis: enhancedAnalysis,
       learnedFromLiveChart,
       learnedFromLivestream,
       patternConfidence,
@@ -1501,35 +1547,113 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
       combinedLearningScore,
       isAccurate,
       accuracyReason: reason,
+      ictAnalysis,
+      hasICTSetup,
+      ictConfidence,
       processingTimeMs,
       pipelineVersion: this.version2
     };
   }
   
   /**
-   * Calculate combined learning score from all sources
+   * Calculate combined learning score from all sources including ICT
    */
-  private calculateCombinedScore(
+  private calculateCombinedScoreWithICT(
     baseConfidence: number,
     patternConfidence: number,
     velocityConfidence: number,
+    ictConfidence: number,
     doubleVerified: boolean
   ): number {
     // Weights for different confidence sources
-    const baseWeight = 0.4;
-    const patternWeight = patternConfidence > 0 ? 0.3 : 0;
-    const velocityWeight = velocityConfidence > 0 ? 0.2 : 0;
+    const baseWeight = 0.3;
+    const patternWeight = patternConfidence > 0 ? 0.2 : 0;
+    const velocityWeight = velocityConfidence > 0 ? 0.15 : 0;
+    const ictWeight = ictConfidence > 0 ? 0.25 : 0;
     const verificationBonus = doubleVerified ? 0.1 : -0.1;
     
-    const totalWeight = baseWeight + patternWeight + velocityWeight;
+    const totalWeight = baseWeight + patternWeight + velocityWeight + ictWeight;
     
     const score = (
       baseConfidence * baseWeight +
       patternConfidence * patternWeight +
-      velocityConfidence * velocityWeight
+      velocityConfidence * velocityWeight +
+      ictConfidence * ictWeight
     ) / totalWeight + verificationBonus;
     
     return Math.max(0, Math.min(1, score));
+  }
+  
+  /**
+   * Append ICT/SMC analysis to output
+   */
+  private appendICTAnalysis(original: string, ict: ICTSMCAnalysis): string {
+    const lines: string[] = [original];
+    
+    lines.push('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('📊 ICT/SMC ANALYSIS');
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
+    // Market Structure
+    lines.push(`🏗️ Structure: ${ict.marketStructure.trend} (${ict.marketStructure.strength}%)`);
+    if (ict.marketStructure.lastBOS) lines.push(`   ↳ BOS: ${ict.marketStructure.lastBOS}`);
+    if (ict.marketStructure.lastCHoCH) lines.push(`   ↳ CHoCH: ${ict.marketStructure.lastCHoCH}`);
+    
+    // Premium/Discount
+    lines.push(`\n💰 Zone: ${ict.premiumDiscount.zone} (${ict.premiumDiscount.pricePosition.toFixed(0)}%)`);
+    lines.push(`   Fib Level: ${ict.premiumDiscount.fibLevel}`);
+    
+    // Order Blocks
+    if (ict.orderBlocks.length > 0) {
+      lines.push(`\n📦 Order Blocks: ${ict.orderBlocks.length}`);
+      const nearestOB = ict.orderBlocks[0];
+      lines.push(`   ↳ ${nearestOB.type} OB at ${nearestOB.midpoint.toFixed(2)}`);
+    }
+    
+    // Fair Value Gaps
+    if (ict.fairValueGaps.length > 0) {
+      lines.push(`\n📉 Fair Value Gaps: ${ict.fairValueGaps.length}`);
+      const nearestFVG = ict.fairValueGaps[0];
+      lines.push(`   ↳ ${nearestFVG.type} FVG CE at ${nearestFVG.midpoint.toFixed(2)}`);
+    }
+    
+    // Liquidity Pools
+    if (ict.liquidityPools.length > 0) {
+      const bsl = ict.liquidityPools.filter(p => p.type === 'BSL').length;
+      const ssl = ict.liquidityPools.filter(p => p.type === 'SSL').length;
+      lines.push(`\n💧 Liquidity: ${bsl} BSL | ${ssl} SSL`);
+    }
+    
+    // OTE Zone
+    if (ict.optimalEntry.isOTE) {
+      lines.push(`\n🎯 OTE ZONE ACTIVE: ${ict.optimalEntry.zone}`);
+      lines.push(`   Entry: ${ict.optimalEntry.entryLevel.toFixed(2)}`);
+      lines.push(`   R:R = ${ict.optimalEntry.riskReward.toFixed(1)}`);
+    }
+    
+    // Trade Setup
+    if (ict.tradeSetup) {
+      lines.push('\n┌─────────────────────────────────────┐');
+      lines.push(`│  🎯 ICT TRADE SETUP: ${ict.tradeSetup.direction}              │`);
+      lines.push('└─────────────────────────────────────┘');
+      lines.push(`Type: ${ict.tradeSetup.type.replace('_', ' ')}`);
+      lines.push(`Entry: ${ict.tradeSetup.entry.toFixed(2)}`);
+      lines.push(`Stop Loss: ${ict.tradeSetup.stopLoss.toFixed(2)}`);
+      lines.push(`Target 1: ${ict.tradeSetup.target1.toFixed(2)} (${ict.tradeSetup.riskReward.toFixed(1)}R)`);
+      lines.push(`Target 2: ${ict.tradeSetup.target2.toFixed(2)}`);
+      lines.push(`Confidence: ${ict.tradeSetup.confidence}%`);
+      
+      lines.push('\nConfluence Factors:');
+      ict.tradeSetup.confluence.forEach(c => lines.push(`  ${c}`));
+    }
+    
+    // Multi-TF Confluence
+    lines.push(`\n📈 Multi-TF: HTF ${ict.htfTrend} | LTF ${ict.ltfTrend}`);
+    lines.push(`   ${ict.timeframeConfluence.recommendation}`);
+    
+    lines.push('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    return lines.join('\n');
   }
   
   /**

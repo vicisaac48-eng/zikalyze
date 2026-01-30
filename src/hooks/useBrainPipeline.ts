@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Integrates the complete brain pipeline with React state management
 // Self-learns from live chart data and WebSocket livestream
+// ICT/SMC analysis with multi-timeframe confluence
 // Only sends accurate information after strict verification!
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -14,7 +15,8 @@ import {
   SelfLearningOutput,
   AnalysisInput,
   ChartTrendInput,
-  LivestreamUpdate
+  LivestreamUpdate,
+  ICTSMCAnalysis
 } from '@/lib/zikalyze-brain';
 
 interface UseBrainPipelineOptions {
@@ -26,6 +28,9 @@ interface UseBrainPipelineOptions {
 interface UseBrainPipelineReturn {
   // Pipeline output
   output: BrainPipelineOutput | SelfLearningOutput | null;
+  // ICT/SMC Analysis
+  ictAnalysis: ICTSMCAnalysis | null;
+  hasICTSetup: boolean;
   // Processing state
   isProcessing: boolean;
   error: string | null;
@@ -98,6 +103,8 @@ export function useBrainPipeline(
   
   // State
   const [output, setOutput] = useState<BrainPipelineOutput | SelfLearningOutput | null>(null);
+  const [ictAnalysis, setIctAnalysis] = useState<ICTSMCAnalysis | null>(null);
+  const [hasICTSetup, setHasICTSetup] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [storageStats, setStorageStats] = useState({ goodCount: 0, badCount: 0, learningCount: 0 });
@@ -171,6 +178,7 @@ export function useBrainPipeline(
   /**
    * Process input with self-learning from live chart and livestream data
    * Only sends accurate information after strict verification
+   * Includes ICT/SMC multi-timeframe analysis
    */
   const processWithLearning = useCallback(async (
     input: AnalysisInput,
@@ -210,12 +218,18 @@ export function useBrainPipeline(
       setStorageStats(selfLearningPipelineRef.current.getStorageStats());
       setLearningAdjustment(selfLearningPipelineRef.current.getLearningAdjustment());
       
-      // Log processing stats with learning info
+      // Update ICT analysis state
+      if (result.ictAnalysis) {
+        setIctAnalysis(result.ictAnalysis);
+        setHasICTSetup(result.hasICTSetup);
+      }
+      
+      // Log processing stats with learning and ICT info
       console.log(
         `[SelfLearning] Processed ${input.crypto} in ${result.processingTimeMs}ms | ` +
         `Bias: ${result.bias} | Accurate: ${result.isAccurate ? '✓' : '✗'} | ` +
+        `ICT Setup: ${result.hasICTSetup ? '✓' : '✗'} | ` +
         `Chart Learn: ${result.learnedFromLiveChart ? '✓' : '✗'} | ` +
-        `Stream Learn: ${result.learnedFromLivestream ? '✓' : '✗'} | ` +
         `Score: ${(result.combinedLearningScore * 100).toFixed(0)}%`
       );
       
@@ -236,6 +250,8 @@ export function useBrainPipeline(
   const clearOutput = useCallback(() => {
     setOutput(null);
     setError(null);
+    setIctAnalysis(null);
+    setHasICTSetup(false);
   }, []);
 
   /**
@@ -288,6 +304,8 @@ export function useBrainPipeline(
 
   return {
     output,
+    ictAnalysis,
+    hasICTSetup,
     isProcessing,
     error,
     processInput,
