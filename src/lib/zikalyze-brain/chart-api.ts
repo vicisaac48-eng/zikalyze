@@ -362,7 +362,7 @@ export async function fetchFromCryptoCompare(
     const result = await response.json();
     if (result.Response !== 'Success' || !result.Data?.Data) return null;
     
-    return result.Data.Data.map((point: any) => ({
+    return result.Data.Data.map((point: { time: number; open: number; high: number; low: number; close: number; volumeto: number }) => ({
       timestamp: point.time * 1000,
       open: point.open,
       high: point.high,

@@ -60,7 +60,7 @@ export function useUnifiedRealtime(
     
     if (priceData && priceData.current_price > 0) {
       const now = Date.now();
-      const lastUpdate = (priceData as any).lastUpdate || (priceData as any).last_updated;
+      const lastUpdate = (priceData as { lastUpdate?: string | number; last_updated?: string }).lastUpdate || (priceData as { lastUpdate?: string | number; last_updated?: string }).last_updated;
       const dataAge = lastUpdate ? now - new Date(lastUpdate).getTime() : 0;
       const isFresh = dataAge < 30000; // Data is fresh if updated within 30 seconds
       
