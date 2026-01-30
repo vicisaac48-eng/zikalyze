@@ -1,334 +1,220 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, Component, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, Mail, Lock, ArrowRight, Loader2, CheckCircle2, ShieldAlert, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { TrendingUp, AlertCircle, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useRateLimit } from "@/hooks/useRateLimit";
-import { usePasswordStrength } from "@/hooks/usePasswordStrength";
-import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
-import { supabase } from "@/integrations/supabase/client";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import { Button } from "@/components/ui/button";
 
-import { z } from "zod";
+// Check if Clerk is configured
+const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Error boundary for Clerk components
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ClerkErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("[Auth] Clerk error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+// Demo mode component - used when Clerk is not configured or fails
+const DemoModeAuth = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="text-center py-8">
+      <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">Welcome to Zikalyze</h3>
+      <p className="text-muted-foreground mb-4">
+        Experience the smartest trading companion with real-time analysis.
+      </p>
+      <Button 
+        onClick={() => navigate("/dashboard")}
+        className="bg-primary hover:bg-primary/90"
+      >
+        Explore Dashboard
+      </Button>
+      <p className="text-xs text-muted-foreground mt-4">
+        No sign-up required for demo mode
+      </p>
+    </div>
+  );
+};
+
+// Fallback component when Clerk has issues
+const ClerkNotConfigured = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="text-center py-8">
+      <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">Authentication Not Configured</h3>
+      <p className="text-muted-foreground mb-4">
+        Set VITE_CLERK_PUBLISHABLE_KEY in your environment to enable authentication.
+      </p>
+      <Button variant="outline" onClick={() => navigate("/dashboard")}>
+        Continue to Dashboard (Demo Mode)
+      </Button>
+    </div>
+  );
+};
+
+// Lazy loaded Clerk components with error handling
+const AuthWithClerk = () => {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [ClerkComponents, setClerkComponents] = useState<{
+    SignIn: React.ComponentType<Record<string, unknown>>;
+    SignUp: React.ComponentType<Record<string, unknown>>;
+    useUser: () => { user: unknown; isLoaded: boolean };
+  } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Dynamically import Clerk components
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadClerk = async () => {
+      try {
+        const clerk = await import("@clerk/clerk-react");
+        if (mounted) {
+          setClerkComponents({
+            SignIn: clerk.SignIn as React.ComponentType<Record<string, unknown>>,
+            SignUp: clerk.SignUp as React.ComponentType<Record<string, unknown>>,
+            useUser: clerk.useUser,
+          });
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("[Auth] Failed to load Clerk:", err);
+        if (mounted) {
+          setLoadError(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    // Timeout for loading
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("[Auth] Clerk load timeout");
+        setLoadError(true);
+        setLoading(false);
+      }
+    }, 8000);
+
+    loadClerk();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, [loading]);
+
+  // Check if user is already logged in via Clerk global
+  useEffect(() => {
+    const checkUser = () => {
+      try {
+        const clerkInstance = (window as unknown as { Clerk?: { user?: unknown } }).Clerk;
+        if (clerkInstance?.user) {
+          navigate("/dashboard");
+        }
+      } catch {
+        // Ignore
+      }
+    };
+    
+    checkUser();
+    const interval = setInterval(checkUser, 1000);
+    return () => clearInterval(interval);
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading authentication...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !ClerkComponents) {
+    return <DemoModeAuth />;
+  }
+
+  const { SignIn, SignUp } = ClerkComponents;
+
+  const clerkAppearance = {
+    elements: {
+      rootBox: "w-full",
+      card: "bg-transparent shadow-none p-0",
+      headerTitle: "hidden",
+      headerSubtitle: "hidden",
+      socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-secondary/80",
+      formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+      formFieldInput: "bg-secondary border-border text-foreground",
+      formFieldLabel: "text-foreground",
+      footerActionLink: "text-primary hover:text-primary/80",
+      identityPreviewText: "text-foreground",
+      identityPreviewEditButton: "text-primary",
+      formFieldInputShowPasswordButton: "text-muted-foreground",
+      footer: "hidden",
+    }
+  };
+
+  return (
+    <ClerkErrorBoundary fallback={<DemoModeAuth />}>
+      <Tabs defaultValue="signin" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
+          <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="signin">
+          <div className="flex justify-center">
+            <SignIn 
+              routing="hash"
+              forceRedirectUrl="/dashboard"
+              appearance={clerkAppearance}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="signup">
+          <div className="flex justify-center">
+            <SignUp 
+              routing="hash"
+              forceRedirectUrl="/dashboard"
+              appearance={clerkAppearance}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </ClerkErrorBoundary>
+  );
+};
 
 const Auth = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { t } = useTranslation();
-  const { user, loading: authLoading, signIn, signUp, resetPassword } = useAuth();
-  const { checkRateLimit, recordLoginAttempt, formatRetryAfter } = useRateLimit();
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [resetRateLimitError, setResetRateLimitError] = useState<{ message: string; retryAfter: number } | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
-  
-  const passwordStrength = usePasswordStrength(password);
-  
-  const emailSchema = z.string().email(t("validation.invalidEmail"));
-  const passwordSchema = z.string().min(6, t("validation.passwordMinLength"));
-  const strongPasswordSchema = z.string()
-    .min(12, "Password must be at least 12 characters")
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/\d/, "Password must contain a number")
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, "Password must contain a special character");
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user && !authLoading) {
-      navigate("/dashboard");
-    }
-  }, [user, authLoading, navigate]);
-
-  const validateForm = (forSignUp: boolean = false): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
-    }
-    
-    // Use strong password validation for signup
-    if (forSignUp) {
-      if (!passwordStrength.isValid) {
-        newErrors.password = "Password doesn't meet security requirements";
-      }
-    } else {
-      const passwordResult = passwordSchema.safeParse(password);
-      if (!passwordResult.success) {
-        newErrors.password = passwordResult.error.errors[0].message;
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    
-    setRateLimitError(null);
-    setIsLoading(true);
-    
-    try {
-      // Check rate limit before attempting sign in
-      const rateLimitResult = await checkRateLimit(email);
-      if (!rateLimitResult.allowed) {
-        setIsLoading(false);
-        setRateLimitError(
-          t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) })
-        );
-        toast({
-          title: t("auth.tooManyAttempts"),
-          description: t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) }),
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        // Record failed attempt
-        await recordLoginAttempt(email, false);
-        setIsLoading(false);
-        
-        const errorMessage = error.message || error.toString() || "An error occurred during sign in";
-        if (errorMessage.includes("Invalid login credentials")) {
-          const remainingAttempts = rateLimitResult.max_attempts - rateLimitResult.attempts - 1;
-          toast({
-            title: t("auth.invalidCredentials"),
-            description: remainingAttempts > 0 
-              ? t("auth.checkCredentials", { attempts: remainingAttempts })
-              : t("auth.checkCredentials", { attempts: 0 }),
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: t("auth.signInFailed"),
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // Record successful attempt (clears failed attempts)
-      await recordLoginAttempt(email, true);
-
-      // Send sign-in notification email
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-signin-email', {
-          body: { email }
-        });
-        
-        if (emailError) {
-          console.error('Failed to send sign-in notification email:', emailError);
-          // Don't block sign in if email fails
-        } else {
-          console.log('Sign-in notification email sent successfully');
-        }
-      } catch (emailErr) {
-        console.error('Error sending sign-in notification email:', emailErr);
-      }
-      
-      setIsLoading(false);
-
-      toast({
-        title: t("auth.welcomeBack"),
-        description: t("auth.signInSuccess"),
-      });
-      navigate("/dashboard");
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.signInFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const formatWaitTime = (seconds: number): string => {
-    if (seconds >= 60) {
-      const minutes = Math.ceil(seconds / 60);
-      return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-    }
-    return `${seconds} seconds`;
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetRateLimitError(null);
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      setErrors({ email: emailResult.error.errors[0].message });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      const { error, rateLimited, retryAfter } = await resetPassword(email);
-      setIsLoading(false);
-
-      if (rateLimited && retryAfter) {
-        setResetRateLimitError({
-          message: t("auth.tooManyResetRequests"),
-          retryAfter
-        });
-        return;
-      }
-
-      if (error) {
-        const errorMessage = error.message || error.toString() || "An error occurred";
-        toast({
-          title: t("auth.resetFailed"),
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: t("auth.checkEmailForReset"),
-        description: t("auth.resetLinkSent"),
-      });
-      setShowForgotPassword(false);
-      setResetRateLimitError(null);
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.resetFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm(true)) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const { error } = await signUp(email, password);
-
-      if (error) {
-        setIsLoading(false);
-        const errorMessage = error.message || error.toString() || "An error occurred during sign up";
-        if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
-          toast({
-            title: t("auth.accountExists"),
-            description: t("auth.accountExistsDesc"),
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: t("auth.signUpFailed"),
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // Send welcome email directly via edge function
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
-          body: { email }
-        });
-        
-        if (emailError) {
-          console.error('Failed to send welcome email:', emailError);
-          // Don't block signup if email fails
-        } else {
-          console.log('Welcome email sent successfully');
-        }
-      } catch (emailErr) {
-        console.error('Error sending welcome email:', emailErr);
-      }
-      
-      setIsLoading(false);
-
-      // Show success toast with email confirmation
-      toast({
-        title: t("auth.accountCreated"),
-        description: t("auth.welcomeEmailSent"),
-      });
-
-      // Show email confirmation screen
-      setShowEmailConfirmation(true);
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.signUpFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleResendVerification = async () => {
-    setIsResending(true);
-    
-    try {
-      // Use Supabase's resend method for email verification
-      // This won't create a duplicate account
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      });
-      
-      setIsResending(false);
-
-      if (error) {
-        const errorMessage = error.message || error.toString() || "An error occurred";
-        toast({
-          title: t("auth.failedToResend"),
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: t("auth.emailSent"),
-        description: t("auth.anotherVerificationSent"),
-      });
-    } catch (err) {
-      setIsResending(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.failedToResend"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Redirect immediately if already logged in (no blocking loading state)
-  if (user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -349,287 +235,12 @@ const Auth = () => {
 
         {/* Auth Card */}
         <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
-              <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              {rateLimitError && (
-                <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-2">
-                  <ShieldAlert className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-sm text-destructive">{rateLimitError}</p>
-                </div>
-              )}
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">{t("auth.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                        setRateLimitError(null);
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">{t("auth.password")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder={t("auth.enterPassword")}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {t("auth.forgotPassword")}
-                  </button>
-                </div>
-
-
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      {t("auth.signIn")} <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">{t("auth.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t("auth.password")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder={t("auth.createPassword")}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  <PasswordStrengthMeter password={password} />
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      {t("auth.createAccount")} <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          {isClerkConfigured ? <AuthWithClerk /> : <ClerkNotConfigured />}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("auth.termsAgreement")}
           </p>
         </div>
-
-        {/* Email Confirmation Screen */}
-        {showEmailConfirmation && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl w-full max-w-md mx-4 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                  <CheckCircle2 className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold mb-2">{t("auth.checkEmail")}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t("auth.verificationSent")}
-              </p>
-              <p className="font-medium text-foreground mb-6 break-all">{email}</p>
-              <p className="text-sm text-muted-foreground mb-6">
-                {t("auth.verificationExpiry")}
-              </p>
-              <div className="space-y-3">
-                <Button
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={handleResendVerification}
-                  disabled={isResending}
-                >
-                  {isResending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t("auth.sending")}
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      {t("auth.resendVerification")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setShowEmailConfirmation(false);
-                    setEmail("");
-                    setPassword("");
-                  }}
-                >
-                  {t("auth.backToSignIn")}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  {t("auth.checkSpam")}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Forgot Password Modal */}
-        {showForgotPassword && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl w-full max-w-md mx-4">
-              <h3 className="text-xl font-bold mb-2">{t("auth.resetPassword")}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t("auth.resetPasswordDesc")}
-              </p>
-              
-              {/* Rate Limit Warning */}
-              {resetRateLimitError && (
-                <div className="mb-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-warning">
-                        {resetRateLimitError.message}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {t("auth.tryAgainIn", { time: formatWaitTime(resetRateLimitError.retryAfter) })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reset-email">{t("auth.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                        setResetRateLimitError(null);
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowForgotPassword(false);
-                      setResetRateLimitError(null);
-                    }}
-                  >
-                    {t("common.cancel")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={isLoading || !!resetRateLimitError}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t("auth.sendResetLink")
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

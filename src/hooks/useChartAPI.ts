@@ -70,7 +70,7 @@ export function useChartAPI(
 
     try {
       // Fetch main analysis and multi-TF in parallel
-      const promises: Promise<any>[] = [
+      const promises: Promise<ChartAnalysisResult | ChartAnalysisResult[]>[] = [
         analyzeChart(symbol, interval, 100)
       ];
       

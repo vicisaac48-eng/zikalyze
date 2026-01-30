@@ -1,36 +1,32 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { UserProfile, useUser } from "@clerk/clerk-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Mail, Lock, Loader2, AlertTriangle } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useSettings } from "@/hooks/useSettings";
 import { alertSound } from "@/lib/alertSound";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
-import TwoFactorAuth from "@/components/settings/TwoFactorAuth";
-import { SessionManagement } from "@/components/settings/SessionManagement";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import EmailDigestSettings from "@/components/settings/EmailDigestSettings";
 import { languageCodes } from "@/i18n/config";
 
-const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+// Check if Clerk is configured
+const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const Settings = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const { settings, saveSettings, toggleSetting } = useSettings();
-  const { user, updatePassword, updateEmail } = useAuth();
+  const { setTheme, resolvedTheme } = useTheme();
+  const { settings, saveSettings } = useSettings();
+  
+  // Only call useUser hook when Clerk is configured (app is wrapped with ClerkProvider)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { user } = isClerkConfigured ? useUser() : { user: null };
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -52,18 +48,6 @@ const Settings = () => {
       alertSound.playTestSound();
     }
   };
-
-  // Profile form state
-  const [newEmail, setNewEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
   // General settings local state (saved on button click)
   const [selectedLanguage, setSelectedLanguage] = useState(settings.language);
@@ -100,124 +84,6 @@ const Settings = () => {
       title: t("settings.settingsSaved"),
       description: t("settings.settingsSavedDesc"),
     });
-  };
-
-  const handleEmailUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    
-    const emailResult = emailSchema.safeParse(newEmail);
-    if (!emailResult.success) {
-      setErrors({ email: emailResult.error.errors[0].message });
-      return;
-    }
-    
-    setIsUpdatingEmail(true);
-    const { error } = await updateEmail(newEmail);
-    setIsUpdatingEmail(false);
-    
-    if (error) {
-      toast({
-        title: "Email update failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Verification email sent",
-      description: "Please check your new email to confirm the change.",
-    });
-    setNewEmail("");
-  };
-
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    
-    const passwordResult = passwordSchema.safeParse(newPassword);
-    if (!passwordResult.success) {
-      setErrors({ password: passwordResult.error.errors[0].message });
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setErrors({ confirmPassword: "Passwords do not match" });
-      return;
-    }
-    
-    setIsUpdatingPassword(true);
-    const { error } = await updatePassword(newPassword);
-    setIsUpdatingPassword(false);
-    
-    if (error) {
-      toast({
-        title: "Password update failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Password updated",
-      description: "Your password has been changed successfully.",
-    });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") return;
-    
-    setIsDeletingAccount(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Not authenticated",
-          description: "Please log in again to delete your account.",
-          variant: "destructive",
-        });
-        setIsDeletingAccount(false);
-        return;
-      }
-
-      const response = await supabase.functions.invoke("delete-account", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      // Sign out first to clear local session
-      await supabase.auth.signOut();
-      
-      toast({
-        title: "Account deleted",
-        description: "Your account and all data have been permanently deleted.",
-      });
-      
-      // Redirect to landing page
-      navigate("/", { replace: true });
-    } catch (error: any) {
-      toast({
-        title: "Deletion failed",
-        description: error.message || "Failed to delete account. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeletingAccount(false);
-      setShowDeleteConfirm(false);
-      setDeleteConfirmText("");
-    }
   };
 
   return (
@@ -278,103 +144,53 @@ const Settings = () => {
                           <User className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                          <div className="font-medium text-foreground">{user?.email}</div>
+                          <div className="font-medium text-foreground">
+                            {user?.primaryEmailAddress?.emailAddress || "No email (Demo Mode)"}
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                            Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Change Email */}
+                  {/* Clerk User Profile - handles email, password, 2FA, etc. */}
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Change Email</h3>
-                    <form onSubmit={handleEmailUpdate} className="space-y-4">
-                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-email">New Email Address</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="new-email"
-                              type="email"
-                              placeholder="Enter new email"
-                              value={newEmail}
-                              onChange={(e) => {
-                                setNewEmail(e.target.value);
-                                setErrors((prev) => ({ ...prev, email: undefined }));
-                              }}
-                              className="pl-10"
-                            />
-                          </div>
-                          {errors.email && (
-                            <p className="text-sm text-destructive">{errors.email}</p>
-                          )}
-                        </div>
-                        <Button type="submit" disabled={isUpdatingEmail || !newEmail}>
-                          {isUpdatingEmail ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Update Email
-                        </Button>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Manage Account</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Update your email, password, and security settings below.
+                    </p>
+                    {isClerkConfigured && UserProfile ? (
+                      <div className="flex justify-center">
+                        <UserProfile 
+                          routing="hash"
+                          appearance={{
+                            elements: {
+                              rootBox: "w-full",
+                              card: "bg-transparent shadow-none border-0 p-0",
+                              navbar: "hidden",
+                              pageScrollBox: "p-0",
+                              formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+                              formFieldInput: "bg-secondary border-border text-foreground",
+                              formFieldLabel: "text-foreground",
+                              headerTitle: "text-foreground",
+                              headerSubtitle: "text-muted-foreground",
+                            }
+                          }}
+                        />
                       </div>
-                    </form>
-                  </div>
-
-                  {/* Change Password */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Change Password</h3>
-                    <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-password">New Password</Label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="new-password"
-                              type="password"
-                              placeholder="Enter new password"
-                              value={newPassword}
-                              onChange={(e) => {
-                                setNewPassword(e.target.value);
-                                setErrors((prev) => ({ ...prev, password: undefined }));
-                              }}
-                              className="pl-10"
-                            />
-                          </div>
-                          {errors.password && (
-                            <p className="text-sm text-destructive">{errors.password}</p>
-                          )}
+                    ) : (
+                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3 mb-2">
+                          <AlertCircle className="h-5 w-5 text-warning" />
+                          <span className="font-medium text-foreground">Authentication Not Configured</span>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="confirm-password">Confirm New Password</Label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="confirm-password"
-                              type="password"
-                              placeholder="Confirm new password"
-                              value={confirmPassword}
-                              onChange={(e) => {
-                                setConfirmPassword(e.target.value);
-                                setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                              }}
-                              className="pl-10"
-                            />
-                          </div>
-                          {errors.confirmPassword && (
-                            <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                          )}
-                        </div>
-                        <Button type="submit" disabled={isUpdatingPassword || !newPassword || !confirmPassword}>
-                          {isUpdatingPassword ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Update Password
-                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          Set VITE_CLERK_PUBLISHABLE_KEY in your environment to enable account management features.
+                        </p>
                       </div>
-                    </form>
+                    )}
                   </div>
                 </div>
               )}
@@ -523,86 +339,21 @@ const Settings = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-4">Security Settings</h3>
                   
                   <div className="space-y-4">
-                    {/* Two-Factor Authentication Component */}
-                    <TwoFactorAuth />
-
-                    {/* Active Sessions */}
-                    <SessionManagement />
-
                     <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="font-medium text-foreground mb-2">Change Password</div>
-                      <div className="text-sm text-muted-foreground mb-3">Update your account password</div>
+                      <div className="font-medium text-foreground mb-2">Account Security</div>
+                      <div className="text-sm text-muted-foreground mb-3">
+                        Manage your password, two-factor authentication, and active sessions through your profile.
+                      </div>
                       <Button variant="outline" onClick={() => setActiveTab("profile")}>
                         Go to Profile Settings
                       </Button>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-                      <div className="font-medium text-destructive mb-2">Danger Zone</div>
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="font-medium text-foreground mb-2">Delete Account</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Permanently delete your account and all associated data. This action cannot be undone.
+                        To delete your account, go to your profile settings above and use the account management options provided by Clerk.
                       </div>
-                      <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
-                        Delete Account
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Delete Account Confirmation Modal */}
-              {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                  <div className="rounded-2xl border border-destructive/30 bg-card p-6 shadow-2xl w-full max-w-md mx-4">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-destructive/20 flex items-center justify-center">
-                        <AlertTriangle className="h-5 w-5 text-destructive" />
-                      </div>
-                      <h3 className="text-xl font-bold text-destructive">Delete Account</h3>
-                    </div>
-                    
-                    <p className="text-muted-foreground mb-4">
-                      This will permanently delete your account and all your data including:
-                    </p>
-                    <ul className="text-sm text-muted-foreground mb-4 list-disc list-inside space-y-1">
-                      <li>All price alerts</li>
-                      <li>All analysis history</li>
-                      <li>Your account credentials</li>
-                    </ul>
-                    <p className="text-sm text-foreground font-medium mb-4">
-                      Type <span className="text-destructive font-bold">DELETE</span> to confirm:
-                    </p>
-                    
-                    <Input
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="Type DELETE to confirm"
-                      className="mb-4"
-                    />
-                    
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          setShowDeleteConfirm(false);
-                          setDeleteConfirmText("");
-                        }}
-                        disabled={isDeletingAccount}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={handleDeleteAccount}
-                        disabled={deleteConfirmText !== "DELETE" || isDeletingAccount}
-                      >
-                        {isDeletingAccount ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : null}
-                        Delete Forever
-                      </Button>
                     </div>
                   </div>
                 </div>

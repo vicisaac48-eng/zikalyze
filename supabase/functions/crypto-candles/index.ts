@@ -63,7 +63,7 @@ async function fetchFromBinance(symbol: string, interval: string, limit: number)
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
-          return data.map((k: any[]) => ({
+          return data.map((k: [number, string, string, string, string, string]) => ({
             timestamp: k[0],
             open: parseFloat(k[1]),
             high: parseFloat(k[2]),

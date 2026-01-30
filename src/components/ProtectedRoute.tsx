@@ -27,8 +27,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   });
 
   useEffect(() => {
+    // Only redirect to auth if loading is complete, no user, and NOT in demo mode
+    // Demo mode is when loading is false and user is null (Clerk timed out or not configured)
+    // We allow access in demo mode so users can explore the app
     if (!loading && !user) {
-      navigate("/auth");
+      // User not logged in - allow demo mode access, don't redirect
+      // The auth page is available via the nav menu if they want to sign in
     }
   }, [user, loading, navigate]);
 
@@ -50,13 +54,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) return null;
-
+  // Always allow access - demo mode when not logged in
   return (
     <>
       {children}
       <SessionTimeoutModal
-        open={showWarning}
+        open={showWarning && !!user}
         remainingTime={remainingTime}
         onExtend={extendSession}
       />

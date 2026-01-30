@@ -8,6 +8,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Type for registration with periodicSync
+interface PeriodicSyncRegistration extends ServiceWorkerRegistration {
+  periodicSync?: {
+    register: (tag: string, options: { minInterval: number }) => Promise<void>;
+  };
+}
+
+// Type for offline learning data
+interface OfflineLearningData {
+  symbol: string;
+  volatility: number;
+  avgVelocity?: number;
+  lastBias?: 'LONG' | 'SHORT' | 'NEUTRAL';
+  biasChanges?: number;
+  offlineSamples: number;
+}
+
 export interface LearnedPatterns {
   trendAccuracy: number;
   avgVelocity: number;
@@ -72,7 +89,7 @@ function initBackgroundLearning() {
     // Register for periodic background sync if available
     navigator.serviceWorker.ready.then(registration => {
       if ('periodicSync' in registration) {
-        (registration as any).periodicSync?.register('ai-background-learning', {
+        (registration as PeriodicSyncRegistration).periodicSync?.register('ai-background-learning', {
           minInterval: 60 * 1000 // 1 minute minimum
         }).catch((e: Error) => {
           console.log('[AI Learning] Periodic sync not available:', e.message);
@@ -83,7 +100,7 @@ function initBackgroundLearning() {
 }
 
 // Get offline learning data from Service Worker
-async function getOfflineLearning(): Promise<any[]> {
+async function getOfflineLearning(): Promise<OfflineLearningData[]> {
   return new Promise((resolve) => {
     if (!navigator.serviceWorker?.controller) {
       resolve([]);
@@ -180,7 +197,7 @@ export function useAILearning(symbol: string) {
     // 2. Merge offline learning from Service Worker
     try {
       const offlineData = await getOfflineLearning();
-      const symbolData = offlineData.find((d: any) => d.symbol === symbol);
+      const symbolData = offlineData.find((d) => d.symbol === symbol);
       
       if (symbolData && symbolData.offlineSamples > 0) {
         console.log(`[AI Learning] Merging ${symbolData.offlineSamples} offline samples for ${symbol}`);

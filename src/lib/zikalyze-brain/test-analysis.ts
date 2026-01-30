@@ -98,6 +98,6 @@ export function testClientSideAnalysis() {
 
 // Auto-register for browser console
 if (typeof window !== 'undefined') {
-  (window as any).testZikalyzeAI = testClientSideAnalysis;
+  (window as { testZikalyzeAI?: typeof testClientSideAnalysis }).testZikalyzeAI = testClientSideAnalysis;
   console.log('💡 Run window.testZikalyzeAI() in browser console to test the AI brain');
 }

@@ -150,7 +150,7 @@ export function useLiveMarketData(
         sentimentScore: response.summary?.sentimentScore || 50,
         socialMentions: response.summary?.totalMentions || 0,
         trendingTopics: response.social?.trendingTopics || [],
-        macroEvents: (response.macroEvents || []).slice(0, 3).map((e: any) => ({
+        macroEvents: (response.macroEvents || []).slice(0, 3).map((e: { event: string; impact: string; countdown: string }) => ({
           event: e.event,
           impact: e.impact,
           countdown: e.countdown

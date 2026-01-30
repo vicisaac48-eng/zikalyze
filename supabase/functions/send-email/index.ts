@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
         subject = 'Confirm your email change - Zikalyze'
         break
 
-      case 'recovery':
+      case 'recovery': {
         // Extract origin from redirect_to or use hash-based redirect for HashRouter
         const resetRedirect = redirect_to || `${supabaseUrl.replace('.supabase.co', '.lovableproject.com')}/#/reset-password`;
         html = render(
@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
         )
         subject = 'Reset your Zikalyze password'
         break
+      }
 
       default:
         console.log(`Skipping unsupported email type: ${email_action_type}`)

@@ -248,7 +248,7 @@ export function useChartTrendData(symbol: string): ChartTrendData | null {
         return null;
       }
       
-      const candles: CandleData[] = result.Data.Data.map((point: any) => ({
+      const candles: CandleData[] = result.Data.Data.map((point: { time: number; open: number; high: number; low: number; close: number; volumeto: number }) => ({
         timestamp: point.time * 1000,
         open: point.open,
         high: point.high,

@@ -246,7 +246,7 @@ async function fetchTrendingCoins(): Promise<{ topics: string[]; lastUpdated: st
     const data = await response.json();
     
     if (data.coins) {
-      const topics = data.coins.slice(0, 8).map((coin: any) => 
+      const topics = data.coins.slice(0, 8).map((coin: { item: { symbol: string } }) => 
         `#${coin.item.symbol.toUpperCase()}`
       );
       
@@ -400,7 +400,7 @@ async function fetchLiveNews(crypto: string): Promise<{
       if (data.Data && Array.isArray(data.Data)) {
         sourcesUsed.push('CryptoCompare');
         
-        data.Data.slice(0, 10).forEach((article: any) => {
+        data.Data.slice(0, 10).forEach((article: { title?: string; published_on: number; source_info?: { name?: string }; source?: string; body?: string; url?: string; guid?: string }) => {
           const headline = article.title || '';
           const publishedAt = article.published_on * 1000;
           
@@ -435,7 +435,7 @@ async function fetchLiveNews(crypto: string): Promise<{
       if (data.status_updates && Array.isArray(data.status_updates)) {
         sourcesUsed.push('CoinGecko');
         
-        data.status_updates.slice(0, 3).forEach((update: any) => {
+        data.status_updates.slice(0, 3).forEach((update: { created_at: string; description?: string; project?: { links?: { homepage?: string[] } } }) => {
           const publishedAt = new Date(update.created_at).getTime();
           
           allNews.push({
@@ -517,7 +517,7 @@ function calculateSentimentScore(
 // Generate social media data using REAL CoinGecko community data
 function generateSocialData(
   crypto: string,
-  marketData: any,
+  marketData: Record<string, unknown>,
   fearGreedValue: number
 ): {
   twitter: { mentions: number; sentiment: number; trending: boolean; followers: number };
@@ -607,8 +607,8 @@ function generateSocialData(
 // Generate news headlines based on real market conditions
 function generateRealNewsHeadlines(
   crypto: string,
-  marketData: any,
-  fearGreed: any
+  marketData: Record<string, unknown>,
+  fearGreed: { value: number; label: string }
 ): Array<{
   source: string;
   headline: string;

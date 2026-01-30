@@ -298,7 +298,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
               blockHeightRef.current = parseInt(data.params.result.number, 16);
             }
           }
-        } catch {}
+        } catch { /* Ignore parse errors */ }
       };
 
       ws.onclose = () => {
@@ -310,7 +310,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
           wsStateRef.current.reconnectTimeout = setTimeout(connectBlockWebSocket, delay);
         }
       };
-    } catch {}
+    } catch { /* Ignore WebSocket connection errors */ }
   }, [crypto]);
 
   // Setup WebSocket for BTC/ETH block data
