@@ -53,7 +53,8 @@ export function usePushNotifications() {
   useEffect(() => {
     if (isSupported) {
       // Register service worker
-      navigator.serviceWorker.register('/sw.js')
+      const swPath = import.meta.env.BASE_URL + 'sw.js';
+      navigator.serviceWorker.register(swPath)
         .then(() => checkSubscription())
         .catch((error) => {
           console.error('Service worker registration failed:', error);

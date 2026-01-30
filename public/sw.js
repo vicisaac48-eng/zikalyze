@@ -1,10 +1,10 @@
 // Service Worker for Push Notifications, Offline Caching, and Background AI Learning
 const CACHE_NAME = 'zikalyze-v5';
 const STATIC_ASSETS = [
-  '/',
-  '/favicon.ico',
-  '/offline.html',
-  '/background-learning-worker.js'
+  './',
+  './favicon.ico',
+  './offline.html',
+  './background-learning-worker.js'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -311,17 +311,17 @@ self.addEventListener('fetch', (event) => {
           // Cache the index.html for offline support
           if (response.ok) {
             const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              // Always cache as root URL for HashRouter compatibility
-              cache.put('/', responseClone);
-            });
+              caches.open(CACHE_NAME).then((cache) => {
+                // Always cache as root URL for HashRouter compatibility
+                cache.put('./', responseClone);
+              });
           }
           return response;
         })
         .catch(() => {
           // For HashRouter: always serve cached root/index.html
           // The hash fragment will be preserved and handled client-side
-          return caches.match('/').then((cached) => cached || caches.match('/offline.html'));
+          return caches.match('./').then((cached) => cached || caches.match('./offline.html'));
         })
     );
     return;
@@ -394,8 +394,8 @@ self.addEventListener('push', (event) => {
   // Professional notification options - auto-dismiss after confirmation
   const options = {
     body: data.body,
-    icon: '/pwa-192x192.png',
-    badge: '/favicon.ico',
+    icon: './pwa-192x192.png',
+    badge: './favicon.ico',
     image: data.image || undefined,
     vibrate: data.urgency === 'critical' 
       ? [200, 100, 200, 100, 200] 
@@ -474,18 +474,28 @@ self.addEventListener('notificationclick', (event) => {
     }
   }
   
+  const toAppUrl = (path) => {
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/#/')) return `.${path}`;
+    if (path.startsWith('#/')) return `./${path}`;
+    if (path.startsWith('/')) return `./#${path}`;
+    return `./#/${path}`;
+  };
+
+  const appUrl = new URL(toAppUrl(url), self.registration.scope).toString();
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Try to focus existing window
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(url);
+          client.navigate(appUrl);
           return client.focus();
         }
       }
       // Open new window if none exists
       if (clients.openWindow) {
-        return clients.openWindow(url);
+        return clients.openWindow(appUrl);
       }
     })
   );
