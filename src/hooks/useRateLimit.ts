@@ -5,6 +5,8 @@ interface RateLimitResult {
   attempts: number;
   max_attempts: number;
   retry_after: number;
+  block_reason?: string;  // 'ip_spam_block' when IP is blocked for 15 hours
+  message?: string;       // User-friendly message for IP spam block
 }
 
 export const useRateLimit = () => {
@@ -40,11 +42,16 @@ export const useRateLimit = () => {
   };
 
   const formatRetryAfter = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds} seconds`;
+    if (seconds >= 3600) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${hours} hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} minute${minutes > 1 ? 's' : ''}` : ''}`;
     }
-    const minutes = Math.ceil(seconds / 60);
-    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    if (seconds >= 60) {
+      const minutes = Math.ceil(seconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    }
+    return `${seconds} seconds`;
   };
 
   return {
