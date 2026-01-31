@@ -2103,6 +2103,19 @@ export interface UnifiedBrainOutput {
   hasSentiment: boolean;
   hasICT: boolean;
   
+  // Real-time data freshness
+  dataFreshness?: 'REAL_TIME' | 'RECENT' | 'STALE';
+  liveDataSources?: string[];
+  
+  // Fear & Greed impact on analysis
+  fearGreedImpact?: {
+    value: number;
+    trend: 'RISING' | 'FALLING' | 'STABLE';
+    biasModifier: number;
+    contrarian: boolean;
+    description: string;
+  };
+  
   // Self-Learning Metrics
   learnedFromChart: boolean;
   learnedFromStream: boolean;
@@ -2217,21 +2230,36 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     });
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Sentiment Analysis
+    // STEP 5: Sentiment Analysis with Real-Time Fear & Greed
     // ═══════════════════════════════════════════════════════════════════════
     const fearGreed = input.sentimentData?.fearGreed?.value || 50;
     const sentimentLabel = this.getSentimentLabel(fearGreed);
     
+    // Calculate Fear & Greed impact on analysis (real-time integration)
+    const fearGreedImpact = this.calculateFearGreedImpact(input);
+    
+    // Calculate data freshness for accuracy weighting
+    const dataFreshness = this.calculateDataFreshness(input, chartData);
+    
+    // Log real-time data status
+    console.log(`[UnifiedBrain] Real-Time Data: ${dataFreshness.sources.join(' + ')} | Status: ${dataFreshness.status} | Fear&Greed: ${fearGreed} (${fearGreedImpact.trend})`);
+    
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Calculate Unified Accuracy Score
+    // STEP 6: Calculate Unified Accuracy Score (Enhanced with real-time data)
     // ═══════════════════════════════════════════════════════════════════════
-    const accuracyScore = this.calculateUnifiedAccuracy(
+    const baseAccuracy = this.calculateUnifiedAccuracy(
       selfLearningOutput,
       !!chartData?.isLive,
       !!livestreamUpdate,
       !!input.onChainData,
       macroImpact
     );
+    
+    // Boost accuracy based on data freshness
+    const freshnessBonus = dataFreshness.status === 'REAL_TIME' ? 8 : 
+                          dataFreshness.status === 'RECENT' ? 4 : 0;
+    const fearGreedLiveBonus = fearGreedImpact.isLive ? 3 : 0;
+    const accuracyScore = Math.min(100, baseAccuracy + freshnessBonus + fearGreedLiveBonus);
     
     // ═══════════════════════════════════════════════════════════════════════
     // STEP 7: Build Simplified TL;DR
@@ -2276,6 +2304,19 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       hasMacro: macroCatalysts.length > 0,
       hasSentiment: !!input.sentimentData,
       hasICT: selfLearningOutput.hasICTSetup,
+      
+      // Real-time data freshness
+      dataFreshness: dataFreshness.status,
+      liveDataSources: dataFreshness.sources,
+      
+      // Fear & Greed impact
+      fearGreedImpact: {
+        value: fearGreedImpact.value,
+        trend: fearGreedImpact.trend,
+        biasModifier: fearGreedImpact.biasModifier,
+        contrarian: fearGreedImpact.contrarian,
+        description: fearGreedImpact.description
+      },
       
       // Self-Learning
       learnedFromChart: selfLearningOutput.learnedFromLiveChart,
@@ -2344,6 +2385,139 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     if (fearGreed <= 65) return '😊 GREED';
     if (fearGreed <= 80) return '🤑 HIGH GREED';
     return '🔥 EXTREME GREED';
+  }
+  
+  /**
+   * Calculate Fear & Greed impact on analysis
+   * Uses contrarian signals at extremes and trend following in moderate zones
+   */
+  private calculateFearGreedImpact(input: AnalysisInput): {
+    value: number;
+    trend: 'RISING' | 'FALLING' | 'STABLE';
+    biasModifier: number;
+    contrarian: boolean;
+    description: string;
+    isLive: boolean;
+  } {
+    const fearGreedData = input.sentimentData?.fearGreed;
+    const value = fearGreedData?.value ?? 50;
+    
+    // Extract enhanced data if available
+    const enhancedData = fearGreedData as { 
+      value: number; 
+      label: string; 
+      previousValue?: number;
+      trend?: 'RISING' | 'FALLING' | 'STABLE';
+      isLive?: boolean;
+      aiWeight?: number;
+    } | undefined;
+    
+    const previousValue = enhancedData?.previousValue ?? value;
+    const isLive = enhancedData?.isLive ?? false;
+    
+    // Determine trend
+    const diff = value - previousValue;
+    const trend: 'RISING' | 'FALLING' | 'STABLE' = 
+      diff > 3 ? 'RISING' : diff < -3 ? 'FALLING' : 'STABLE';
+    
+    // Calculate bias modifier based on Fear & Greed levels
+    // - At EXTREMES: Use contrarian approach (extreme fear = bullish, extreme greed = bearish)
+    // - At MODERATE levels: Follow sentiment (fear = bearish, greed = bullish) - describes current market mood
+    let biasModifier = 0;
+    let contrarian = false;
+    let description = '';
+    
+    // Contrarian signals at EXTREME levels (<=20 or >=80)
+    if (value <= 20) {
+      biasModifier = 0.15; // Bullish contrarian - buy when others are fearful
+      contrarian = true;
+      description = '🟢 Extreme fear - potential buying opportunity (contrarian signal)';
+    } else if (value >= 80) {
+      biasModifier = -0.15; // Bearish contrarian - sell when others are greedy
+      contrarian = true;
+      description = '🔴 Extreme greed - potential selling opportunity (contrarian signal)';
+    } 
+    // Sentiment-following at MODERATE levels - describes current market mood
+    else if (value <= 35) {
+      biasModifier = -0.05; // Market is fearful, sentiment is bearish
+      contrarian = false;
+      description = '😰 Fear in market - current sentiment is bearish';
+    } else if (value >= 65) {
+      biasModifier = 0.05; // Market is greedy, sentiment is bullish
+      contrarian = false;
+      description = '😊 Greed in market - current sentiment is bullish';
+    } else {
+      biasModifier = 0;
+      contrarian = false;
+      description = '😐 Neutral sentiment - no significant bias';
+    }
+    
+    // Adjust based on trend
+    if (trend === 'RISING' && value > 50) {
+      biasModifier += 0.02; // Rising sentiment adds slight bullish
+      description += ' (trend: rising)';
+    } else if (trend === 'FALLING' && value < 50) {
+      biasModifier -= 0.02; // Falling sentiment adds slight bearish
+      description += ' (trend: falling)';
+    }
+    
+    return {
+      value,
+      trend,
+      biasModifier,
+      contrarian,
+      description,
+      isLive
+    };
+  }
+  
+  /**
+   * Calculate data freshness score for accuracy weighting
+   */
+  private calculateDataFreshness(input: AnalysisInput, chartData?: ChartTrendInput): {
+    score: number;
+    status: 'REAL_TIME' | 'RECENT' | 'STALE';
+    sources: string[];
+  } {
+    const sources: string[] = [];
+    let freshnessScore = 0;
+    
+    // Check price data freshness
+    if (input.isLiveData) {
+      freshnessScore += 30;
+      sources.push('Live Price');
+    }
+    
+    // Check chart data freshness
+    if (chartData?.isLive) {
+      freshnessScore += 25;
+      sources.push('Live Chart');
+    }
+    
+    // Check Fear & Greed freshness
+    const fearGreedData = input.sentimentData?.fearGreed as { isLive?: boolean } | undefined;
+    if (fearGreedData?.isLive) {
+      freshnessScore += 20;
+      sources.push('Live Fear&Greed');
+    }
+    
+    // Check on-chain data freshness
+    if (input.onChainData) {
+      freshnessScore += 15;
+      sources.push('On-Chain');
+    }
+    
+    // Check multi-timeframe data
+    if (input.multiTimeframeData) {
+      freshnessScore += 10;
+      sources.push('Multi-TF');
+    }
+    
+    const status: 'REAL_TIME' | 'RECENT' | 'STALE' = 
+      freshnessScore >= 70 ? 'REAL_TIME' :
+      freshnessScore >= 40 ? 'RECENT' : 'STALE';
+    
+    return { score: freshnessScore, status, sources };
   }
   
   /**
