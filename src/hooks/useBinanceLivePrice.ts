@@ -19,8 +19,8 @@ const WS_PROXY_URL = `wss://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/cryp
 // Binance direct WebSocket as fallback
 const BINANCE_WS_URL = "wss://stream.binance.com:9443/ws";
 
-const CONNECTION_TIMEOUT = 10000;
-const RECONNECT_DELAY = 2000;
+const CONNECTION_TIMEOUT = 8000; // Reduced from 10s for faster timeout detection
+const RECONNECT_DELAY = 1000; // Reduced from 2000ms for faster reconnection
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fallbackChange?: number) => {
@@ -195,6 +195,7 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
             isConnecting: true,
           }));
           
+          // Balanced exponential backoff (still faster than original but safer)
           const delay = RECONNECT_DELAY * Math.min(reconnectAttemptsRef.current + 1, 3);
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) connect();
@@ -210,14 +211,14 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
             source: 'Cached',
           }));
           
-          // Retry after longer delay
+          // Retry after moderate delay (balanced from 30s to 20s)
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
               reconnectAttemptsRef.current = 0;
               useProxyRef.current = true;
               connect();
             }
-          }, 30000);
+          }, 20000);
         }
       };
     } catch (e) {
