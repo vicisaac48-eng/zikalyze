@@ -323,10 +323,17 @@ export function clearSession(): void {
 }
 
 /**
- * Clear all account data from local storage
- * This removes all stored credentials and sessions
+ * Clear all account data from local storage, IndexedDB, and service worker caches
+ * This removes all stored credentials, sessions, AI learning data, and cached assets
+ * 
+ * Data cleared:
+ * - sessionStorage: zikalyze_session
+ * - localStorage: All keys starting with 'zikalyze' (settings, portfolio, analysis history, etc.)
+ * - localStorage: wallet_session, pwa-install-dismissed (non-prefixed app keys)
+ * - IndexedDB: ZikalyzeAIBrain database (AI learning patterns)
+ * - Service Worker: All zikalyze-* caches
  */
-export function clearAccountData(): void {
+export async function clearAccountData(): Promise<void> {
   // Clear session
   sessionStorage.removeItem(SESSION_KEY);
   
@@ -347,6 +354,44 @@ export function clearAccountData(): void {
   // Clear non-prefixed app-related keys
   localStorage.removeItem('wallet_session');
   localStorage.removeItem('pwa-install-dismissed');
+  
+  // Clear IndexedDB AI learning data
+  try {
+    if ('indexedDB' in window) {
+      await new Promise<void>((resolve) => {
+        const deleteRequest = indexedDB.deleteDatabase('ZikalyzeAIBrain');
+        deleteRequest.onsuccess = () => {
+          console.log('[clearAccountData] IndexedDB cleared');
+          resolve();
+        };
+        deleteRequest.onerror = () => {
+          console.warn('[clearAccountData] IndexedDB clear failed:', deleteRequest.error);
+          resolve();
+        };
+        deleteRequest.onblocked = () => {
+          console.warn('[clearAccountData] IndexedDB delete blocked');
+          resolve();
+        };
+      });
+    }
+  } catch (error) {
+    console.warn('[clearAccountData] Failed to clear IndexedDB:', error);
+  }
+  
+  // Clear service worker caches
+  try {
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter(name => name.startsWith('zikalyze'))
+          .map(name => caches.delete(name))
+      );
+      console.log('[clearAccountData] Service worker caches cleared');
+    }
+  } catch (error) {
+    console.warn('[clearAccountData] Failed to clear caches:', error);
+  }
 }
 
 /**

@@ -70,8 +70,8 @@ const Settings = () => {
 
     setIsDeleting(true);
     try {
-      // Clear all account data
-      clearAccountData();
+      // Clear all account data (localStorage, IndexedDB, and caches)
+      await clearAccountData();
       
       // Sign out the user
       await signOut();
