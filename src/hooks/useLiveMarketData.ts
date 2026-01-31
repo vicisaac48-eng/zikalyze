@@ -198,19 +198,33 @@ export function useLiveMarketData(
     };
   }, [crypto, fetchSentimentData]);
 
-  // Check whale activity when on-chain data changes significantly
+  // Store onChainData in ref and throttle whale activity checks
+  const onChainDataRef = useRef(onChainData);
+  onChainDataRef.current = onChainData;
+  const lastWhaleCheckRef = useRef(0);
+  const WHALE_CHECK_THROTTLE_MS = 30000; // Only check every 30 seconds
+
+  // Check whale activity when on-chain data changes significantly (throttled)
   useEffect(() => {
-    if (!onChainData.isLive) return;
+    const currentOnChain = onChainDataRef.current;
+    if (!currentOnChain.isLive) return;
     
-    const whaleNetFlowAbs = Math.abs(onChainData.exchangeNetFlow.value);
+    // Throttle whale activity checks
+    const now = Date.now();
+    if (now - lastWhaleCheckRef.current < WHALE_CHECK_THROTTLE_MS) {
+      return;
+    }
+    lastWhaleCheckRef.current = now;
+    
+    const whaleNetFlowAbs = Math.abs(currentOnChain.exchangeNetFlow.value);
     if (whaleNetFlowAbs > 10000) {
       checkWhaleActivity(
         crypto.toUpperCase(),
-        onChainData.exchangeNetFlow.value * 1000,
-        onChainData.whaleActivity.largeTxCount24h
+        currentOnChain.exchangeNetFlow.value * 1000,
+        currentOnChain.whaleActivity.largeTxCount24h
       );
     }
-  }, [crypto, onChainData, checkWhaleActivity]);
+  }, [crypto, checkWhaleActivity]);
 
   // Build aggregated data - always use live data when available
   const hasValidPrice = livePrice.price > 0;

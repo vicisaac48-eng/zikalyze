@@ -213,7 +213,13 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     return deriveMetricsFromPrice(crypto, currentPrice, currentChange, currentVolume);
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, livePrice.volume, price, change, cryptoInfo?.volume]);
 
-  // Update metrics when derived data changes
+  // Store derivedMetrics in ref to avoid triggering useEffect on every price update
+  const derivedMetricsRef = useRef(derivedMetrics);
+  derivedMetricsRef.current = derivedMetrics;
+  const lastMetricsUpdateRef = useRef(0);
+  const METRICS_UPDATE_THROTTLE_MS = 2000; // Only update metrics every 2 seconds
+
+  // Update metrics when derived data changes (throttled to prevent excessive re-renders)
   useEffect(() => {
     if (!isMountedRef.current) return;
     
@@ -224,32 +230,41 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       hashRateRef.current = 0;
       difficultyRef.current = 0;
       avgBlockTimeRef.current = 0;
+      lastMetricsUpdateRef.current = 0;
       setMetrics(null);
     }
 
+    // Throttle metrics updates to reduce re-renders
+    const now = Date.now();
+    if (now - lastMetricsUpdateRef.current < METRICS_UPDATE_THROTTLE_MS) {
+      return;
+    }
+    lastMetricsUpdateRef.current = now;
+
+    const currentDerivedMetrics = derivedMetricsRef.current;
     const newMetrics: OnChainMetrics = {
-      exchangeNetFlow: derivedMetrics.exchangeNetFlow!,
-      whaleActivity: derivedMetrics.whaleActivity!,
-      mempoolData: derivedMetrics.mempoolData!,
-      transactionVolume: derivedMetrics.transactionVolume!,
+      exchangeNetFlow: currentDerivedMetrics.exchangeNetFlow!,
+      whaleActivity: currentDerivedMetrics.whaleActivity!,
+      mempoolData: currentDerivedMetrics.mempoolData!,
+      transactionVolume: currentDerivedMetrics.transactionVolume!,
       hashRate: hashRateRef.current,
-      activeAddresses: derivedMetrics.activeAddresses!,
+      activeAddresses: currentDerivedMetrics.activeAddresses!,
       blockHeight: blockHeightRef.current,
       difficulty: difficultyRef.current,
       avgBlockTime: avgBlockTimeRef.current,
-      source: derivedMetrics.source!,
+      source: currentDerivedMetrics.source!,
       lastUpdated: new Date(),
       period: '24h',
       isLive: livePrice.isLive,
       streamStatus: livePrice.isLive ? 'connected' : 'connecting',
-      etfFlow: derivedMetrics.etfFlow,
-      validatorQueue: derivedMetrics.validatorQueue,
+      etfFlow: currentDerivedMetrics.etfFlow,
+      validatorQueue: currentDerivedMetrics.validatorQueue,
     };
 
     setMetrics(newMetrics);
     setStreamStatus(livePrice.isLive ? 'connected' : 'connecting');
     setLoading(false);
-  }, [crypto, derivedMetrics, livePrice.isLive]);
+  }, [crypto, livePrice.isLive]);
 
   // WebSocket for block data (BTC/ETH only) - lightweight connection
   const connectBlockWebSocket = useCallback(() => {

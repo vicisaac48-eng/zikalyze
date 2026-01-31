@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useCryptoPrices, CryptoPrice } from "@/hooks/useCryptoPrices";
+import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCurrency } from "@/hooks/useCurrency";
 import { TrendingUp, TrendingDown, Bell, X, BellRing, Search } from "lucide-react";
@@ -25,10 +25,9 @@ interface Top100CryptoListProps {
 type PriceFlash = "up" | "down" | null;
 
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
-  // Use prices from props if provided, otherwise fetch own (for standalone usage)
-  const ownPrices = useCryptoPrices();
-  const prices = propPrices ?? ownPrices.prices;
-  const pricesLoading = propLoading ?? ownPrices.loading;
+  // Use prices from props (required) - removes duplicate WebSocket connections
+  const prices = propPrices ?? [];
+  const pricesLoading = propLoading ?? false;
   const { alerts, loading: alertsLoading, createAlert, removeAlert, checkAlerts } = usePriceAlerts();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const { t } = useTranslation();
