@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchWithRetry, safeFetch } from "@/lib/fetchWithRetry";
 
+// Global singleton state to prevent multiple WebSocket connections
+// This ensures only one set of WebSocket connections is established
+// regardless of how many components call useCryptoPrices()
+let globalWebSocketsInitialized = false;
+let globalPricesSubscribers = 0;
+
 export interface CryptoPrice {
   id: string;
   symbol: string;
@@ -1048,9 +1054,14 @@ export const useCryptoPrices = () => {
   }, [fetchPrices]);
 
   // Connect to multi-exchange WebSockets when crypto list is populated
+  // Uses global flag to prevent multiple hook instances from creating duplicate connections
   useEffect(() => {
+    globalPricesSubscribers++;
+    
     const checkAndConnect = () => {
-      if (cryptoListRef.current.length > 0 && !exchangesConnectedRef.current) {
+      // Use global flag to ensure only one set of WebSocket connections
+      if (cryptoListRef.current.length > 0 && !globalWebSocketsInitialized && !exchangesConnectedRef.current) {
+        globalWebSocketsInitialized = true;
         exchangesConnectedRef.current = true;
         
         // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
@@ -1080,15 +1091,21 @@ export const useCryptoPrices = () => {
     
     return () => {
       clearTimeout(timeoutId);
-      Object.values(reconnectTimeouts).forEach(timeout => {
-        clearTimeout(timeout);
-      });
+      globalPricesSubscribers--;
       
-      if (binanceWs) binanceWs.close();
-      if (okxWs) okxWs.close();
-      if (bybitWs) bybitWs.close();
-      if (krakenWs) krakenWs.close();
-      if (coinbaseWs) coinbaseWs.close();
+      // Only close WebSockets and reset global flag if no more subscribers
+      if (globalPricesSubscribers <= 0) {
+        globalWebSocketsInitialized = false;
+        Object.values(reconnectTimeouts).forEach(timeout => {
+          clearTimeout(timeout);
+        });
+        
+        if (binanceWs) binanceWs.close();
+        if (okxWs) okxWs.close();
+        if (bybitWs) bybitWs.close();
+        if (krakenWs) krakenWs.close();
+        if (coinbaseWs) coinbaseWs.close();
+      }
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 
