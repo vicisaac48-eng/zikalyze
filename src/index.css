@@ -291,6 +291,22 @@ All colors MUST be HSL.
     50% { opacity: 1; }
   }
 
+  .animate-chart-bar {
+    animation: chart-bar-wave 2s ease-in-out infinite;
+    -webkit-animation: chart-bar-wave 2s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  @-webkit-keyframes chart-bar-wave {
+    0%, 100% { -webkit-transform: scaleY(1); transform: scaleY(1); }
+    50% { -webkit-transform: scaleY(0.7); transform: scaleY(0.7); }
+  }
+
+  @keyframes chart-bar-wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.7); }
+  }
+
   /* Touch and interaction improvements */
   .touch-action-pan {
     -ms-touch-action: pan-x pan-y;
@@ -395,7 +411,8 @@ All colors MUST be HSL.
     .animate-spin-slow,
     .animate-logo-bounce,
     .animate-shimmer,
-    .animate-glow-pulse {
+    .animate-glow-pulse,
+    .animate-chart-bar {
       animation: none;
       -webkit-animation: none;
     }
