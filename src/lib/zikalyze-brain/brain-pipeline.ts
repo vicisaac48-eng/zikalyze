@@ -501,10 +501,11 @@ export class AIAnalyzer {
 /**
  * Attention AI Algorithm Calculator
  * Filters bad/unnecessary information, verifies data quality, applies attention mechanism
+ * Uses strict thresholds for 💯 accurate analysis
  */
 export class AttentionAlgorithm {
-  private readonly qualityThreshold = 0.6;
-  private readonly minConfidence = 0.4;
+  private readonly qualityThreshold = 0.65; // Increased from 0.6 for stricter quality control
+  private readonly minConfidence = 0.45; // Increased from 0.4 for higher confidence requirement
 
   /**
    * Process analyzed data through attention mechanism
@@ -830,11 +831,12 @@ export class DoubleVerificationLoop {
   private analyzer: AIAnalyzer;
   private attention: AttentionAlgorithm;
   
-  // Accuracy thresholds — focus on accuracy, not perfect matching
-  private readonly minAccuracyScore = 0.65; // 65%+ accuracy required for release
-  private readonly minQualityConfidence = 0.4; // Minimum confidence for quality data
-  private readonly maxScoreDiff = 15; // Maximum score difference allowed (more lenient)
-  private readonly maxConfidenceDiff = 0.20; // Maximum confidence difference allowed
+  // Accuracy thresholds — STRICT verification for 💯 accuracy
+  // Only release information that passes rigorous double-check
+  private readonly minAccuracyScore = 0.70; // 70%+ accuracy required for release (increased from 65%)
+  private readonly minQualityConfidence = 0.45; // Minimum confidence for quality data (increased from 0.4)
+  private readonly maxScoreDiff = 12; // Maximum score difference allowed (reduced from 15 for stricter matching)
+  private readonly maxConfidenceDiff = 0.15; // Maximum confidence difference allowed (reduced from 0.20)
   
   constructor() {
     this.analyzer = new AIAnalyzer();

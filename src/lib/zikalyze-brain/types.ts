@@ -171,6 +171,9 @@ export interface AnalysisResult {
   scenarios: IfThenScenario[];
   timestamp: string;
   source: 'client-side-wasm';
+  // Data verification status
+  verificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'ESTIMATED';
+  liveDataSources?: number; // Count of live data sources (0-4)
   // Attention mechanism outputs
   attentionHeatmap?: number[];   // Per-timeframe importance weights [0..1]
   attentionVector?: number[];    // Aggregated context vector after attention + ReLU

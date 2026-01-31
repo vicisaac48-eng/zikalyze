@@ -492,8 +492,25 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // BUILD FINAL ANALYSIS — Dense, Visual, Actionable
   // ═══════════════════════════════════════════════════════════════════════════
   
+  // Calculate data verification status
+  const dataSourceCount = [hasRealOnChain, hasRealChartData, hasRealMultiTfData, isLiveData].filter(Boolean).length;
+  const verificationLevel = dataSourceCount >= 3 ? 'VERIFIED' : dataSourceCount >= 2 ? 'PARTIALLY_VERIFIED' : 'ESTIMATED';
+  const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
+  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
+  
+  // Build data sources verification section
+  const dataSourcesSection = `━━━ 🔍 DATA VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━
+${verificationEmoji} Status: ${verificationLabel} (${dataSourceCount}/4 live sources)
+   • Price Data: ${isLiveData ? '✅ Real-time WebSocket' : '⚠️ Cached/Fallback'}
+   • On-Chain: ${hasRealOnChain ? '✅ Live blockchain data' : '⚠️ Derived from price action'}
+   • Chart Data: ${hasRealChartData ? '✅ Live chart API' : '⚠️ Price-based estimates'}
+   • Multi-TF: ${hasRealMultiTfData ? '✅ Multi-timeframe live' : '⚠️ Estimated confluence'}
+
+`;
+
   const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+   ${verificationEmoji} ${verificationLabel}
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 📌 TL;DR: ${tldr}
@@ -559,6 +576,16 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 Consider flipping short or exiting longs` : `↔️ BREAKOUT SCENARIO: Watch $${high24h.toFixed(decimals)} (up) / $${low24h.toFixed(decimals)} (down)
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
+
+${dataSourcesSection}
+━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
+This analysis uses algorithmic calculations based on available
+market data. Crypto markets are highly volatile and unpredictable.
+• Always verify signals with multiple sources before trading
+• Past patterns do not guarantee future results
+• This is NOT financial advice — trade at your own risk
+• Confidence scores reflect data quality, not prediction certainty
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
   return {
@@ -573,6 +600,8 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
     scenarios,
     timestamp: new Date().toISOString(),
     source: 'client-side-wasm',
+    verificationStatus: verificationLevel,
+    liveDataSources: dataSourceCount,
     attentionHeatmap: topDownAnalysis.attentionHeatmap || [],
     attentionVector: topDownAnalysis.attentionVector || [],
     attentionEntropyLoss: 0
