@@ -2520,6 +2520,656 @@ ${upcomingMacro.map(m => `  📅 ${m}`).join('\n')}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🧠🧠 COMBINED BRAIN — Merges BOTH Brain Systems for Complete Top-Down Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+// 
+// This is the ULTIMATE brain that combines:
+// 1. Original Brain (runClientSideAnalysis): Top-down multi-TF analysis, macro, 
+//    volume, institutional vs retail, precision entries, if-then scenarios
+// 2. Pipeline Brain (ZikalyzeBrainPipeline): Attention, double verification,
+//    self-learning, ICT/SMC analysis, accuracy-based release
+//
+// All information flows into BOTH brains, results are merged for the best analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { 
+  analyzeInstitutionalVsRetail, 
+  generateIfThenScenarios 
+} from './institutional-analysis';
+import { 
+  analyzeMarketStructure, 
+  generatePrecisionEntry, 
+  calculateFinalBias, 
+  performTopDownAnalysis,
+  TopDownAnalysis
+} from './technical-analysis';
+
+/**
+ * Combined Brain Output — Merges both brain systems
+ */
+export interface CombinedBrainOutput {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Analysis (from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  confidence: number;
+  analysis: string;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Top-Down Analysis (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  topDownAnalysis: TopDownAnalysis;
+  technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  technicalConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pipeline Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  pipelineConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ICT/SMC Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  ictAnalysis?: ICTSMCAnalysis;
+  hasICTSetup: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Institutional vs Retail (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  retailBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  institutionalRetailDivergence: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Precision Entry (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  precisionEntry: {
+    zone: string;
+    invalidation: string;
+    timing: string;
+    trigger: string;
+  };
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // If-Then Scenarios (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  scenarios: Array<{
+    condition: string;
+    priceLevel: number;
+    outcome: string;
+    probability: number;
+    action: string;
+  }>;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Key Insights (merged from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  keyInsights: string[];
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Data Sources & Verification
+  // ═══════════════════════════════════════════════════════════════════════════
+  isVerified: boolean;
+  isAccurate: boolean;
+  accuracyScore: number;
+  
+  // Macro
+  macroImpact: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+  upcomingMacro: string[];
+  
+  // Volume
+  volumeSpike: boolean;
+  volumeSignal: string;
+  
+  // Sentiment
+  fearGreed: number;
+  sentimentLabel: string;
+  
+  // On-Chain
+  onChainSummary: string;
+  etfFlow: string;
+  
+  // Learning
+  learnedFromChart: boolean;
+  learnedFromStream: boolean;
+  combinedLearningScore: number;
+  
+  // Metadata
+  timestamp: string;
+  processingTimeMs: number;
+  brainVersion: string;
+}
+
+/**
+ * 🧠🧠 COMBINED BRAIN
+ * 
+ * The ULTIMATE crypto analysis engine that combines BOTH brain systems:
+ * 
+ * ORIGINAL BRAIN (runClientSideAnalysis):
+ * - Top-down multi-timeframe analysis (Weekly → Daily → 4H → 1H → 15M)
+ * - Institutional vs Retail analysis
+ * - Precision entry zones
+ * - If-Then scenarios
+ * - Macro catalyst integration
+ * 
+ * PIPELINE BRAIN (ZikalyzeBrainPipeline):
+ * - Active Crypto Source (read, learn, adapt)
+ * - AI Analyzer (human-readable processing)
+ * - Attention Algorithm (filter, verify, calculate)
+ * - Double verification loop
+ * - ICT/SMC analysis
+ * - Self-learning from charts and livestream
+ * 
+ * All information is analyzed by BOTH brains, then merged for the most
+ * comprehensive and accurate analysis possible.
+ */
+export class CombinedBrain extends UnifiedBrain {
+  private readonly combinedVersion = '3.0.0';
+  
+  constructor() {
+    super();
+    console.log('[CombinedBrain] v3.0 — BOTH Brains Combined for Ultimate Analysis');
+  }
+  
+  /**
+   * Run COMBINED analysis using BOTH brain systems
+   * 
+   * Step 1: Run Original Brain (top-down, institutional, precision entries)
+   * Step 2: Run Pipeline Brain (attention, verification, ICT/SMC, learning)
+   * Step 3: Merge results and calculate combined confidence
+   * Step 4: Generate unified output with all insights
+   */
+  analyzeWithBothBrains(
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): CombinedBrainOutput {
+    const startTime = Date.now();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Run Original Brain — Top-Down Multi-Timeframe Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 1: Running Original Brain (top-down analysis)...');
+    
+    // Prepare input for original brain
+    const originalBrainInput = {
+      ...input,
+      chartTrendData: chartData,
+      multiTimeframeData: input.multiTimeframeData
+    };
+    
+    // Run original brain analysis
+    const originalResult = runClientSideAnalysis(originalBrainInput);
+    
+    // Extract top-down analysis directly
+    const topDownAnalysis = performTopDownAnalysis(
+      input.price,
+      input.high24h || input.price * 1.02,
+      input.low24h || input.price * 0.98,
+      input.change,
+      chartData,
+      input.multiTimeframeData
+    );
+    
+    // Calculate technical bias and confidence from original brain
+    const technicalBias = topDownAnalysis.tradeableDirection === 'LONG' ? 'LONG' 
+                        : topDownAnalysis.tradeableDirection === 'SHORT' ? 'SHORT' 
+                        : 'NEUTRAL';
+    const technicalConfidence = topDownAnalysis.confluenceScore;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Run Pipeline Brain — Attention, Verification, ICT/SMC, Learning
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 2: Running Pipeline Brain (verification + learning)...');
+    
+    const pipelineResult = this.analyze(input, chartData, livestreamUpdate);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: Institutional vs Retail Analysis (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 3: Analyzing institutional vs retail...');
+    
+    const etfData = estimateETFFlowData(input.price, input.change, input.crypto);
+    const onChainData = input.onChainData || estimateOnChainMetrics(input.crypto, input.price, input.change);
+    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
+    const socialSentiment = input.sentimentData?.social?.overall?.score || 50;
+    
+    const institutionalVsRetail = analyzeInstitutionalVsRetail({
+      etfFlow: etfData,
+      onChain: onChainData,
+      socialSentiment,
+      fearGreed,
+      price: input.price,
+      change: input.change
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Generate Precision Entry Zones (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 4: Generating precision entry zones...');
+    
+    const high24h = input.high24h || input.price * 1.02;
+    const low24h = input.low24h || input.price * 0.98;
+    const volume = input.volume || 0;
+    
+    const volumeSpike = detectVolumeSpike({
+      currentVolume: volume,
+      avgVolume24h: volume * 0.85,
+      priceChange: input.change,
+      price: input.price,
+      high24h,
+      low24h
+    });
+    
+    const precisionEntryData = generatePrecisionEntry(
+      input.price,
+      high24h,
+      low24h,
+      input.change,
+      technicalBias,
+      volumeSpike.isSpike ? 'HIGH' : 'MODERATE'
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Generate If-Then Scenarios (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 5: Generating if-then scenarios...');
+    
+    const range = high24h - low24h;
+    const keySupport = low24h + range * 0.15;
+    const keyResistance = high24h - range * 0.15;
+    
+    const scenarios = generateIfThenScenarios({
+      price: input.price,
+      high: high24h,
+      low: low24h,
+      bias: technicalBias,
+      keySupport,
+      keyResistance
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 6: Merge Biases from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 6: Merging both brain outputs...');
+    
+    const { combinedBias, combinedConfidence } = this.mergeBrainOutputs(
+      technicalBias,
+      technicalConfidence,
+      pipelineResult.bias,
+      pipelineResult.confidence * 100,
+      institutionalVsRetail.institutionalBias,
+      pipelineResult.hasICTSetup,
+      pipelineResult.isVerified
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 7: Merge Key Insights from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    const keyInsights = this.mergeInsights(
+      originalResult.insights,
+      topDownAnalysis.reasoning,
+      pipelineResult.ictAnalysis,
+      institutionalVsRetail,
+      combinedBias
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 8: Build Combined Analysis Output
+    // ═══════════════════════════════════════════════════════════════════════
+    const processingTimeMs = Date.now() - startTime;
+    
+    const combinedAnalysis = this.buildCombinedAnalysis(
+      input,
+      combinedBias,
+      combinedConfidence,
+      technicalBias,
+      technicalConfidence,
+      pipelineResult,
+      topDownAnalysis,
+      institutionalVsRetail,
+      precisionEntryData,
+      scenarios,
+      keyInsights,
+      volumeSpike,
+      processingTimeMs
+    );
+    
+    console.log(`[CombinedBrain] ✅ Complete in ${processingTimeMs}ms — Bias: ${combinedBias} (${combinedConfidence.toFixed(0)}%)`);
+    
+    return {
+      bias: combinedBias,
+      confidence: combinedConfidence,
+      analysis: combinedAnalysis,
+      
+      // Top-Down Analysis
+      topDownAnalysis,
+      technicalBias,
+      technicalConfidence,
+      
+      // Pipeline Analysis
+      pipelineBias: pipelineResult.bias,
+      pipelineConfidence: pipelineResult.confidence * 100,
+      
+      // ICT/SMC
+      ictAnalysis: pipelineResult.ictAnalysis,
+      hasICTSetup: pipelineResult.hasICTSetup,
+      
+      // Institutional vs Retail
+      institutionalBias: institutionalVsRetail.institutionalBias,
+      retailBias: institutionalVsRetail.retailBias,
+      institutionalRetailDivergence: institutionalVsRetail.divergence,
+      
+      // Precision Entry
+      precisionEntry: {
+        zone: precisionEntryData.zone,
+        invalidation: precisionEntryData.invalidation,
+        timing: precisionEntryData.timing,
+        trigger: precisionEntryData.trigger
+      },
+      
+      // Scenarios
+      scenarios,
+      
+      // Key Insights
+      keyInsights,
+      
+      // Verification
+      isVerified: pipelineResult.isVerified,
+      isAccurate: pipelineResult.isVerified && combinedConfidence >= 50,
+      accuracyScore: pipelineResult.accuracyScore,
+      
+      // Macro
+      macroImpact: pipelineResult.macroImpact,
+      upcomingMacro: pipelineResult.upcomingMacro,
+      
+      // Volume
+      volumeSpike: volumeSpike.isSpike,
+      volumeSignal: volumeSpike.signal,
+      
+      // Sentiment
+      fearGreed,
+      sentimentLabel: pipelineResult.sentimentLabel,
+      
+      // On-Chain
+      onChainSummary: pipelineResult.onChainSummary,
+      etfFlow: pipelineResult.etfFlow,
+      
+      // Learning
+      learnedFromChart: pipelineResult.learnedFromChart,
+      learnedFromStream: pipelineResult.learnedFromStream,
+      combinedLearningScore: pipelineResult.combinedLearningScore,
+      
+      // Metadata
+      timestamp: new Date().toISOString(),
+      processingTimeMs,
+      brainVersion: this.combinedVersion
+    };
+  }
+  
+  /**
+   * Merge outputs from both brains into a single bias and confidence
+   */
+  private mergeBrainOutputs(
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    pipelineConfidence: number,
+    institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL',
+    hasICTSetup: boolean,
+    isVerified: boolean
+  ): { combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'; combinedConfidence: number } {
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMBINED BIAS CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+    // Priority: Technical (40%) + Pipeline (35%) + Institutional (25%)
+    // Agreement bonus: +8% when both brains agree
+    // ICT setup bonus: +5% confidence
+    // Verification bonus: +3% confidence
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Convert biases to numeric scores
+    const biasToScore = (b: string): number => {
+      if (b === 'LONG' || b === 'BULLISH') return 1;
+      if (b === 'SHORT' || b === 'BEARISH') return -1;
+      return 0;
+    };
+    
+    const technicalScore = biasToScore(technicalBias) * (technicalConfidence / 100);
+    const pipelineScore = biasToScore(pipelineBias) * (pipelineConfidence / 100);
+    const institutionalScore = biasToScore(institutionalBias) * 0.5; // Scale down
+    
+    // Weighted combination
+    const combinedScore = 
+      (technicalScore * 0.40) + 
+      (pipelineScore * 0.35) + 
+      (institutionalScore * 0.25);
+    
+    // Determine combined bias
+    let combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+    if (combinedScore > 0.15) {
+      combinedBias = 'LONG';
+    } else if (combinedScore < -0.15) {
+      combinedBias = 'SHORT';
+    } else {
+      combinedBias = 'NEUTRAL';
+    }
+    
+    // Calculate combined confidence
+    const baseConfidence = (technicalConfidence * 0.40 + pipelineConfidence * 0.35 + 50 * 0.25);
+    let combinedConfidence = baseConfidence;
+    
+    // Agreement bonus: if both brains agree, boost confidence
+    if (technicalBias === pipelineBias && technicalBias !== 'NEUTRAL') {
+      combinedConfidence += 8;
+    }
+    
+    // ICT setup bonus
+    if (hasICTSetup) {
+      combinedConfidence += 5;
+    }
+    
+    // Verification bonus
+    if (isVerified) {
+      combinedConfidence += 3;
+    }
+    
+    // Disagreement penalty: if brains conflict, reduce confidence
+    if ((technicalBias === 'LONG' && pipelineBias === 'SHORT') ||
+        (technicalBias === 'SHORT' && pipelineBias === 'LONG')) {
+      combinedConfidence -= 15;
+      combinedBias = 'NEUTRAL'; // Force neutral when brains conflict
+    }
+    
+    // Clamp confidence
+    combinedConfidence = Math.max(35, Math.min(85, combinedConfidence));
+    
+    return { combinedBias, combinedConfidence };
+  }
+  
+  /**
+   * Merge insights from both brains
+   */
+  private mergeInsights(
+    originalInsights: string[],
+    topDownReasoning: string[],
+    ictAnalysis: ICTSMCAnalysis | undefined,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean; divergenceNote: string },
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'
+  ): string[] {
+    const insights: string[] = [];
+    
+    // Add combined bias summary
+    if (combinedBias === 'LONG') {
+      insights.push('🎯 COMBINED BIAS: BULLISH — Both brains aligned');
+    } else if (combinedBias === 'SHORT') {
+      insights.push('🎯 COMBINED BIAS: BEARISH — Both brains aligned');
+    } else {
+      insights.push('⏸️ COMBINED BIAS: NEUTRAL — Waiting for confluence');
+    }
+    
+    // Add top-down reasoning (max 2)
+    topDownReasoning.slice(0, 2).forEach(r => insights.push(`📊 ${r}`));
+    
+    // Add ICT insight if available
+    if (ictAnalysis && ictAnalysis.tradeSetup) {
+      insights.push(`🎯 ICT: ${ictAnalysis.tradeSetup.type.replace('_', ' ')} ${ictAnalysis.tradeSetup.direction}`);
+    }
+    
+    // Add institutional vs retail insight
+    if (institutionalVsRetail.divergence) {
+      insights.push(`⚠️ ${institutionalVsRetail.divergenceNote}`);
+    } else {
+      insights.push(`🏦 Institutional: ${institutionalVsRetail.institutionalBias} | Retail: ${institutionalVsRetail.retailBias}`);
+    }
+    
+    // Add filtered original insights (max 2, bias-aligned)
+    originalInsights
+      .filter(i => !i.includes('🎯'))
+      .filter(i => {
+        if (combinedBias === 'LONG') {
+          return !i.toLowerCase().includes('bearish') && !i.toLowerCase().includes('short');
+        }
+        if (combinedBias === 'SHORT') {
+          return !i.toLowerCase().includes('bullish') && !i.toLowerCase().includes('long');
+        }
+        return true;
+      })
+      .slice(0, 2)
+      .forEach(i => insights.push(i));
+    
+    return insights;
+  }
+  
+  /**
+   * Build the combined analysis output string
+   */
+  private buildCombinedAnalysis(
+    input: AnalysisInput,
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    combinedConfidence: number,
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineResult: UnifiedBrainOutput,
+    topDownAnalysis: TopDownAnalysis,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean },
+    precisionEntry: { zone: string; invalidation: string; timing: string; trigger: string },
+    scenarios: Array<{ condition: string; priceLevel: number; outcome: string; probability: number; action: string }>,
+    keyInsights: string[],
+    volumeSpike: { isSpike: boolean; signal: string; magnitude: string; percentageAboveAvg: number },
+    processingTimeMs: number
+  ): string {
+    const biasEmoji = combinedBias === 'LONG' ? '🟢' : combinedBias === 'SHORT' ? '🔴' : '⚪';
+    const priceStr = input.price.toFixed(input.price < 1 ? 6 : 2);
+    const change = input.change;
+    
+    let analysis = `
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠🧠 ZIKALYZE COMBINED BRAIN v3.0                                ║
+║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
+║  Both Brains Combined for Ultimate Top-Down Analysis
+╚══════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│  ${biasEmoji} COMBINED VERDICT: ${combinedBias}  │  Confidence: ${combinedConfidence.toFixed(0)}%
+│                                                                │
+│  📊 Technical Brain: ${technicalBias} (${technicalConfidence.toFixed(0)}%)
+│  🧠 Pipeline Brain: ${pipelineResult.bias} (${(pipelineResult.confidence * 100).toFixed(0)}%)
+│  🏦 Institutional: ${institutionalVsRetail.institutionalBias}
+└────────────────────────────────────────────────────────────────┘
+
+━━━ 📊 TOP-DOWN MULTI-TIMEFRAME ANALYSIS ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Weekly:  ${topDownAnalysis.weekly.trend} (${topDownAnalysis.weekly.strength.toFixed(0)}%)
+  Daily:   ${topDownAnalysis.daily.trend} (${topDownAnalysis.daily.strength.toFixed(0)}%)
+  4H:      ${topDownAnalysis.h4.trend} (${topDownAnalysis.h4.strength.toFixed(0)}%)
+  1H:      ${topDownAnalysis.h1.trend} (${topDownAnalysis.h1.strength.toFixed(0)}%)
+  15M:     ${topDownAnalysis.m15.trend} (${topDownAnalysis.m15.strength.toFixed(0)}%)
+  
+  Confluence Score: ${topDownAnalysis.confluenceScore.toFixed(0)}%
+  Tradeable Direction: ${topDownAnalysis.tradeableDirection}
+
+━━━ 🎯 KEY INSIGHTS (From Both Brains) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${keyInsights.map(i => `  ${i}`).join('\n')}
+
+━━━ 📍 PRECISION ENTRY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Zone: ${precisionEntry.zone}
+  Timing: ${precisionEntry.timing}
+  Trigger: ${precisionEntry.trigger}
+  Invalidation: ${precisionEntry.invalidation}
+`;
+
+    // Add ICT analysis if available
+    if (pipelineResult.hasICTSetup && pipelineResult.ictAnalysis?.tradeSetup) {
+      const ict = pipelineResult.ictAnalysis;
+      analysis += `
+━━━ 📈 ICT/SMC SETUP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Type: ${ict.tradeSetup.type.replace('_', ' ')}
+  Direction: ${ict.tradeSetup.direction}
+  Entry: $${ict.tradeSetup.entry.toFixed(2)}
+  Stop Loss: $${ict.tradeSetup.stopLoss.toFixed(2)}
+  Target: $${ict.tradeSetup.target1.toFixed(2)} (${ict.tradeSetup.riskReward.toFixed(1)}R)
+  Confidence: ${ict.tradeSetup.confidence}%
+`;
+    }
+
+    // Add scenarios
+    if (scenarios.length > 0) {
+      analysis += `
+━━━ 🔮 IF-THEN SCENARIOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+      scenarios.slice(0, 3).forEach((s, i) => {
+        analysis += `  ${i + 1}. ${s.condition} @ $${s.priceLevel.toFixed(2)}
+     → ${s.outcome} (${s.probability}% prob)
+     Action: ${s.action}
+`;
+      });
+    }
+
+    // Add market pulse
+    analysis += `
+━━━ 📊 MARKET PULSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🔗 On-Chain: ${pipelineResult.onChainSummary}
+  💼 ETF Flow: ${pipelineResult.etfFlow}
+  😊 Sentiment: ${pipelineResult.sentimentLabel} (${pipelineResult.fearGreed}/100)
+  📊 Volume: ${volumeSpike.isSpike ? `🔥 SPIKE +${volumeSpike.percentageAboveAvg.toFixed(0)}%` : 'Normal'}
+`;
+
+    // Add macro if impact
+    if (pipelineResult.macroImpact !== 'NONE' && pipelineResult.upcomingMacro.length > 0) {
+      analysis += `
+  ⚡ Macro Impact: ${pipelineResult.macroImpact}
+${pipelineResult.upcomingMacro.slice(0, 2).map(m => `     📅 ${m}`).join('\n')}
+`;
+    }
+
+    // Add verification and learning status
+    analysis += `
+━━━ 🧠 BRAIN STATUS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ Verified: ${pipelineResult.isVerified ? 'YES' : 'NO'} | Accuracy: ${pipelineResult.accuracyScore.toFixed(0)}%
+  📊 Chart Learning: ${pipelineResult.learnedFromChart ? '✓ Active' : '○ Pending'}
+  📡 Stream Learning: ${pipelineResult.learnedFromStream ? '✓ Active' : '○ Pending'}
+  🎯 ICT Patterns: ${pipelineResult.hasICTSetup ? '✓ Detected' : '○ None'}
+  📈 Learning Score: ${(pipelineResult.combinedLearningScore * 100).toFixed(0)}%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Powered by Zikalyze Combined Brain v${this.combinedVersion} | ${processingTimeMs}ms
+  Both brains analyzed and merged for ultimate accuracy
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+    return analysis;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📤 EXPORTS — Public API for Brain Pipeline
 // ═══════════════════════════════════════════════════════════════════════════════
 
