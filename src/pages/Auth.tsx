@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, Key, User, Lock, Eye, EyeOff, Sparkles, Copy, Check, AlertCircle, Shield } from "lucide-react";
@@ -9,6 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useBotProtection } from "@/hooks/useBotProtection";
 import { toast } from "sonner";
+
+// Helper function to format retry time consistently
+const formatRetryTime = (seconds: number): string => {
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+  }
+  if (seconds >= 60) {
+    const minutes = Math.ceil(seconds / 60);
+    return `${minutes}m`;
+  }
+  return `${seconds}s`;
+};
 
 // Demo mode component - for users who want to explore without connecting
 const DemoModeAuth = () => {
@@ -53,29 +67,31 @@ const SignUpForm = () => {
     honeypotProps
   } = useBotProtection({ limiter: 'auth', formProtection: true, checkBot: true });
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check for bot activity
+  // Shared validation function for bot protection and rate limiting
+  const validateSubmission = useCallback(() => {
     if (isBot) {
       toast.error("Automated access detected. Please try again later.");
-      return;
+      return false;
     }
     
-    // Check form submission for bot indicators
     const formCheck = checkFormSubmission({ website: honeypot });
     if (!formCheck.valid) {
       toast.error(formCheck.reason || "Invalid submission. Please try again.");
-      return;
+      return false;
     }
     
-    // Check if blocked by rate limit
     if (isBlocked) {
-      const hours = Math.floor(retryAfterSeconds / 3600);
-      const minutes = Math.floor((retryAfterSeconds % 3600) / 60);
-      toast.error(`Too many attempts. Please try again in ${hours > 0 ? `${hours}h ` : ''}${minutes}m.`);
-      return;
+      toast.error(`Too many attempts. Please try again in ${formatRetryTime(retryAfterSeconds)}.`);
+      return false;
     }
+    
+    return true;
+  }, [isBot, isBlocked, retryAfterSeconds, checkFormSubmission, honeypot]);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateSubmission()) return;
     
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
@@ -241,7 +257,7 @@ const SignUpForm = () => {
         <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
           <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
           <p className="text-destructive">
-            Too many attempts. Please wait {Math.floor(retryAfterSeconds / 3600)}h {Math.floor((retryAfterSeconds % 3600) / 60)}m before trying again.
+            Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
           </p>
         </div>
       )}
@@ -274,6 +290,27 @@ const SignInForm = () => {
     honeypotProps
   } = useBotProtection({ limiter: 'auth', formProtection: true, checkBot: true });
 
+  // Shared validation function for bot protection and rate limiting
+  const validateSubmission = useCallback(() => {
+    if (isBot) {
+      toast.error("Automated access detected. Please try again later.");
+      return false;
+    }
+    
+    const formCheck = checkFormSubmission({ website: honeypot });
+    if (!formCheck.valid) {
+      toast.error(formCheck.reason || "Invalid submission. Please try again.");
+      return false;
+    }
+    
+    if (isBlocked) {
+      toast.error(`Too many attempts. Please try again in ${formatRetryTime(retryAfterSeconds)}.`);
+      return false;
+    }
+    
+    return true;
+  }, [isBot, isBlocked, retryAfterSeconds, checkFormSubmission, honeypot]);
+
   useEffect(() => {
     if (isSignedIn) {
       navigate("/dashboard");
@@ -283,26 +320,7 @@ const SignInForm = () => {
   const handleSignInWithKey = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check for bot activity
-    if (isBot) {
-      toast.error("Automated access detected. Please try again later.");
-      return;
-    }
-    
-    // Check form submission for bot indicators
-    const formCheck = checkFormSubmission({ website: honeypot });
-    if (!formCheck.valid) {
-      toast.error(formCheck.reason || "Invalid submission. Please try again.");
-      return;
-    }
-    
-    // Check if blocked by rate limit
-    if (isBlocked) {
-      const hours = Math.floor(retryAfterSeconds / 3600);
-      const minutes = Math.floor((retryAfterSeconds % 3600) / 60);
-      toast.error(`Too many attempts. Please try again in ${hours > 0 ? `${hours}h ` : ''}${minutes}m.`);
-      return;
-    }
+    if (!validateSubmission()) return;
     
     const { error } = await signInWithKey(privateKey);
     if (error) {
@@ -316,26 +334,7 @@ const SignInForm = () => {
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check for bot activity
-    if (isBot) {
-      toast.error("Automated access detected. Please try again later.");
-      return;
-    }
-    
-    // Check form submission for bot indicators
-    const formCheck = checkFormSubmission({ website: honeypot });
-    if (!formCheck.valid) {
-      toast.error(formCheck.reason || "Invalid submission. Please try again.");
-      return;
-    }
-    
-    // Check if blocked by rate limit
-    if (isBlocked) {
-      const hours = Math.floor(retryAfterSeconds / 3600);
-      const minutes = Math.floor((retryAfterSeconds % 3600) / 60);
-      toast.error(`Too many attempts. Please try again in ${hours > 0 ? `${hours}h ` : ''}${minutes}m.`);
-      return;
-    }
+    if (!validateSubmission()) return;
     
     const { error } = await recoverWallet(username, password);
     if (error) {
@@ -416,7 +415,7 @@ const SignInForm = () => {
             <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
               <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
               <p className="text-destructive">
-                Too many attempts. Please wait {Math.floor(retryAfterSeconds / 3600)}h {Math.floor((retryAfterSeconds % 3600) / 60)}m before trying again.
+                Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
               </p>
             </div>
           )}
@@ -489,7 +488,7 @@ const SignInForm = () => {
             <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
               <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
               <p className="text-destructive">
-                Too many attempts. Please wait {Math.floor(retryAfterSeconds / 3600)}h {Math.floor((retryAfterSeconds % 3600) / 60)}m before trying again.
+                Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
               </p>
             </div>
           )}
