@@ -1074,7 +1074,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => openRateLimitModal()}
+                onClick={openRateLimitModal}
                 className="text-xs text-primary hover:text-primary/80"
               >
                 Upgrade

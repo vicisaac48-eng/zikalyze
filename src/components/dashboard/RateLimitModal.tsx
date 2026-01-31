@@ -61,8 +61,8 @@ export function RateLimitModal({
           <DialogDescription className="text-base">
             {t(
               "rateLimit.description",
-              `You've used all ${maxAnalyses} free AI analyses. Sign up to unlock unlimited analyses!`
-            ).replace("${maxAnalyses}", String(maxAnalyses))}
+              "You've used all {{maxAnalyses}} free AI analyses. Sign up to unlock unlimited analyses!"
+            ).replace("{{maxAnalyses}}", String(maxAnalyses))}
           </DialogDescription>
         </DialogHeader>
 
