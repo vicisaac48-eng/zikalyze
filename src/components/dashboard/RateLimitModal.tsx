@@ -23,17 +23,21 @@ interface RateLimitModalProps {
   onClose: () => void;
   analysisCount: number;
   maxAnalyses: number;
+  /** If true, prevents closing the modal via backdrop click or escape key */
+  preventBypass?: boolean;
 }
 
 /**
  * Modal displayed when guest users reach their analysis limit.
  * Encourages sign-up with benefits messaging.
+ * When preventBypass is true, users cannot dismiss the modal without signing in/up.
  */
 export function RateLimitModal({
   open,
   onClose,
   analysisCount,
   maxAnalyses,
+  preventBypass = true,
 }: RateLimitModalProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -48,9 +52,21 @@ export function RateLimitModal({
     navigate("/auth");
   };
 
+  // When preventBypass is true, block closing via backdrop click or escape key
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen && !preventBypass) {
+      onClose();
+    }
+    // When preventBypass is true, do nothing on close attempt
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent 
+        className="sm:max-w-md" 
+        hideCloseButton={preventBypass}
+        preventClose={preventBypass}
+      >
         <DialogHeader className="text-center sm:text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
             <Lock className="h-8 w-8 text-primary" />
@@ -122,14 +138,17 @@ export function RateLimitModal({
             <LogIn className="mr-2 h-4 w-4" />
             {t("rateLimit.signIn", "Already have an account? Sign In")}
           </Button>
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-          >
-            {t("rateLimit.maybeLater", "Maybe later")}
-          </Button>
+          {/* Only show "Maybe later" when bypass is not prevented */}
+          {!preventBypass && (
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+            >
+              {t("rateLimit.maybeLater", "Maybe later")}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
