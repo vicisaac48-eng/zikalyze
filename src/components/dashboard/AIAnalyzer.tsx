@@ -403,15 +403,65 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation
   // ═══════════════════════════════════════════════════════════════════════════
   
+  // Store rapidly-changing values in refs to prevent useCallback recreation
+  const learningDataRef = useRef({
+    currentPrice,
+    currentChange,
+    currentHigh,
+    currentLow,
+    currentVolume,
+    marketCap,
+    currentLanguage,
+    sentiment: liveData.sentiment,
+    onChainMetrics,
+    chartTrendData,
+    multiTfData,
+    streamUpdateCount,
+    learnedPatterns
+  });
+  
+  // Update ref whenever values change (no re-render)
+  learningDataRef.current = {
+    currentPrice,
+    currentChange,
+    currentHigh,
+    currentLow,
+    currentVolume,
+    marketCap,
+    currentLanguage,
+    sentiment: liveData.sentiment,
+    onChainMetrics,
+    chartTrendData,
+    multiTfData,
+    streamUpdateCount,
+    learnedPatterns
+  };
+  
   const processBackgroundLearning = useCallback(() => {
     if (!backgroundStreamingRef.current) return;
+    
+    const {
+      currentPrice: price,
+      currentChange: change,
+      currentHigh: high,
+      currentLow: low,
+      currentVolume: volume,
+      marketCap: mCap,
+      currentLanguage: lang,
+      sentiment,
+      onChainMetrics: ocMetrics,
+      chartTrendData: cTrendData,
+      multiTfData: mTfData,
+      streamUpdateCount: updateCount,
+      learnedPatterns: patterns
+    } = learningDataRef.current;
     
     const now = Date.now();
     
     // Collect price data point
     priceHistoryRef.current = [
       ...priceHistoryRef.current.slice(-299), // Keep last 300 points (10 min @ 2s intervals)
-      { price: currentPrice, timestamp: now }
+      { price, timestamp: now }
     ];
     setPriceHistory([...priceHistoryRef.current]);
     
@@ -434,115 +484,115 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     // Micro-trend detection
     const microTrend = priceVelocity > 0.1 ? 'ACCELERATING ↑' :
                        priceVelocity < -0.1 ? 'ACCELERATING ↓' :
-                       currentPrice > avgRecentPrice ? 'DRIFTING ↑' :
-                       currentPrice < avgRecentPrice ? 'DRIFTING ↓' : 'CONSOLIDATING ↔';
+                       price > avgRecentPrice ? 'DRIFTING ↑' :
+                       price < avgRecentPrice ? 'DRIFTING ↓' : 'CONSOLIDATING ↔';
 
     // Build adapted on-chain data for brain processing
-    const adaptedOnChainData = onChainMetrics ? {
-      exchangeNetFlow: onChainMetrics.exchangeNetFlow,
-      whaleActivity: onChainMetrics.whaleActivity,
+    const adaptedOnChainData = ocMetrics ? {
+      exchangeNetFlow: ocMetrics.exchangeNetFlow,
+      whaleActivity: ocMetrics.whaleActivity,
       longTermHolders: { 
-        accumulating: onChainMetrics.activeAddresses.trend === 'INCREASING', 
-        change7d: onChainMetrics.activeAddresses.change24h * 7, 
-        sentiment: onChainMetrics.activeAddresses.trend === 'INCREASING' ? 'BULLISH' : 'NEUTRAL' 
+        accumulating: ocMetrics.activeAddresses.trend === 'INCREASING', 
+        change7d: ocMetrics.activeAddresses.change24h * 7, 
+        sentiment: ocMetrics.activeAddresses.trend === 'INCREASING' ? 'BULLISH' : 'NEUTRAL' 
       },
       shortTermHolders: { behavior: 'NEUTRAL', profitLoss: 0 },
-      activeAddresses: onChainMetrics.activeAddresses,
-      transactionVolume: onChainMetrics.transactionVolume,
+      activeAddresses: ocMetrics.activeAddresses,
+      transactionVolume: ocMetrics.transactionVolume,
       mempoolData: {
-        unconfirmedTxs: onChainMetrics.mempoolData.unconfirmedTxs,
-        mempoolSize: onChainMetrics.mempoolData.unconfirmedTxs * 250,
-        avgFeeRate: onChainMetrics.mempoolData.avgFeeRate
+        unconfirmedTxs: ocMetrics.mempoolData.unconfirmedTxs,
+        mempoolSize: ocMetrics.mempoolData.unconfirmedTxs * 250,
+        avgFeeRate: ocMetrics.mempoolData.avgFeeRate
       },
-      hashRate: onChainMetrics.hashRate,
-      blockHeight: onChainMetrics.blockHeight,
-      difficulty: onChainMetrics.difficulty,
-      source: onChainMetrics.source
+      hashRate: ocMetrics.hashRate,
+      blockHeight: ocMetrics.blockHeight,
+      difficulty: ocMetrics.difficulty,
+      source: ocMetrics.source
     } : undefined;
 
     // Build multi-timeframe input
-    const adaptedMultiTfData: MultiTimeframeInput | undefined = multiTfData && !multiTfData.isLoading ? {
-      '15m': multiTfData['15m'] ? {
-        timeframe: '15m', trend: multiTfData['15m'].trend, trendStrength: multiTfData['15m'].trendStrength,
-        ema9: multiTfData['15m'].ema9, ema21: multiTfData['15m'].ema21, rsi: multiTfData['15m'].rsi,
-        support: multiTfData['15m'].support, resistance: multiTfData['15m'].resistance,
-        volumeTrend: multiTfData['15m'].volumeTrend, higherHighs: multiTfData['15m'].higherHighs,
-        higherLows: multiTfData['15m'].higherLows, lowerHighs: multiTfData['15m'].lowerHighs,
-        lowerLows: multiTfData['15m'].lowerLows, isLive: multiTfData['15m'].isLive
+    const adaptedMultiTfData: MultiTimeframeInput | undefined = mTfData && !mTfData.isLoading ? {
+      '15m': mTfData['15m'] ? {
+        timeframe: '15m', trend: mTfData['15m'].trend, trendStrength: mTfData['15m'].trendStrength,
+        ema9: mTfData['15m'].ema9, ema21: mTfData['15m'].ema21, rsi: mTfData['15m'].rsi,
+        support: mTfData['15m'].support, resistance: mTfData['15m'].resistance,
+        volumeTrend: mTfData['15m'].volumeTrend, higherHighs: mTfData['15m'].higherHighs,
+        higherLows: mTfData['15m'].higherLows, lowerHighs: mTfData['15m'].lowerHighs,
+        lowerLows: mTfData['15m'].lowerLows, isLive: mTfData['15m'].isLive
       } : null,
-      '1h': multiTfData['1h'] ? {
-        timeframe: '1h', trend: multiTfData['1h'].trend, trendStrength: multiTfData['1h'].trendStrength,
-        ema9: multiTfData['1h'].ema9, ema21: multiTfData['1h'].ema21, rsi: multiTfData['1h'].rsi,
-        support: multiTfData['1h'].support, resistance: multiTfData['1h'].resistance,
-        volumeTrend: multiTfData['1h'].volumeTrend, higherHighs: multiTfData['1h'].higherHighs,
-        higherLows: multiTfData['1h'].higherLows, lowerHighs: multiTfData['1h'].lowerHighs,
-        lowerLows: multiTfData['1h'].lowerLows, isLive: multiTfData['1h'].isLive
+      '1h': mTfData['1h'] ? {
+        timeframe: '1h', trend: mTfData['1h'].trend, trendStrength: mTfData['1h'].trendStrength,
+        ema9: mTfData['1h'].ema9, ema21: mTfData['1h'].ema21, rsi: mTfData['1h'].rsi,
+        support: mTfData['1h'].support, resistance: mTfData['1h'].resistance,
+        volumeTrend: mTfData['1h'].volumeTrend, higherHighs: mTfData['1h'].higherHighs,
+        higherLows: mTfData['1h'].higherLows, lowerHighs: mTfData['1h'].lowerHighs,
+        lowerLows: mTfData['1h'].lowerLows, isLive: mTfData['1h'].isLive
       } : null,
-      '4h': multiTfData['4h'] ? {
-        timeframe: '4h', trend: multiTfData['4h'].trend, trendStrength: multiTfData['4h'].trendStrength,
-        ema9: multiTfData['4h'].ema9, ema21: multiTfData['4h'].ema21, rsi: multiTfData['4h'].rsi,
-        support: multiTfData['4h'].support, resistance: multiTfData['4h'].resistance,
-        volumeTrend: multiTfData['4h'].volumeTrend, higherHighs: multiTfData['4h'].higherHighs,
-        higherLows: multiTfData['4h'].higherLows, lowerHighs: multiTfData['4h'].lowerHighs,
-        lowerLows: multiTfData['4h'].lowerLows, isLive: multiTfData['4h'].isLive
+      '4h': mTfData['4h'] ? {
+        timeframe: '4h', trend: mTfData['4h'].trend, trendStrength: mTfData['4h'].trendStrength,
+        ema9: mTfData['4h'].ema9, ema21: mTfData['4h'].ema21, rsi: mTfData['4h'].rsi,
+        support: mTfData['4h'].support, resistance: mTfData['4h'].resistance,
+        volumeTrend: mTfData['4h'].volumeTrend, higherHighs: mTfData['4h'].higherHighs,
+        higherLows: mTfData['4h'].higherLows, lowerHighs: mTfData['4h'].lowerHighs,
+        lowerLows: mTfData['4h'].lowerLows, isLive: mTfData['4h'].isLive
       } : null,
-      '1d': multiTfData['1d'] ? {
-        timeframe: '1d', trend: multiTfData['1d'].trend, trendStrength: multiTfData['1d'].trendStrength,
-        ema9: multiTfData['1d'].ema9, ema21: multiTfData['1d'].ema21, rsi: multiTfData['1d'].rsi,
-        support: multiTfData['1d'].support, resistance: multiTfData['1d'].resistance,
-        volumeTrend: multiTfData['1d'].volumeTrend, higherHighs: multiTfData['1d'].higherHighs,
-        higherLows: multiTfData['1d'].higherLows, lowerHighs: multiTfData['1d'].lowerHighs,
-        lowerLows: multiTfData['1d'].lowerLows, isLive: multiTfData['1d'].isLive
+      '1d': mTfData['1d'] ? {
+        timeframe: '1d', trend: mTfData['1d'].trend, trendStrength: mTfData['1d'].trendStrength,
+        ema9: mTfData['1d'].ema9, ema21: mTfData['1d'].ema21, rsi: mTfData['1d'].rsi,
+        support: mTfData['1d'].support, resistance: mTfData['1d'].resistance,
+        volumeTrend: mTfData['1d'].volumeTrend, higherHighs: mTfData['1d'].higherHighs,
+        higherLows: mTfData['1d'].higherLows, lowerHighs: mTfData['1d'].lowerHighs,
+        lowerLows: mTfData['1d'].lowerLows, isLive: mTfData['1d'].isLive
       } : null,
-      confluence: multiTfData.confluence
+      confluence: mTfData.confluence
     } : undefined;
     
     // Run brain analysis to learn from current data
     const result = runClientSideAnalysis({
       crypto,
-      price: currentPrice,
-      change: currentChange,
-      high24h: currentHigh,
-      low24h: currentLow,
-      volume: currentVolume,
-      marketCap,
-      language: currentLanguage,
+      price,
+      change,
+      high24h: high,
+      low24h: low,
+      volume,
+      marketCap: mCap,
+      language: lang,
       isLiveData: true,
-      dataSource: `LEARNING (${streamUpdateCount + 1} samples)`,
+      dataSource: `LEARNING (${updateCount + 1} samples)`,
       onChainData: adaptedOnChainData,
-      sentimentData: liveData.sentiment ? {
-        fearGreed: { value: liveData.sentiment.fearGreedValue, label: liveData.sentiment.fearGreedLabel },
-        social: liveData.sentiment.sentimentScore !== undefined ? { overall: { score: liveData.sentiment.sentimentScore } } : undefined
+      sentimentData: sentiment ? {
+        fearGreed: { value: sentiment.fearGreedValue, label: sentiment.fearGreedLabel },
+        social: sentiment.sentimentScore !== undefined ? { overall: { score: sentiment.sentimentScore } } : undefined
       } : undefined,
-      chartTrendData: chartTrendData ? {
-        candles: chartTrendData.candles, trend24h: chartTrendData.trend24h, trendStrength: chartTrendData.trendStrength,
-        higherHighs: chartTrendData.higherHighs, higherLows: chartTrendData.higherLows,
-        lowerHighs: chartTrendData.lowerHighs, lowerLows: chartTrendData.lowerLows,
-        ema9: chartTrendData.ema9, ema21: chartTrendData.ema21, rsi: chartTrendData.rsi,
-        volumeTrend: chartTrendData.volumeTrend, priceVelocity: chartTrendData.priceVelocity,
-        isLive: chartTrendData.isLive, source: chartTrendData.source
+      chartTrendData: cTrendData ? {
+        candles: cTrendData.candles, trend24h: cTrendData.trend24h, trendStrength: cTrendData.trendStrength,
+        higherHighs: cTrendData.higherHighs, higherLows: cTrendData.higherLows,
+        lowerHighs: cTrendData.lowerHighs, lowerLows: cTrendData.lowerLows,
+        ema9: cTrendData.ema9, ema21: cTrendData.ema21, rsi: cTrendData.rsi,
+        volumeTrend: cTrendData.volumeTrend, priceVelocity: cTrendData.priceVelocity,
+        isLive: cTrendData.isLive, source: cTrendData.source
       } : undefined,
       multiTimeframeData: adaptedMultiTfData
     });
     
     // Update learned patterns using persistent hook (AI adaptation)
-    const biasChanged = learnedPatterns.lastBias !== result.bias;
+    const biasChanged = patterns.lastBias !== result.bias;
     updatePatterns({
       trendAccuracy: priceHistoryRef.current.length > 10 ? 
-        (learnedPatterns.trendAccuracy * 0.95 + (result.confidence / 100) * 0.05) : learnedPatterns.trendAccuracy,
-      avgVelocity: (learnedPatterns.avgVelocity * 0.9 + Math.abs(priceVelocity) * 0.1),
-      volatility: (learnedPatterns.volatility * 0.9 + volatility * 0.1),
+        (patterns.trendAccuracy * 0.95 + (result.confidence / 100) * 0.05) : patterns.trendAccuracy,
+      avgVelocity: (patterns.avgVelocity * 0.9 + Math.abs(priceVelocity) * 0.1),
+      volatility: (patterns.volatility * 0.9 + volatility * 0.1),
       lastBias: result.bias,
-      biasChanges: biasChanged ? learnedPatterns.biasChanges + 1 : learnedPatterns.biasChanges,
-      samplesCollected: learnedPatterns.samplesCollected + 1,
-      avgPrice24h: (learnedPatterns.avgPrice24h * 0.95 + currentPrice * 0.05) || currentPrice,
-      priceRange24h: Math.max(learnedPatterns.priceRange24h, currentHigh - currentLow)
+      biasChanges: biasChanged ? patterns.biasChanges + 1 : patterns.biasChanges,
+      samplesCollected: patterns.samplesCollected + 1,
+      avgPrice24h: (patterns.avgPrice24h * 0.95 + price * 0.05) || price,
+      priceRange24h: Math.max(patterns.priceRange24h, high - low)
     });
     
     // Learn support/resistance levels from chart data
-    if (chartTrendData?.isLive && chartTrendData.candles.length > 0) {
-      const lowPrice = Math.min(...chartTrendData.candles.map(c => c.low));
-      const highPrice = Math.max(...chartTrendData.candles.map(c => c.high));
+    if (cTrendData?.isLive && cTrendData.candles.length > 0) {
+      const lowPrice = Math.min(...cTrendData.candles.map(c => c.low));
+      const highPrice = Math.max(...cTrendData.candles.map(c => c.high));
       learnPriceLevel(lowPrice, 'support');
       learnPriceLevel(highPrice, 'resistance');
     }
@@ -552,10 +602,10 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     setStreamUpdateCount(prev => prev + 1);
     
     // Silent console log for debugging
-    if (streamUpdateCount % 10 === 0) {
-      console.log(`[AI Learning] Sample #${streamUpdateCount + 1}: $${currentPrice.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
+    if (updateCount % 10 === 0) {
+      console.log(`[AI Learning] Sample #${updateCount + 1}: $${price.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, multiTfData, streamUpdateCount]);
+  }, [crypto, updatePatterns, learnPriceLevel]); // Only recreate when crypto changes or update functions change
 
   // Auto-start background learning on mount
   useEffect(() => {
