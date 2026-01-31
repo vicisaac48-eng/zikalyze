@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     // Only redirect to auth if loading is complete, no user, and NOT in demo mode
-    // Demo mode is when loading is false and user is null (Clerk timed out or not configured)
+    // Demo mode is when loading is false and user is null (no wallet connected)
     // We allow access in demo mode so users can explore the app
     if (!loading && !user) {
       // User not logged in - allow demo mode access, don't redirect
