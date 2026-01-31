@@ -660,7 +660,7 @@ export const useCryptoPrices = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadCachedTop100, loadCachedLivePrices, saveCachedTop100]); // Dependencies for helper functions used in fetchPrices
+  }, [loadCachedTop100, saveCachedTop100]); // Dependencies for helper functions used in fetchPrices
 
   // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
   const connectOKX = useCallback(() => {
@@ -1041,7 +1041,7 @@ export const useCryptoPrices = () => {
       setTimeout(() => connectKraken(), 4000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updatePrice]); // KRAKEN_PAIRS is a module-level constant (defined at line ~913)
+  }, [updatePrice]); // KRAKEN_PAIRS is a module-level constant defined earlier in this file
 
   // Initial fetch
   useEffect(() => {
@@ -1183,7 +1183,7 @@ export const useCryptoPrices = () => {
       fetchCoinCapFallback();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLive]); // Only run once when we go live, prices dependency would cause infinite loop
+  }, [isLive]); // Run when isLive changes to fetch fallback prices, prices dependency would cause infinite loop
 
 // All price updates now come from WebSockets - no polling needed
 
