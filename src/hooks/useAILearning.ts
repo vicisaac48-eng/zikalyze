@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withTimeoutNull } from '@/lib/timeoutPromise';
 
 // Type for registration with periodicSync
 interface PeriodicSyncRegistration extends ServiceWorkerRegistration {
@@ -423,11 +424,11 @@ export function useAILearning(symbol: string) {
       return updated;
     });
     
-    // Contribute to global learning via secure RPC
+    // Contribute to global learning via secure RPC with timeout protection
     if (userId) {
       try {
         const consensusBias = bias === 'LONG' ? 'BULLISH' : bias === 'SHORT' ? 'BEARISH' : 'NEUTRAL';
-        await supabase.rpc('contribute_to_global_learning', {
+        const rpcCall = supabase.rpc('contribute_to_global_learning', {
           p_symbol: symbol,
           p_avg_trend_accuracy: patternsRef.current.trendAccuracy,
           p_avg_volatility: patternsRef.current.volatility,
@@ -436,6 +437,9 @@ export function useAILearning(symbol: string) {
           p_total_predictions: patternsRef.current.totalPredictions,
           p_correct_predictions: patternsRef.current.correctPredictions
         });
+        
+        // Add 5-second timeout to prevent hanging
+        await withTimeoutNull(rpcCall, 5000);
       } catch (e) {
         console.warn('[AI Learning] Global contribution failed:', e);
       }
