@@ -6,6 +6,7 @@ import { fetchWithRetry, safeFetch } from "@/lib/fetchWithRetry";
 // regardless of how many components call useCryptoPrices()
 let globalWebSocketsInitialized = false;
 let globalPricesSubscribers = 0;
+let globalPricesFetched = false;
 
 export interface CryptoPrice {
   id: string;
