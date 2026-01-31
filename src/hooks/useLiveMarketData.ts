@@ -178,6 +178,10 @@ export function useLiveMarketData(
     }
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, fallbackPrice, fallbackChange, checkSentimentShift]);
 
+  // Store fetchSentimentData in ref to avoid unnecessary effect triggers
+  const fetchSentimentDataRef = useRef(fetchSentimentData);
+  fetchSentimentDataRef.current = fetchSentimentData;
+
   // Reset and fetch when crypto changes
   useEffect(() => {
     isMountedRef.current = true;
@@ -190,13 +194,13 @@ export function useLiveMarketData(
       setSentimentData(null);
     }
     
-    // Fetch sentiment once (no polling)
-    fetchSentimentData();
+    // Fetch sentiment once (no polling) using ref
+    fetchSentimentDataRef.current();
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [crypto, fetchSentimentData]);
+  }, [crypto]); // Removed fetchSentimentData from deps to prevent potential re-fetch loops
 
   // Store onChainData in ref and throttle whale activity checks
   const onChainDataRef = useRef(onChainData);

@@ -624,6 +624,10 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     learnPriceLevel, updatePatterns
   ]);
 
+  // Store processBackgroundLearning in ref to avoid recreating interval on every callback change
+  const processBackgroundLearningRef = useRef(processBackgroundLearning);
+  processBackgroundLearningRef.current = processBackgroundLearning;
+
   // Auto-start background learning on mount
   useEffect(() => {
     if (!backgroundStreamingRef.current && liveData.priceIsLive) {
@@ -631,12 +635,12 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       backgroundStreamingRef.current = true;
       setIsStreaming(true);
       
-      // Initial learning cycle
-      processBackgroundLearning();
+      // Initial learning cycle using ref
+      processBackgroundLearningRef.current();
       
-      // Set up interval for continuous learning
+      // Set up interval for continuous learning using ref
       streamingIntervalRef.current = setInterval(() => {
-        processBackgroundLearning();
+        processBackgroundLearningRef.current();
       }, STREAMING_INTERVAL);
     }
     
@@ -647,7 +651,11 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       }
       backgroundStreamingRef.current = false;
     };
-  }, [liveData.priceIsLive, processBackgroundLearning]);
+  }, [liveData.priceIsLive]); // Removed processBackgroundLearning from deps to prevent infinite loops
+
+  // Store startLearningSession in ref to avoid unnecessary effect triggers
+  const startLearningSessionRef = useRef(startLearningSession);
+  startLearningSessionRef.current = startLearningSession;
 
   // Restart learning and reset state when crypto changes
   useEffect(() => {
@@ -666,10 +674,10 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       priceHistoryRef.current = [];
       setPriceHistory([]);
       setStreamUpdateCount(0);
-      startLearningSession();
+      startLearningSessionRef.current();
       console.log(`[AI Learning] Switched to ${crypto}, loading persistent learning data...`);
     }
-  }, [crypto, startLearningSession]);
+  }, [crypto]); // Removed startLearningSession from deps to prevent re-renders
 
   const handleSelectHistory = (record: AnalysisRecord) => {
     setSelectedHistory(record);

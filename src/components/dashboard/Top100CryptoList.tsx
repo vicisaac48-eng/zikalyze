@@ -26,7 +26,8 @@ type PriceFlash = "up" | "down" | null;
 
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
   // Use prices from props (required) - removes duplicate WebSocket connections
-  const prices = propPrices ?? [];
+  // Memoize to prevent unnecessary re-renders
+  const prices = useMemo(() => propPrices ?? [], [propPrices]);
   const pricesLoading = propLoading ?? false;
   const { alerts, loading: alertsLoading, createAlert, removeAlert, checkAlerts } = usePriceAlerts();
   const { formatPrice, symbol: currencySymbol } = useCurrency();

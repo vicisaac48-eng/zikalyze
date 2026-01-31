@@ -529,14 +529,21 @@ export function useMultiTimeframeData(symbol: string): MultiTimeframeData {
     console.log(`[MTF] ${symbol} loaded ${successCount}/4 timeframes: 15m=${tf15m?.trend || 'N/A'}, 1h=${tf1h?.trend || 'N/A'}, 4h=${tf4h?.trend || 'N/A'}, 1d=${tf1d?.trend || 'N/A'}`);
   }, [symbol, fetchTimeframe]);
   
+  // Store fetchAllTimeframes in ref to avoid recreating interval on every callback change
+  const fetchAllTimeframesRef = useRef(fetchAllTimeframes);
+  fetchAllTimeframesRef.current = fetchAllTimeframes;
+  
   useEffect(() => {
     mountedRef.current = true;
     setData(prev => ({ ...prev, isLoading: true }));
     
-    fetchAllTimeframes();
+    // Initial fetch using ref to get latest callback
+    fetchAllTimeframesRef.current();
     
-    // Refresh every 30 seconds for real-time analysis
-    refreshIntervalRef.current = window.setInterval(fetchAllTimeframes, 30000);
+    // Refresh every 30 seconds for real-time analysis using ref
+    refreshIntervalRef.current = window.setInterval(() => {
+      fetchAllTimeframesRef.current();
+    }, 30000);
     
     return () => {
       mountedRef.current = false;
@@ -544,7 +551,7 @@ export function useMultiTimeframeData(symbol: string): MultiTimeframeData {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [symbol, fetchAllTimeframes]);
+  }, [symbol]); // Only depend on symbol, not fetchAllTimeframes
   
   return data;
 }

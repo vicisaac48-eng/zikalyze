@@ -122,13 +122,21 @@ export function useChartAPI(
     await fetchData();
   }, [fetchData]);
 
+  // Store fetchData in ref to avoid recreating interval on every callback change
+  const fetchDataRef = useRef(fetchData);
+  fetchDataRef.current = fetchData;
+
   // Initial fetch and interval refresh
   useEffect(() => {
     mountedRef.current = true;
-    fetchData();
     
-    // Set up refresh interval
-    refreshIntervalRef.current = setInterval(fetchData, REFRESH_INTERVAL);
+    // Initial fetch using ref to get latest callback
+    fetchDataRef.current();
+    
+    // Set up refresh interval using ref
+    refreshIntervalRef.current = setInterval(() => {
+      fetchDataRef.current();
+    }, REFRESH_INTERVAL);
     
     return () => {
       mountedRef.current = false;
@@ -136,7 +144,7 @@ export function useChartAPI(
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [fetchData]);
+  }, [symbol, interval, enableMultiTf]); // Only depend on props, not fetchData
 
   // Convert analysis to ChartTrendInput for AI Brain compatibility
   const chartTrendInput: ChartTrendInput | null = analysis ? toChartTrendInput(analysis) : null;
