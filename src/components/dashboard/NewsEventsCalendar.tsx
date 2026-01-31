@@ -141,8 +141,10 @@ const getScheduledEvents = (): CalendarEvent[] => {
   // NFP (Non-Farm Payrolls) - First Friday of each month
   const getNFPDate = (y: number, m: number): Date => {
     const firstDay = new Date(y, m, 1);
-    const firstFriday = new Date(y, m, 1 + ((5 - firstDay.getDay() + 7) % 7));
-    return firstFriday;
+    const dayOfWeek = firstDay.getDay();
+    // Calculate days until first Friday (Friday = 5)
+    const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
+    return new Date(y, m, 1 + daysUntilFriday);
   };
 
   for (let i = 0; i < 12; i++) {
@@ -163,29 +165,43 @@ const getScheduledEvents = (): CalendarEvent[] => {
     }
   }
 
-  // Weekly Jobless Claims (Every Thursday)
-  for (let i = 0; i < 8; i++) {
-    const daysUntilThursday = (4 - now.getDay() + 7) % 7;
-    const nextThursday = addDays(now, daysUntilThursday + i * 7);
-    if (nextThursday >= now) {
+  // Weekly Jobless Claims (Every Thursday at 08:30 EST)
+  const getNextThursdays = (count: number): Date[] => {
+    const thursdays: Date[] = [];
+    let daysUntilThursday = (4 - now.getDay() + 7) % 7;
+    // If today is Thursday, start from today (the filter will handle if it's past)
+    if (daysUntilThursday === 0) {
+      daysUntilThursday = 0;
+    }
+    for (let i = 0; i < count; i++) {
+      thursdays.push(addDays(now, daysUntilThursday + i * 7));
+    }
+    return thursdays;
+  };
+
+  getNextThursdays(8).forEach((thursdayDate, i) => {
+    if (thursdayDate >= now) {
       events.push({
         id: `jobless-${i}`,
         event: "Weekly Jobless Claims",
-        date: nextThursday,
+        date: thursdayDate,
         time: "08:30 EST",
         impact: "medium",
         category: "Employment",
         description: "Weekly unemployment claims data",
-        countdown: getCountdown(nextThursday),
+        countdown: getCountdown(thursdayDate),
       });
     }
-  }
+  });
 
   // Options Expiry (3rd Friday of each month)
   const getThirdFriday = (y: number, m: number): Date => {
     const firstDay = new Date(y, m, 1);
-    const firstFriday = new Date(y, m, 1 + ((5 - firstDay.getDay() + 7) % 7));
-    return new Date(y, m, firstFriday.getDate() + 14);
+    const dayOfWeek = firstDay.getDay();
+    // Calculate days until first Friday (Friday = 5)
+    const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
+    // Third Friday is 14 days after the first Friday
+    return new Date(y, m, 1 + daysUntilFriday + 14);
   };
 
   for (let i = 0; i < 6; i++) {
@@ -230,12 +246,18 @@ const getScheduledEvents = (): CalendarEvent[] => {
 // Calculate countdown string
 const getCountdown = (targetDate: Date): string => {
   const now = new Date();
+  const totalMinutes = differenceInMinutes(targetDate, now);
+  
+  // If the event has passed
+  if (totalMinutes < 0) return "Passed";
+  
+  // If the event is happening now (within the same minute)
+  if (totalMinutes === 0) return "Now";
+  
   const days = differenceInDays(targetDate, now);
-  const hours = differenceInHours(targetDate, now) % 24;
-  const minutes = differenceInMinutes(targetDate, now) % 60;
-
-  if (days < 0) return "Passed";
-  if (days === 0 && hours === 0 && minutes <= 0) return "Now";
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+  
   if (days === 0) return `${hours}h ${minutes}m`;
   if (days === 1) return "Tomorrow";
   if (days <= 7) return `${days} days`;
@@ -253,24 +275,18 @@ const NewsEventsCalendar = ({ crypto }: NewsEventsCalendarProps) => {
   const { t } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => getScheduledEvents());
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Load events
   const loadEvents = useCallback(() => {
-    setLoading(true);
-    // Simulate a brief loading state for UI feedback
-    setTimeout(() => {
-      const scheduledEvents = getScheduledEvents();
-      setEvents(scheduledEvents);
-      setLastUpdate(new Date());
-      setLoading(false);
-    }, 300);
+    const scheduledEvents = getScheduledEvents();
+    setEvents(scheduledEvents);
+    setLastUpdate(new Date());
   }, []);
 
   useEffect(() => {
-    loadEvents();
     // Auto-refresh every 5 minutes
     const interval = setInterval(loadEvents, 5 * 60 * 1000);
     return () => clearInterval(interval);
