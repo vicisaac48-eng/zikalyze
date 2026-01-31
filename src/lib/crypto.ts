@@ -360,39 +360,55 @@ export async function clearAccountData(): Promise<void> {
   localStorage.removeItem('wallet_session');
   localStorage.removeItem('pwa-install-dismissed');
   
-  // Clear IndexedDB AI learning data
+  // Clear IndexedDB AI learning data with timeout
   try {
     if ('indexedDB' in window) {
-      await new Promise<void>((resolve) => {
-        const deleteRequest = indexedDB.deleteDatabase(AI_LEARNING_DB_NAME);
-        deleteRequest.onsuccess = () => {
-          console.log('[clearAccountData] IndexedDB cleared');
+      await Promise.race([
+        new Promise<void>((resolve) => {
+          const deleteRequest = indexedDB.deleteDatabase(AI_LEARNING_DB_NAME);
+          deleteRequest.onsuccess = () => {
+            console.log('[clearAccountData] IndexedDB cleared');
+            resolve();
+          };
+          deleteRequest.onerror = () => {
+            console.warn('[clearAccountData] IndexedDB clear failed:', deleteRequest.error);
+            resolve();
+          };
+          deleteRequest.onblocked = () => {
+            console.warn('[clearAccountData] IndexedDB delete blocked');
+            resolve();
+          };
+        }),
+        // Timeout after 5 seconds to prevent hanging
+        new Promise<void>((resolve) => setTimeout(() => {
+          console.warn('[clearAccountData] IndexedDB delete timed out');
           resolve();
-        };
-        deleteRequest.onerror = () => {
-          console.warn('[clearAccountData] IndexedDB clear failed:', deleteRequest.error);
-          resolve();
-        };
-        deleteRequest.onblocked = () => {
-          console.warn('[clearAccountData] IndexedDB delete blocked');
-          resolve();
-        };
-      });
+        }, 5000))
+      ]);
     }
   } catch (error) {
     console.warn('[clearAccountData] Failed to clear IndexedDB:', error);
   }
   
-  // Clear service worker caches
+  // Clear service worker caches with timeout
   try {
     if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames
-          .filter(name => name.startsWith(CACHE_PREFIX))
-          .map(name => caches.delete(name))
-      );
-      console.log('[clearAccountData] Service worker caches cleared');
+      await Promise.race([
+        (async () => {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames
+              .filter(name => name.startsWith(CACHE_PREFIX))
+              .map(name => caches.delete(name))
+          );
+          console.log('[clearAccountData] Service worker caches cleared');
+        })(),
+        // Timeout after 5 seconds to prevent hanging
+        new Promise<void>((resolve) => setTimeout(() => {
+          console.warn('[clearAccountData] Cache delete timed out');
+          resolve();
+        }, 5000))
+      ]);
     }
   } catch (error) {
     console.warn('[clearAccountData] Failed to clear caches:', error);
