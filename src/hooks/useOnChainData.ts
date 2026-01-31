@@ -348,13 +348,17 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     } catch { /* Ignore WebSocket connection errors */ }
   }, [crypto]);
 
+  // Store connectBlockWebSocket in ref to avoid unnecessary effect triggers
+  const connectBlockWebSocketRef = useRef(connectBlockWebSocket);
+  connectBlockWebSocketRef.current = connectBlockWebSocket;
+
   // Setup WebSocket for BTC/ETH block data
   useEffect(() => {
     isMountedRef.current = true;
     const cryptoUpper = crypto.toUpperCase();
     
     if (cryptoUpper === 'BTC' || cryptoUpper === 'ETH') {
-      connectBlockWebSocket();
+      connectBlockWebSocketRef.current();
     }
 
     // Capture ref for cleanup
@@ -370,7 +374,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
         clearTimeout(wsState.reconnectTimeout);
       }
     };
-  }, [crypto, connectBlockWebSocket]);
+  }, [crypto]); // Removed connectBlockWebSocket from deps to prevent re-connection loops
 
   const refresh = useCallback(() => {
     // Force re-derive by updating timestamp

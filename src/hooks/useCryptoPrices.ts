@@ -1056,7 +1056,18 @@ export const useCryptoPrices = () => {
   // Initial fetch
   useEffect(() => {
     fetchPrices();
-  }, [fetchPrices]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - fetchPrices is guarded by pricesInitializedRef
+
+  // Store connect functions in refs to avoid unnecessary effect triggers
+  const connectBinanceRef = useRef(connectBinance);
+  const connectOKXRef = useRef(connectOKX);
+  const connectBybitRef = useRef(connectBybit);
+  const connectKrakenRef = useRef(connectKraken);
+  connectBinanceRef.current = connectBinance;
+  connectOKXRef.current = connectOKX;
+  connectBybitRef.current = connectBybit;
+  connectKrakenRef.current = connectKraken;
 
   // Connect to multi-exchange WebSockets when crypto list is populated
   // Uses global flag to prevent multiple hook instances from creating duplicate connections
@@ -1071,13 +1082,13 @@ export const useCryptoPrices = () => {
         
         // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
         console.log('[WebSocket] ⚡ Connecting to multiple exchanges for real-time prices...');
-        connectBinance();
+        connectBinanceRef.current();
         // OKX for altcoin coverage (includes KAS)
-        setTimeout(() => connectOKX(), 200);
+        setTimeout(() => connectOKXRef.current(), 200);
         // Bybit for additional fast updates
-        setTimeout(() => connectBybit(), 400);
+        setTimeout(() => connectBybitRef.current(), 400);
         // Kraken for additional coverage
-        setTimeout(() => connectKraken(), 600);
+        setTimeout(() => connectKrakenRef.current(), 600);
       }
     };
     
@@ -1124,7 +1135,7 @@ export const useCryptoPrices = () => {
         }
       }
     };
-  }, [connectBinance, connectOKX, connectBybit, connectKraken]);
+  }, []); // Run once on mount - connection functions are stored in refs
 
   // Track live status
   useEffect(() => {
