@@ -1080,20 +1080,35 @@ export class ZikalyzeBrainPipeline {
       // Store verified good data after double verification
       this.storage.storeGoodData(firstCheck);
       this.storage.storeGoodData(secondCheck);
-    } else if (!releaseApproved || firstCheck.quality === 'BAD') {
-      // Store filtered/bad data with reason
-      const filterReason = releaseApproved 
-        ? firstCheck.filteredOutReasons.join('; ')
-        : releaseReason;
+    } else {
+      // Store filtered/bad data with reason - either verification failed or quality is BAD
+      const filterReason = !releaseApproved 
+        ? releaseReason 
+        : firstCheck.filteredOutReasons.join('; ') || 'Unknown filter reason';
       this.storage.storeBadData(rawData, filterReason);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
     // STEP 6: Record Learning Signal for Continuous Adaptation 📚
     // ═══════════════════════════════════════════════════════════════════════
+    // Use categorized pattern keys for better aggregation
+    const getMatchCategory = (pct: number): string => {
+      if (pct >= 0.95) return 'high';
+      if (pct >= 0.85) return 'medium';
+      return 'low';
+    };
+    
+    const getBlockReason = (reason: string): string => {
+      if (reason.includes('Failed double verification')) return 'double_verify_fail';
+      if (reason.includes('re-processing failed')) return 'analyzer_fail';
+      if (reason.includes('Second Attention')) return 'second_attention_fail';
+      if (reason.includes('mismatch')) return 'verification_mismatch';
+      return 'unknown';
+    };
+    
     if (releaseApproved) {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_verified_${(matchPercentage * 100).toFixed(0)}pct`,
+        `${rawData.symbol}_verified_${getMatchCategory(matchPercentage)}`,
         'CORRECT',
         0.01 * matchPercentage // Stronger signal for higher match
       );
@@ -1101,7 +1116,7 @@ export class ZikalyzeBrainPipeline {
       console.log(`[Brain] ✅ ${rawData.symbol}: Verified output released (${(matchPercentage * 100).toFixed(0)}% match)`);
     } else {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_blocked_${releaseReason.substring(0, 30)}`,
+        `${rawData.symbol}_blocked_${getBlockReason(releaseReason)}`,
         'INCORRECT',
         0.02
       );
@@ -1211,28 +1226,35 @@ export class ZikalyzeBrainPipeline {
                    '🔴 LOW QUALITY';
     const matchPct = matchPercentage !== undefined ? `${(matchPercentage * 100).toFixed(0)}%` : 'N/A';
     
-    // Build verification flow visualization
+    // Helper to truncate and pad step names for fixed-width box (width = 43 chars inside)
+    const formatStepName = (name: string, maxLen: number = 28): string => {
+      const truncated = name.length > maxLen ? name.substring(0, maxLen - 2) + '..' : name;
+      return truncated.padEnd(maxLen);
+    };
+    
+    // Build verification flow visualization with consistent box width
     let verificationFlow = '';
     if (verificationSteps && verificationSteps.length > 0) {
+      const stepLines = verificationSteps.map(step => 
+        `│  ${step.passed ? '✅' : '❌'} Step ${step.step}: ${formatStepName(step.name)}│`
+      ).join('\n');
+      
       verificationFlow = `
-┌─────────────────────────────────────────────────┐
-│  🔄 VERIFICATION FLOW (All in < 1 second)       │
-├─────────────────────────────────────────────────┤
-${verificationSteps.map(step => 
-  `│  ${step.passed ? '✅' : '❌'} Step ${step.step}: ${step.name.padEnd(30)}│`
-).join('\n')}
-│                                                 │
-│  📊 Match Percentage: ${matchPct.padEnd(24)}│
-│  🧠 Brain → Analyzer → Attention → Compare      │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│  🔄 VERIFICATION FLOW (All in < 1 second)     │
+├───────────────────────────────────────────────┤
+${stepLines}
+│                                               │
+│  📊 Match: ${matchPct.padEnd(7)} 🧠 Brain → Analyzer      │
+└───────────────────────────────────────────────┘
 `;
     }
     
-    return `┌─────────────────────────────────────────────────┐
-│  🧠 ZIKALYZE AI BRAIN PIPELINE v2.0             │
-│  ${status}   ${quality}                         │
-│  📊 Verification Match: ${matchPct.padEnd(21)}│
-└─────────────────────────────────────────────────┘
+    return `┌───────────────────────────────────────────────┐
+│  🧠 ZIKALYZE AI BRAIN PIPELINE v2.0           │
+│  ${status}  ${quality.padEnd(20)}│
+│  📊 Verification Match: ${matchPct.padEnd(19)}│
+└───────────────────────────────────────────────┘
 
 📊 ${symbol} @ $${price.toLocaleString()}
 ${verificationFlow}
