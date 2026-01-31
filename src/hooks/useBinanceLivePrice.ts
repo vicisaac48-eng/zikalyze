@@ -195,8 +195,8 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
             isConnecting: true,
           }));
           
-          // Faster reconnect with exponential backoff capped at lower value
-          const delay = RECONNECT_DELAY * Math.min(reconnectAttemptsRef.current + 1, 2);
+          // Balanced exponential backoff (still faster than original but safer)
+          const delay = RECONNECT_DELAY * Math.min(reconnectAttemptsRef.current + 1, 3);
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) connect();
           }, delay);
@@ -211,14 +211,14 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
             source: 'Cached',
           }));
           
-          // Retry after shorter delay (was 30s, now 15s)
+          // Retry after moderate delay (balanced from 30s to 20s)
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
               reconnectAttemptsRef.current = 0;
               useProxyRef.current = true;
               connect();
             }
-          }, 15000);
+          }, 20000);
         }
       };
     } catch (e) {

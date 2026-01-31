@@ -320,10 +320,10 @@ export const useCryptoPrices = () => {
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
-  // Throttle interval - reduced for faster UI updates (prevents UI jank)
-  const UPDATE_THROTTLE_MS = 500; // Reduced from 1000ms for faster updates
-  // Even faster updates for special altcoins
-  const FAST_UPDATE_THROTTLE_MS = 200; // Reduced from 500ms for real-time feel
+  // Throttle interval - balanced for fast UI updates while preventing excessive re-renders
+  const UPDATE_THROTTLE_MS = 750; // Reduced from 1000ms but not too aggressive
+  // Faster updates for special altcoins with lower volume
+  const FAST_UPDATE_THROTTLE_MS = 350; // Reduced from 500ms for real-time feel
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
@@ -741,8 +741,8 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(e => e !== "OKX"));
         
-        // Faster reconnection for better real-time experience
-        const delay = Math.min(1500 + Math.random() * 1500, 5000); // Reduced from 3000-8000ms
+        // Balanced reconnection with moderate delay
+        const delay = Math.min(2000 + Math.random() * 1500, 6000); // More balanced range
         if (reconnectTimeoutsRef.current.okx) {
           clearTimeout(reconnectTimeoutsRef.current.okx);
         }
@@ -754,7 +754,7 @@ export const useCryptoPrices = () => {
       okxWsRef.current = ws;
     } catch (err) {
       console.log(`[OKX] Connection failed, retrying...`);
-      setTimeout(() => connectOKX(), 1500); // Reduced from 3000ms
+      setTimeout(() => connectOKX(), 2000); // Moderate retry delay
     }
   }, [updatePrice]);
 
@@ -840,8 +840,8 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(ex => ex !== "Binance"));
         
-        // Reconnect with faster delay for better responsiveness
-        const delay = 1000 + Math.random() * 1000; // Reduced from 2000-4000ms
+        // Reconnect with balanced delay
+        const delay = 1500 + Math.random() * 1000; // More balanced range
         if (reconnectTimeoutsRef.current.binance) {
           clearTimeout(reconnectTimeoutsRef.current.binance);
         }
@@ -908,14 +908,14 @@ export const useCryptoPrices = () => {
       
       ws.onclose = () => {
         setConnectedExchanges(prev => prev.filter(e => e !== "Bybit"));
-        // Faster reconnection for better real-time experience
-        const delay = 1500 + Math.random() * 1500; // Reduced from 3000-5000ms
+        // Balanced reconnection delay
+        const delay = 2000 + Math.random() * 1500; // Balanced from 3000-5000ms
         reconnectTimeoutsRef.current.bybit = window.setTimeout(() => connectBybit(), delay);
       };
       
       bybitWsRef.current = ws;
     } catch (err) {
-      setTimeout(() => connectBybit(), 1500); // Reduced from 3000ms
+      setTimeout(() => connectBybit(), 2000); // Moderate retry delay
     }
   }, [updatePrice]);
 
@@ -1035,8 +1035,8 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(ex => ex !== "Kraken"));
         
-        // Faster reconnection for better real-time experience
-        const delay = 1500 + Math.random() * 1500; // Reduced from 3000-5000ms
+        // Balanced reconnection delay
+        const delay = 2000 + Math.random() * 1500; // Balanced from 3000-5000ms
         if (reconnectTimeoutsRef.current.kraken) {
           clearTimeout(reconnectTimeoutsRef.current.kraken);
         }
@@ -1049,7 +1049,7 @@ export const useCryptoPrices = () => {
       krakenWsRef.current = ws;
     } catch (err) {
       console.log(`[Kraken] Connection failed, retrying...`);
-      setTimeout(() => connectKraken(), 2000); // Reduced from 4000ms
+      setTimeout(() => connectKraken(), 2500); // Moderate retry delay
     }
   }, [updatePrice]);
 
