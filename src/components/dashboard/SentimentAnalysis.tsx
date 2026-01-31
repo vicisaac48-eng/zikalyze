@@ -496,6 +496,35 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     return 'from-destructive to-destructive/50';
   };
 
+  // Helper to get event impact styling class
+  const getEventImpactClass = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
+      case 'high':
+        return 'bg-destructive/25 text-destructive border border-destructive/40';
+      case 'medium':
+        return 'bg-warning/25 text-warning border border-warning/40';
+      default:
+        return 'bg-muted/80 text-muted-foreground border border-border';
+    }
+  };
+
+  // Helper to get Zap icon styling class based on impact
+  const getZapIconClass = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
+      case 'high':
+        return 'text-destructive animate-pulse';
+      case 'medium':
+        return 'text-warning';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  // Helper to check if countdown is imminent (Today or Tomorrow)
+  const isImminentCountdown = (countdown: string) => {
+    return countdown === 'Today' || countdown === 'Tomorrow';
+  };
+
   if (loading) {
     return (
       <Card className="border-border bg-card">
@@ -537,10 +566,10 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     <Card className="border-border bg-card">
       {/* Macro Events Banner - Positioned at the very top for maximum visibility */}
       {data.macroEvents && data.macroEvents.length > 0 && (
-        <div className="rounded-t-lg border-b border-warning/50 bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 p-3">
+        <div className="rounded-t-lg border-b border-warning/50 bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 p-3" role="region" aria-label="Upcoming macro events">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-4 w-4 text-warning animate-pulse" />
-            <span className="text-sm font-semibold text-warning">📅 Upcoming News & Events</span>
+            <Calendar className="h-4 w-4 text-warning animate-pulse" aria-hidden="true" />
+            <span className="text-sm font-semibold text-warning">Upcoming News & Events</span>
             <Badge variant="outline" className="text-xs border-warning/50 text-warning">
               {data.macroEvents.length} event{data.macroEvents.length > 1 ? 's' : ''}
             </Badge>
@@ -549,18 +578,12 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
             {data.macroEvents.map((event, i) => (
               <div 
                 key={i} 
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium shadow-sm ${
-                  event.impact === 'high' 
-                    ? 'bg-destructive/25 text-destructive border border-destructive/40' 
-                    : event.impact === 'medium'
-                    ? 'bg-warning/25 text-warning border border-warning/40'
-                    : 'bg-muted/80 text-muted-foreground border border-border'
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium shadow-sm ${getEventImpactClass(event.impact)}`}
               >
-                <Zap className={`h-3.5 w-3.5 ${event.impact === 'high' ? 'text-destructive animate-pulse' : event.impact === 'medium' ? 'text-warning' : 'text-muted-foreground'}`} />
+                <Zap className={`h-3.5 w-3.5 ${getZapIconClass(event.impact)}`} aria-hidden="true" />
                 <span>{event.event}</span>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
-                  event.countdown === 'Today' || event.countdown === 'Tomorrow'
+                  isImminentCountdown(event.countdown)
                     ? 'bg-destructive/30 text-destructive'
                     : 'bg-muted text-muted-foreground'
                 }`}>
