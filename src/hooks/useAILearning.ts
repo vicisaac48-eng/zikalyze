@@ -147,36 +147,6 @@ export function useAILearning(symbol: string) {
     patternsRef.current = patterns;
   }, [patterns]);
 
-  // Get user ID and initialize background learning
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id || null);
-    });
-    
-    // Initialize background learning in service worker
-    initBackgroundLearning();
-    
-    // Listen for learning updates from service worker
-    const handleSWMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'LEARNING_UPDATE') {
-        console.log('[AI Learning] Received background learning update');
-        loadPatterns();
-      }
-    };
-    
-    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
-    
-    return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-    };
-  }, []);
-
-  // Load patterns on mount/symbol change
-  useEffect(() => {
-    loadPatterns();
-    loadGlobalLearning();
-  }, [symbol, userId]);
-
   // Load from localStorage first, then merge offline learning, then from DB
   const loadPatterns = useCallback(async () => {
     setIsLoading(true);
@@ -304,6 +274,36 @@ export function useAILearning(symbol: string) {
       console.warn('[AI Learning] Global learning load failed:', e);
     }
   }, [symbol]);
+
+  // Get user ID and initialize background learning
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+    
+    // Initialize background learning in service worker
+    initBackgroundLearning();
+    
+    // Listen for learning updates from service worker
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'LEARNING_UPDATE') {
+        console.log('[AI Learning] Received background learning update');
+        loadPatterns();
+      }
+    };
+    
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+    };
+  }, [loadPatterns]);
+
+  // Load patterns on mount/symbol change
+  useEffect(() => {
+    loadPatterns();
+    loadGlobalLearning();
+  }, [symbol, userId, loadPatterns, loadGlobalLearning]);
 
   // Save patterns (debounced)
   const savePatterns = useCallback(async (newPatterns: LearnedPatterns) => {

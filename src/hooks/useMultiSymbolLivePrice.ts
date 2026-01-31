@@ -249,7 +249,7 @@ export const useMultiSymbolLivePrice = (
       clearTimeout(initTimeout);
       cleanup();
     };
-  }, [symbols.join(','), connect, cleanup]);
+  }, [symbols, connect, cleanup]); // symbols triggers re-connection when the list changes
 
   // Apply fallback prices when not live
   useEffect(() => {

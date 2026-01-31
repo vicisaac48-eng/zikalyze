@@ -285,6 +285,13 @@ const BYBIT_SYMBOLS: Record<string, string> = {
 // Priority symbols for faster update throttling
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
+// Cache configuration constants
+const TOP100_CACHE_KEY = "zikalyze_top100_cache_v1";
+const TOP100_CACHE_TTL_MS = 60 * 60 * 1000; // 1h
+const LIVE_PRICES_CACHE_KEY = "zikalyze_live_prices_v1";
+const LIVE_PRICES_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h - prices are still useful even if stale
+const PRICE_SAVE_THROTTLE_MS = 5000; // Save at most every 5 seconds
+
 export const useCryptoPrices = () => {
   // Initialize with fallback prices for immediate display
   const [prices, setPrices] = useState<CryptoPrice[]>(FALLBACK_CRYPTOS);
@@ -399,16 +406,9 @@ export const useCryptoPrices = () => {
     }));
   }, []);
 
-  const TOP100_CACHE_KEY = "zikalyze_top100_cache_v1";
-  const TOP100_CACHE_TTL_MS = 60 * 60 * 1000; // 1h
-  
-  // Live prices cache - persists current prices for instant load
-  const LIVE_PRICES_CACHE_KEY = "zikalyze_live_prices_v1";
-  const LIVE_PRICES_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h - prices are still useful even if stale
   const lastPriceSaveRef = useRef<number>(0);
-  const PRICE_SAVE_THROTTLE_MS = 5000; // Save at most every 5 seconds
 
-  const loadCachedTop100 = (): CoinGeckoCoin[] | null => {
+  const loadCachedTop100 = useCallback((): CoinGeckoCoin[] | null => {
     try {
       const raw = localStorage.getItem(TOP100_CACHE_KEY);
       if (!raw) return null;
@@ -419,18 +419,18 @@ export const useCryptoPrices = () => {
     } catch {
       return null;
     }
-  };
+  }, []);
 
-  const saveCachedTop100 = (data: CoinGeckoCoin[]) => {
+  const saveCachedTop100 = useCallback((data: CoinGeckoCoin[]) => {
     try {
       localStorage.setItem(TOP100_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
     } catch {
       // ignore storage errors
     }
-  };
+  }, []);
   
   // Load persisted live prices
-  const loadCachedLivePrices = (): CryptoPrice[] | null => {
+  const loadCachedLivePrices = useCallback((): CryptoPrice[] | null => {
     try {
       const raw = localStorage.getItem(LIVE_PRICES_CACHE_KEY);
       if (!raw) return null;
@@ -442,7 +442,7 @@ export const useCryptoPrices = () => {
     } catch {
       return null;
     }
-  };
+  }, []);
   
   // Save current live prices to localStorage (throttled)
   const saveLivePrices = useCallback((pricesToSave: CryptoPrice[]) => {
@@ -660,7 +660,7 @@ export const useCryptoPrices = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Empty deps - only run once on mount, use ref to track initialization
+  }, [loadCachedTop100, loadCachedLivePrices, saveCachedTop100]); // Dependencies for helper functions used in fetchPrices
 
   // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
   const connectOKX = useCallback(() => {
@@ -847,7 +847,7 @@ export const useCryptoPrices = () => {
       console.log(`[Binance] Connection failed, trying Bybit fallback...`);
       connectBybit();
     }
-  }, [updatePrice]);
+  }, [updatePrice, connectBybit]);
 
   // Connect to Bybit WebSocket - Fast updates, KAS support
   const connectBybit = useCallback(() => {
@@ -1040,7 +1040,8 @@ export const useCryptoPrices = () => {
       console.log(`[Kraken] Connection failed, retrying...`);
       setTimeout(() => connectKraken(), 4000);
     }
-  }, [updatePrice]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updatePrice]); // KRAKEN_PAIRS is a module-level constant (defined at line ~913)
 
   // Initial fetch
   useEffect(() => {
@@ -1181,7 +1182,8 @@ export const useCryptoPrices = () => {
     if (prices.length > 0 && isLive) {
       fetchCoinCapFallback();
     }
-  }, [isLive]); // Only run once when we go live
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLive]); // Only run once when we go live, prices dependency would cause infinite loop
 
 // All price updates now come from WebSockets - no polling needed
 
