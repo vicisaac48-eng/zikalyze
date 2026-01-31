@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrivateKey } from "@/lib/crypto";
 
@@ -21,7 +21,6 @@ import { formatPrivateKey } from "@/lib/crypto";
 const Auth = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { toast } = useToast();
   const { signUp, signInWithPrivateKey, signInWithPassword, recoverPrivateKey, isSignedIn, loading: authLoading } = useAuth();
 
   // Form state
@@ -66,11 +65,7 @@ const Auth = () => {
     e.preventDefault();
     
     if (signupPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      });
+      toast.error("Passwords don't match - Please make sure your passwords match");
       return;
     }
     
@@ -81,21 +76,14 @@ const Auth = () => {
     setIsLoading(false);
     
     if (result.error) {
-      toast({
-        title: "Sign up failed",
-        description: result.error.message,
-        variant: "destructive",
-      });
+      toast.error(`Sign up failed: ${result.error.message}`);
       return;
     }
     
     // Show the generated private key
     if (result.privateKey) {
       setGeneratedKey(result.privateKey);
-      toast({
-        title: "Account created!",
-        description: "Save your private key securely. You'll need it to login.",
-      });
+      toast.success("Account created! Save your private key securely. You'll need it to login.");
     }
   };
 
@@ -110,18 +98,11 @@ const Auth = () => {
     setIsLoading(false);
     
     if (result.error) {
-      toast({
-        title: "Login failed",
-        description: result.error.message,
-        variant: "destructive",
-      });
+      toast.error(`Login failed: ${result.error.message}`);
       return;
     }
     
-    toast({
-      title: "Welcome back!",
-      description: "You've been successfully signed in.",
-    });
+    toast.success("Welcome back! You've been successfully signed in.");
     
     navigate("/dashboard");
   };
@@ -137,18 +118,11 @@ const Auth = () => {
     setIsLoading(false);
     
     if (result.error) {
-      toast({
-        title: "Login failed",
-        description: result.error.message,
-        variant: "destructive",
-      });
+      toast.error(`Login failed: ${result.error.message}`);
       return;
     }
     
-    toast({
-      title: "Welcome back!",
-      description: "You've been successfully signed in.",
-    });
+    toast.success("Welcome back! You've been successfully signed in.");
     
     navigate("/dashboard");
   };
@@ -164,20 +138,13 @@ const Auth = () => {
     setIsLoading(false);
     
     if (result.error) {
-      toast({
-        title: "Recovery failed",
-        description: result.error.message,
-        variant: "destructive",
-      });
+      toast.error(`Recovery failed: ${result.error.message}`);
       return;
     }
     
     if (result.privateKey) {
       setRecoveredKey(result.privateKey);
-      toast({
-        title: "Key recovered!",
-        description: "Your private key has been retrieved.",
-      });
+      toast.success("Key recovered! Your private key has been retrieved.");
     }
   };
 
@@ -186,17 +153,10 @@ const Auth = () => {
     try {
       await navigator.clipboard.writeText(formatPrivateKey(key));
       setCopied(true);
-      toast({
-        title: "Copied!",
-        description: "Private key copied to clipboard",
-      });
+      toast.success("Private key copied to clipboard");
       setTimeout(() => setCopied(false), 3000);
     } catch {
-      toast({
-        title: "Copy failed",
-        description: "Please select and copy the key manually, or check your browser permissions.",
-        variant: "destructive",
-      });
+      toast.error("Copy failed - Please select and copy the key manually, or check your browser permissions.");
     }
   };
 

@@ -372,7 +372,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       // Cache and save - get the record ID for feedback
       if (result.analysis.length > 100) {
         cacheAnalysis(result.analysis, analysisPrice, analysisChange);
-        const savedId = await saveAnalysis(result.analysis, analysisPrice, analysisChange, result.confidence, result.bias);
+        const savedId = saveAnalysis(result.analysis, analysisPrice, analysisChange, result.confidence, result.bias);
         if (savedId) {
           setCurrentAnalysisId(savedId);
         }

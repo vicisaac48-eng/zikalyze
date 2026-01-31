@@ -1,5 +1,4 @@
 import { lazy, Suspense } from "react";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
@@ -85,7 +84,6 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
           <TooltipProvider>
-            <Toaster />
             <Sonner />
             <PWAInstallBanner />
             <ZikalyzeWatermark />

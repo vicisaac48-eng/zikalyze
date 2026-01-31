@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { useSettings } from "@/hooks/useSettings";
 import { alertSound } from "@/lib/alertSound";
@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Settings = () => {
-  const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
@@ -65,11 +64,7 @@ const Settings = () => {
 
   const handleEraseData = async () => {
     if (deleteConfirmText !== DELETE_CONFIRMATION_TEXT) {
-      toast({
-        title: "Confirmation required",
-        description: `Please type ${DELETE_CONFIRMATION_TEXT} to confirm`,
-        variant: "destructive",
-      });
+      toast.error(`Please type ${DELETE_CONFIRMATION_TEXT} to confirm`);
       return;
     }
 
@@ -81,20 +76,13 @@ const Settings = () => {
       // Sign out the user
       await signOut();
       
-      toast({
-        title: t("settings.accountDeleted"),
-        description: t("settings.accountDeletedDesc"),
-      });
+      toast.success(t("settings.accountDeleted"));
       
       // Redirect to landing page
       navigate("/");
     } catch (error) {
       console.error("Error erasing data:", error);
-      toast({
-        title: t("settings.deletionFailed"),
-        description: t("settings.deletionFailedDesc"),
-        variant: "destructive",
-      });
+      toast.error(t("settings.deletionFailed"));
     } finally {
       setIsDeleting(false);
       setDeleteConfirmText("");
@@ -132,10 +120,7 @@ const Settings = () => {
       window.dispatchEvent(new Event("settingsChanged"));
     }, 0);
 
-    toast({
-      title: t("settings.settingsSaved"),
-      description: t("settings.settingsSavedDesc"),
-    });
+    toast.success(t("settings.settingsSaved"));
   };
 
   return (
@@ -226,17 +211,10 @@ const Settings = () => {
                             try {
                               await navigator.clipboard.writeText(formatPrivateKey(user.privateKey || ""));
                               setKeyCopied(true);
-                              toast({
-                                title: "Copied!",
-                                description: "Private key copied to clipboard",
-                              });
+                              toast.success("Private key copied to clipboard");
                               setTimeout(() => setKeyCopied(false), 3000);
                             } catch {
-                              toast({
-                                title: "Copy failed",
-                                description: "Please select and copy the key manually, or check your browser permissions.",
-                                variant: "destructive",
-                              });
+                              toast.error("Copy failed - Please select and copy the key manually.");
                             }
                           }}
                         >

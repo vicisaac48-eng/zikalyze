@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 // VAPID public key for push notifications
@@ -33,7 +33,6 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const { user, isSignedIn } = useAuth();
 
   // Check if push is supported
@@ -85,11 +84,7 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!isSupported) {
-      toast({
-        title: "Not Supported",
-        description: "Push notifications are not supported in this browser",
-        variant: "destructive"
-      });
+      toast.error("Push notifications are not supported in this browser");
       return false;
     }
 
@@ -98,22 +93,14 @@ export function usePushNotifications() {
 
       // Check if user is logged in
       if (!isSignedIn || !user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to enable push notifications",
-          variant: "destructive"
-        });
+        toast.error("Please log in to enable push notifications");
         return false;
       }
 
       // Request notification permission
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        toast({
-          title: "Permission Denied",
-          description: "Please allow notifications in your browser settings",
-          variant: "destructive"
-        });
+        toast.error("Please allow notifications in your browser settings");
         return false;
       }
 
@@ -137,10 +124,7 @@ export function usePushNotifications() {
         localStorage.setItem(PUSH_STATUS_KEY, 'true');
         setIsSubscribed(true);
         
-        toast({
-          title: "Notifications Enabled",
-          description: "You'll receive alerts when the app is open"
-        });
+        toast.success("Notifications Enabled - You'll receive alerts when the app is open");
         
         return true;
       }
@@ -148,16 +132,12 @@ export function usePushNotifications() {
       return false;
     } catch (error) {
       console.error('Error subscribing to push:', error);
-      toast({
-        title: "Subscription Failed",
-        description: "Could not enable notifications. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Could not enable notifications. Please try again.");
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, isSignedIn, user, toast]);
+  }, [isSupported, isSignedIn, user]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     try {
@@ -174,24 +154,17 @@ export function usePushNotifications() {
       localStorage.removeItem(PUSH_STATUS_KEY);
       setIsSubscribed(false);
       
-      toast({
-        title: "Notifications Disabled",
-        description: "You won't receive notification alerts"
-      });
+      toast.info("Notifications disabled - You won't receive notification alerts");
       
       return true;
     } catch (error) {
       console.error('Error unsubscribing:', error);
-      toast({
-        title: "Error",
-        description: "Could not disable notifications",
-        variant: "destructive"
-      });
+      toast.error("Could not disable notifications");
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   return {
     isSupported,

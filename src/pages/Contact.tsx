@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -19,7 +19,6 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 const Contact = () => {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
@@ -65,17 +64,10 @@ const Contact = () => {
       if (error) throw error;
 
       setIsSubmitted(true);
-      toast({
-        title: "Message sent!",
-        description: "We'll get back to you as soon as possible.",
-      });
+      toast.success("Message sent! We'll get back to you as soon as possible.");
     } catch (error) {
       console.error("Contact form error:", error);
-      toast({
-        title: "Failed to send message",
-        description: "Please try again later or email us directly.",
-        variant: "destructive",
-      });
+      toast.error("Failed to send message. Please try again later or email us directly.");
     } finally {
       setIsSubmitting(false);
     }
