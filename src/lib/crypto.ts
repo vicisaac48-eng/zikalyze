@@ -334,6 +334,7 @@ export function clearAccountData(): void {
   localStorage.removeItem(STORAGE_KEY);
   
   // Clear any other Zikalyze-related data
+  // First collect all keys, then remove them to avoid index shifting during iteration
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

@@ -41,6 +41,9 @@ const Settings = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Confirmation text required to delete account
+  const DELETE_CONFIRMATION_TEXT = "DELETE";
+
   // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -61,10 +64,10 @@ const Settings = () => {
   };
 
   const handleEraseData = async () => {
-    if (deleteConfirmText !== "DELETE") {
+    if (deleteConfirmText !== DELETE_CONFIRMATION_TEXT) {
       toast({
         title: "Confirmation required",
-        description: "Please type DELETE to confirm",
+        description: `Please type ${DELETE_CONFIRMATION_TEXT} to confirm`,
         variant: "destructive",
       });
       return;
@@ -453,10 +456,11 @@ const Settings = () => {
                                 <li>{t("settings.deleteCredentials")}</li>
                               </ul>
                               <div className="pt-2">
-                                <label className="text-sm font-medium text-foreground">
+                                <label htmlFor="delete-confirm-input" className="text-sm font-medium text-foreground">
                                   {t("settings.typeDelete")}
                                 </label>
                                 <Input
+                                  id="delete-confirm-input"
                                   placeholder={t("settings.typeDeletePlaceholder")}
                                   value={deleteConfirmText}
                                   onChange={(e) => setDeleteConfirmText(e.target.value)}
@@ -471,7 +475,7 @@ const Settings = () => {
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleEraseData}
-                              disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                              disabled={deleteConfirmText !== DELETE_CONFIRMATION_TEXT || isDeleting}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               {isDeleting ? "Deleting..." : t("settings.deleteForever")}
