@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
-import SentimentAnalysis from "@/components/dashboard/SentimentAnalysis";
+import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
@@ -109,7 +109,7 @@ const Analyzer = () => {
             change={selected.change}
           />
 
-          {/* AI Analyzer & Sentiment Analysis Grid */}
+          {/* AI Analyzer & News Events Calendar Grid */}
           <div className="grid lg:grid-cols-2 gap-6">
             <AIAnalyzer 
               crypto={selectedCrypto} 
@@ -121,11 +121,7 @@ const Analyzer = () => {
               marketCap={getPriceBySymbol(selectedCrypto)?.market_cap}
                 isLive={isLive}
             />
-            <SentimentAnalysis
-              crypto={selectedCrypto}
-              price={selected.price}
-              change={selected.change}
-            />
+            <NewsEventsCalendar crypto={selectedCrypto} />
           </div>
 
           {/* Additional Analysis Tips */}
