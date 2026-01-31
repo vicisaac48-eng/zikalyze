@@ -105,25 +105,25 @@ All colors MUST be HSL.
      Consistent styling across all platforms
      ======================================== */
 
-  /* Glow effects - GPU accelerated */
+  /* Glow effects - Clean and professional */
   .glow-cyan {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
   }
   
   .glow-purple {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(267 84% 81% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(267 84% 81% / 0.15);
   }
 
   .glow-success {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
   }
 
   .glow-warning {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(38 92% 50% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(38 92% 50% / 0.15);
   }
   
   /* Gradient utilities - Cross-browser compatible */
