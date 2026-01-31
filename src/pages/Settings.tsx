@@ -191,7 +191,7 @@ const Settings = () => {
                         </div>
                         <div className="relative">
                           <Input
-                            value={showPrivateKey ? (getPrivateKey() || "") : "••••••••••••••••••••••••••••••••••••••••••••"}
+                            value={showPrivateKey ? (getPrivateKey() || "") : "0x" + "•".repeat(64)}
                             readOnly
                             className="pr-20 font-mono text-xs"
                           />
@@ -410,29 +410,29 @@ const Settings = () => {
                   
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="font-medium text-foreground mb-2">Wallet Security</div>
+                      <div className="font-medium text-foreground mb-2">Account Security</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Your wallet security is managed through your browser extension (MetaMask or similar).
+                        Your wallet is generated from your username and password. Keep your private key safe as a backup.
                       </div>
                       <Button variant="outline" onClick={() => setActiveTab("profile")}>
-                        View Wallet Info
+                        View Private Key
                       </Button>
                     </div>
 
                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                      <div className="font-medium text-foreground mb-2">Disconnect Wallet</div>
+                      <div className="font-medium text-foreground mb-2">Sign Out</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        To disconnect your wallet, go to your profile settings above or disconnect from your wallet extension.
+                        To sign out, go to your profile settings above. You can always sign back in with your private key or recover using your username and password.
                       </div>
                     </div>
 
                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
                       <div className="font-medium text-foreground mb-2">Best Practices</div>
                       <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                        <li>Never share your seed phrase or private keys</li>
-                        <li>Always verify transaction details before signing</li>
-                        <li>Use a hardware wallet for large holdings</li>
-                        <li>Enable 2FA on your wallet extension if available</li>
+                        <li>Never share your private key with anyone</li>
+                        <li>Use a strong, unique password for your account</li>
+                        <li>Save your private key in a secure location</li>
+                        <li>Remember your username for easy recovery</li>
                       </ul>
                     </div>
                   </div>

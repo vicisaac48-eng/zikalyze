@@ -118,7 +118,7 @@ const SignUpForm = () => {
         <div className="p-3 rounded-lg bg-muted/50 text-sm">
           <p className="font-medium mb-1">Recovery tip:</p>
           <p className="text-muted-foreground text-xs">
-            You can always recover your wallet by using the same username "{username}" and password.
+            You can recover your wallet using the same username and password. Use strong, unique credentials for better security.
           </p>
         </div>
 
@@ -142,11 +142,11 @@ const SignUpForm = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="pl-10"
-            minLength={3}
+            minLength={4}
             required
           />
         </div>
-        <p className="text-xs text-muted-foreground">Used for wallet recovery. Min 3 characters.</p>
+        <p className="text-xs text-muted-foreground">Used for wallet recovery. Min 4 characters.</p>
       </div>
 
       <div className="space-y-2">
