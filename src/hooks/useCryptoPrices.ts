@@ -660,7 +660,7 @@ export const useCryptoPrices = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadCachedTop100, saveCachedTop100]); // Dependencies for helper functions used in fetchPrices
+  }, [loadCachedTop100, loadCachedLivePrices, saveCachedTop100]); // Dependencies for helper functions used in fetchPrices
 
   // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
   const connectOKX = useCallback(() => {
