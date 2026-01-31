@@ -17,6 +17,11 @@ const SALT_PREFIX = "zikalyze-web3-auth-v1";
 const MASTER_STORAGE_KEY = "zikalyze-master-storage-key";
 const SESSION_ENCRYPTION_KEY = "zikalyze-session-key";
 
+// Constants for data cleanup
+const AI_LEARNING_DB_NAME = 'ZikalyzeAIBrain';
+const CACHE_PREFIX = 'zikalyze';
+const STORAGE_PREFIX = 'zikalyze';
+
 // Convert string to Uint8Array
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -327,11 +332,11 @@ export function clearSession(): void {
  * This removes all stored credentials, sessions, AI learning data, and cached assets
  * 
  * Data cleared:
- * - sessionStorage: zikalyze_session
- * - localStorage: All keys starting with 'zikalyze' (settings, portfolio, analysis history, etc.)
+ * - sessionStorage: SESSION_KEY (zikalyze_session)
+ * - localStorage: All keys starting with STORAGE_PREFIX (zikalyze*)
  * - localStorage: wallet_session, pwa-install-dismissed (non-prefixed app keys)
- * - IndexedDB: ZikalyzeAIBrain database (AI learning patterns)
- * - Service Worker: All zikalyze-* caches
+ * - IndexedDB: AI_LEARNING_DB_NAME database (AI learning patterns)
+ * - Service Worker: All CACHE_PREFIX-* caches
  */
 export async function clearAccountData(): Promise<void> {
   // Clear session
@@ -345,7 +350,7 @@ export async function clearAccountData(): Promise<void> {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('zikalyze')) {
+    if (key && key.startsWith(STORAGE_PREFIX)) {
       keysToRemove.push(key);
     }
   }
@@ -359,7 +364,7 @@ export async function clearAccountData(): Promise<void> {
   try {
     if ('indexedDB' in window) {
       await new Promise<void>((resolve) => {
-        const deleteRequest = indexedDB.deleteDatabase('ZikalyzeAIBrain');
+        const deleteRequest = indexedDB.deleteDatabase(AI_LEARNING_DB_NAME);
         deleteRequest.onsuccess = () => {
           console.log('[clearAccountData] IndexedDB cleared');
           resolve();
@@ -384,7 +389,7 @@ export async function clearAccountData(): Promise<void> {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames
-          .filter(name => name.startsWith('zikalyze'))
+          .filter(name => name.startsWith(CACHE_PREFIX))
           .map(name => caches.delete(name))
       );
       console.log('[clearAccountData] Service worker caches cleared');
