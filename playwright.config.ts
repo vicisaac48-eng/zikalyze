@@ -51,13 +51,15 @@ export default defineConfig({
     },
   ],
 
-  // Run your local dev server before starting the tests
-  webServer: {
-    command: 'npm run preview',
-    url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  // Run your local dev server before starting the tests (only if not disabled)
+  ...(process.env.PLAYWRIGHT_NO_WEBSERVER ? {} : {
+    webServer: {
+      command: 'npx vite preview --host :: --port 8080',
+      url: 'http://localhost:8080',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+  }),
 });

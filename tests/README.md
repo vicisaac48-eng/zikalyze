@@ -97,7 +97,28 @@ Tests are configured in `playwright.config.ts`:
 
 ## Continuous Integration
 
-These health checks can be integrated into your CI/CD pipeline by running:
+These health checks are automatically run in CI/CD via GitHub Actions:
+
+- **On every push** to `main` or `develop` branches
+- **On every pull request** to `main` or `develop` branches  
+- **Daily at 6 AM UTC** as a scheduled check
+- **Manually** via GitHub Actions workflow dispatch
+
+The workflow will:
+1. Build the application
+2. Install Playwright and browsers
+3. Run all health checks
+4. Upload test reports and screenshots
+5. Comment on PRs with test results
+
+To manually trigger a health check in CI:
+1. Go to the "Actions" tab in GitHub
+2. Select "Web App Health Check" workflow
+3. Click "Run workflow"
+
+### CI Configuration
+
+The CI workflow is defined in `.github/workflows/health-check.yml` and runs:
 
 ```bash
 npm run build && npm run test:health

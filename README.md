@@ -41,6 +41,47 @@ Start the development server:
 npm run dev
 
 
+## 🧪 Health Checks & Testing
+
+This project includes comprehensive automated health checks to verify the web app works without hanging or crashes.
+
+### Running Health Checks
+
+To run the complete health check suite:
+
+```bash
+npm run test:health
+```
+
+This will:
+- Build the application
+- Start a preview server
+- Run 11+ automated browser tests
+- Verify no crashes, hangs, or critical errors
+- Generate a detailed test report
+
+### What's Tested
+
+The health checks verify:
+- ✅ App loads without hanging
+- ✅ All critical pages render successfully  
+- ✅ Navigation works smoothly between pages
+- ✅ No JavaScript errors or crashes
+- ✅ React components render properly
+- ✅ Error pages (404) are handled gracefully
+- ✅ Page lifecycle completes without memory leaks
+
+### View Test Results
+
+After running tests, view the detailed HTML report:
+
+```bash
+npm run test:health:report
+```
+
+For more details, see [tests/README.md](./tests/README.md)
+
+
 
 How to Edit
 There are several ways to refine and evolve Zikalyze AI:

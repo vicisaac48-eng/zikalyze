@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:health": "playwright test",
+    "test:health": "bash scripts/health-check.sh",
     "test:health:ui": "playwright test --ui",
     "test:health:report": "playwright show-report"
   },
