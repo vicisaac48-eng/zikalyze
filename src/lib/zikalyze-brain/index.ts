@@ -497,16 +497,6 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const verificationLevel = dataSourceCount >= 3 ? 'VERIFIED' : dataSourceCount >= 2 ? 'PARTIALLY_VERIFIED' : 'ESTIMATED';
   const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
   const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
-  
-  // Build data sources verification section
-  const dataSourcesSection = `━━━ 🔍 DATA VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━
-${verificationEmoji} Status: ${verificationLabel} (${dataSourceCount}/4 live sources)
-   • Price Data: ${isLiveData ? '✅ Real-time WebSocket' : '⚠️ Cached/Fallback'}
-   • On-Chain: ${hasRealOnChain ? '✅ Live blockchain data' : '⚠️ Derived from price action'}
-   • Chart Data: ${hasRealChartData ? '✅ Live chart API' : '⚠️ Price-based estimates'}
-   • Multi-TF: ${hasRealMultiTfData ? '✅ Multi-timeframe live' : '⚠️ Estimated confluence'}
-
-`;
 
   const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
@@ -577,7 +567,6 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
 
-${dataSourcesSection}
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses algorithmic calculations based on available
 market data. Crypto markets are highly volatile and unpredictable.
