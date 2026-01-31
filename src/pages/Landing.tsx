@@ -75,7 +75,7 @@ const Landing = () => {
       });
       window.history.replaceState(null, '', location.pathname);
     }
-  }, [location, toast, t]);
+  }, [location, t]);
 
   // Redirect to dashboard if already logged in (non-blocking)
   useEffect(() => {
