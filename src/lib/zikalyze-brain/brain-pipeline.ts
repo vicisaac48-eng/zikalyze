@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.0 — Self-Learning from Live Data
+// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.1 — Self-Learning from Live Data
 // ═══════════════════════════════════════════════════════════════════════════════
 // 
 // ENHANCED PROCESSING FLOW:
@@ -9,10 +9,16 @@
 // 🔄 Step 4: Send back to AI Analyzer → Attention for SECOND verification
 // 🔒 Step 5: Store good and bad data separately (hidden)
 // 📚 Step 6: Record learning signal for continuous adaptation
-// 📤 Step 7: Compare first & second check ✅ → if 100% correct → release output
+// 📤 Step 7: Release ONLY if information is ACCURATE (not 100% required)
+//
+// 🎯 ACCURACY-BASED RELEASE (not 100% match required):
+//    - Consistency between first and second verification checks
+//    - Quality of data from both checks
+//    - Confidence levels from AI analysis
+//    - Data reliability across verification passes
 //
 // 🔗 All processing happens in under 1 second ⚡
-// 🛡️ Only sends verified, accurate information to users
+// 🛡️ Only sends verified, ACCURATE information to users
 // 📊 Self-learns from live chart data and WebSocket livestream
 // 📈 ICT/SMC analysis with multi-timeframe confluence
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -817,17 +823,18 @@ export interface EnhancedVerificationResult {
  * 2. Send verified data BACK to AI Analyzer for re-processing
  * 3. AI Analyzer sends to Attention for SECOND verification
  * 4. Compare first and second checks
- * 5. If 100% match (within tolerance), approve release for user output
+ * 5. Release ONLY if information is ACCURATE (not 100% match required)
  * 6. All happens in under a second ⚡
  */
 export class DoubleVerificationLoop {
   private analyzer: AIAnalyzer;
   private attention: AttentionAlgorithm;
   
-  // Match tolerance — higher means stricter matching required for release
-  private readonly matchTolerance = 0.95; // 95%+ match required for release approval
-  private readonly maxScoreDiff = 10; // Maximum score difference allowed
-  private readonly maxConfidenceDiff = 0.15; // Maximum confidence difference allowed
+  // Accuracy thresholds — focus on accuracy, not perfect matching
+  private readonly minAccuracyScore = 0.65; // 65%+ accuracy required for release
+  private readonly minQualityConfidence = 0.4; // Minimum confidence for quality data
+  private readonly maxScoreDiff = 15; // Maximum score difference allowed (more lenient)
+  private readonly maxConfidenceDiff = 0.20; // Maximum confidence difference allowed
   
   constructor() {
     this.analyzer = new AIAnalyzer();
@@ -840,8 +847,8 @@ export class DoubleVerificationLoop {
    * Step 1: Receive first check from main pipeline (Attention verified data)
    * Step 2: Send BACK to AI Analyzer for re-processing
    * Step 3: AI Analyzer sends to Attention for second verification
-   * Step 4: Compare both checks with strict matching
-   * Step 5: Only release if 100% verified (within tolerance)
+   * Step 4: Calculate accuracy score based on both checks
+   * Step 5: Release ONLY if information is ACCURATE (verified as reliable)
    */
   verify(
     rawData: RawCryptoData,
@@ -894,39 +901,43 @@ export class DoubleVerificationLoop {
     });
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 4: Compare First and Second Checks
+    // STEP 4: Calculate Accuracy Score — Compare & Verify Information
     // ═══════════════════════════════════════════════════════════════════════
-    const { match, matchPercentage } = this.compareVerificationsDetailed(firstCheck, secondCheck);
-    const step4Passed = match && matchPercentage >= this.matchTolerance;
+    const { match, matchPercentage, accuracyScore } = this.calculateAccuracy(firstCheck, secondCheck);
+    const isAccurate = accuracyScore >= this.minAccuracyScore;
+    const step4Passed = isAccurate;
     verificationSteps.push({
       step: 4,
-      name: 'Compare Verification Results',
+      name: 'Accuracy Verification',
       passed: step4Passed,
-      confidence: matchPercentage,
+      confidence: accuracyScore,
       timestamp: Date.now(),
-      details: `Match: ${(matchPercentage * 100).toFixed(0)}%, Threshold: ${(this.matchTolerance * 100).toFixed(0)}%`
+      details: `Accuracy: ${(accuracyScore * 100).toFixed(0)}%, Min Required: ${(this.minAccuracyScore * 100).toFixed(0)}%`
     });
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Final Release Decision — Only if 100% Verified
+    // STEP 5: Final Release Decision — Only if ACCURATE (not 100% required)
     // ═══════════════════════════════════════════════════════════════════════
-    const allStepsPassed = verificationSteps.every(step => step.passed);
-    const releaseApproved = allStepsPassed && 
+    // Release if information is ACCURATE — verified as reliable data
+    // Does NOT require 100% match, just verified accuracy
+    const releaseApproved = isAccurate && 
                             firstCheck.quality !== 'BAD' && 
-                            secondCheck.quality !== 'BAD' && 
-                            match;
+                            secondCheck.quality !== 'BAD' &&
+                            step1Passed && step2Passed && step3Passed;
     
     let releaseReason: string;
     if (releaseApproved) {
-      releaseReason = `✅ VERIFIED — All ${verificationSteps.length} checks passed, ${(matchPercentage * 100).toFixed(0)}% match`;
+      releaseReason = `✅ ACCURATE — Information verified (${(accuracyScore * 100).toFixed(0)}% accuracy)`;
     } else if (!step1Passed) {
       releaseReason = '❌ First check failed quality threshold';
     } else if (!step2Passed) {
       releaseReason = '❌ AI Analyzer re-processing failed';
     } else if (!step3Passed) {
       releaseReason = '❌ Second Attention verification failed';
-    } else if (!step4Passed) {
-      releaseReason = `❌ Verification mismatch (${(matchPercentage * 100).toFixed(0)}% < ${(this.matchTolerance * 100).toFixed(0)}% required)`;
+    } else if (!isAccurate) {
+      releaseReason = `❌ Information not accurate enough (${(accuracyScore * 100).toFixed(0)}% < ${(this.minAccuracyScore * 100).toFixed(0)}% required)`;
+    } else if (firstCheck.quality === 'BAD' || secondCheck.quality === 'BAD') {
+      releaseReason = '❌ Data quality too low for release';
     } else {
       releaseReason = '❌ Unknown verification failure';
     }
@@ -935,7 +946,7 @@ export class DoubleVerificationLoop {
       step: 5,
       name: 'Release Decision',
       passed: releaseApproved,
-      confidence: releaseApproved ? 1.0 : 0,
+      confidence: releaseApproved ? accuracyScore : 0,
       timestamp: Date.now(),
       details: releaseReason
     });
@@ -943,12 +954,12 @@ export class DoubleVerificationLoop {
     const totalVerificationTimeMs = Date.now() - startTime;
     
     // Log verification summary
-    console.log(`[DoubleVerify] ${rawData.symbol}: ${releaseApproved ? '✅ APPROVED' : '❌ BLOCKED'} in ${totalVerificationTimeMs}ms`);
+    console.log(`[DoubleVerify] ${rawData.symbol}: ${releaseApproved ? '✅ ACCURATE' : '❌ NOT ACCURATE'} (${(accuracyScore * 100).toFixed(0)}%) in ${totalVerificationTimeMs}ms`);
     
     return {
       verified: releaseApproved,
       match,
-      matchPercentage,
+      matchPercentage: accuracyScore, // Return accuracy score instead of strict match
       secondCheck,
       verificationSteps,
       totalVerificationTimeMs,
@@ -958,13 +969,19 @@ export class DoubleVerificationLoop {
   }
 
   /**
-   * Detailed comparison of two verification results
-   * Returns match percentage for precise verification
+   * Calculate accuracy score based on both verification checks
+   * Accuracy is determined by:
+   * - Consistency between first and second checks
+   * - Quality of both checks
+   * - Confidence levels
+   * - Data reliability
+   * 
+   * Returns accuracy score (0-1) — higher = more accurate information
    */
-  private compareVerificationsDetailed(
+  private calculateAccuracy(
     first: AttentionVerifiedData, 
     second: AttentionVerifiedData
-  ): { match: boolean; matchPercentage: number } {
+  ): { match: boolean; matchPercentage: number; accuracyScore: number } {
     // Calculate individual metric differences
     const bullishDiff = Math.abs(
       first.analyzedData.bullishScore - second.analyzedData.bullishScore
@@ -982,22 +999,55 @@ export class DoubleVerificationLoop {
       first.confidenceScore - second.confidenceScore
     );
     
-    // Calculate match percentage (inverse of average difference)
+    // Calculate consistency (how similar both checks are)
     const avgScoreDiff = (bullishDiff + bearishDiff + volatilityDiff + momentumDiff) / 4;
-    const scoreMatch = Math.max(0, 1 - (avgScoreDiff / 100));
-    const confidenceMatch = Math.max(0, 1 - confidenceDiff);
-    const qualityMatch = first.quality === second.quality ? 1.0 : 0.5;
+    const consistency = Math.max(0, 1 - (avgScoreDiff / 100));
     
-    // Weighted match percentage
-    const matchPercentage = (scoreMatch * 0.5) + (confidenceMatch * 0.3) + (qualityMatch * 0.2);
+    // Calculate confidence factor (average confidence of both checks)
+    const avgConfidence = (first.confidenceScore + second.confidenceScore) / 2;
     
-    // Strict matching criteria
+    // Calculate quality factor
+    const qualityScore = this.getQualityScore(first.quality) + this.getQualityScore(second.quality);
+    const qualityFactor = qualityScore / 2; // 0-1 range
+    
+    // Calculate reliability (confidence similarity)
+    const reliabilityFactor = Math.max(0, 1 - confidenceDiff);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACCURACY SCORE FORMULA
+    // ═══════════════════════════════════════════════════════════════════════
+    // Accuracy = weighted combination of:
+    // - Consistency (40%): How similar are both verification results
+    // - Confidence (25%): Average confidence level
+    // - Quality (20%): Data quality from both checks
+    // - Reliability (15%): How stable the confidence is between checks
+    const accuracyScore = 
+      (consistency * 0.40) + 
+      (avgConfidence * 0.25) + 
+      (qualityFactor * 0.20) + 
+      (reliabilityFactor * 0.15);
+    
+    // Match check (for backwards compatibility, more lenient)
     const match = bullishDiff <= this.maxScoreDiff && 
                   bearishDiff <= this.maxScoreDiff && 
-                  confidenceDiff <= this.maxConfidenceDiff &&
-                  first.quality === second.quality;
+                  confidenceDiff <= this.maxConfidenceDiff;
     
-    return { match, matchPercentage };
+    // Match percentage (for backwards compatibility)
+    const matchPercentage = consistency;
+    
+    return { match, matchPercentage, accuracyScore };
+  }
+  
+  /**
+   * Convert quality enum to numeric score
+   */
+  private getQualityScore(quality: DataQuality): number {
+    switch (quality) {
+      case 'GOOD': return 1.0;
+      case 'UNCERTAIN': return 0.5;
+      case 'BAD': return 0.0;
+      default: return 0.0;
+    }
   }
 }
 
@@ -1016,7 +1066,7 @@ export class DoubleVerificationLoop {
  * STEP 4: 🔄 Send back to AI Analyzer → Attention for second verification
  * STEP 5: 🔒 Store good and bad data separately (hidden)
  * STEP 6: 📚 Record learning signal for adaptation
- * STEP 7: 📤 Compare first & second check, if 100% correct → release to users
+ * STEP 7: 📤 Release ONLY if information is ACCURATE (not 100% required)
  * 
  * ⚡ All processing happens in under 1 second!
  */
@@ -1027,7 +1077,7 @@ export class ZikalyzeBrainPipeline {
   private storage: HiddenDataStorageManager;
   private verification: DoubleVerificationLoop;
   
-  private readonly version = '2.0.0';
+  private readonly version = '2.1.0';
 
   constructor() {
     this.source = new ActiveCryptoSource();
@@ -1035,7 +1085,7 @@ export class ZikalyzeBrainPipeline {
     this.attention = new AttentionAlgorithm();
     this.storage = new HiddenDataStorageManager();
     this.verification = new DoubleVerificationLoop();
-    console.log('[ZikalyzeBrain] v2.0 Pipeline initialized with enhanced double verification');
+    console.log('[ZikalyzeBrain] v2.1 Pipeline initialized with accuracy-based verification');
   }
 
   /**

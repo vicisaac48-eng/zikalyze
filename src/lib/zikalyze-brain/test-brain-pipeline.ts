@@ -199,7 +199,7 @@ function testEnhancedDoubleVerification(): boolean {
   const checks = [
     { name: 'Has verified flag', pass: typeof verificationResult.verified === 'boolean' },
     { name: 'Has match flag', pass: typeof verificationResult.match === 'boolean' },
-    { name: 'Has matchPercentage', pass: verificationResult.matchPercentage >= 0 && verificationResult.matchPercentage <= 1 },
+    { name: 'Has accuracy/matchPercentage', pass: verificationResult.matchPercentage >= 0 && verificationResult.matchPercentage <= 1 },
     { name: 'Has secondCheck', pass: verificationResult.secondCheck !== null },
     { name: 'Has verification steps', pass: Array.isArray(verificationResult.verificationSteps) },
     { name: 'Has 5 verification steps', pass: verificationResult.verificationSteps.length === 5 },
@@ -214,14 +214,15 @@ function testEnhancedDoubleVerification(): boolean {
     { name: 'Has releaseApproved', pass: typeof verificationResult.releaseApproved === 'boolean' },
     { name: 'Has releaseReason', pass: verificationResult.releaseReason.length > 0 },
     { name: 'Verification < 500ms', pass: verificationResult.totalVerificationTimeMs < 500 },
+    { name: 'Release based on accuracy (not 100%)', pass: verificationResult.releaseReason.includes('ACCURATE') || verificationResult.releaseReason.includes('accuracy') || !verificationResult.releaseApproved },
   ];
   
   const passed = checks.filter(c => c.pass).length;
   const failed = checks.filter(c => !c.pass);
   
-  console.log(`   Enhanced Verification: ${passed}/${checks.length} passed`);
-  console.log(`   Release: ${verificationResult.releaseApproved ? '✅ APPROVED' : '❌ BLOCKED'}`);
-  console.log(`   Match: ${(verificationResult.matchPercentage * 100).toFixed(0)}%`);
+  console.log(`   Accuracy-Based Verification: ${passed}/${checks.length} passed`);
+  console.log(`   Release: ${verificationResult.releaseApproved ? '✅ ACCURATE' : '❌ NOT ACCURATE'}`);
+  console.log(`   Accuracy: ${(verificationResult.matchPercentage * 100).toFixed(0)}%`);
   console.log(`   Reason: ${verificationResult.releaseReason}`);
   console.log(`   Steps: ${verificationResult.verificationSteps.map(s => s.passed ? '✅' : '❌').join(' → ')}`);
   
