@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Key, Copy, CheckCircle2 } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Key, Copy, CheckCircle2, Trash2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,18 +14,32 @@ import { alertSound } from "@/lib/alertSound";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPrivateKey } from "@/lib/crypto";
+import { formatPrivateKey, clearAccountData } from "@/lib/crypto";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [keyCopied, setKeyCopied] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -42,6 +57,44 @@ const Settings = () => {
     if (checked) {
       // Play test sound when enabling
       alertSound.playTestSound();
+    }
+  };
+
+  const handleEraseData = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast({
+        title: "Confirmation required",
+        description: "Please type DELETE to confirm",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Clear all account data
+      clearAccountData();
+      
+      // Sign out the user
+      await signOut();
+      
+      toast({
+        title: t("settings.accountDeleted"),
+        description: t("settings.accountDeletedDesc"),
+      });
+      
+      // Redirect to landing page
+      navigate("/");
+    } catch (error) {
+      console.error("Error erasing data:", error);
+      toast({
+        title: t("settings.deletionFailed"),
+        description: t("settings.deletionFailedDesc"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmText("");
     }
   };
 
@@ -370,11 +423,62 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                      <div className="font-medium text-foreground mb-2">Clear Account Data</div>
-                      <div className="text-sm text-muted-foreground mb-3">
-                        To remove your account data from this device, clear your browser's local storage and session storage.
+                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30">
+                      <div className="flex items-center gap-3 mb-2">
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
+                        <div className="font-medium text-foreground">{t("settings.dangerZone")}</div>
                       </div>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        {t("settings.dangerZoneDesc")}
+                      </div>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Trash2 className="h-4 w-4" />
+                            {t("settings.deleteAccount")}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
+                              {t("settings.deleteAccountTitle")}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="space-y-3">
+                              <p>{t("settings.deleteWarning")}</p>
+                              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                                <li>{t("settings.deleteAlerts")}</li>
+                                <li>{t("settings.deleteHistory")}</li>
+                                <li>{t("settings.deleteCredentials")}</li>
+                              </ul>
+                              <div className="pt-2">
+                                <label className="text-sm font-medium text-foreground">
+                                  {t("settings.typeDelete")}
+                                </label>
+                                <Input
+                                  placeholder={t("settings.typeDeletePlaceholder")}
+                                  value={deleteConfirmText}
+                                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                  className="mt-2"
+                                />
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
+                              {t("common.cancel")}
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleEraseData}
+                              disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {isDeleting ? "Deleting..." : t("settings.deleteForever")}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

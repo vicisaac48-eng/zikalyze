@@ -323,6 +323,28 @@ export function clearSession(): void {
 }
 
 /**
+ * Clear all account data from local storage
+ * This removes all stored credentials and sessions
+ */
+export function clearAccountData(): void {
+  // Clear session
+  sessionStorage.removeItem(SESSION_KEY);
+  
+  // Clear stored credentials
+  localStorage.removeItem(STORAGE_KEY);
+  
+  // Clear any other Zikalyze-related data
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('zikalyze')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+}
+
+/**
  * Format private key for display (show in groups)
  */
 export function formatPrivateKey(key: string): string {
