@@ -343,6 +343,10 @@ export function clearAccountData(): void {
     }
   }
   keysToRemove.forEach(key => localStorage.removeItem(key));
+  
+  // Clear non-prefixed app-related keys
+  localStorage.removeItem('wallet_session');
+  localStorage.removeItem('pwa-install-dismissed');
 }
 
 /**
