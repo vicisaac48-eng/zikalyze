@@ -11,6 +11,7 @@ import {
   Calendar, Radio, Zap, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getUpcomingMacroCatalysts } from "@/lib/zikalyze-brain/macro-catalysts";
 
 interface MacroEvent {
   event: string;
@@ -332,6 +333,32 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         sentiment: change > 2 ? 'Bullish' : change < -2 ? 'Cautious' : 'Neutral'
       }));
 
+      // Get upcoming macro events/news
+      const macroCatalysts = getUpcomingMacroCatalysts();
+      const now = new Date();
+      
+      // Format macro events for display
+      const macroEvents: MacroEvent[] = macroCatalysts.map(catalyst => {
+        let countdown = 'Ongoing';
+        if (catalyst.date !== 'Ongoing') {
+          const eventDate = new Date(catalyst.date);
+          const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          countdown = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`;
+        }
+        // Map impact to lowercase with proper validation
+        const impactLower = catalyst.impact.toLowerCase();
+        const impact: 'high' | 'medium' | 'low' = 
+          impactLower === 'high' ? 'high' :
+          impactLower === 'medium' ? 'medium' : 'low';
+        return {
+          event: catalyst.event,
+          date: catalyst.date,
+          impact,
+          countdown,
+          category: catalyst.expectedEffect
+        };
+      });
+
       const sentimentData: SentimentData = {
         crypto,
         timestamp: new Date().toISOString(),
@@ -368,6 +395,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
           influencerMentions: selectedInfluencers
         },
         fearGreed,
+        macroEvents,
         summary: {
           overallSentiment,
           sentimentScore,
