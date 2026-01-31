@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles, LineChart } from "lucide-react";
+import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles, LineChart, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,12 +13,14 @@ import { useMultiTimeframeData, Timeframe } from "@/hooks/useMultiTimeframeData"
 import { useChartAPI } from "@/hooks/useChartAPI";
 import { useAILearning } from "@/hooks/useAILearning";
 import { useRealTimeFearGreed } from "@/hooks/useRealTimeFearGreed";
+import { useAnalysisRateLimit } from "@/hooks/useAnalysisRateLimit";
 import { runClientSideAnalysis, AnalysisResult } from "@/lib/zikalyze-brain";
 import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brain/types";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import AISummaryCard from "./AISummaryCard";
 import AttentionHeatmap from "@/components/AttentionHeatmap";
+import { RateLimitModal } from "./RateLimitModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -153,6 +155,20 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     markFreshData 
   } = useAnalysisCache(crypto);
 
+  // Guest user rate limiting
+  const {
+    canAnalyze,
+    remainingAnalyses,
+    isLimitReached,
+    isGuest,
+    analysisCount,
+    maxAnalyses,
+    recordAnalysis,
+    showRateLimitModal,
+    openRateLimitModal,
+    closeRateLimitModal
+  } = useAnalysisRateLimit();
+
   // Get current language code
   const currentLanguage = i18n.language || 'en';
 
@@ -203,6 +219,12 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   }, [fullAnalysis, scrollToBottom]);
 
   const runAnalysis = useCallback(async () => {
+    // Check rate limit for guest users
+    if (!canAnalyze) {
+      openRateLimitModal();
+      return;
+    }
+
     setIsAnalyzing(true);
     setHasAnalyzed(false);
     setDisplayedText("");
@@ -384,6 +406,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       setFullAnalysis(result.analysis);
       setHasAnalyzed(true);
 
+      // Record analysis for guest rate limiting
+      recordAnalysis();
+
       // Cache and save - get the record ID for feedback
       if (result.analysis.length > 100) {
         cacheAnalysis(result.analysis, analysisPrice, analysisChange);
@@ -412,7 +437,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData, realTimeFearGreed, isRealTimeData, actualDataSource]);
+  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData, realTimeFearGreed, isRealTimeData, actualDataSource, canAnalyze, openRateLimitModal, recordAnalysis]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation
@@ -1016,12 +1041,15 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
           className={cn(
             "w-full h-11 mb-4 font-semibold",
             isAnalyzing ? "bg-primary/50" : 
+            isLimitReached ? "bg-gradient-to-r from-muted to-muted/80" :
             isOffline ? (hasCache ? "bg-gradient-to-r from-warning to-warning/80" : "bg-muted") :
             "bg-gradient-to-r from-primary to-chart-cyan shadow-lg shadow-primary/20"
           )}
         >
           {isAnalyzing ? (
             <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Analyzing {crypto}...</>
+          ) : isLimitReached ? (
+            <><Lock className="h-4 w-4 mr-2" />Sign Up to Continue</>
           ) : isOffline ? (
             hasCache ? (
               <><Database className="h-4 w-4 mr-2" />View Cached Analysis</>
@@ -1034,6 +1062,26 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
             <><Play className="h-4 w-4 mr-2" />Analyze {crypto}</>
           )}
         </Button>
+
+        {/* Guest User Rate Limit Banner */}
+        {isGuest && remainingAnalyses <= 3 && remainingAnalyses > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-warning/10 to-primary/10 border border-warning/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-warning" />
+                <span className="text-sm font-medium">{remainingAnalyses} free {remainingAnalyses === 1 ? 'analysis' : 'analyses'} remaining</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={openRateLimitModal}
+                className="text-xs text-primary hover:text-primary/80"
+              >
+                Upgrade
+              </Button>
+            </div>
+          </div>
+        )}
         
         {/* AI Learning runs silently in background - no visible status bar */}
 
@@ -1150,6 +1198,14 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
         </div>
         </div>
       </div>
+
+      {/* Rate Limit Modal */}
+      <RateLimitModal
+        open={showRateLimitModal}
+        onClose={closeRateLimitModal}
+        analysisCount={analysisCount}
+        maxAnalyses={maxAnalyses}
+      />
     </div>
   );
 };
