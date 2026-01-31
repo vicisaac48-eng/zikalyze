@@ -1,13 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchWithRetry, safeFetch } from "@/lib/fetchWithRetry";
 
-// Global singleton state to prevent multiple WebSocket connections
-// This ensures only one set of WebSocket connections is established
-// regardless of how many components call useCryptoPrices()
-let globalWebSocketsInitialized = false;
-let globalPricesSubscribers = 0;
-let globalPricesFetched = false;
-
 export interface CryptoPrice {
   id: string;
   symbol: string;
@@ -320,10 +313,10 @@ export const useCryptoPrices = () => {
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
-  // Throttle interval - balanced for fast UI updates while preventing excessive re-renders
-  const UPDATE_THROTTLE_MS = 750; // Reduced from 1000ms but not too aggressive
-  // Faster updates for special altcoins with lower volume
-  const FAST_UPDATE_THROTTLE_MS = 350; // Reduced from 500ms for real-time feel
+  // Throttle interval - reduced to 1 second for faster UI updates
+  const UPDATE_THROTTLE_MS = 1000;
+  // Even faster updates for special altcoins
+  const FAST_UPDATE_THROTTLE_MS = 500;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
@@ -472,10 +465,9 @@ export const useCryptoPrices = () => {
   }, []);
 
   const fetchPrices = useCallback(async () => {
-    // Prevent re-fetching if already initialized (use both local ref and global flag)
-    if (pricesInitializedRef.current || globalPricesFetched) return;
+    // Prevent re-fetching if already initialized
+    if (pricesInitializedRef.current) return;
     pricesInitializedRef.current = true;
-    globalPricesFetched = true;
     
     // PRIORITY 1: Load persisted live prices first (most recent data)
     // Since we only run once (pricesInitializedRef guards this), prices will be empty here
@@ -741,8 +733,7 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(e => e !== "OKX"));
         
-        // Balanced reconnection with moderate delay
-        const delay = Math.min(2000 + Math.random() * 1500, 6000); // More balanced range
+        const delay = Math.min(3000 + Math.random() * 2000, 8000);
         if (reconnectTimeoutsRef.current.okx) {
           clearTimeout(reconnectTimeoutsRef.current.okx);
         }
@@ -754,7 +745,7 @@ export const useCryptoPrices = () => {
       okxWsRef.current = ws;
     } catch (err) {
       console.log(`[OKX] Connection failed, retrying...`);
-      setTimeout(() => connectOKX(), 2000); // Moderate retry delay
+      setTimeout(() => connectOKX(), 3000);
     }
   }, [updatePrice]);
 
@@ -840,8 +831,8 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(ex => ex !== "Binance"));
         
-        // Reconnect with balanced delay
-        const delay = 1500 + Math.random() * 1000; // More balanced range
+        // Reconnect with exponential backoff
+        const delay = 2000 + Math.random() * 2000;
         if (reconnectTimeoutsRef.current.binance) {
           clearTimeout(reconnectTimeoutsRef.current.binance);
         }
@@ -908,14 +899,13 @@ export const useCryptoPrices = () => {
       
       ws.onclose = () => {
         setConnectedExchanges(prev => prev.filter(e => e !== "Bybit"));
-        // Balanced reconnection delay
-        const delay = 2000 + Math.random() * 1500; // Balanced from 3000-5000ms
+        const delay = 3000 + Math.random() * 2000;
         reconnectTimeoutsRef.current.bybit = window.setTimeout(() => connectBybit(), delay);
       };
       
       bybitWsRef.current = ws;
     } catch (err) {
-      setTimeout(() => connectBybit(), 2000); // Moderate retry delay
+      setTimeout(() => connectBybit(), 3000);
     }
   }, [updatePrice]);
 
@@ -1035,8 +1025,7 @@ export const useCryptoPrices = () => {
         clearTimeout(connectTimeout);
         setConnectedExchanges(prev => prev.filter(ex => ex !== "Kraken"));
         
-        // Balanced reconnection delay
-        const delay = 2000 + Math.random() * 1500; // Balanced from 3000-5000ms
+        const delay = 3000 + Math.random() * 2000;
         if (reconnectTimeoutsRef.current.kraken) {
           clearTimeout(reconnectTimeoutsRef.current.kraken);
         }
@@ -1049,46 +1038,30 @@ export const useCryptoPrices = () => {
       krakenWsRef.current = ws;
     } catch (err) {
       console.log(`[Kraken] Connection failed, retrying...`);
-      setTimeout(() => connectKraken(), 2500); // Moderate retry delay
+      setTimeout(() => connectKraken(), 4000);
     }
   }, [updatePrice]);
 
   // Initial fetch
   useEffect(() => {
     fetchPrices();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount - fetchPrices is guarded by pricesInitializedRef
-
-  // Store connect functions in refs to avoid unnecessary effect triggers
-  const connectBinanceRef = useRef(connectBinance);
-  const connectOKXRef = useRef(connectOKX);
-  const connectBybitRef = useRef(connectBybit);
-  const connectKrakenRef = useRef(connectKraken);
-  connectBinanceRef.current = connectBinance;
-  connectOKXRef.current = connectOKX;
-  connectBybitRef.current = connectBybit;
-  connectKrakenRef.current = connectKraken;
+  }, [fetchPrices]);
 
   // Connect to multi-exchange WebSockets when crypto list is populated
-  // Uses global flag to prevent multiple hook instances from creating duplicate connections
   useEffect(() => {
-    globalPricesSubscribers++;
-    
     const checkAndConnect = () => {
-      // Use global flag to ensure only one set of WebSocket connections
-      if (cryptoListRef.current.length > 0 && !globalWebSocketsInitialized && !exchangesConnectedRef.current) {
-        globalWebSocketsInitialized = true;
+      if (cryptoListRef.current.length > 0 && !exchangesConnectedRef.current) {
         exchangesConnectedRef.current = true;
         
         // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
         console.log('[WebSocket] ⚡ Connecting to multiple exchanges for real-time prices...');
-        connectBinanceRef.current();
+        connectBinance();
         // OKX for altcoin coverage (includes KAS)
-        setTimeout(() => connectOKXRef.current(), 200);
+        setTimeout(() => connectOKX(), 200);
         // Bybit for additional fast updates
-        setTimeout(() => connectBybitRef.current(), 400);
+        setTimeout(() => connectBybit(), 400);
         // Kraken for additional coverage
-        setTimeout(() => connectKrakenRef.current(), 600);
+        setTimeout(() => connectKraken(), 600);
       }
     };
     
@@ -1099,43 +1072,17 @@ export const useCryptoPrices = () => {
     
     return () => {
       clearTimeout(timeoutId);
-      globalPricesSubscribers--;
+      Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
       
-      // Only close WebSockets and reset global flag if no more subscribers
-      if (globalPricesSubscribers <= 0) {
-        globalWebSocketsInitialized = false;
-        exchangesConnectedRef.current = false;
-        
-        // Clear all reconnect timeouts (use current ref values)
-        Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
-          clearTimeout(timeout);
-        });
-        reconnectTimeoutsRef.current = {};
-        
-        // Close all WebSocket connections (use current ref values)
-        if (binanceWsRef.current) {
-          try { binanceWsRef.current.close(); } catch { /* Ignore close errors */ }
-          binanceWsRef.current = null;
-        }
-        if (okxWsRef.current) {
-          try { okxWsRef.current.close(); } catch { /* Ignore close errors */ }
-          okxWsRef.current = null;
-        }
-        if (bybitWsRef.current) {
-          try { bybitWsRef.current.close(); } catch { /* Ignore close errors */ }
-          bybitWsRef.current = null;
-        }
-        if (krakenWsRef.current) {
-          try { krakenWsRef.current.close(); } catch { /* Ignore close errors */ }
-          krakenWsRef.current = null;
-        }
-        if (coinbaseWsRef.current) {
-          try { coinbaseWsRef.current.close(); } catch { /* Ignore close errors */ }
-          coinbaseWsRef.current = null;
-        }
-      }
+      if (binanceWsRef.current) binanceWsRef.current.close();
+      if (okxWsRef.current) okxWsRef.current.close();
+      if (bybitWsRef.current) bybitWsRef.current.close();
+      if (krakenWsRef.current) krakenWsRef.current.close();
+      if (coinbaseWsRef.current) coinbaseWsRef.current.close();
     };
-  }, []); // Run once on mount - connection functions are stored in refs
+  }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 
   // Track live status
   useEffect(() => {

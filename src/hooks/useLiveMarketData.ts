@@ -178,10 +178,6 @@ export function useLiveMarketData(
     }
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, fallbackPrice, fallbackChange, checkSentimentShift]);
 
-  // Store fetchSentimentData in ref to avoid unnecessary effect triggers
-  const fetchSentimentDataRef = useRef(fetchSentimentData);
-  fetchSentimentDataRef.current = fetchSentimentData;
-
   // Reset and fetch when crypto changes
   useEffect(() => {
     isMountedRef.current = true;
@@ -194,41 +190,27 @@ export function useLiveMarketData(
       setSentimentData(null);
     }
     
-    // Fetch sentiment once (no polling) using ref
-    fetchSentimentDataRef.current();
+    // Fetch sentiment once (no polling)
+    fetchSentimentData();
 
     return () => {
       isMountedRef.current = false;
     };
-  }, [crypto]); // Removed fetchSentimentData from deps to prevent potential re-fetch loops
+  }, [crypto, fetchSentimentData]);
 
-  // Store onChainData in ref and throttle whale activity checks
-  const onChainDataRef = useRef(onChainData);
-  onChainDataRef.current = onChainData;
-  const lastWhaleCheckRef = useRef(0);
-  const WHALE_CHECK_THROTTLE_MS = 30000; // Only check every 30 seconds
-
-  // Check whale activity when on-chain data changes significantly (throttled)
+  // Check whale activity when on-chain data changes significantly
   useEffect(() => {
-    const currentOnChain = onChainDataRef.current;
-    if (!currentOnChain.isLive) return;
+    if (!onChainData.isLive) return;
     
-    // Throttle whale activity checks
-    const now = Date.now();
-    if (now - lastWhaleCheckRef.current < WHALE_CHECK_THROTTLE_MS) {
-      return;
-    }
-    lastWhaleCheckRef.current = now;
-    
-    const whaleNetFlowAbs = Math.abs(currentOnChain.exchangeNetFlow.value);
+    const whaleNetFlowAbs = Math.abs(onChainData.exchangeNetFlow.value);
     if (whaleNetFlowAbs > 10000) {
       checkWhaleActivity(
         crypto.toUpperCase(),
-        currentOnChain.exchangeNetFlow.value * 1000,
-        currentOnChain.whaleActivity.largeTxCount24h
+        onChainData.exchangeNetFlow.value * 1000,
+        onChainData.whaleActivity.largeTxCount24h
       );
     }
-  }, [crypto, checkWhaleActivity]);
+  }, [crypto, onChainData, checkWhaleActivity]);
 
   // Build aggregated data - always use live data when available
   const hasValidPrice = livePrice.price > 0;

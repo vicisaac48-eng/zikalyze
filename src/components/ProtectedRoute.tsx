@@ -26,11 +26,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     onTimeout: handleTimeout,
   });
 
-  // Redirect to login if not authenticated (no demo mode)
   useEffect(() => {
+    // Only redirect to auth if loading is complete, no user, and NOT in demo mode
+    // Demo mode is when loading is false and user is null (Clerk timed out or not configured)
+    // We allow access in demo mode so users can explore the app
     if (!loading && !user) {
-      toast.info("Please sign in to access the dashboard");
-      navigate("/auth");
+      // User not logged in - allow demo mode access, don't redirect
+      // The auth page is available via the nav menu if they want to sign in
     }
   }, [user, loading, navigate]);
 
@@ -52,11 +54,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Only allow authenticated users - no demo mode
-  if (!user) {
-    return null;
-  }
-
+  // Always allow access - demo mode when not logged in
   return (
     <>
       {children}

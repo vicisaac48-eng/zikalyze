@@ -315,22 +315,15 @@ export function useChartTrendData(symbol: string): ChartTrendData | null {
     setIsLoading(false);
   }, [symbol, fetchFromEdgeFunction, fetchFromCryptoCompare]);
   
-  // Store fetchData in ref to avoid recreating interval on every callback change
-  const fetchDataRef = useRef(fetchData);
-  fetchDataRef.current = fetchData;
-  
   useEffect(() => {
     mountedRef.current = true;
     setIsLoading(true);
     
-    // Initial fetch using ref to get latest callback
-    fetchDataRef.current();
+    // Initial fetch
+    fetchData();
     
     // Refresh every 30 seconds for real-time trend updates
-    // Using ref ensures we always call the latest version of fetchData
-    refreshIntervalRef.current = window.setInterval(() => {
-      fetchDataRef.current();
-    }, 30000);
+    refreshIntervalRef.current = window.setInterval(fetchData, 30000);
     
     return () => {
       mountedRef.current = false;
@@ -338,7 +331,7 @@ export function useChartTrendData(symbol: string): ChartTrendData | null {
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [symbol]); // Only depend on symbol, not fetchData
+  }, [symbol, fetchData]);
   
   return data;
 }

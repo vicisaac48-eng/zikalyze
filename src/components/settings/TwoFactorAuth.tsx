@@ -10,10 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { use2FA } from "@/hooks/use2FA";
 
 const TwoFactorAuth = () => {
+  const { toast } = useToast();
   const { isEnabled, isLoading, setupData, setupTwoFA, verifyAndEnable, disableTwoFA } = use2FA();
   
   const [showSetupDialog, setShowSetupDialog] = useState(false);
@@ -32,7 +33,11 @@ const TwoFactorAuth = () => {
       setShowSetupDialog(true);
       setStep("qr");
     } catch (error) {
-      toast.error("Could not initialize 2FA setup. Please try again.");
+      toast({
+        title: "Setup failed",
+        description: "Could not initialize 2FA setup. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -40,7 +45,11 @@ const TwoFactorAuth = () => {
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
-      toast.error("Please enter a 6-digit verification code.");
+      toast({
+        title: "Invalid code",
+        description: "Please enter a 6-digit verification code.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -48,16 +57,27 @@ const TwoFactorAuth = () => {
     try {
       const success = await verifyAndEnable(verificationCode);
       if (success) {
-        toast.success("2FA Enabled! 🔒 Your account is now protected with two-factor authentication.");
+        toast({
+          title: "2FA Enabled! 🔒",
+          description: "Your account is now protected with two-factor authentication.",
+        });
         setShowSetupDialog(false);
         setVerificationCode("");
         setStep("qr");
       } else {
-        toast.error("Invalid code. Please try again.");
+        toast({
+          title: "Verification failed",
+          description: "Invalid code. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Invalid code. Please try again.";
-      toast.error(errorMessage);
+      toast({
+        title: "Verification failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -65,7 +85,11 @@ const TwoFactorAuth = () => {
 
   const handleDisable = async () => {
     if (disableCode.length !== 6) {
-      toast.error("Please enter a 6-digit verification code.");
+      toast({
+        title: "Invalid code",
+        description: "Please enter a 6-digit verification code.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -73,15 +97,26 @@ const TwoFactorAuth = () => {
     try {
       const success = await disableTwoFA(disableCode);
       if (success) {
-        toast.info("2FA Disabled - Two-factor authentication has been removed from your account.");
+        toast({
+          title: "2FA Disabled",
+          description: "Two-factor authentication has been removed from your account.",
+        });
         setShowDisableDialog(false);
         setDisableCode("");
       } else {
-        toast.error("Invalid code. Please try again.");
+        toast({
+          title: "Failed to disable",
+          description: "Invalid code. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Invalid code. Please try again.";
-      toast.error(errorMessage);
+      toast({
+        title: "Failed to disable",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -96,7 +131,10 @@ const TwoFactorAuth = () => {
       setCopiedBackup(true);
       setTimeout(() => setCopiedBackup(false), 2000);
     }
-    toast.success(type === "secret" ? "Secret key copied to clipboard" : "Backup codes copied to clipboard");
+    toast({
+      title: "Copied!",
+      description: type === "secret" ? "Secret key copied to clipboard" : "Backup codes copied to clipboard",
+    });
   };
 
   if (isLoading) {
