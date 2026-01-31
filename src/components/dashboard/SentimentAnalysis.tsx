@@ -120,21 +120,24 @@ async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response
 }
 
 /**
- * Fetch real Fear & Greed Index from Alternative.me
+ * Fetch real Fear & Greed Index from Alternative.me with retry
  */
-async function fetchFearGreedIndex(): Promise<{
+async function fetchFearGreedIndex(retryCount = 0): Promise<{
   value: number;
   label: string;
   previousValue: number;
   previousLabel: string;
-}> {
+} | null> {
+  const maxRetries = 3;
+  
   try {
-    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 5000);
+    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 8000);
     if (!response.ok) throw new Error('Fear & Greed API failed');
     
     const data = await response.json();
     
     if (data.data && data.data.length >= 2) {
+      console.log(`[Sentiment] Fear & Greed LIVE: ${data.data[0].value} (${data.data[0].value_classification})`);
       return {
         value: parseInt(data.data[0].value),
         label: data.data[0].value_classification,
@@ -144,8 +147,16 @@ async function fetchFearGreedIndex(): Promise<{
     }
     throw new Error('Invalid data format');
   } catch (error) {
-    console.warn('[Sentiment] Fear & Greed fetch failed, using derived value');
-    return { value: 50, label: 'Neutral', previousValue: 48, previousLabel: 'Neutral' };
+    console.warn(`[Sentiment] Fear & Greed fetch attempt ${retryCount + 1} failed`);
+    
+    // Retry with exponential backoff
+    if (retryCount < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      return fetchFearGreedIndex(retryCount + 1);
+    }
+    
+    // Return null to indicate we couldn't get real data - don't use fake values
+    return null;
   }
 }
 
@@ -288,13 +299,23 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
       console.log(`[Sentiment] Fetching live data for ${crypto}...`);
       
       // Fetch all data in parallel with timeouts to prevent hanging
-      const [fearGreed, trending, news] = await Promise.all([
+      const [fearGreedResult, trending, news] = await Promise.all([
         fetchFearGreedIndex(),
         fetchTrendingTopics(),
         fetchLiveNews(crypto)
       ]);
 
-      // Calculate sentiment score
+      // If Fear & Greed fetch failed after retries, show error
+      if (!fearGreedResult) {
+        console.error('[Sentiment] Could not fetch Fear & Greed Index - API unavailable');
+        setError('Fear & Greed data unavailable - please try again');
+        setLoading(false);
+        return;
+      }
+
+      const fearGreed = fearGreedResult;
+
+      // Calculate sentiment score using REAL Fear & Greed value
       const sentimentScore = calculateSentimentScore(change, fearGreed.value);
       const overallSentiment = getSentimentLabel(sentimentScore);
 
