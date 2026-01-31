@@ -423,7 +423,7 @@ const Landing = () => {
                         {[65, 70, 60, 75, 68, 80, 72, 85, 78, 90, 82, 88, 95, 87, 92].map((h, i) => (
                           <div
                             key={i}
-                            className="flex-1 rounded-t bg-gradient-to-t from-primary/50 to-primary transition-all duration-300"
+                            className="flex-1 rounded-t bg-gradient-to-t from-primary/50 to-primary animate-chart-bar origin-bottom"
                             style={{ height: `${h}%`, animationDelay: `${i * 100}ms` }}
                           />
                         ))}
@@ -447,9 +447,6 @@ const Landing = () => {
 
           {/* Tutorial Steps */}
           <div className="relative">
-            {/* Connection Line */}
-            <div className="hidden lg:block absolute top-1/2 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 -translate-y-1/2 z-0" />
-            
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 relative z-10 sm:gap-6">
               {/* Step 1: Sign Up */}
               <div 

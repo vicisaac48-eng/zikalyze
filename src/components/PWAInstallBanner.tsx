@@ -69,12 +69,12 @@ export const PWAInstallBanner = () => {
     localStorage.setItem("pwa-install-dismissed", Date.now().toString());
   };
 
-  if (!isMobile || !showBanner || isInstalled) {
+  if (!showBanner || isInstalled) {
     return null;
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom duration-300">
+    <div className={`fixed z-50 animate-in slide-in-from-bottom duration-300 ${isMobile ? 'bottom-0 left-0 right-0 p-4' : 'bottom-4 right-4 max-w-sm'}`}>
       <div className="bg-card border border-border rounded-xl p-4 shadow-lg backdrop-blur-sm">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
