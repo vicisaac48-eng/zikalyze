@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Zap, LineChart, PlayCircle, UserPlus, ChartCandlestick, Bell, Rocket, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
@@ -13,7 +13,6 @@ const Landing = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
   const { t } = useTranslation();
   const [isNavigating, setIsNavigating] = useState(false);
   const [userCount, setUserCount] = useState<number | null>(null);

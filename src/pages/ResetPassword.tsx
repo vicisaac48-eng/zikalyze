@@ -5,14 +5,13 @@ import { TrendingUp, Lock, ArrowRight, Loader2, CheckCircle2 } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { t } = useTranslation();
   const { session, updatePassword } = useAuth();
   
@@ -43,11 +42,7 @@ const ResetPassword = () => {
         
         if (error) {
           console.error('Error setting recovery session:', error);
-          toast({
-            title: t("auth.invalidLink"),
-            description: t("auth.requestNewLink"),
-            variant: "destructive",
-          });
+          toast.error(t("auth.invalidLink"));
           navigate("/auth");
           return;
         }
@@ -73,19 +68,15 @@ const ResetPassword = () => {
     };
 
     handleRecoveryToken();
-  }, [session, navigate, toast, t]);
+  }, [session, navigate, t]);
 
   // Redirect if no valid session after checking
   useEffect(() => {
     if (!isChecking && !isValidSession && !session) {
-      toast({
-        title: t("auth.invalidLink"),
-        description: t("auth.requestNewLink"),
-        variant: "destructive",
-      });
+      toast.error(t("auth.invalidLink"));
       navigate("/auth");
     }
-  }, [isChecking, isValidSession, session, navigate, toast, t]);
+  }, [isChecking, isValidSession, session, navigate, t]);
 
   const validateForm = (): boolean => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
@@ -113,19 +104,12 @@ const ResetPassword = () => {
     setIsLoading(false);
 
     if (error) {
-      toast({
-        title: t("settings.passwordUpdateFailed"),
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(`${t("settings.passwordUpdateFailed")}: ${error.message}`);
       return;
     }
 
     setIsSuccess(true);
-    toast({
-      title: t("auth.passwordUpdated"),
-      description: t("auth.passwordResetSuccess"),
-    });
+    toast.success(t("auth.passwordUpdated"));
     
     // Sign out and redirect to login
     await supabase.auth.signOut();
