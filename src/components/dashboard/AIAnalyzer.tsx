@@ -12,6 +12,7 @@ import { useChartTrendData } from "@/hooks/useChartTrendData";
 import { useMultiTimeframeData, Timeframe } from "@/hooks/useMultiTimeframeData";
 import { useChartAPI } from "@/hooks/useChartAPI";
 import { useAILearning } from "@/hooks/useAILearning";
+import { useRealTimeFearGreed } from "@/hooks/useRealTimeFearGreed";
 import { runClientSideAnalysis, AnalysisResult } from "@/lib/zikalyze-brain";
 import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brain/types";
 import { format } from "date-fns";
@@ -86,6 +87,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   // 📈 Multi-timeframe analysis (15m, 1h, 4h, 1d)
   const multiTfData = useMultiTimeframeData(crypto);
   
+  // 🔥 Real-time Fear & Greed index for AI brain integration
+  const realTimeFearGreed = useRealTimeFearGreed();
+  
   // Real-time on-chain data with whale tracking - use live price for accuracy
   const { metrics: onChainMetrics, streamStatus } = useOnChainData(
     crypto, 
@@ -114,7 +118,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     const sources: string[] = [];
     if (liveData.priceIsLive) sources.push('WebSocket');
     if (onChainMetrics && streamStatus === 'connected') sources.push('On-Chain');
-    if (liveData.sentiment?.isLive) sources.push('Sentiment');
+    if (realTimeFearGreed.isLive) sources.push('Fear&Greed');
     if (chartAPI.isLive) sources.push('ChartAPI');
     return sources.length > 0 ? sources.join(' + ') : 'Fallback';
   };
@@ -285,16 +289,27 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
         source: 'live-market-data'
       } : undefined;
 
-      // Adapt sentiment data format
-      const adaptedSentimentData = liveData.sentiment ? {
+      // Adapt sentiment data format with real-time Fear & Greed
+      // Prioritize real-time Fear & Greed hook over liveData.sentiment
+      const adaptedSentimentData = {
         fearGreed: { 
-          value: liveData.sentiment.fearGreedValue, 
-          label: liveData.sentiment.fearGreedLabel 
+          value: realTimeFearGreed.value, 
+          label: realTimeFearGreed.label,
+          previousValue: realTimeFearGreed.previousValue,
+          previousLabel: realTimeFearGreed.previousLabel,
+          trend: realTimeFearGreed.trend,
+          extremeLevel: realTimeFearGreed.extremeLevel,
+          aiWeight: realTimeFearGreed.aiWeight,
+          isLive: realTimeFearGreed.isLive,
+          timestamp: realTimeFearGreed.timestamp
         },
-        social: liveData.sentiment.sentimentScore !== undefined ? { 
+        social: liveData.sentiment?.sentimentScore !== undefined ? { 
           overall: { score: liveData.sentiment.sentimentScore } 
         } : undefined
-      } : undefined;
+      };
+      
+      // Log Fear & Greed data for debugging
+      console.log(`[AI Analysis] Fear & Greed: ${realTimeFearGreed.value} (${realTimeFearGreed.label}) | Trend: ${realTimeFearGreed.trend} | Live: ${realTimeFearGreed.isLive}`);
 
       // Build multi-timeframe input
       const adaptedMultiTfData: MultiTimeframeInput | undefined = multiTfData && !multiTfData.isLoading ? {
@@ -397,7 +412,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData]);
+  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData, realTimeFearGreed, isRealTimeData, actualDataSource]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation
