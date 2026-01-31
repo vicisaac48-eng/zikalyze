@@ -345,10 +345,15 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
           const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           countdown = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`;
         }
+        // Map impact to lowercase with proper validation
+        const impactLower = catalyst.impact.toLowerCase();
+        const impact: 'high' | 'medium' | 'low' = 
+          impactLower === 'high' ? 'high' :
+          impactLower === 'medium' ? 'medium' : 'low';
         return {
           event: catalyst.event,
           date: catalyst.date,
-          impact: catalyst.impact.toLowerCase() as 'high' | 'medium' | 'low',
+          impact,
           countdown,
           category: catalyst.expectedEffect
         };
