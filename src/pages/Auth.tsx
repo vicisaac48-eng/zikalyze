@@ -1,220 +1,360 @@
-import { useEffect, useState, Component, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, AlertCircle, Sparkles } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrendingUp, Key, User, Lock, Eye, EyeOff, Sparkles, Copy, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
-// Check if Clerk is configured
-const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-// Error boundary for Clerk components
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class ClerkErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, ErrorBoundaryState> {
-  constructor(props: { children: ReactNode; fallback: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("[Auth] Clerk error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}
-
-// Demo mode component - used when Clerk is not configured or fails
+// Demo mode component - for users who want to explore without connecting
 const DemoModeAuth = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="text-center py-8">
-      <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
-      <h3 className="text-lg font-semibold mb-2">Welcome to Zikalyze</h3>
-      <p className="text-muted-foreground mb-4">
-        Experience the smartest trading companion with real-time analysis.
+    <div className="text-center py-4">
+      <Sparkles className="h-8 w-8 text-primary mx-auto mb-3" />
+      <h3 className="text-base font-semibold mb-2">Just Exploring?</h3>
+      <p className="text-sm text-muted-foreground mb-3">
+        Try the dashboard without creating an account.
       </p>
       <Button 
+        variant="outline"
         onClick={() => navigate("/dashboard")}
-        className="bg-primary hover:bg-primary/90"
+        className="w-full"
       >
         Explore Dashboard
       </Button>
-      <p className="text-xs text-muted-foreground mt-4">
-        No sign-up required for demo mode
-      </p>
     </div>
   );
 };
 
-// Fallback component when Clerk has issues
-const ClerkNotConfigured = () => {
+// Sign Up Form
+const SignUpForm = () => {
   const navigate = useNavigate();
-  
-  return (
-    <div className="text-center py-8">
-      <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
-      <h3 className="text-lg font-semibold mb-2">Authentication Not Configured</h3>
-      <p className="text-muted-foreground mb-4">
-        Set VITE_CLERK_PUBLISHABLE_KEY in your environment to enable authentication.
-      </p>
-      <Button variant="outline" onClick={() => navigate("/dashboard")}>
-        Continue to Dashboard (Demo Mode)
-      </Button>
-    </div>
-  );
-};
+  const { signUp, isProcessing } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-// Lazy loaded Clerk components with error handling
-const AuthWithClerk = () => {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const [ClerkComponents, setClerkComponents] = useState<{
-    SignIn: React.ComponentType<Record<string, unknown>>;
-    SignUp: React.ComponentType<Record<string, unknown>>;
-    useUser: () => { user: unknown; isLoaded: boolean };
-  } | null>(null);
-  const [loadError, setLoadError] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Dynamically import Clerk components
-  useEffect(() => {
-    let mounted = true;
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const loadClerk = async () => {
-      try {
-        const clerk = await import("@clerk/clerk-react");
-        if (mounted) {
-          setClerkComponents({
-            SignIn: clerk.SignIn as React.ComponentType<Record<string, unknown>>,
-            SignUp: clerk.SignUp as React.ComponentType<Record<string, unknown>>,
-            useUser: clerk.useUser,
-          });
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("[Auth] Failed to load Clerk:", err);
-        if (mounted) {
-          setLoadError(true);
-          setLoading(false);
-        }
-      }
-    };
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
-    // Timeout for loading
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn("[Auth] Clerk load timeout");
-        setLoadError(true);
-        setLoading(false);
-      }
-    }, 8000);
-
-    loadClerk();
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-    };
-  }, [loading]);
-
-  // Check if user is already logged in via Clerk global
-  useEffect(() => {
-    const checkUser = () => {
-      try {
-        const clerkInstance = (window as unknown as { Clerk?: { user?: unknown } }).Clerk;
-        if (clerkInstance?.user) {
-          navigate("/dashboard");
-        }
-      } catch {
-        // Ignore
-      }
-    };
+    const { error, privateKey, address } = await signUp(username, password);
     
-    checkUser();
-    const interval = setInterval(checkUser, 1000);
-    return () => clearInterval(interval);
-  }, [navigate]);
+    if (error) {
+      toast.error(error.message);
+    } else if (privateKey) {
+      setGeneratedKey(privateKey);
+      toast.success(`Wallet created! Address: ${address?.slice(0, 10)}...`);
+    }
+  };
 
-  if (loading) {
+  const copyPrivateKey = async () => {
+    if (generatedKey) {
+      await navigator.clipboard.writeText(generatedKey);
+      setCopied(true);
+      toast.success("Private key copied! Keep it safe!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const continueToApp = () => {
+    navigate("/dashboard");
+  };
+
+  if (generatedKey) {
     return (
-      <div className="text-center py-8">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading authentication...</p>
+      <div className="space-y-4">
+        <div className="text-center">
+          <div className="h-12 w-12 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-3">
+            <Check className="h-6 w-6 text-success" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Wallet Created!</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Save your private key securely. You'll need it to sign in.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30">
+          <div className="flex items-start gap-2 mb-2">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-sm font-medium text-destructive">
+              Important: Save this key now!
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This is your only way to access your account. If you lose it, use your username and password to recover.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Your Private Key</Label>
+          <div className="relative">
+            <Input
+              value={generatedKey}
+              readOnly
+              className="pr-10 font-mono text-xs"
+            />
+            <button
+              onClick={copyPrivateKey}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-lg bg-muted/50 text-sm">
+          <p className="font-medium mb-1">Recovery tip:</p>
+          <p className="text-muted-foreground text-xs">
+            You can recover your wallet using the same username and password. Use strong, unique credentials for better security.
+          </p>
+        </div>
+
+        <Button onClick={continueToApp} className="w-full">
+          Continue to Dashboard
+        </Button>
       </div>
     );
   }
 
-  if (loadError || !ClerkComponents) {
-    return <DemoModeAuth />;
-  }
+  return (
+    <form onSubmit={handleSignUp} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="signup-username">Username</Label>
+        <div className="relative">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-username"
+            type="text"
+            placeholder="Enter username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="pl-10"
+            minLength={4}
+            required
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">Used for wallet recovery. Min 4 characters.</p>
+      </div>
 
-  const { SignIn, SignUp } = ClerkComponents;
+      <div className="space-y-2">
+        <Label htmlFor="signup-password">Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Create password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="pl-10 pr-10"
+            minLength={8}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
 
-  const clerkAppearance = {
-    elements: {
-      rootBox: "w-full",
-      card: "bg-transparent shadow-none p-0",
-      headerTitle: "hidden",
-      headerSubtitle: "hidden",
-      socialButtonsBlockButton: "bg-secondary border-border text-foreground hover:bg-secondary/80",
-      formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
-      formFieldInput: "bg-secondary border-border text-foreground",
-      formFieldLabel: "text-foreground",
-      footerActionLink: "text-primary hover:text-primary/80",
-      identityPreviewText: "text-foreground",
-      identityPreviewEditButton: "text-primary",
-      formFieldInputShowPasswordButton: "text-muted-foreground",
-      footer: "hidden",
+      <div className="space-y-2">
+        <Label htmlFor="signup-confirm">Confirm Password</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-confirm"
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="pl-10"
+            minLength={8}
+            required
+          />
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full" disabled={isProcessing}>
+        {isProcessing ? "Creating Wallet..." : "Create Wallet"}
+      </Button>
+    </form>
+  );
+};
+
+// Sign In Form
+const SignInForm = () => {
+  const navigate = useNavigate();
+  const { signInWithKey, recoverWallet, isProcessing, isSignedIn } = useAuth();
+  const [mode, setMode] = useState<"key" | "recover">("key");
+  const [privateKey, setPrivateKey] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      navigate("/dashboard");
+    }
+  }, [isSignedIn, navigate]);
+
+  const handleSignInWithKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await signInWithKey(privateKey);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Signed in successfully!");
+      navigate("/dashboard");
+    }
+  };
+
+  const handleRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await recoverWallet(username, password);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Wallet recovered successfully!");
+      navigate("/dashboard");
     }
   };
 
   return (
-    <ClerkErrorBoundary fallback={<DemoModeAuth />}>
-      <Tabs defaultValue="signin" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
-          <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
-        </TabsList>
+    <div className="space-y-4">
+      <div className="flex gap-2 p-1 bg-muted rounded-lg">
+        <button
+          type="button"
+          onClick={() => setMode("key")}
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+            mode === "key" ? "bg-background text-foreground shadow" : "text-muted-foreground"
+          }`}
+        >
+          Private Key
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("recover")}
+          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+            mode === "recover" ? "bg-background text-foreground shadow" : "text-muted-foreground"
+          }`}
+        >
+          Recover Wallet
+        </button>
+      </div>
 
-        <TabsContent value="signin">
-          <div className="flex justify-center">
-            <SignIn 
-              routing="hash"
-              forceRedirectUrl="/dashboard"
-              appearance={clerkAppearance}
-            />
+      {mode === "key" ? (
+        <form onSubmit={handleSignInWithKey} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="private-key">Private Key</Label>
+            <div className="relative">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="private-key"
+                type={showKey ? "text" : "password"}
+                placeholder="0x..."
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
+                className="pl-10 pr-10 font-mono text-xs"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Enter the private key you received when signing up.
+            </p>
           </div>
-        </TabsContent>
 
-        <TabsContent value="signup">
-          <div className="flex justify-center">
-            <SignUp 
-              routing="hash"
-              forceRedirectUrl="/dashboard"
-              appearance={clerkAppearance}
-            />
+          <Button type="submit" className="w-full" disabled={isProcessing}>
+            {isProcessing ? "Signing In..." : "Sign In"}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handleRecover} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="recover-username">Username</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="recover-username"
+                type="text"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
           </div>
-        </TabsContent>
-      </Tabs>
-    </ClerkErrorBoundary>
+
+          <div className="space-y-2">
+            <Label htmlFor="recover-password">Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="recover-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Use the same username and password you used during sign up to recover your wallet.
+          </p>
+
+          <Button type="submit" className="w-full" disabled={isProcessing}>
+            {isProcessing ? "Recovering..." : "Recover Wallet"}
+          </Button>
+        </form>
+      )}
+    </div>
   );
 };
 
 const Auth = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { isSignedIn } = useAuth();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      navigate("/dashboard");
+    }
+  }, [isSignedIn, navigate]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -234,10 +374,34 @@ const Auth = () => {
         </div>
 
         {/* Auth Card */}
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
-          {isClerkConfigured ? <AuthWithClerk /> : <ClerkNotConfigured />}
+        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-6 shadow-2xl">
+          <Tabs defaultValue="signup" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="signup">{t("auth.signUp", "Sign Up")}</TabsTrigger>
+              <TabsTrigger value="signin">{t("auth.signIn", "Sign In")}</TabsTrigger>
+            </TabsList>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+            <TabsContent value="signup">
+              <SignUpForm />
+            </TabsContent>
+
+            <TabsContent value="signin">
+              <SignInForm />
+            </TabsContent>
+          </Tabs>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <DemoModeAuth />
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
             {t("auth.termsAgreement")}
           </p>
         </div>
