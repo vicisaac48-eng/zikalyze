@@ -56,7 +56,6 @@ interface SentimentData {
   meta?: {
     newsSource: string;
     newsLastUpdated: string;
-    isLive: boolean;
     isSimulated?: boolean;
   };
 }
@@ -147,8 +146,9 @@ function generateFallbackFearGreed(priceChange: number): {
     return 'Extreme Fear';
   };
   
-  // Simulate previous value as slightly different
-  const previousValue = Math.round(Math.min(100, Math.max(0, value + (Math.random() - 0.5) * 10)));
+  // Use deterministic previous value: slightly lower than current (markets typically recover)
+  const previousOffset = priceChange >= 0 ? -3 : 3;
+  const previousValue = Math.round(Math.min(100, Math.max(0, value + previousOffset)));
   
   console.log(`[Sentiment] Fear & Greed SIMULATED: ${value} (${getLabel(value)}) based on ${priceChange.toFixed(2)}% price change`);
   
@@ -458,7 +458,6 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         meta: {
           newsSource: news.length > 0 ? 'CryptoCompare Live' : 'Derived',
           newsLastUpdated: new Date().toISOString(),
-          isLive: !isFearGreedSimulated,
           isSimulated: isFearGreedSimulated
         }
       };
@@ -637,8 +636,8 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
           Sentiment Analysis — {crypto}
-          {/* Live indicator */}
-          {data.meta?.isLive && !data.meta?.isSimulated && (
+          {/* Live indicator - show when not simulated */}
+          {!data.meta?.isSimulated && (
             <span className="flex items-center gap-1 text-xs font-normal bg-success/20 text-success px-2 py-0.5 rounded-full animate-pulse">
               <Radio className="h-3 w-3" />
               LIVE
@@ -842,7 +841,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
             {data.meta?.newsSource && (
               <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Radio className={`h-3 w-3 ${data.meta.isLive ? 'text-success' : 'text-muted-foreground'}`} />
+                  <Radio className={`h-3 w-3 ${!data.meta.isSimulated ? 'text-success' : 'text-muted-foreground'}`} />
                   Source: {data.meta.newsSource}
                 </span>
                 {data.meta.newsLastUpdated && (
