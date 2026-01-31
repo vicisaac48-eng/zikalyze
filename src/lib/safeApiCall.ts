@@ -110,6 +110,8 @@ export async function safeApiCall<T>(
       // Check if timeout
       if (error instanceof TimeoutError) {
         isTimeout = true;
+        // Abort the internal controller to trigger cleanup callbacks
+        internalController.abort();
         onTimeout?.();
         console.warn(
           `[SafeApiCall] Timeout on attempt ${attempt + 1}/${retries + 1}`
