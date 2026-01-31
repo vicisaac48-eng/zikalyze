@@ -2420,28 +2420,32 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     const trend: 'RISING' | 'FALLING' | 'STABLE' = 
       diff > 3 ? 'RISING' : diff < -3 ? 'FALLING' : 'STABLE';
     
-    // Calculate bias modifier based on contrarian signals
+    // Calculate bias modifier based on Fear & Greed levels
+    // - At EXTREMES: Use contrarian approach (extreme fear = bullish, extreme greed = bearish)
+    // - At MODERATE levels: Follow sentiment (fear = bearish, greed = bullish) - describes current market mood
     let biasModifier = 0;
     let contrarian = false;
     let description = '';
     
-    // Contrarian signals at extremes
+    // Contrarian signals at EXTREME levels (<=20 or >=80)
     if (value <= 20) {
-      biasModifier = 0.15; // Slight bullish contrarian
+      biasModifier = 0.15; // Bullish contrarian - buy when others are fearful
       contrarian = true;
       description = '🟢 Extreme fear - potential buying opportunity (contrarian signal)';
     } else if (value >= 80) {
-      biasModifier = -0.15; // Slight bearish contrarian
+      biasModifier = -0.15; // Bearish contrarian - sell when others are greedy
       contrarian = true;
       description = '🔴 Extreme greed - potential selling opportunity (contrarian signal)';
-    } else if (value <= 35) {
-      biasModifier = -0.05;
+    } 
+    // Sentiment-following at MODERATE levels - describes current market mood
+    else if (value <= 35) {
+      biasModifier = -0.05; // Market is fearful, sentiment is bearish
       contrarian = false;
-      description = '😰 Fear in market - bearish sentiment';
+      description = '😰 Fear in market - current sentiment is bearish';
     } else if (value >= 65) {
-      biasModifier = 0.05;
+      biasModifier = 0.05; // Market is greedy, sentiment is bullish
       contrarian = false;
-      description = '😊 Greed in market - bullish sentiment';
+      description = '😊 Greed in market - current sentiment is bullish';
     } else {
       biasModifier = 0;
       contrarian = false;

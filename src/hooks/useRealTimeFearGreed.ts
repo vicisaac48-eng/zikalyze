@@ -171,10 +171,14 @@ export function useRealTimeFearGreed(): FearGreedData {
 
 /**
  * Get sentiment adjustment for AI analysis based on Fear & Greed
- * Returns a bias modifier (-1 to 1) where:
- *   -1 = Strong bearish sentiment (extreme fear - contrarian bullish signal)
- *   0 = Neutral sentiment
- *   1 = Strong bullish sentiment (extreme greed - contrarian bearish signal)
+ * 
+ * The modifier represents how Fear & Greed affects market analysis:
+ * - At EXTREMES: Uses contrarian approach (extreme fear = bullish opportunity, extreme greed = bearish opportunity)
+ * - At MODERATE levels: Describes current sentiment (fear = bearish mood, greed = bullish mood)
+ * 
+ * Returns a bias modifier (-0.15 to 0.15) where:
+ *   Positive = Bullish bias adjustment
+ *   Negative = Bearish bias adjustment
  */
 export function getFearGreedBiasModifier(fearGreed: FearGreedData): {
   modifier: number;
@@ -183,35 +187,35 @@ export function getFearGreedBiasModifier(fearGreed: FearGreedData): {
 } {
   const value = fearGreed.value;
   
-  // Contrarian signals at extremes
+  // Contrarian signals at EXTREME levels (<=20 or >=80)
   if (value <= 20) {
     return {
-      modifier: 0.15, // Slight bullish contrarian
+      modifier: 0.15, // Bullish contrarian - buy when others are fearful
       contrarian: true,
       description: 'Extreme fear - potential buying opportunity (contrarian)'
     };
   }
   if (value >= 80) {
     return {
-      modifier: -0.15, // Slight bearish contrarian
+      modifier: -0.15, // Bearish contrarian - sell when others are greedy
       contrarian: true,
       description: 'Extreme greed - potential selling opportunity (contrarian)'
     };
   }
   
-  // Normal sentiment following
+  // Sentiment-following at MODERATE levels - describes current market mood
   if (value <= 35) {
     return {
-      modifier: -0.05,
+      modifier: -0.05, // Market is fearful, current sentiment is bearish
       contrarian: false,
-      description: 'Fear - market sentiment bearish'
+      description: 'Fear - market sentiment is currently bearish'
     };
   }
   if (value >= 65) {
     return {
-      modifier: 0.05,
+      modifier: 0.05, // Market is greedy, current sentiment is bullish
       contrarian: false,
-      description: 'Greed - market sentiment bullish'
+      description: 'Greed - market sentiment is currently bullish'
     };
   }
   
