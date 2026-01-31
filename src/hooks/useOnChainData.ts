@@ -217,7 +217,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
   const derivedMetricsRef = useRef(derivedMetrics);
   derivedMetricsRef.current = derivedMetrics;
   const lastMetricsUpdateRef = useRef(0);
-  const METRICS_UPDATE_THROTTLE_MS = 2000; // Only update metrics every 2 seconds
+  const METRICS_UPDATE_THROTTLE_MS = 1000; // Reduced from 2000ms for faster updates
 
   // Update metrics when derived data changes (throttled to prevent excessive re-renders)
   useEffect(() => {
