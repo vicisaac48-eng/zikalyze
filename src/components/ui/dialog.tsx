@@ -45,12 +45,14 @@ const DialogContent = React.forwardRef<
       onEscapeKeyDown={(e) => {
         if (preventClose) {
           e.preventDefault();
+          return;
         }
         onEscapeKeyDown?.(e);
       }}
       onInteractOutside={(e) => {
         if (preventClose) {
           e.preventDefault();
+          return;
         }
         onInteractOutside?.(e);
       }}
