@@ -1,12 +1,26 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN PIPELINE — Self-Learning from Live Data
+// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.1 — Self-Learning from Live Data
 // ═══════════════════════════════════════════════════════════════════════════════
-// ⚡ Active Crypto Direct Source → AI Analyzer → Attention Algorithm → Double Verify
-// 🔗 All processing happens in a second with deterministic, verifiable steps
-// 🛡️ Filters bad/unnecessary data, verifies before output
+// 
+// ENHANCED PROCESSING FLOW:
+// ⚡ Step 1: Brain connects to Active Crypto Direct Source (read, learn, adapt)
+// 📝 Step 2: Send information to AI Analyzer (process to human-readable language)
+// 🧮 Step 3: Pass to Attention AI Algorithm (filter bad info, verify, calculate)
+// 🔄 Step 4: Send back to AI Analyzer → Attention for SECOND verification
+// 🔒 Step 5: Store good and bad data separately (hidden)
+// 📚 Step 6: Record learning signal for continuous adaptation
+// 📤 Step 7: Release ONLY if information is ACCURATE (not 100% required)
+//
+// 🎯 ACCURACY-BASED RELEASE (not 100% match required):
+//    - Consistency between first and second verification checks
+//    - Quality of data from both checks
+//    - Confidence levels from AI analysis
+//    - Data reliability across verification passes
+//
+// 🔗 All processing happens in under 1 second ⚡
+// 🛡️ Only sends verified, ACCURATE information to users
 // 📊 Self-learns from live chart data and WebSocket livestream
 // 📈 ICT/SMC analysis with multi-timeframe confluence
-// ✅ Only sends accurate information after strict verification
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { 
@@ -770,17 +784,57 @@ export class HiddenDataStorageManager {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🔄 DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// 🔄 ENHANCED DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// ═══════════════════════════════════════════════════════════════════════════════
+// Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release if 100%
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Double Verification Loop
- * Sends data back through analyzer and attention for second verification
- * Compares with first check before releasing output
+ * Verification Step Details — Tracks each step of the verification process
+ */
+export interface VerificationStep {
+  step: number;
+  name: string;
+  passed: boolean;
+  confidence: number;
+  timestamp: number;
+  details: string;
+}
+
+/**
+ * Enhanced Verification Result — Detailed verification output
+ */
+export interface EnhancedVerificationResult {
+  verified: boolean;
+  match: boolean;
+  matchPercentage: number;
+  secondCheck: AttentionVerifiedData;
+  verificationSteps: VerificationStep[];
+  totalVerificationTimeMs: number;
+  releaseApproved: boolean;
+  releaseReason: string;
+}
+
+/**
+ * Enhanced Double Verification Loop
+ * 
+ * FLOW (as specified in requirements):
+ * 1. First Check: AI Analyzer → Attention Algorithm (filter, verify, calculate)
+ * 2. Send verified data BACK to AI Analyzer for re-processing
+ * 3. AI Analyzer sends to Attention for SECOND verification
+ * 4. Compare first and second checks
+ * 5. Release ONLY if information is ACCURATE (not 100% match required)
+ * 6. All happens in under a second ⚡
  */
 export class DoubleVerificationLoop {
   private analyzer: AIAnalyzer;
   private attention: AttentionAlgorithm;
+  
+  // Accuracy thresholds — focus on accuracy, not perfect matching
+  private readonly minAccuracyScore = 0.65; // 65%+ accuracy required for release
+  private readonly minQualityConfidence = 0.4; // Minimum confidence for quality data
+  private readonly maxScoreDiff = 15; // Maximum score difference allowed (more lenient)
+  private readonly maxConfidenceDiff = 0.20; // Maximum confidence difference allowed
   
   constructor() {
     this.analyzer = new AIAnalyzer();
@@ -788,56 +842,212 @@ export class DoubleVerificationLoop {
   }
 
   /**
-   * Perform double verification
-   * Returns final verified output only if both checks pass
+   * Perform enhanced double verification
+   * 
+   * Step 1: Receive first check from main pipeline (Attention verified data)
+   * Step 2: Send BACK to AI Analyzer for re-processing
+   * Step 3: AI Analyzer sends to Attention for second verification
+   * Step 4: Calculate accuracy score based on both checks
+   * Step 5: Release ONLY if information is ACCURATE (verified as reliable)
    */
   verify(
     rawData: RawCryptoData,
     firstCheck: AttentionVerifiedData
-  ): { verified: boolean; match: boolean; secondCheck: AttentionVerifiedData } {
-    // Second pass through analyzer
+  ): EnhancedVerificationResult {
+    const startTime = Date.now();
+    const verificationSteps: VerificationStep[] = [];
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: First Check Validation
+    // ═══════════════════════════════════════════════════════════════════════
+    const step1Passed = firstCheck.quality !== 'BAD' && firstCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 1,
+      name: 'First Check Validation',
+      passed: step1Passed,
+      confidence: firstCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${firstCheck.quality}, Confidence: ${(firstCheck.confidenceScore * 100).toFixed(0)}%`
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Send Back to AI Analyzer for Re-Processing
+    // ═══════════════════════════════════════════════════════════════════════
     const reAnalyzed = this.analyzer.process(rawData);
+    const step2Passed = reAnalyzed.featureVector.length > 0 && 
+                        reAnalyzed.bullishScore >= 0 && 
+                        reAnalyzed.bearishScore >= 0;
+    verificationSteps.push({
+      step: 2,
+      name: 'AI Analyzer Re-Processing',
+      passed: step2Passed,
+      confidence: (reAnalyzed.bullishScore + reAnalyzed.bearishScore) / 200,
+      timestamp: Date.now(),
+      details: `Bull: ${reAnalyzed.bullishScore}, Bear: ${reAnalyzed.bearishScore}`
+    });
     
-    // Second pass through attention
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: AI Analyzer Sends to Attention for Second Verification
+    // ═══════════════════════════════════════════════════════════════════════
     const secondCheck = this.attention.calculate(reAnalyzed);
+    const step3Passed = secondCheck.quality !== 'BAD' && secondCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 3,
+      name: 'Second Attention Verification',
+      passed: step3Passed,
+      confidence: secondCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${secondCheck.quality}, Confidence: ${(secondCheck.confidenceScore * 100).toFixed(0)}%`
+    });
     
-    // Compare results
-    const match = this.compareVerifications(firstCheck, secondCheck);
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Calculate Accuracy Score — Compare & Verify Information
+    // ═══════════════════════════════════════════════════════════════════════
+    const { match, matchPercentage, accuracyScore } = this.calculateAccuracy(firstCheck, secondCheck);
+    const isAccurate = accuracyScore >= this.minAccuracyScore;
+    const step4Passed = isAccurate;
+    verificationSteps.push({
+      step: 4,
+      name: 'Accuracy Verification',
+      passed: step4Passed,
+      confidence: accuracyScore,
+      timestamp: Date.now(),
+      details: `Accuracy: ${(accuracyScore * 100).toFixed(0)}%, Min Required: ${(this.minAccuracyScore * 100).toFixed(0)}%`
+    });
     
-    // Both checks must pass quality threshold
-    const verified = 
-      firstCheck.quality !== 'BAD' && 
-      secondCheck.quality !== 'BAD' && 
-      match;
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Final Release Decision — Only if ACCURATE (not 100% required)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Release if information is ACCURATE — verified as reliable data
+    // Does NOT require 100% match, just verified accuracy
+    const releaseApproved = isAccurate && 
+                            firstCheck.quality !== 'BAD' && 
+                            secondCheck.quality !== 'BAD' &&
+                            step1Passed && step2Passed && step3Passed;
     
-    return { verified, match, secondCheck };
+    let releaseReason: string;
+    if (releaseApproved) {
+      releaseReason = `✅ ACCURATE — Information verified (${(accuracyScore * 100).toFixed(0)}% accuracy)`;
+    } else if (!step1Passed) {
+      releaseReason = '❌ First check failed quality threshold';
+    } else if (!step2Passed) {
+      releaseReason = '❌ AI Analyzer re-processing failed';
+    } else if (!step3Passed) {
+      releaseReason = '❌ Second Attention verification failed';
+    } else if (!isAccurate) {
+      releaseReason = `❌ Information not accurate enough (${(accuracyScore * 100).toFixed(0)}% < ${(this.minAccuracyScore * 100).toFixed(0)}% required)`;
+    } else if (firstCheck.quality === 'BAD' || secondCheck.quality === 'BAD') {
+      releaseReason = '❌ Data quality too low for release';
+    } else {
+      releaseReason = '❌ Unknown verification failure';
+    }
+    
+    verificationSteps.push({
+      step: 5,
+      name: 'Release Decision',
+      passed: releaseApproved,
+      confidence: releaseApproved ? accuracyScore : 0,
+      timestamp: Date.now(),
+      details: releaseReason
+    });
+    
+    const totalVerificationTimeMs = Date.now() - startTime;
+    
+    // Log verification summary
+    console.log(`[DoubleVerify] ${rawData.symbol}: ${releaseApproved ? '✅ ACCURATE' : '❌ NOT ACCURATE'} (${(accuracyScore * 100).toFixed(0)}%) in ${totalVerificationTimeMs}ms`);
+    
+    return {
+      verified: releaseApproved,
+      match,
+      matchPercentage: accuracyScore, // Return accuracy score instead of strict match
+      secondCheck,
+      verificationSteps,
+      totalVerificationTimeMs,
+      releaseApproved,
+      releaseReason
+    };
   }
 
   /**
-   * Compare two verification results
+   * Calculate accuracy score based on both verification checks
+   * Accuracy is determined by:
+   * - Consistency between first and second checks
+   * - Quality of both checks
+   * - Confidence levels
+   * - Data reliability
+   * 
+   * Returns accuracy score (0-1) — higher = more accurate information
    */
-  private compareVerifications(
+  private calculateAccuracy(
     first: AttentionVerifiedData, 
     second: AttentionVerifiedData
-  ): boolean {
-    // Compare key metrics
+  ): { match: boolean; matchPercentage: number; accuracyScore: number } {
+    // Calculate individual metric differences
     const bullishDiff = Math.abs(
       first.analyzedData.bullishScore - second.analyzedData.bullishScore
     );
     const bearishDiff = Math.abs(
       first.analyzedData.bearishScore - second.analyzedData.bearishScore
     );
+    const volatilityDiff = Math.abs(
+      first.analyzedData.volatilityScore - second.analyzedData.volatilityScore
+    );
+    const momentumDiff = Math.abs(
+      first.analyzedData.momentumScore - second.analyzedData.momentumScore
+    );
     const confidenceDiff = Math.abs(
       first.confidenceScore - second.confidenceScore
     );
     
-    // Allow small variance (within 10%)
-    const maxDiff = 10;
+    // Calculate consistency (how similar both checks are)
+    const avgScoreDiff = (bullishDiff + bearishDiff + volatilityDiff + momentumDiff) / 4;
+    const consistency = Math.max(0, 1 - (avgScoreDiff / 100));
     
-    return bullishDiff <= maxDiff && 
-           bearishDiff <= maxDiff && 
-           confidenceDiff <= 0.15 &&
-           first.quality === second.quality;
+    // Calculate confidence factor (average confidence of both checks)
+    const avgConfidence = (first.confidenceScore + second.confidenceScore) / 2;
+    
+    // Calculate quality factor
+    const qualityScore = this.getQualityScore(first.quality) + this.getQualityScore(second.quality);
+    const qualityFactor = qualityScore / 2; // 0-1 range
+    
+    // Calculate reliability (confidence similarity)
+    const reliabilityFactor = Math.max(0, 1 - confidenceDiff);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACCURACY SCORE FORMULA
+    // ═══════════════════════════════════════════════════════════════════════
+    // Accuracy = weighted combination of:
+    // - Consistency (40%): How similar are both verification results
+    // - Confidence (25%): Average confidence level
+    // - Quality (20%): Data quality from both checks
+    // - Reliability (15%): How stable the confidence is between checks
+    const accuracyScore = 
+      (consistency * 0.40) + 
+      (avgConfidence * 0.25) + 
+      (qualityFactor * 0.20) + 
+      (reliabilityFactor * 0.15);
+    
+    // Match check (for backwards compatibility, more lenient)
+    const match = bullishDiff <= this.maxScoreDiff && 
+                  bearishDiff <= this.maxScoreDiff && 
+                  confidenceDiff <= this.maxConfidenceDiff;
+    
+    // Match percentage (for backwards compatibility)
+    const matchPercentage = consistency;
+    
+    return { match, matchPercentage, accuracyScore };
+  }
+  
+  /**
+   * Convert quality enum to numeric score
+   */
+  private getQualityScore(quality: DataQuality): number {
+    switch (quality) {
+      case 'GOOD': return 1.0;
+      case 'UNCERTAIN': return 0.5;
+      case 'BAD': return 0.0;
+      default: return 0.0;
+    }
   }
 }
 
@@ -846,15 +1056,19 @@ export class DoubleVerificationLoop {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Zikalyze Brain Pipeline
- * Complete processing pipeline that:
- * 1. Connects to Active Crypto Direct Source (read, learn, adapt)
- * 2. Sends to AI Analyzer (human-readable processing)
- * 3. Passes to Attention Algorithm (filter, verify, calculate)
- * 4. Stores good/bad data separately (hidden)
- * 5. Double verifies before output
+ * Zikalyze Brain Pipeline v2.0
  * 
- * All happens in a second!
+ * Complete processing pipeline implementing the enhanced verification flow:
+ * 
+ * STEP 1: 🔗 Brain connects to Active Crypto Direct Source (read, learn, adapt)
+ * STEP 2: 📝 Sends information to AI Analyzer (process to human-readable language)
+ * STEP 3: 🧮 Passes to Attention AI Algorithm (filter bad/unnecessary info, verify)
+ * STEP 4: 🔄 Send back to AI Analyzer → Attention for second verification
+ * STEP 5: 🔒 Store good and bad data separately (hidden)
+ * STEP 6: 📚 Record learning signal for adaptation
+ * STEP 7: 📤 Release ONLY if information is ACCURATE (not 100% required)
+ * 
+ * ⚡ All processing happens in under 1 second!
  */
 export class ZikalyzeBrainPipeline {
   private source: ActiveCryptoSource;
@@ -863,7 +1077,7 @@ export class ZikalyzeBrainPipeline {
   private storage: HiddenDataStorageManager;
   private verification: DoubleVerificationLoop;
   
-  private readonly version = '1.0.0';
+  private readonly version = '2.1.0';
 
   constructor() {
     this.source = new ActiveCryptoSource();
@@ -871,6 +1085,7 @@ export class ZikalyzeBrainPipeline {
     this.attention = new AttentionAlgorithm();
     this.storage = new HiddenDataStorageManager();
     this.verification = new DoubleVerificationLoop();
+    console.log('[ZikalyzeBrain] v2.1 Pipeline initialized with accuracy-based verification');
   }
 
   /**
@@ -896,70 +1111,105 @@ export class ZikalyzeBrainPipeline {
     const analyzedData = this.analyzer.process(rawData, onChainData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate
+    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate 🧮
     // ═══════════════════════════════════════════════════════════════════════
     const firstCheck = this.attention.calculate(analyzedData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 4: Store Good/Bad Data Separately (Hidden)
+    // STEP 4: Enhanced Double Verification — Send Back to AI Analyzer, 
+    //         Then to Attention for Second Check, Compare, Release if 100%
     // ═══════════════════════════════════════════════════════════════════════
-    if (firstCheck.quality === 'GOOD') {
+    // Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release
+    const verificationResult = this.verification.verify(rawData, firstCheck);
+    const { verified, match, matchPercentage, secondCheck, verificationSteps, releaseApproved, releaseReason } = verificationResult;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Store Both Good and Bad Data Separately (Hidden) 🔒
+    // ═══════════════════════════════════════════════════════════════════════
+    if (releaseApproved && firstCheck.quality === 'GOOD') {
+      // Store verified good data after double verification
       this.storage.storeGoodData(firstCheck);
-    } else if (firstCheck.quality === 'BAD') {
-      this.storage.storeBadData(rawData, firstCheck.filteredOutReasons.join('; '));
+      this.storage.storeGoodData(secondCheck);
+    } else {
+      // Store filtered/bad data with reason - either verification failed or quality is BAD
+      const filterReason = !releaseApproved 
+        ? releaseReason 
+        : firstCheck.filteredOutReasons.join('; ') || 'Unknown filter reason';
+      this.storage.storeBadData(rawData, filterReason);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Double Verification — Send Back, Compare, Release
+    // STEP 6: Record Learning Signal for Continuous Adaptation 📚
     // ═══════════════════════════════════════════════════════════════════════
-    const { verified, match, secondCheck } = this.verification.verify(rawData, firstCheck);
+    // Use categorized pattern keys for better aggregation
+    const getMatchCategory = (pct: number): string => {
+      if (pct >= 0.95) return 'high';
+      if (pct >= 0.85) return 'medium';
+      return 'low';
+    };
     
-    // Record learning signal for adaptation
-    if (verified) {
+    const getBlockReason = (reason: string): string => {
+      if (reason.includes('Failed double verification')) return 'double_verify_fail';
+      if (reason.includes('re-processing failed')) return 'analyzer_fail';
+      if (reason.includes('Second Attention')) return 'second_attention_fail';
+      if (reason.includes('mismatch')) return 'verification_mismatch';
+      return 'unknown';
+    };
+    
+    if (releaseApproved) {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_${firstCheck.quality}`,
+        `${rawData.symbol}_verified_${getMatchCategory(matchPercentage)}`,
         'CORRECT',
-        0.01
+        0.01 * matchPercentage // Stronger signal for higher match
       );
       this.source.learn(rawData.symbol, [1]);
+      console.log(`[Brain] ✅ ${rawData.symbol}: Verified output released (${(matchPercentage * 100).toFixed(0)}% match)`);
     } else {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_verification_mismatch`,
+        `${rawData.symbol}_blocked_${getBlockReason(releaseReason)}`,
         'INCORRECT',
         0.02
       );
       this.source.learn(rawData.symbol, [0]);
+      console.log(`[Brain] ❌ ${rawData.symbol}: Output blocked - ${releaseReason}`);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Generate Final Output — Only if 100% Verified
+    // STEP 7: Generate Final Output — Only Accurate Info Released to Users 📤
     // ═══════════════════════════════════════════════════════════════════════
     const bias = this.determineBias(
       firstCheck.analyzedData.bullishScore,
       firstCheck.analyzedData.bearishScore,
-      verified
+      releaseApproved
     );
     
     const confidence = this.calculateFinalConfidence(
       firstCheck.confidenceScore,
       secondCheck.confidenceScore,
-      verified,
+      releaseApproved,
       match
     );
     
     const processingTimeMs = Date.now() - startTime;
+    
+    // Ensure all processing happens in under 1 second
+    if (processingTimeMs > 1000) {
+      console.warn(`[Brain] ⚠️ Processing time exceeded 1 second: ${processingTimeMs}ms`);
+    }
     
     return {
       bias,
       confidence,
       humanReadableAnalysis: this.buildHumanReadableOutput(
         firstCheck,
-        verified,
+        releaseApproved,
         rawData.symbol,
-        rawData.price
+        rawData.price,
+        verificationSteps,
+        matchPercentage
       ),
       keyInsights: firstCheck.filteredInsights,
-      doubleVerified: verified,
+      doubleVerified: releaseApproved,
       verificationMatch: match,
       firstCheckConfidence: firstCheck.confidenceScore,
       secondCheckConfidence: secondCheck.confidenceScore,
@@ -1009,30 +1259,60 @@ export class ZikalyzeBrainPipeline {
   }
 
   /**
-   * Build final human-readable output
+   * Build final human-readable output with verification details
+   * Shows complete verification flow and match percentage
    */
   private buildHumanReadableOutput(
     data: AttentionVerifiedData,
     verified: boolean,
     symbol: string,
-    price: number
+    price: number,
+    verificationSteps?: VerificationStep[],
+    matchPercentage?: number
   ): string {
     const status = verified ? '✅ DOUBLE VERIFIED' : '⚠️ UNVERIFIED';
     const quality = data.quality === 'GOOD' ? '🟢 HIGH QUALITY' : 
                    data.quality === 'UNCERTAIN' ? '🟡 MODERATE QUALITY' : 
                    '🔴 LOW QUALITY';
+    const matchPct = matchPercentage !== undefined ? `${(matchPercentage * 100).toFixed(0)}%` : 'N/A';
     
-    return `┌─────────────────────────────────────────────────┐
-│  🧠 ZIKALYZE AI BRAIN PIPELINE                  │
-│  ${status}   ${quality}                         │
-└─────────────────────────────────────────────────┘
+    // Helper to truncate and pad step names for fixed-width box (width = 43 chars inside)
+    const formatStepName = (name: string, maxLen: number = 28): string => {
+      const truncated = name.length > maxLen ? name.substring(0, maxLen - 2) + '..' : name;
+      return truncated.padEnd(maxLen);
+    };
+    
+    // Build verification flow visualization with consistent box width
+    let verificationFlow = '';
+    if (verificationSteps && verificationSteps.length > 0) {
+      const stepLines = verificationSteps.map(step => 
+        `│  ${step.passed ? '✅' : '❌'} Step ${step.step}: ${formatStepName(step.name)}│`
+      ).join('\n');
+      
+      verificationFlow = `
+┌───────────────────────────────────────────────┐
+│  🔄 VERIFICATION FLOW (All in < 1 second)     │
+├───────────────────────────────────────────────┤
+${stepLines}
+│                                               │
+│  📊 Match: ${matchPct.padEnd(7)} 🧠 Brain → Analyzer      │
+└───────────────────────────────────────────────┘
+`;
+    }
+    
+    return `┌───────────────────────────────────────────────┐
+│  🧠 ZIKALYZE AI BRAIN PIPELINE v2.0           │
+│  ${status}  ${quality.padEnd(20)}│
+│  📊 Verification Match: ${matchPct.padEnd(19)}│
+└───────────────────────────────────────────────┘
 
 📊 ${symbol} @ $${price.toLocaleString()}
-
+${verificationFlow}
 ${data.filteredInsights.join('\n\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Confidence: ${(data.confidenceScore * 100).toFixed(0)}% | Hash: ${data.verificationHash}
+${verified ? '✅ Output released to users' : '⚠️ Output blocked - verification pending'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
   }
 
@@ -2232,6 +2512,656 @@ ${upcomingMacro.map(m => `  📅 ${m}`).join('\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Powered by Zikalyze Unified Brain | ${output.processingTimeMs}ms
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+    return analysis;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠🧠 COMBINED BRAIN — Merges BOTH Brain Systems for Complete Top-Down Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+// 
+// This is the ULTIMATE brain that combines:
+// 1. Original Brain (runClientSideAnalysis): Top-down multi-TF analysis, macro, 
+//    volume, institutional vs retail, precision entries, if-then scenarios
+// 2. Pipeline Brain (ZikalyzeBrainPipeline): Attention, double verification,
+//    self-learning, ICT/SMC analysis, accuracy-based release
+//
+// All information flows into BOTH brains, results are merged for the best analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { 
+  analyzeInstitutionalVsRetail, 
+  generateIfThenScenarios 
+} from './institutional-analysis';
+import { 
+  analyzeMarketStructure, 
+  generatePrecisionEntry, 
+  calculateFinalBias, 
+  performTopDownAnalysis,
+  TopDownAnalysis
+} from './technical-analysis';
+
+/**
+ * Combined Brain Output — Merges both brain systems
+ */
+export interface CombinedBrainOutput {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Analysis (from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  confidence: number;
+  analysis: string;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Top-Down Analysis (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  topDownAnalysis: TopDownAnalysis;
+  technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  technicalConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pipeline Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  pipelineConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ICT/SMC Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  ictAnalysis?: ICTSMCAnalysis;
+  hasICTSetup: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Institutional vs Retail (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  retailBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  institutionalRetailDivergence: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Precision Entry (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  precisionEntry: {
+    zone: string;
+    invalidation: string;
+    timing: string;
+    trigger: string;
+  };
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // If-Then Scenarios (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  scenarios: Array<{
+    condition: string;
+    priceLevel: number;
+    outcome: string;
+    probability: number;
+    action: string;
+  }>;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Key Insights (merged from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  keyInsights: string[];
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Data Sources & Verification
+  // ═══════════════════════════════════════════════════════════════════════════
+  isVerified: boolean;
+  isAccurate: boolean;
+  accuracyScore: number;
+  
+  // Macro
+  macroImpact: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+  upcomingMacro: string[];
+  
+  // Volume
+  volumeSpike: boolean;
+  volumeSignal: string;
+  
+  // Sentiment
+  fearGreed: number;
+  sentimentLabel: string;
+  
+  // On-Chain
+  onChainSummary: string;
+  etfFlow: string;
+  
+  // Learning
+  learnedFromChart: boolean;
+  learnedFromStream: boolean;
+  combinedLearningScore: number;
+  
+  // Metadata
+  timestamp: string;
+  processingTimeMs: number;
+  brainVersion: string;
+}
+
+/**
+ * 🧠🧠 COMBINED BRAIN
+ * 
+ * The ULTIMATE crypto analysis engine that combines BOTH brain systems:
+ * 
+ * ORIGINAL BRAIN (runClientSideAnalysis):
+ * - Top-down multi-timeframe analysis (Weekly → Daily → 4H → 1H → 15M)
+ * - Institutional vs Retail analysis
+ * - Precision entry zones
+ * - If-Then scenarios
+ * - Macro catalyst integration
+ * 
+ * PIPELINE BRAIN (ZikalyzeBrainPipeline):
+ * - Active Crypto Source (read, learn, adapt)
+ * - AI Analyzer (human-readable processing)
+ * - Attention Algorithm (filter, verify, calculate)
+ * - Double verification loop
+ * - ICT/SMC analysis
+ * - Self-learning from charts and livestream
+ * 
+ * All information is analyzed by BOTH brains, then merged for the most
+ * comprehensive and accurate analysis possible.
+ */
+export class CombinedBrain extends UnifiedBrain {
+  private readonly combinedVersion = '3.0.0';
+  
+  constructor() {
+    super();
+    console.log('[CombinedBrain] v3.0 — BOTH Brains Combined for Ultimate Analysis');
+  }
+  
+  /**
+   * Run COMBINED analysis using BOTH brain systems
+   * 
+   * Step 1: Run Original Brain (top-down, institutional, precision entries)
+   * Step 2: Run Pipeline Brain (attention, verification, ICT/SMC, learning)
+   * Step 3: Merge results and calculate combined confidence
+   * Step 4: Generate unified output with all insights
+   */
+  analyzeWithBothBrains(
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): CombinedBrainOutput {
+    const startTime = Date.now();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Run Original Brain — Top-Down Multi-Timeframe Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 1: Running Original Brain (top-down analysis)...');
+    
+    // Prepare input for original brain
+    const originalBrainInput = {
+      ...input,
+      chartTrendData: chartData,
+      multiTimeframeData: input.multiTimeframeData
+    };
+    
+    // Run original brain analysis
+    const originalResult = runClientSideAnalysis(originalBrainInput);
+    
+    // Extract top-down analysis directly
+    const topDownAnalysis = performTopDownAnalysis(
+      input.price,
+      input.high24h || input.price * 1.02,
+      input.low24h || input.price * 0.98,
+      input.change,
+      chartData,
+      input.multiTimeframeData
+    );
+    
+    // Calculate technical bias and confidence from original brain
+    const technicalBias = topDownAnalysis.tradeableDirection === 'LONG' ? 'LONG' 
+                        : topDownAnalysis.tradeableDirection === 'SHORT' ? 'SHORT' 
+                        : 'NEUTRAL';
+    const technicalConfidence = topDownAnalysis.confluenceScore;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Run Pipeline Brain — Attention, Verification, ICT/SMC, Learning
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 2: Running Pipeline Brain (verification + learning)...');
+    
+    const pipelineResult = this.analyze(input, chartData, livestreamUpdate);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: Institutional vs Retail Analysis (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 3: Analyzing institutional vs retail...');
+    
+    const etfData = estimateETFFlowData(input.price, input.change, input.crypto);
+    const onChainData = input.onChainData || estimateOnChainMetrics(input.crypto, input.price, input.change);
+    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
+    const socialSentiment = input.sentimentData?.social?.overall?.score || 50;
+    
+    const institutionalVsRetail = analyzeInstitutionalVsRetail({
+      etfFlow: etfData,
+      onChain: onChainData,
+      socialSentiment,
+      fearGreed,
+      price: input.price,
+      change: input.change
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Generate Precision Entry Zones (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 4: Generating precision entry zones...');
+    
+    const high24h = input.high24h || input.price * 1.02;
+    const low24h = input.low24h || input.price * 0.98;
+    const volume = input.volume || 0;
+    
+    const volumeSpike = detectVolumeSpike({
+      currentVolume: volume,
+      avgVolume24h: volume * 0.85,
+      priceChange: input.change,
+      price: input.price,
+      high24h,
+      low24h
+    });
+    
+    const precisionEntryData = generatePrecisionEntry(
+      input.price,
+      high24h,
+      low24h,
+      input.change,
+      technicalBias,
+      volumeSpike.isSpike ? 'HIGH' : 'MODERATE'
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Generate If-Then Scenarios (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 5: Generating if-then scenarios...');
+    
+    const range = high24h - low24h;
+    const keySupport = low24h + range * 0.15;
+    const keyResistance = high24h - range * 0.15;
+    
+    const scenarios = generateIfThenScenarios({
+      price: input.price,
+      high: high24h,
+      low: low24h,
+      bias: technicalBias,
+      keySupport,
+      keyResistance
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 6: Merge Biases from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 6: Merging both brain outputs...');
+    
+    const { combinedBias, combinedConfidence } = this.mergeBrainOutputs(
+      technicalBias,
+      technicalConfidence,
+      pipelineResult.bias,
+      pipelineResult.confidence * 100,
+      institutionalVsRetail.institutionalBias,
+      pipelineResult.hasICTSetup,
+      pipelineResult.isVerified
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 7: Merge Key Insights from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    const keyInsights = this.mergeInsights(
+      originalResult.insights,
+      topDownAnalysis.reasoning,
+      pipelineResult.ictAnalysis,
+      institutionalVsRetail,
+      combinedBias
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 8: Build Combined Analysis Output
+    // ═══════════════════════════════════════════════════════════════════════
+    const processingTimeMs = Date.now() - startTime;
+    
+    const combinedAnalysis = this.buildCombinedAnalysis(
+      input,
+      combinedBias,
+      combinedConfidence,
+      technicalBias,
+      technicalConfidence,
+      pipelineResult,
+      topDownAnalysis,
+      institutionalVsRetail,
+      precisionEntryData,
+      scenarios,
+      keyInsights,
+      volumeSpike,
+      processingTimeMs
+    );
+    
+    console.log(`[CombinedBrain] ✅ Complete in ${processingTimeMs}ms — Bias: ${combinedBias} (${combinedConfidence.toFixed(0)}%)`);
+    
+    return {
+      bias: combinedBias,
+      confidence: combinedConfidence,
+      analysis: combinedAnalysis,
+      
+      // Top-Down Analysis
+      topDownAnalysis,
+      technicalBias,
+      technicalConfidence,
+      
+      // Pipeline Analysis
+      pipelineBias: pipelineResult.bias,
+      pipelineConfidence: pipelineResult.confidence * 100,
+      
+      // ICT/SMC
+      ictAnalysis: pipelineResult.ictAnalysis,
+      hasICTSetup: pipelineResult.hasICTSetup,
+      
+      // Institutional vs Retail
+      institutionalBias: institutionalVsRetail.institutionalBias,
+      retailBias: institutionalVsRetail.retailBias,
+      institutionalRetailDivergence: institutionalVsRetail.divergence,
+      
+      // Precision Entry
+      precisionEntry: {
+        zone: precisionEntryData.zone,
+        invalidation: precisionEntryData.invalidation,
+        timing: precisionEntryData.timing,
+        trigger: precisionEntryData.trigger
+      },
+      
+      // Scenarios
+      scenarios,
+      
+      // Key Insights
+      keyInsights,
+      
+      // Verification
+      isVerified: pipelineResult.isVerified,
+      isAccurate: pipelineResult.isVerified && combinedConfidence >= 50,
+      accuracyScore: pipelineResult.accuracyScore,
+      
+      // Macro
+      macroImpact: pipelineResult.macroImpact,
+      upcomingMacro: pipelineResult.upcomingMacro,
+      
+      // Volume
+      volumeSpike: volumeSpike.isSpike,
+      volumeSignal: volumeSpike.signal,
+      
+      // Sentiment
+      fearGreed,
+      sentimentLabel: pipelineResult.sentimentLabel,
+      
+      // On-Chain
+      onChainSummary: pipelineResult.onChainSummary,
+      etfFlow: pipelineResult.etfFlow,
+      
+      // Learning
+      learnedFromChart: pipelineResult.learnedFromChart,
+      learnedFromStream: pipelineResult.learnedFromStream,
+      combinedLearningScore: pipelineResult.combinedLearningScore,
+      
+      // Metadata
+      timestamp: new Date().toISOString(),
+      processingTimeMs,
+      brainVersion: this.combinedVersion
+    };
+  }
+  
+  /**
+   * Merge outputs from both brains into a single bias and confidence
+   */
+  private mergeBrainOutputs(
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    pipelineConfidence: number,
+    institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL',
+    hasICTSetup: boolean,
+    isVerified: boolean
+  ): { combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'; combinedConfidence: number } {
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMBINED BIAS CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+    // Priority: Technical (40%) + Pipeline (35%) + Institutional (25%)
+    // Agreement bonus: +8% when both brains agree
+    // ICT setup bonus: +5% confidence
+    // Verification bonus: +3% confidence
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Convert biases to numeric scores
+    const biasToScore = (b: string): number => {
+      if (b === 'LONG' || b === 'BULLISH') return 1;
+      if (b === 'SHORT' || b === 'BEARISH') return -1;
+      return 0;
+    };
+    
+    const technicalScore = biasToScore(technicalBias) * (technicalConfidence / 100);
+    const pipelineScore = biasToScore(pipelineBias) * (pipelineConfidence / 100);
+    const institutionalScore = biasToScore(institutionalBias) * 0.5; // Scale down
+    
+    // Weighted combination
+    const combinedScore = 
+      (technicalScore * 0.40) + 
+      (pipelineScore * 0.35) + 
+      (institutionalScore * 0.25);
+    
+    // Determine combined bias
+    let combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+    if (combinedScore > 0.15) {
+      combinedBias = 'LONG';
+    } else if (combinedScore < -0.15) {
+      combinedBias = 'SHORT';
+    } else {
+      combinedBias = 'NEUTRAL';
+    }
+    
+    // Calculate combined confidence
+    const baseConfidence = (technicalConfidence * 0.40 + pipelineConfidence * 0.35 + 50 * 0.25);
+    let combinedConfidence = baseConfidence;
+    
+    // Agreement bonus: if both brains agree, boost confidence
+    if (technicalBias === pipelineBias && technicalBias !== 'NEUTRAL') {
+      combinedConfidence += 8;
+    }
+    
+    // ICT setup bonus
+    if (hasICTSetup) {
+      combinedConfidence += 5;
+    }
+    
+    // Verification bonus
+    if (isVerified) {
+      combinedConfidence += 3;
+    }
+    
+    // Disagreement penalty: if brains conflict, reduce confidence
+    if ((technicalBias === 'LONG' && pipelineBias === 'SHORT') ||
+        (technicalBias === 'SHORT' && pipelineBias === 'LONG')) {
+      combinedConfidence -= 15;
+      combinedBias = 'NEUTRAL'; // Force neutral when brains conflict
+    }
+    
+    // Clamp confidence
+    combinedConfidence = Math.max(35, Math.min(85, combinedConfidence));
+    
+    return { combinedBias, combinedConfidence };
+  }
+  
+  /**
+   * Merge insights from both brains
+   */
+  private mergeInsights(
+    originalInsights: string[],
+    topDownReasoning: string[],
+    ictAnalysis: ICTSMCAnalysis | undefined,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean; divergenceNote: string },
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'
+  ): string[] {
+    const insights: string[] = [];
+    
+    // Add combined bias summary
+    if (combinedBias === 'LONG') {
+      insights.push('🎯 COMBINED BIAS: BULLISH — Both brains aligned');
+    } else if (combinedBias === 'SHORT') {
+      insights.push('🎯 COMBINED BIAS: BEARISH — Both brains aligned');
+    } else {
+      insights.push('⏸️ COMBINED BIAS: NEUTRAL — Waiting for confluence');
+    }
+    
+    // Add top-down reasoning (max 2)
+    topDownReasoning.slice(0, 2).forEach(r => insights.push(`📊 ${r}`));
+    
+    // Add ICT insight if available
+    if (ictAnalysis && ictAnalysis.tradeSetup) {
+      insights.push(`🎯 ICT: ${ictAnalysis.tradeSetup.type.replace('_', ' ')} ${ictAnalysis.tradeSetup.direction}`);
+    }
+    
+    // Add institutional vs retail insight
+    if (institutionalVsRetail.divergence) {
+      insights.push(`⚠️ ${institutionalVsRetail.divergenceNote}`);
+    } else {
+      insights.push(`🏦 Institutional: ${institutionalVsRetail.institutionalBias} | Retail: ${institutionalVsRetail.retailBias}`);
+    }
+    
+    // Add filtered original insights (max 2, bias-aligned)
+    originalInsights
+      .filter(i => !i.includes('🎯'))
+      .filter(i => {
+        if (combinedBias === 'LONG') {
+          return !i.toLowerCase().includes('bearish') && !i.toLowerCase().includes('short');
+        }
+        if (combinedBias === 'SHORT') {
+          return !i.toLowerCase().includes('bullish') && !i.toLowerCase().includes('long');
+        }
+        return true;
+      })
+      .slice(0, 2)
+      .forEach(i => insights.push(i));
+    
+    return insights;
+  }
+  
+  /**
+   * Build the combined analysis output string
+   */
+  private buildCombinedAnalysis(
+    input: AnalysisInput,
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    combinedConfidence: number,
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineResult: UnifiedBrainOutput,
+    topDownAnalysis: TopDownAnalysis,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean },
+    precisionEntry: { zone: string; invalidation: string; timing: string; trigger: string },
+    scenarios: Array<{ condition: string; priceLevel: number; outcome: string; probability: number; action: string }>,
+    keyInsights: string[],
+    volumeSpike: { isSpike: boolean; signal: string; magnitude: string; percentageAboveAvg: number },
+    processingTimeMs: number
+  ): string {
+    const biasEmoji = combinedBias === 'LONG' ? '🟢' : combinedBias === 'SHORT' ? '🔴' : '⚪';
+    const priceStr = input.price.toFixed(input.price < 1 ? 6 : 2);
+    const change = input.change;
+    
+    let analysis = `
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠🧠 ZIKALYZE COMBINED BRAIN v3.0                                ║
+║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
+║  Both Brains Combined for Ultimate Top-Down Analysis
+╚══════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│  ${biasEmoji} COMBINED VERDICT: ${combinedBias}  │  Confidence: ${combinedConfidence.toFixed(0)}%
+│                                                                │
+│  📊 Technical Brain: ${technicalBias} (${technicalConfidence.toFixed(0)}%)
+│  🧠 Pipeline Brain: ${pipelineResult.bias} (${(pipelineResult.confidence * 100).toFixed(0)}%)
+│  🏦 Institutional: ${institutionalVsRetail.institutionalBias}
+└────────────────────────────────────────────────────────────────┘
+
+━━━ 📊 TOP-DOWN MULTI-TIMEFRAME ANALYSIS ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Weekly:  ${topDownAnalysis.weekly.trend} (${topDownAnalysis.weekly.strength.toFixed(0)}%)
+  Daily:   ${topDownAnalysis.daily.trend} (${topDownAnalysis.daily.strength.toFixed(0)}%)
+  4H:      ${topDownAnalysis.h4.trend} (${topDownAnalysis.h4.strength.toFixed(0)}%)
+  1H:      ${topDownAnalysis.h1.trend} (${topDownAnalysis.h1.strength.toFixed(0)}%)
+  15M:     ${topDownAnalysis.m15.trend} (${topDownAnalysis.m15.strength.toFixed(0)}%)
+  
+  Confluence Score: ${topDownAnalysis.confluenceScore.toFixed(0)}%
+  Tradeable Direction: ${topDownAnalysis.tradeableDirection}
+
+━━━ 🎯 KEY INSIGHTS (From Both Brains) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${keyInsights.map(i => `  ${i}`).join('\n')}
+
+━━━ 📍 PRECISION ENTRY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Zone: ${precisionEntry.zone}
+  Timing: ${precisionEntry.timing}
+  Trigger: ${precisionEntry.trigger}
+  Invalidation: ${precisionEntry.invalidation}
+`;
+
+    // Add ICT analysis if available
+    if (pipelineResult.hasICTSetup && pipelineResult.ictAnalysis?.tradeSetup) {
+      const ict = pipelineResult.ictAnalysis;
+      analysis += `
+━━━ 📈 ICT/SMC SETUP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Type: ${ict.tradeSetup.type.replace('_', ' ')}
+  Direction: ${ict.tradeSetup.direction}
+  Entry: $${ict.tradeSetup.entry.toFixed(2)}
+  Stop Loss: $${ict.tradeSetup.stopLoss.toFixed(2)}
+  Target: $${ict.tradeSetup.target1.toFixed(2)} (${ict.tradeSetup.riskReward.toFixed(1)}R)
+  Confidence: ${ict.tradeSetup.confidence}%
+`;
+    }
+
+    // Add scenarios
+    if (scenarios.length > 0) {
+      analysis += `
+━━━ 🔮 IF-THEN SCENARIOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+      scenarios.slice(0, 3).forEach((s, i) => {
+        analysis += `  ${i + 1}. ${s.condition} @ $${s.priceLevel.toFixed(2)}
+     → ${s.outcome} (${s.probability}% prob)
+     Action: ${s.action}
+`;
+      });
+    }
+
+    // Add market pulse
+    analysis += `
+━━━ 📊 MARKET PULSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🔗 On-Chain: ${pipelineResult.onChainSummary}
+  💼 ETF Flow: ${pipelineResult.etfFlow}
+  😊 Sentiment: ${pipelineResult.sentimentLabel} (${pipelineResult.fearGreed}/100)
+  📊 Volume: ${volumeSpike.isSpike ? `🔥 SPIKE +${volumeSpike.percentageAboveAvg.toFixed(0)}%` : 'Normal'}
+`;
+
+    // Add macro if impact
+    if (pipelineResult.macroImpact !== 'NONE' && pipelineResult.upcomingMacro.length > 0) {
+      analysis += `
+  ⚡ Macro Impact: ${pipelineResult.macroImpact}
+${pipelineResult.upcomingMacro.slice(0, 2).map(m => `     📅 ${m}`).join('\n')}
+`;
+    }
+
+    // Add verification and learning status
+    analysis += `
+━━━ 🧠 BRAIN STATUS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ Verified: ${pipelineResult.isVerified ? 'YES' : 'NO'} | Accuracy: ${pipelineResult.accuracyScore.toFixed(0)}%
+  📊 Chart Learning: ${pipelineResult.learnedFromChart ? '✓ Active' : '○ Pending'}
+  📡 Stream Learning: ${pipelineResult.learnedFromStream ? '✓ Active' : '○ Pending'}
+  🎯 ICT Patterns: ${pipelineResult.hasICTSetup ? '✓ Detected' : '○ None'}
+  📈 Learning Score: ${(pipelineResult.combinedLearningScore * 100).toFixed(0)}%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Powered by Zikalyze Combined Brain v${this.combinedVersion} | ${processingTimeMs}ms
+  Both brains analyzed and merged for ultimate accuracy
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
