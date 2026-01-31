@@ -183,8 +183,8 @@ describe('Timeout Prevention Mechanisms', () => {
       );
       
       const results = await Promise.all([
-        safeApiCall(() => fastApi() as Promise<string>, { timeout: 1000 }),
-        safeApiCall(() => slowApi() as Promise<string>, { timeout: 1000 })
+        safeApiCall(() => fastApi() as Promise<string>, { timeout: 1000, retries: 0 }),
+        safeApiCall(() => slowApi() as Promise<string>, { timeout: 1000, retries: 0 })
       ]);
       
       expect(results[0].data).toBe('fast');
