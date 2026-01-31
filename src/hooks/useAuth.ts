@@ -1,237 +1,254 @@
 import { useState, useEffect, useCallback } from "react";
+import { Wallet, keccak256, toUtf8Bytes, formatEther, JsonRpcProvider } from "ethers";
 
-// User type compatible with components expecting Supabase-like user
-export interface ClerkUserLike {
-  id: string;
-  email?: string;
+// User type for Web3 wallet authentication
+export interface Web3User {
+  id: string; // wallet address
+  address: string;
+  shortAddress: string;
+  username: string;
+  balance?: string;
   created_at?: string;
-  primaryEmailAddress?: {
-    emailAddress: string;
-  };
 }
 
-// Check if Clerk is configured at module load time
-const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Auth state type
+interface AuthState {
+  user: Web3User | null;
+  isSignedIn: boolean;
+  loading: boolean;
+  isProcessing: boolean;
+}
 
-// Timeout for Clerk to load (8 seconds) - falls back to demo mode if exceeded
-const CLERK_LOAD_TIMEOUT = 8000;
+// Storage keys
+const WALLET_DATA_KEY = "zikalyze_wallet_data";
 
-// Demo mode auth state - used when Clerk is not configured or fails
-const createDemoAuthState = () => ({
-  user: null,
-  session: null,
-  loading: false,
-  isSignedIn: false,
-  isDemoMode: true,
-  signUp: async (_email: string, _password: string) => {
-    console.info("[Auth] Demo mode - sign up not available");
-    return { error: null }; // Don't throw error, just silently succeed in demo mode
-  },
-  signIn: async (_email: string, _password: string) => {
-    console.info("[Auth] Demo mode - sign in not available");
-    return { error: null }; // Don't throw error, just silently succeed in demo mode
-  },
-  signOut: async () => ({ error: null }),
-  resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => 
-    ({ error: null }), // Silent success in demo mode
-  updatePassword: async (_newPassword: string) => ({ error: null }),
-  updateEmail: async (_newEmail: string) => ({ error: null }),
-});
+// Shorten wallet address for display
+const shortenAddress = (address: string): string => {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+// Derive private key from username and password (deterministic)
+const derivePrivateKey = (username: string, password: string): string => {
+  // Create a deterministic seed from username + password
+  const seed = `${username.toLowerCase()}:${password}:zikalyze-v1`;
+  // Use keccak256 to generate a 32-byte private key
+  const privateKey = keccak256(toUtf8Bytes(seed));
+  return privateKey;
+};
+
+// Create wallet from private key
+const createWalletFromKey = (privateKey: string): Wallet => {
+  return new Wallet(privateKey);
+};
 
 /**
- * useAuth hook with Clerk integration
+ * useAuth hook with Web3 wallet authentication
  * 
- * Provides authentication state with automatic demo mode fallback:
- * 1. If VITE_CLERK_PUBLISHABLE_KEY is not set -> Demo mode immediately
- * 2. If Clerk fails to load within 8 seconds -> Demo mode fallback
- * 3. Otherwise -> Full Clerk authentication
- * 
- * Demo mode allows users to explore the app without signing in.
+ * Provides authentication via deterministic wallet generation:
+ * - Sign up: Creates wallet from username + password
+ * - Sign in: Uses private key directly or recovers with username + password
  */
 export const useAuth = () => {
-  // State for demo mode and loading
-  const [state, setState] = useState<{
-    user: ClerkUserLike | null;
-    isSignedIn: boolean;
-    loading: boolean;
-    isDemoMode: boolean;
-    clerkLoaded: boolean;
-  }>({
+  const [state, setState] = useState<AuthState>({
     user: null,
     isSignedIn: false,
-    loading: isClerkConfigured, // Only loading if Clerk is configured
-    isDemoMode: !isClerkConfigured, // Start in demo mode if not configured
-    clerkLoaded: false,
+    loading: true,
+    isProcessing: false,
   });
 
-  // Clerk integration - dynamically imported to avoid issues when not configured
-  const [clerkModules, setClerkModules] = useState<{
-    useUser?: () => { user: unknown; isLoaded: boolean; isSignedIn?: boolean };
-    useClerk?: () => { signOut: () => Promise<void> };
-  }>({});
+  // Get wallet balance (optional, may fail without RPC)
+  const getBalance = useCallback(async (address: string): Promise<string | undefined> => {
+    try {
+      // Use a public Ethereum RPC
+      const provider = new JsonRpcProvider("https://eth.llamarpc.com");
+      const balance = await provider.getBalance(address);
+      return formatEther(balance);
+    } catch (error) {
+      console.warn("[Auth] Failed to get balance:", error);
+      return undefined;
+    }
+  }, []);
 
-  // Load Clerk modules dynamically when configured
+  // Load saved wallet on mount
   useEffect(() => {
-    if (!isClerkConfigured) return;
-
-    let mounted = true;
-    
-    // Set up timeout for Clerk loading
-    const timeout = setTimeout(() => {
-      if (mounted && state.loading) {
-        console.warn("[Auth] Clerk load timeout - switching to demo mode");
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          isDemoMode: true,
-        }));
-      }
-    }, CLERK_LOAD_TIMEOUT);
-
-    // Dynamically import Clerk hooks
-    import("@clerk/clerk-react").then(({ useUser, useClerk }) => {
-      if (mounted) {
-        setClerkModules({ useUser, useClerk });
-      }
-    }).catch((err) => {
-      console.error("[Auth] Failed to load Clerk:", err);
-      if (mounted) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          isDemoMode: true,
-        }));
-      }
-    });
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-    };
-  }, [state.loading]);
-
-  // When Clerk modules are loaded, we need to use them
-  // This is done via a child component pattern to maintain hook rules
-  useEffect(() => {
-    if (!isClerkConfigured || !clerkModules.useUser) return;
-
-    // Since we can't call hooks conditionally, we'll use polling approach
-    // to check Clerk's state
-    const checkClerkState = () => {
+    const loadSavedWallet = async () => {
       try {
-        // Access Clerk state through window if available
-        const clerkInstance = (window as unknown as { Clerk?: { user?: unknown; loaded?: boolean } }).Clerk;
-        if (clerkInstance?.loaded) {
-          const user = clerkInstance.user as { 
-            id?: string; 
-            primaryEmailAddress?: { emailAddress?: string };
-            createdAt?: Date;
-          } | null;
-          
-          setState({
-            user: user ? {
-              id: user.id || "demo-user",
-              email: user.primaryEmailAddress?.emailAddress,
-              created_at: user.createdAt?.toISOString(),
-              primaryEmailAddress: user.primaryEmailAddress
-                ? { emailAddress: user.primaryEmailAddress.emailAddress || "" }
-                : undefined,
-            } : null,
-            isSignedIn: !!user,
-            loading: false,
-            isDemoMode: false,
-            clerkLoaded: true,
-          });
-          return true;
+        const savedData = localStorage.getItem(WALLET_DATA_KEY);
+        if (savedData) {
+          const { address, username, privateKey } = JSON.parse(savedData);
+          // Verify the wallet can be recreated
+          const wallet = createWalletFromKey(privateKey);
+          if (wallet.address === address) {
+            const balance = await getBalance(address);
+            setState({
+              user: {
+                id: address,
+                address,
+                shortAddress: shortenAddress(address),
+                username,
+                balance,
+              },
+              isSignedIn: true,
+              loading: false,
+              isProcessing: false,
+            });
+            return;
+          }
         }
-      } catch {
-        // Clerk not ready yet
+      } catch (error) {
+        console.warn("[Auth] Failed to load saved wallet:", error);
+        localStorage.removeItem(WALLET_DATA_KEY);
       }
-      return false;
+      setState(prev => ({ ...prev, loading: false }));
     };
 
-    // Poll for Clerk state
-    if (checkClerkState()) return;
-    
-    const interval = setInterval(() => {
-      if (checkClerkState()) {
-        clearInterval(interval);
-      }
-    }, 200);
+    loadSavedWallet();
+  }, [getBalance]);
 
-    // Cleanup and timeout
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      if (state.loading) {
-        console.warn("[Auth] Clerk polling timeout - switching to demo mode");
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          isDemoMode: true,
-        }));
-      }
-    }, CLERK_LOAD_TIMEOUT);
+  // Sign up with username and password
+  const signUp = useCallback(async (username: string, password: string): Promise<{ 
+    error: Error | null; 
+    privateKey?: string;
+    address?: string;
+  }> => {
+    if (!username || username.length < 3) {
+      return { error: new Error("Username must be at least 3 characters") };
+    }
+    if (!password || password.length < 8) {
+      return { error: new Error("Password must be at least 8 characters") };
+    }
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [clerkModules.useUser, state.loading]);
+    setState(prev => ({ ...prev, isProcessing: true }));
+
+    try {
+      // Derive private key from username and password
+      const privateKey = derivePrivateKey(username, password);
+      const wallet = createWalletFromKey(privateKey);
+      const address = wallet.address;
+      const balance = await getBalance(address);
+
+      // Save wallet data
+      localStorage.setItem(WALLET_DATA_KEY, JSON.stringify({
+        address,
+        username,
+        privateKey,
+      }));
+
+      setState({
+        user: {
+          id: address,
+          address,
+          shortAddress: shortenAddress(address),
+          username,
+          balance,
+          created_at: new Date().toISOString(),
+        },
+        isSignedIn: true,
+        loading: false,
+        isProcessing: false,
+      });
+
+      return { error: null, privateKey, address };
+    } catch (error) {
+      setState(prev => ({ ...prev, isProcessing: false }));
+      const err = error instanceof Error ? error : new Error("Failed to create wallet");
+      return { error: err };
+    }
+  }, [getBalance]);
+
+  // Sign in with private key
+  const signInWithKey = useCallback(async (privateKey: string, username?: string): Promise<{ error: Error | null }> => {
+    if (!privateKey || privateKey.length !== 66) {
+      return { error: new Error("Invalid private key format") };
+    }
+
+    setState(prev => ({ ...prev, isProcessing: true }));
+
+    try {
+      const wallet = createWalletFromKey(privateKey);
+      const address = wallet.address;
+      const balance = await getBalance(address);
+
+      // Save wallet data
+      localStorage.setItem(WALLET_DATA_KEY, JSON.stringify({
+        address,
+        username: username || "User",
+        privateKey,
+      }));
+
+      setState({
+        user: {
+          id: address,
+          address,
+          shortAddress: shortenAddress(address),
+          username: username || "User",
+          balance,
+        },
+        isSignedIn: true,
+        loading: false,
+        isProcessing: false,
+      });
+
+      return { error: null };
+    } catch (error) {
+      setState(prev => ({ ...prev, isProcessing: false }));
+      const err = error instanceof Error ? error : new Error("Invalid private key");
+      return { error: err };
+    }
+  }, [getBalance]);
+
+  // Recover wallet with username and password
+  const recoverWallet = useCallback(async (username: string, password: string): Promise<{ 
+    error: Error | null;
+    privateKey?: string;
+    address?: string;
+  }> => {
+    // Recovery is the same as sign up - deterministic key generation
+    return signUp(username, password);
+  }, [signUp]);
 
   // Sign out function
-  const signOut = useCallback(async () => {
-    if (state.isDemoMode) {
-      return { error: null };
-    }
+  const signOut = useCallback(async (): Promise<{ error: Error | null }> => {
+    localStorage.removeItem(WALLET_DATA_KEY);
+    setState({
+      user: null,
+      isSignedIn: false,
+      loading: false,
+      isProcessing: false,
+    });
+    return { error: null };
+  }, []);
+
+  // Get current private key (for display/export)
+  const getPrivateKey = useCallback((): string | null => {
     try {
-      const clerkInstance = (window as unknown as { Clerk?: { signOut?: () => Promise<void> } }).Clerk;
-      if (clerkInstance?.signOut) {
-        await clerkInstance.signOut();
+      const savedData = localStorage.getItem(WALLET_DATA_KEY);
+      if (savedData) {
+        const { privateKey } = JSON.parse(savedData);
+        return privateKey;
       }
-      setState(prev => ({
-        ...prev,
-        user: null,
-        isSignedIn: false,
-      }));
-      return { error: null };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Sign out failed");
-      return { error };
+    } catch {
+      // Ignore
     }
-  }, [state.isDemoMode]);
+    return null;
+  }, []);
 
-  // Return demo mode auth state if in demo mode
-  if (state.isDemoMode) {
-    return createDemoAuthState();
-  }
-
-  // Return Clerk-powered auth state
   return {
     user: state.user,
     session: state.isSignedIn ? { user: state.user } : null,
     loading: state.loading,
     isSignedIn: state.isSignedIn,
-    isDemoMode: false,
-    signUp: async (_email: string, _password: string) => {
-      console.info("[Auth] Use Clerk's <SignUp /> component for sign up");
-      return { error: null };
-    },
-    signIn: async (_email: string, _password: string) => {
-      console.info("[Auth] Use Clerk's <SignIn /> component for sign in");
-      return { error: null };
-    },
+    isProcessing: state.isProcessing,
+    isDemoMode: !state.isSignedIn,
+    signUp,
+    signInWithKey,
+    recoverWallet,
     signOut,
-    resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => {
-      console.info("[Auth] Use Clerk's built-in password reset flow");
-      return { error: null };
-    },
-    updatePassword: async (_newPassword: string) => {
-      console.info("[Auth] Use Clerk's <UserProfile /> component");
-      return { error: null };
-    },
-    updateEmail: async (_newEmail: string) => {
-      console.info("[Auth] Use Clerk's <UserProfile /> component");
-      return { error: null };
-    },
+    getPrivateKey,
+    // Legacy compatibility methods
+    signIn: async () => ({ error: null }),
+    resetPassword: async (): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => ({ error: null }),
+    updatePassword: async () => ({ error: null }),
+    updateEmail: async () => ({ error: null }),
   };
 };
