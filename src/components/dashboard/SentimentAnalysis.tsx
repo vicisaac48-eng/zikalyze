@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, TrendingDown, MessageCircle, Users, 
   Newspaper, RefreshCw, Twitter, AlertCircle, Flame, ExternalLink, Search,
-  Calendar, Radio, Zap, Clock
+  Calendar, Radio, Zap, Clock, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUpcomingMacroCatalysts } from "@/lib/zikalyze-brain/macro-catalysts";
@@ -56,7 +56,7 @@ interface SentimentData {
   meta?: {
     newsSource: string;
     newsLastUpdated: string;
-    isLive: boolean;
+    isSimulated?: boolean;
   };
 }
 
@@ -123,16 +123,55 @@ async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response
 /**
  * Fetch real Fear & Greed Index from Alternative.me with retry
  */
+/**
+ * Generate fallback Fear & Greed data based on price change when API is unavailable
+ */
+function generateFallbackFearGreed(priceChange: number): {
+  value: number;
+  label: string;
+  previousValue: number;
+  previousLabel: string;
+  isSimulated: boolean;
+} {
+  // Calculate a reasonable fear/greed value based on 24h price change
+  // Price change of +10% → ~75 (Greed), -10% → ~25 (Fear), 0% → ~50 (Neutral)
+  const baseValue = 50 + (priceChange * 2.5);
+  const value = Math.round(Math.min(100, Math.max(0, baseValue)));
+  
+  const getLabel = (v: number): string => {
+    if (v >= 75) return 'Extreme Greed';
+    if (v >= 55) return 'Greed';
+    if (v >= 45) return 'Neutral';
+    if (v >= 25) return 'Fear';
+    return 'Extreme Fear';
+  };
+  
+  // Use deterministic previous value: slightly lower than current (markets typically recover)
+  const previousOffset = priceChange >= 0 ? -3 : 3;
+  const previousValue = Math.round(Math.min(100, Math.max(0, value + previousOffset)));
+  
+  console.log(`[Sentiment] Fear & Greed SIMULATED: ${value} (${getLabel(value)}) based on ${priceChange.toFixed(2)}% price change`);
+  
+  return {
+    value,
+    label: getLabel(value),
+    previousValue,
+    previousLabel: getLabel(previousValue),
+    isSimulated: true
+  };
+}
+
 async function fetchFearGreedIndex(retryCount = 0): Promise<{
   value: number;
   label: string;
   previousValue: number;
   previousLabel: string;
+  isSimulated?: boolean;
 } | null> {
-  const maxRetries = 3;
+  const maxRetries = 2; // Reduced retries to speed up fallback
   
   try {
-    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 8000);
+    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 6000);
     if (!response.ok) throw new Error('Fear & Greed API failed');
     
     const data = await response.json();
@@ -143,7 +182,8 @@ async function fetchFearGreedIndex(retryCount = 0): Promise<{
         value: parseInt(data.data[0].value),
         label: data.data[0].value_classification,
         previousValue: parseInt(data.data[1].value),
-        previousLabel: data.data[1].value_classification
+        previousLabel: data.data[1].value_classification,
+        isSimulated: false
       };
     }
     throw new Error('Invalid data format');
@@ -152,11 +192,11 @@ async function fetchFearGreedIndex(retryCount = 0): Promise<{
     
     // Retry with exponential backoff
     if (retryCount < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount)));
       return fetchFearGreedIndex(retryCount + 1);
     }
     
-    // Return null to indicate we couldn't get real data - don't use fake values
+    // Return null to indicate we couldn't get real data - caller will use fallback
     return null;
   }
 }
@@ -309,6 +349,10 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     try {
       console.log(`[Sentiment] Fetching live data for ${crypto}...`);
       
+      // Use refs to get current price/change values (prevents flickering from frequent updates)
+      const currentChange = changeRef.current;
+      const currentPrice = priceRef.current;
+      
       // Fetch all data in parallel with timeouts to prevent hanging
       const [fearGreedResult, trending, news] = await Promise.all([
         fetchFearGreedIndex(),
@@ -316,21 +360,15 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         fetchLiveNews(crypto)
       ]);
 
-      // If Fear & Greed fetch failed after retries, show error
-      if (!fearGreedResult) {
-        console.error('[Sentiment] Could not fetch Fear & Greed Index - API unavailable');
-        setError('Fear & Greed data unavailable - please try again');
-        setLoading(false);
-        return;
-      }
-
-      const fearGreed = fearGreedResult;
-
-      // Use refs to get current price/change values (prevents flickering from frequent updates)
-      const currentChange = changeRef.current;
-      const currentPrice = priceRef.current;
+      // Use fallback Fear & Greed data if API failed, allowing dashboard to still function
+      const fearGreed = fearGreedResult ?? generateFallbackFearGreed(currentChange);
+      const isFearGreedSimulated = fearGreed.isSimulated ?? false;
       
-      // Calculate sentiment score using REAL Fear & Greed value
+      if (isFearGreedSimulated) {
+        console.log('[Sentiment] Using simulated Fear & Greed data - dashboard will still function');
+      }
+      
+      // Calculate sentiment score using Fear & Greed value (real or simulated)
       const sentimentScore = calculateSentimentScore(currentChange, fearGreed.value);
       const overallSentiment = getSentimentLabel(sentimentScore);
 
@@ -420,14 +458,14 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         meta: {
           newsSource: news.length > 0 ? 'CryptoCompare Live' : 'Derived',
           newsLastUpdated: new Date().toISOString(),
-          isLive: true
+          isSimulated: isFearGreedSimulated
         }
       };
 
       setData(sentimentData);
       setLastUpdate(new Date());
       setCountdown(60);
-      console.log(`[Sentiment] Live data loaded: Fear/Greed=${fearGreed.value}, Score=${sentimentScore}%, News=${news.length}`);
+      console.log(`[Sentiment] Data loaded: Fear/Greed=${fearGreed.value}${isFearGreedSimulated ? ' (simulated)' : ''}, Score=${sentimentScore}%, News=${news.length}`);
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         console.log('[Sentiment] Request aborted');
@@ -598,11 +636,18 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
           Sentiment Analysis — {crypto}
-          {/* Live indicator */}
-          {data.meta?.isLive && (
+          {/* Live indicator - show when not simulated */}
+          {!data.meta?.isSimulated && (
             <span className="flex items-center gap-1 text-xs font-normal bg-success/20 text-success px-2 py-0.5 rounded-full animate-pulse">
               <Radio className="h-3 w-3" />
               LIVE
+            </span>
+          )}
+          {/* Simulated indicator */}
+          {data.meta?.isSimulated && (
+            <span className="flex items-center gap-1 text-xs font-normal bg-warning/20 text-warning px-2 py-0.5 rounded-full" title="Data derived from price action - API unavailable">
+              <Activity className="h-3 w-3" />
+              DERIVED
             </span>
           )}
         </CardTitle>
@@ -673,7 +718,14 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         {/* Fear & Greed Gauge */}
         <div className="rounded-xl border border-border p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Fear & Greed Index</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Fear & Greed Index</span>
+              {data.meta?.isSimulated && (
+                <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded" title="Based on price momentum">
+                  Derived
+                </span>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground">
               Previous: {data.fearGreed.previousValue} ({data.fearGreed.previousLabel})
             </span>
@@ -789,7 +841,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
             {data.meta?.newsSource && (
               <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Radio className={`h-3 w-3 ${data.meta.isLive ? 'text-success' : 'text-muted-foreground'}`} />
+                  <Radio className={`h-3 w-3 ${!data.meta.isSimulated ? 'text-success' : 'text-muted-foreground'}`} />
                   Source: {data.meta.newsSource}
                 </span>
                 {data.meta.newsLastUpdated && (
