@@ -95,11 +95,14 @@ export const useAnalysisHistory = (symbol: string) => {
     };
   }, [symbol]);
 
+  // Stable reference to user ID to prevent infinite re-renders
+  const userId = user?.id;
+
   /**
    * Fetch history from localStorage for this symbol and user
    */
   const fetchHistory = useCallback(() => {
-    if (!symbol || !user) {
+    if (!symbol || !userId) {
       setHistory([]);
       setLearningStats(null);
       return;
@@ -109,7 +112,7 @@ export const useAnalysisHistory = (symbol: string) => {
     try {
       const allHistory = getAllHistory();
       const userSymbolHistory = allHistory
-        .filter(r => r.symbol === symbol.toUpperCase() && r.user_id === user.id)
+        .filter(r => r.symbol === symbol.toUpperCase() && r.user_id === userId)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 10);
       
@@ -122,7 +125,7 @@ export const useAnalysisHistory = (symbol: string) => {
     } finally {
       setLoading(false);
     }
-  }, [symbol, user, calculateStats]);
+  }, [symbol, userId, calculateStats]);
 
   /**
    * Save a new analysis to localStorage
@@ -134,7 +137,7 @@ export const useAnalysisHistory = (symbol: string) => {
     confidence?: number,
     bias?: string
   ): string | null => {
-    if (!user) {
+    if (!userId) {
       console.error("[AnalysisHistory] User not authenticated");
       return null;
     }
@@ -149,7 +152,7 @@ export const useAnalysisHistory = (symbol: string) => {
         confidence: confidence ?? null,
         bias: bias ?? null,
         created_at: new Date().toISOString(),
-        user_id: user.id,
+        user_id: userId,
         was_correct: null,
         feedback_at: null,
       };
@@ -175,17 +178,17 @@ export const useAnalysisHistory = (symbol: string) => {
       console.error("[AnalysisHistory] Error saving analysis:", err);
       return null;
     }
-  }, [symbol, user, fetchHistory]);
+  }, [symbol, userId, fetchHistory]);
 
   /**
    * Submit feedback for an analysis
    */
   const submitFeedback = useCallback((id: string, wasCorrect: boolean): boolean => {
-    if (!user) return false;
+    if (!userId) return false;
 
     try {
       const allHistory = getAllHistory();
-      const index = allHistory.findIndex(r => r.id === id && r.user_id === user.id);
+      const index = allHistory.findIndex(r => r.id === id && r.user_id === userId);
       
       if (index === -1) return false;
       
@@ -204,17 +207,17 @@ export const useAnalysisHistory = (symbol: string) => {
       console.error("[AnalysisHistory] Error submitting feedback:", err);
       return false;
     }
-  }, [user, fetchHistory]);
+  }, [userId, fetchHistory]);
 
   /**
    * Delete a specific analysis
    */
   const deleteAnalysis = useCallback((id: string): void => {
-    if (!user) return;
+    if (!userId) return;
 
     try {
       const allHistory = getAllHistory();
-      const filtered = allHistory.filter(r => !(r.id === id && r.user_id === user.id));
+      const filtered = allHistory.filter(r => !(r.id === id && r.user_id === userId));
       saveAllHistory(filtered);
       fetchHistory();
       
@@ -222,17 +225,17 @@ export const useAnalysisHistory = (symbol: string) => {
     } catch (err) {
       console.error("[AnalysisHistory] Error deleting analysis:", err);
     }
-  }, [user, fetchHistory]);
+  }, [userId, fetchHistory]);
 
   /**
    * Clear all history for this symbol and user
    */
   const clearAllHistory = useCallback((): void => {
-    if (!user || !symbol) return;
+    if (!userId || !symbol) return;
 
     try {
       const allHistory = getAllHistory();
-      const filtered = allHistory.filter(r => !(r.symbol === symbol.toUpperCase() && r.user_id === user.id));
+      const filtered = allHistory.filter(r => !(r.symbol === symbol.toUpperCase() && r.user_id === userId));
       saveAllHistory(filtered);
       setHistory([]);
       setLearningStats(null);
@@ -241,7 +244,7 @@ export const useAnalysisHistory = (symbol: string) => {
     } catch (err) {
       console.error("[AnalysisHistory] Error clearing history:", err);
     }
-  }, [user, symbol]);
+  }, [userId, symbol]);
 
   // Load history when symbol or user changes
   useEffect(() => {
