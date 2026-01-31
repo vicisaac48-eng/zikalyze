@@ -403,7 +403,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, 
     chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData,
     // Chart API state & real-time data tracking
-    actualDataSource, chartAPI.analysis?.trend, chartAPI.indicators?.rsi, 
+    actualDataSource, chartAPI.analysis, chartAPI.indicators, 
     chartAPI.isLive, chartAPI.source, dataAgeMs, isRealTimeData, 
     liveData.dataSourcesSummary, liveData.priceIsLive,
     // UI state
@@ -620,8 +620,8 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, 
     marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, 
     multiTfData, streamUpdateCount,
-    // AI learning functions and state
-    learnPriceLevel, learnedPatterns, updatePatterns
+    // AI learning functions
+    learnPriceLevel, updatePatterns
   ]);
 
   // Auto-start background learning on mount
