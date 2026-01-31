@@ -17,6 +17,7 @@ const AIMetrics = lazy(() => import("@/components/dashboard/AIMetrics"));
 const AIAnalyzer = lazy(() => import("@/components/dashboard/AIAnalyzer"));
 const Top100CryptoList = lazy(() => import("@/components/dashboard/Top100CryptoList"));
 const OnChainMetrics = lazy(() => import("@/components/dashboard/OnChainMetrics"));
+const SentimentAnalysis = lazy(() => import("@/components/dashboard/SentimentAnalysis"));
 
 // Skeleton loaders for lazy components
 const ChartSkeleton = () => (
@@ -144,21 +145,32 @@ const Dashboard = () => {
             </Suspense>
           </ErrorBoundary>
 
-          {/* AI Analyzer */}
-          <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
-            <Suspense fallback={<ChartSkeleton />}>
-              <AIAnalyzer 
-                crypto={selectedCrypto} 
-                price={selected.price} 
-                change={selected.change}
-                high24h={liveData?.high_24h}
-                low24h={liveData?.low_24h}
-                volume={liveData?.total_volume}
-                marketCap={liveData?.market_cap}
-                isLive={isLive}
-              />
-            </Suspense>
-          </ErrorBoundary>
+          {/* AI Analyzer & Sentiment Analysis Grid */}
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+            <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
+              <Suspense fallback={<ChartSkeleton />}>
+                <AIAnalyzer 
+                  crypto={selectedCrypto} 
+                  price={selected.price} 
+                  change={selected.change}
+                  high24h={liveData?.high_24h}
+                  low24h={liveData?.low_24h}
+                  volume={liveData?.total_volume}
+                  marketCap={liveData?.market_cap}
+                  isLive={isLive}
+                />
+              </Suspense>
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Sentiment Analysis" fallback={<ChartErrorFallback />}>
+              <Suspense fallback={<ChartSkeleton />}>
+                <SentimentAnalysis
+                  crypto={selectedCrypto}
+                  price={selected.price}
+                  change={selected.change}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
 
           {/* Charts Grid */}
           <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
