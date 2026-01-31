@@ -153,7 +153,7 @@ export async function safeApiCall<T>(
 /**
  * Wrapper for fetch calls with hanging prevention
  */
-export async function safeFetchCall<T = any>(
+export async function safeFetchCall<T = unknown>(
   url: string,
   fetchOptions: RequestInit = {},
   options: ApiCallOptions = {}

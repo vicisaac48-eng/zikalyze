@@ -321,7 +321,7 @@ export async function fetchCandles(
       const { data, error } = await supabase.functions.invoke('crypto-candles', {
         body: { symbol: symbol.toUpperCase(), interval, limit },
         // Note: signal parameter is supported but not in Supabase types yet
-      } as any);
+      } as Record<string, unknown>);
       
       clearTimeout(timeoutId);
       
@@ -336,9 +336,9 @@ export async function fetchCandles(
       }
       
       return null;
-    } catch (e: any) {
+    } catch (e: unknown) {
       clearTimeout(timeoutId);
-      if (e.name === 'AbortError') {
+      if (e instanceof Error && e.name === 'AbortError') {
         console.log(`[ChartAPI] Timeout fetching ${symbol}, falling back to CryptoCompare`);
         return null;
       }
@@ -393,9 +393,9 @@ export async function fetchFromCryptoCompare(
         close: point.close,
         volume: point.volumeto
       }));
-    } catch (e: any) {
+    } catch (e: unknown) {
       clearTimeout(timeoutId);
-      if (e.name === 'AbortError') {
+      if (e instanceof Error && e.name === 'AbortError') {
         console.log(`[ChartAPI] CryptoCompare timeout for ${symbol}`);
         return null;
       }
