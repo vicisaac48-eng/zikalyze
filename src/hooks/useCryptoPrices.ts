@@ -1070,17 +1070,25 @@ export const useCryptoPrices = () => {
     // Retry check after a short delay in case crypto list wasn't ready
     const timeoutId = setTimeout(checkAndConnect, 500);
     
+    // Capture refs for cleanup
+    const reconnectTimeouts = reconnectTimeoutsRef.current;
+    const binanceWs = binanceWsRef.current;
+    const okxWs = okxWsRef.current;
+    const bybitWs = bybitWsRef.current;
+    const krakenWs = krakenWsRef.current;
+    const coinbaseWs = coinbaseWsRef.current;
+    
     return () => {
       clearTimeout(timeoutId);
-      Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
+      Object.values(reconnectTimeouts).forEach(timeout => {
         clearTimeout(timeout);
       });
       
-      if (binanceWsRef.current) binanceWsRef.current.close();
-      if (okxWsRef.current) okxWsRef.current.close();
-      if (bybitWsRef.current) bybitWsRef.current.close();
-      if (krakenWsRef.current) krakenWsRef.current.close();
-      if (coinbaseWsRef.current) coinbaseWsRef.current.close();
+      if (binanceWs) binanceWs.close();
+      if (okxWs) okxWs.close();
+      if (bybitWs) bybitWs.close();
+      if (krakenWs) krakenWs.close();
+      if (coinbaseWs) coinbaseWs.close();
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 

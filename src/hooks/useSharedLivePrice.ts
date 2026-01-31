@@ -75,6 +75,8 @@ export const useSharedLivePrice = (
       isConnecting: loading,
       source: 'Fallback',
     };
+    // Note: forceUpdate is intentionally included to trigger re-renders when WebSocket receives updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, prices, loading, isLive, connectedExchanges, fallbackPrice, fallbackChange, forceUpdate]);
   
   return liveData;
