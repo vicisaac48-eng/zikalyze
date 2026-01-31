@@ -1,5 +1,5 @@
 // Minimal Supabase client stub for database operations
-// Authentication is now handled via Web3-style auth - see src/hooks/useAuth.ts
+// Authentication is now handled by Clerk - see src/hooks/useAuth.ts
 // 
 // IMPORTANT: This is a NON-FUNCTIONAL stub that returns null/empty data for all operations.
 // If your application relies on Supabase database features (alerts, analytics, etc.),

@@ -7,7 +7,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { withTimeoutNull } from '@/lib/timeoutPromise';
 
 // Type for registration with periodicSync
 interface PeriodicSyncRegistration extends ServiceWorkerRegistration {
@@ -108,12 +107,7 @@ async function getOfflineLearning(): Promise<OfflineLearningData[]> {
       return;
     }
     
-    // Timeout after 3 seconds to prevent hanging
-    const timeout = setTimeout(() => {
-      navigator.serviceWorker.removeEventListener('message', handler);
-      console.log('[AI Learning] Service Worker response timeout');
-      resolve([]);
-    }, 3000);
+    const timeout = setTimeout(() => resolve([]), 3000);
     
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'OFFLINE_LEARNING_DATA') {
@@ -124,15 +118,7 @@ async function getOfflineLearning(): Promise<OfflineLearningData[]> {
     };
     
     navigator.serviceWorker.addEventListener('message', handler);
-    
-    try {
-      navigator.serviceWorker.controller.postMessage({ type: 'GET_OFFLINE_LEARNING' });
-    } catch (e) {
-      clearTimeout(timeout);
-      navigator.serviceWorker.removeEventListener('message', handler);
-      console.warn('[AI Learning] Failed to send message to Service Worker:', e);
-      resolve([]);
-    }
+    navigator.serviceWorker.controller.postMessage({ type: 'GET_OFFLINE_LEARNING' });
   });
 }
 
@@ -160,6 +146,36 @@ export function useAILearning(symbol: string) {
   useEffect(() => {
     patternsRef.current = patterns;
   }, [patterns]);
+
+  // Get user ID and initialize background learning
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+    
+    // Initialize background learning in service worker
+    initBackgroundLearning();
+    
+    // Listen for learning updates from service worker
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'LEARNING_UPDATE') {
+        console.log('[AI Learning] Received background learning update');
+        loadPatterns();
+      }
+    };
+    
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+    };
+  }, []);
+
+  // Load patterns on mount/symbol change
+  useEffect(() => {
+    loadPatterns();
+    loadGlobalLearning();
+  }, [symbol, userId]);
 
   // Load from localStorage first, then merge offline learning, then from DB
   const loadPatterns = useCallback(async () => {
@@ -289,36 +305,6 @@ export function useAILearning(symbol: string) {
     }
   }, [symbol]);
 
-  // Get user ID and initialize background learning
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id || null);
-    });
-    
-    // Initialize background learning in service worker
-    initBackgroundLearning();
-    
-    // Listen for learning updates from service worker
-    const handleSWMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'LEARNING_UPDATE') {
-        console.log('[AI Learning] Received background learning update');
-        loadPatterns();
-      }
-    };
-    
-    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
-    
-    return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-    };
-  }, [loadPatterns]);
-
-  // Load patterns on mount/symbol change
-  useEffect(() => {
-    loadPatterns();
-    loadGlobalLearning();
-  }, [loadPatterns, loadGlobalLearning]);
-
   // Save patterns (debounced)
   const savePatterns = useCallback(async (newPatterns: LearnedPatterns) => {
     const serialized = JSON.stringify(newPatterns);
@@ -424,11 +410,11 @@ export function useAILearning(symbol: string) {
       return updated;
     });
     
-    // Contribute to global learning via secure RPC with timeout protection
+    // Contribute to global learning via secure RPC
     if (userId) {
       try {
         const consensusBias = bias === 'LONG' ? 'BULLISH' : bias === 'SHORT' ? 'BEARISH' : 'NEUTRAL';
-        const rpcCall = supabase.rpc('contribute_to_global_learning', {
+        await supabase.rpc('contribute_to_global_learning', {
           p_symbol: symbol,
           p_avg_trend_accuracy: patternsRef.current.trendAccuracy,
           p_avg_volatility: patternsRef.current.volatility,
@@ -437,9 +423,6 @@ export function useAILearning(symbol: string) {
           p_total_predictions: patternsRef.current.totalPredictions,
           p_correct_predictions: patternsRef.current.correctPredictions
         });
-        
-        // Add 5-second timeout to prevent hanging
-        await withTimeoutNull(rpcCall, 5000);
       } catch (e) {
         console.warn('[AI Learning] Global contribution failed:', e);
       }

@@ -45,8 +45,6 @@ export const useTickerLiveStream = () => {
   const binanceWsRef = useRef<WebSocket | null>(null);
   const okxWsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const okxReconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const connectionsInitializedRef = useRef(false);
   
   // Update a single ticker price
   const updateTicker = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
@@ -124,12 +122,8 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onclose = (e) => {
-        setSources(prev => {
-          const newSources = prev.filter(s => s !== "Binance");
-          // Update connected status based on remaining sources
-          setIsConnected(newSources.length > 0);
-          return newSources;
-        });
+        setSources(prev => prev.filter(s => s !== "Binance"));
+        setIsConnected(prev => sources.length > 1);
         
         // Reconnect after delay
         if (reconnectTimeoutRef.current) {
@@ -144,7 +138,7 @@ export const useTickerLiveStream = () => {
     } catch (err) {
       console.log(`[Ticker LiveStream] Binance connection failed:`, err);
     }
-  }, [updateTicker]);
+  }, [updateTicker, sources.length]);
 
   // Connect to OKX for KAS (not on Binance)
   const connectOKX = useCallback(() => {
@@ -207,16 +201,9 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onclose = () => {
-        setSources(prev => {
-          const newSources = prev.filter(s => s !== "OKX");
-          setIsConnected(newSources.length > 0);
-          return newSources;
-        });
+        setSources(prev => prev.filter(s => s !== "OKX"));
         // Reconnect after delay
-        if (okxReconnectTimeoutRef.current) {
-          clearTimeout(okxReconnectTimeoutRef.current);
-        }
-        okxReconnectTimeoutRef.current = setTimeout(connectOKX, 3000);
+        setTimeout(connectOKX, 3000);
       };
       
       okxWsRef.current = ws;
@@ -225,11 +212,8 @@ export const useTickerLiveStream = () => {
     }
   }, [updateTicker]);
 
-  // Initialize connections - only run once on mount
+  // Initialize connections
   useEffect(() => {
-    if (connectionsInitializedRef.current) return;
-    connectionsInitializedRef.current = true;
-    
     console.log(`[Ticker LiveStream] 🚀 Starting real-time price streaming for ${TICKER_SYMBOLS.length} coins...`);
     
     // Connect to exchanges
@@ -241,9 +225,6 @@ export const useTickerLiveStream = () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      if (okxReconnectTimeoutRef.current) {
-        clearTimeout(okxReconnectTimeoutRef.current);
-      }
       if (binanceWsRef.current) {
         binanceWsRef.current.close();
       }
@@ -251,8 +232,7 @@ export const useTickerLiveStream = () => {
         okxWsRef.current.close();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, [connectBinance, connectOKX]);
 
   // Helper to get price for a symbol
   const getPrice = useCallback((symbol: string): TickerPrice | undefined => {

@@ -69,12 +69,7 @@ export function useChartAPI(
     }
 
     try {
-      // Add overall timeout to prevent hanging on entire fetch operation
-      const fetchTimeout = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Chart data fetch timeout')), 30000) // 30s max
-      );
-      
-      // Fetch main analysis and multi-TF in parallel with timeout
+      // Fetch main analysis and multi-TF in parallel
       const promises: Promise<ChartAnalysisResult | ChartAnalysisResult[]>[] = [
         analyzeChart(symbol, interval, 100)
       ];
@@ -83,10 +78,7 @@ export function useChartAPI(
         promises.push(fetchMultiTimeframeAnalysis(symbol));
       }
       
-      const results = await Promise.race([
-        Promise.all(promises),
-        fetchTimeout
-      ]) as (ChartAnalysisResult | ChartAnalysisResult[] | null)[];
+      const results = await Promise.all(promises);
       
       if (!mountedRef.current) return;
       
@@ -122,21 +114,13 @@ export function useChartAPI(
     await fetchData();
   }, [fetchData]);
 
-  // Store fetchData in ref to avoid recreating interval on every callback change
-  const fetchDataRef = useRef(fetchData);
-  fetchDataRef.current = fetchData;
-
   // Initial fetch and interval refresh
   useEffect(() => {
     mountedRef.current = true;
+    fetchData();
     
-    // Initial fetch using ref to get latest callback
-    fetchDataRef.current();
-    
-    // Set up refresh interval using ref
-    refreshIntervalRef.current = setInterval(() => {
-      fetchDataRef.current();
-    }, REFRESH_INTERVAL);
+    // Set up refresh interval
+    refreshIntervalRef.current = setInterval(fetchData, REFRESH_INTERVAL);
     
     return () => {
       mountedRef.current = false;
@@ -144,7 +128,7 @@ export function useChartAPI(
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [symbol, interval, enableMultiTf]); // Only depend on props, not fetchData
+  }, [fetchData]);
 
   // Convert analysis to ChartTrendInput for AI Brain compatibility
   const chartTrendInput: ChartTrendInput | null = analysis ? toChartTrendInput(analysis) : null;

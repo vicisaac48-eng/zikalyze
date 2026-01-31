@@ -213,13 +213,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     return deriveMetricsFromPrice(crypto, currentPrice, currentChange, currentVolume);
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, livePrice.volume, price, change, cryptoInfo?.volume]);
 
-  // Store derivedMetrics in ref to avoid triggering useEffect on every price update
-  const derivedMetricsRef = useRef(derivedMetrics);
-  derivedMetricsRef.current = derivedMetrics;
-  const lastMetricsUpdateRef = useRef(0);
-  const METRICS_UPDATE_THROTTLE_MS = 1000; // Reduced from 2000ms for faster updates
-
-  // Update metrics when derived data changes (throttled to prevent excessive re-renders)
+  // Update metrics when derived data changes
   useEffect(() => {
     if (!isMountedRef.current) return;
     
@@ -230,41 +224,32 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       hashRateRef.current = 0;
       difficultyRef.current = 0;
       avgBlockTimeRef.current = 0;
-      lastMetricsUpdateRef.current = 0;
       setMetrics(null);
     }
 
-    // Throttle metrics updates to reduce re-renders
-    const now = Date.now();
-    if (now - lastMetricsUpdateRef.current < METRICS_UPDATE_THROTTLE_MS) {
-      return;
-    }
-    lastMetricsUpdateRef.current = now;
-
-    const currentDerivedMetrics = derivedMetricsRef.current;
     const newMetrics: OnChainMetrics = {
-      exchangeNetFlow: currentDerivedMetrics.exchangeNetFlow!,
-      whaleActivity: currentDerivedMetrics.whaleActivity!,
-      mempoolData: currentDerivedMetrics.mempoolData!,
-      transactionVolume: currentDerivedMetrics.transactionVolume!,
+      exchangeNetFlow: derivedMetrics.exchangeNetFlow!,
+      whaleActivity: derivedMetrics.whaleActivity!,
+      mempoolData: derivedMetrics.mempoolData!,
+      transactionVolume: derivedMetrics.transactionVolume!,
       hashRate: hashRateRef.current,
-      activeAddresses: currentDerivedMetrics.activeAddresses!,
+      activeAddresses: derivedMetrics.activeAddresses!,
       blockHeight: blockHeightRef.current,
       difficulty: difficultyRef.current,
       avgBlockTime: avgBlockTimeRef.current,
-      source: currentDerivedMetrics.source!,
+      source: derivedMetrics.source!,
       lastUpdated: new Date(),
       period: '24h',
       isLive: livePrice.isLive,
       streamStatus: livePrice.isLive ? 'connected' : 'connecting',
-      etfFlow: currentDerivedMetrics.etfFlow,
-      validatorQueue: currentDerivedMetrics.validatorQueue,
+      etfFlow: derivedMetrics.etfFlow,
+      validatorQueue: derivedMetrics.validatorQueue,
     };
 
     setMetrics(newMetrics);
     setStreamStatus(livePrice.isLive ? 'connected' : 'connecting');
     setLoading(false);
-  }, [crypto, livePrice.isLive]);
+  }, [crypto, derivedMetrics, livePrice.isLive]);
 
   // WebSocket for block data (BTC/ETH only) - lightweight connection
   const connectBlockWebSocket = useCallback(() => {
@@ -272,12 +257,6 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     const endpoints = WS_ENDPOINTS[cryptoUpper];
     
     if (!endpoints || endpoints.length === 0) return;
-
-    // Prevent infinite reconnection attempts
-    if (wsStateRef.current.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.log(`[OnChain] Max reconnect attempts reached for ${cryptoUpper}`);
-      return;
-    }
 
     // Cleanup existing
     if (wsStateRef.current.socket) {
@@ -290,18 +269,9 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     try {
       const ws = new WebSocket(wsUrl);
       wsStateRef.current.socket = ws;
-      
-      // Connection timeout to prevent hanging
-      const connectionTimeout = setTimeout(() => {
-        if (ws.readyState !== WebSocket.OPEN) {
-          console.log(`[OnChain] Connection timeout for ${cryptoUpper}`);
-          ws.close();
-        }
-      }, 10000); // 10s connection timeout
 
       ws.onopen = () => {
         if (!isMountedRef.current) return;
-        clearTimeout(connectionTimeout);
         wsStateRef.current.reconnectAttempts = 0;
         
         if (cryptoUpper === 'BTC') {
@@ -332,25 +302,16 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       };
 
       ws.onclose = () => {
-        clearTimeout(connectionTimeout);
         wsStateRef.current.socket = null;
         
         if (isMountedRef.current && wsStateRef.current.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
           const delay = BASE_RECONNECT_DELAY * Math.pow(2, wsStateRef.current.reconnectAttempts);
           wsStateRef.current.reconnectAttempts++;
-          wsStateRef.current.reconnectTimeout = setTimeout(connectBlockWebSocket, Math.min(delay, 30000)); // Cap at 30s
+          wsStateRef.current.reconnectTimeout = setTimeout(connectBlockWebSocket, delay);
         }
-      };
-      
-      ws.onerror = () => {
-        clearTimeout(connectionTimeout);
       };
     } catch { /* Ignore WebSocket connection errors */ }
   }, [crypto]);
-
-  // Store connectBlockWebSocket in ref to avoid unnecessary effect triggers
-  const connectBlockWebSocketRef = useRef(connectBlockWebSocket);
-  connectBlockWebSocketRef.current = connectBlockWebSocket;
 
   // Setup WebSocket for BTC/ETH block data
   useEffect(() => {
@@ -358,23 +319,20 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     const cryptoUpper = crypto.toUpperCase();
     
     if (cryptoUpper === 'BTC' || cryptoUpper === 'ETH') {
-      connectBlockWebSocketRef.current();
+      connectBlockWebSocket();
     }
 
-    // Capture ref for cleanup
-    const wsState = wsStateRef.current;
-    
     return () => {
       isMountedRef.current = false;
-      if (wsState.socket) {
-        wsState.socket.close();
-        wsState.socket = null;
+      if (wsStateRef.current.socket) {
+        wsStateRef.current.socket.close();
+        wsStateRef.current.socket = null;
       }
-      if (wsState.reconnectTimeout) {
-        clearTimeout(wsState.reconnectTimeout);
+      if (wsStateRef.current.reconnectTimeout) {
+        clearTimeout(wsStateRef.current.reconnectTimeout);
       }
     };
-  }, [crypto]); // Removed connectBlockWebSocket from deps to prevent re-connection loops
+  }, [crypto, connectBlockWebSocket]);
 
   const refresh = useCallback(() => {
     // Force re-derive by updating timestamp
