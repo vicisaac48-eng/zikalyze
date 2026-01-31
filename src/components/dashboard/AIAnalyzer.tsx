@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -152,12 +152,12 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   // Get current language code
   const currentLanguage = i18n.language || 'en';
 
-  const processingSteps = [
+  const processingSteps = useMemo(() => [
     t("analyzer.connecting", "Connecting to AI..."),
     t("analyzer.fetching", "Fetching data..."),
     t("analyzer.analyzing", "Analyzing patterns..."),
     t("analyzer.generating", "Generating insights...")
-  ];
+  ], [t]);
 
   // Smooth scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -397,7 +397,18 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData]);
+  }, [
+    crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, 
+    marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, 
+    getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, 
+    chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData,
+    // Chart API state & real-time data tracking
+    actualDataSource, chartAPI.analysis, chartAPI.indicators, 
+    chartAPI.isLive, chartAPI.source, dataAgeMs, isRealTimeData, 
+    liveData.dataSourcesSummary, liveData.priceIsLive,
+    // UI state
+    processingSteps
+  ]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 BACKGROUND AI LEARNING — Silent, always-on data collection & adaptation
@@ -605,7 +616,13 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     if (updateCount % 10 === 0) {
       console.log(`[AI Learning] Sample #${updateCount + 1}: $${price.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
     }
-  }, [crypto, updatePatterns, learnPriceLevel]); // Only recreate when crypto changes or update functions change
+  }, [
+    crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, 
+    marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, 
+    multiTfData, streamUpdateCount,
+    // AI learning functions
+    learnPriceLevel, updatePatterns
+  ]);
 
   // Auto-start background learning on mount
   useEffect(() => {
