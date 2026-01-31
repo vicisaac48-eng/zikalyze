@@ -69,7 +69,12 @@ export function useChartAPI(
     }
 
     try {
-      // Fetch main analysis and multi-TF in parallel
+      // Add overall timeout to prevent hanging on entire fetch operation
+      const fetchTimeout = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Chart data fetch timeout')), 30000) // 30s max
+      );
+      
+      // Fetch main analysis and multi-TF in parallel with timeout
       const promises: Promise<ChartAnalysisResult | ChartAnalysisResult[]>[] = [
         analyzeChart(symbol, interval, 100)
       ];
@@ -78,7 +83,10 @@ export function useChartAPI(
         promises.push(fetchMultiTimeframeAnalysis(symbol));
       }
       
-      const results = await Promise.all(promises);
+      const results = await Promise.race([
+        Promise.all(promises),
+        fetchTimeout
+      ]) as (ChartAnalysisResult | ChartAnalysisResult[] | null)[];
       
       if (!mountedRef.current) return;
       

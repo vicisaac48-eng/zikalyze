@@ -313,21 +313,37 @@ export async function fetchCandles(
   limit: number = 100
 ): Promise<ChartAPIResponse | null> {
   try {
-    const { data, error } = await supabase.functions.invoke('crypto-candles', {
-      body: { symbol: symbol.toUpperCase(), interval, limit }
-    });
+    // Add timeout to prevent hanging on edge function calls
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
     
-    if (error) {
-      console.error(`[ChartAPI] Edge function error for ${symbol}:`, error);
+    try {
+      const { data, error } = await supabase.functions.invoke('crypto-candles', {
+        body: { symbol: symbol.toUpperCase(), interval, limit },
+        // Note: signal parameter is supported but not in Supabase types yet
+      } as any);
+      
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        console.error(`[ChartAPI] Edge function error for ${symbol}:`, error);
+        return null;
+      }
+      
+      if (data?.candles && Array.isArray(data.candles) && data.candles.length > 0) {
+        console.log(`[ChartAPI] ${symbol} ${interval} loaded from ${data.source}: ${data.candles.length} candles`);
+        return data as ChartAPIResponse;
+      }
+      
       return null;
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        console.log(`[ChartAPI] Timeout fetching ${symbol}, falling back to CryptoCompare`);
+        return null;
+      }
+      throw e;
     }
-    
-    if (data?.candles && Array.isArray(data.candles) && data.candles.length > 0) {
-      console.log(`[ChartAPI] ${symbol} ${interval} loaded from ${data.source}: ${data.candles.length} candles`);
-      return data as ChartAPIResponse;
-    }
-    
-    return null;
   } catch (e) {
     console.error(`[ChartAPI] Failed to fetch ${symbol}:`, e);
     return null;
@@ -356,20 +372,35 @@ export async function fetchFromCryptoCompare(
     
     const url = `https://min-api.cryptocompare.com/data/v2/${endpoint}?fsym=${symbol.toUpperCase()}&tsym=USD&limit=${limit}&aggregate=${aggregate}`;
     
-    const response = await fetch(url);
-    if (!response.ok) return null;
+    // Add timeout to prevent hanging on CryptoCompare API
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
     
-    const result = await response.json();
-    if (result.Response !== 'Success' || !result.Data?.Data) return null;
-    
-    return result.Data.Data.map((point: { time: number; open: number; high: number; low: number; close: number; volumeto: number }) => ({
-      timestamp: point.time * 1000,
-      open: point.open,
-      high: point.high,
-      low: point.low,
-      close: point.close,
-      volume: point.volumeto
-    }));
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) return null;
+      
+      const result = await response.json();
+      if (result.Response !== 'Success' || !result.Data?.Data) return null;
+      
+      return result.Data.Data.map((point: { time: number; open: number; high: number; low: number; close: number; volumeto: number }) => ({
+        timestamp: point.time * 1000,
+        open: point.open,
+        high: point.high,
+        low: point.low,
+        close: point.close,
+        volume: point.volumeto
+      }));
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        console.log(`[ChartAPI] CryptoCompare timeout for ${symbol}`);
+        return null;
+      }
+      throw e;
+    }
   } catch (e) {
     console.error(`[ChartAPI] CryptoCompare fallback failed for ${symbol}:`, e);
     return null;

@@ -15,6 +15,11 @@ jobs:
     name: Run Health Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
