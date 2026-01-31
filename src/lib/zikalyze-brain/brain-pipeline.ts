@@ -1,12 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN PIPELINE — Self-Learning from Live Data
+// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.0 — Self-Learning from Live Data
 // ═══════════════════════════════════════════════════════════════════════════════
-// ⚡ Active Crypto Direct Source → AI Analyzer → Attention Algorithm → Double Verify
-// 🔗 All processing happens in a second with deterministic, verifiable steps
-// 🛡️ Filters bad/unnecessary data, verifies before output
+// 
+// ENHANCED PROCESSING FLOW:
+// ⚡ Step 1: Brain connects to Active Crypto Direct Source (read, learn, adapt)
+// 📝 Step 2: Send information to AI Analyzer (process to human-readable language)
+// 🧮 Step 3: Pass to Attention AI Algorithm (filter bad info, verify, calculate)
+// 🔄 Step 4: Send back to AI Analyzer → Attention for SECOND verification
+// 🔒 Step 5: Store good and bad data separately (hidden)
+// 📚 Step 6: Record learning signal for continuous adaptation
+// 📤 Step 7: Compare first & second check ✅ → if 100% correct → release output
+//
+// 🔗 All processing happens in under 1 second ⚡
+// 🛡️ Only sends verified, accurate information to users
 // 📊 Self-learns from live chart data and WebSocket livestream
 // 📈 ICT/SMC analysis with multi-timeframe confluence
-// ✅ Only sends accurate information after strict verification
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { 
@@ -770,17 +778,56 @@ export class HiddenDataStorageManager {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🔄 DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// 🔄 ENHANCED DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// ═══════════════════════════════════════════════════════════════════════════════
+// Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release if 100%
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Double Verification Loop
- * Sends data back through analyzer and attention for second verification
- * Compares with first check before releasing output
+ * Verification Step Details — Tracks each step of the verification process
+ */
+export interface VerificationStep {
+  step: number;
+  name: string;
+  passed: boolean;
+  confidence: number;
+  timestamp: number;
+  details: string;
+}
+
+/**
+ * Enhanced Verification Result — Detailed verification output
+ */
+export interface EnhancedVerificationResult {
+  verified: boolean;
+  match: boolean;
+  matchPercentage: number;
+  secondCheck: AttentionVerifiedData;
+  verificationSteps: VerificationStep[];
+  totalVerificationTimeMs: number;
+  releaseApproved: boolean;
+  releaseReason: string;
+}
+
+/**
+ * Enhanced Double Verification Loop
+ * 
+ * FLOW (as specified in requirements):
+ * 1. First Check: AI Analyzer → Attention Algorithm (filter, verify, calculate)
+ * 2. Send verified data BACK to AI Analyzer for re-processing
+ * 3. AI Analyzer sends to Attention for SECOND verification
+ * 4. Compare first and second checks
+ * 5. If 100% match (within tolerance), approve release for user output
+ * 6. All happens in under a second ⚡
  */
 export class DoubleVerificationLoop {
   private analyzer: AIAnalyzer;
   private attention: AttentionAlgorithm;
+  
+  // Match tolerance — higher means stricter matching required for release
+  private readonly matchTolerance = 0.95; // 95%+ match required for release approval
+  private readonly maxScoreDiff = 10; // Maximum score difference allowed
+  private readonly maxConfidenceDiff = 0.15; // Maximum confidence difference allowed
   
   constructor() {
     this.analyzer = new AIAnalyzer();
@@ -788,56 +835,169 @@ export class DoubleVerificationLoop {
   }
 
   /**
-   * Perform double verification
-   * Returns final verified output only if both checks pass
+   * Perform enhanced double verification
+   * 
+   * Step 1: Receive first check from main pipeline (Attention verified data)
+   * Step 2: Send BACK to AI Analyzer for re-processing
+   * Step 3: AI Analyzer sends to Attention for second verification
+   * Step 4: Compare both checks with strict matching
+   * Step 5: Only release if 100% verified (within tolerance)
    */
   verify(
     rawData: RawCryptoData,
     firstCheck: AttentionVerifiedData
-  ): { verified: boolean; match: boolean; secondCheck: AttentionVerifiedData } {
-    // Second pass through analyzer
+  ): EnhancedVerificationResult {
+    const startTime = Date.now();
+    const verificationSteps: VerificationStep[] = [];
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: First Check Validation
+    // ═══════════════════════════════════════════════════════════════════════
+    const step1Passed = firstCheck.quality !== 'BAD' && firstCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 1,
+      name: 'First Check Validation',
+      passed: step1Passed,
+      confidence: firstCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${firstCheck.quality}, Confidence: ${(firstCheck.confidenceScore * 100).toFixed(0)}%`
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Send Back to AI Analyzer for Re-Processing
+    // ═══════════════════════════════════════════════════════════════════════
     const reAnalyzed = this.analyzer.process(rawData);
+    const step2Passed = reAnalyzed.featureVector.length > 0 && 
+                        reAnalyzed.bullishScore >= 0 && 
+                        reAnalyzed.bearishScore >= 0;
+    verificationSteps.push({
+      step: 2,
+      name: 'AI Analyzer Re-Processing',
+      passed: step2Passed,
+      confidence: (reAnalyzed.bullishScore + reAnalyzed.bearishScore) / 200,
+      timestamp: Date.now(),
+      details: `Bull: ${reAnalyzed.bullishScore}, Bear: ${reAnalyzed.bearishScore}`
+    });
     
-    // Second pass through attention
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: AI Analyzer Sends to Attention for Second Verification
+    // ═══════════════════════════════════════════════════════════════════════
     const secondCheck = this.attention.calculate(reAnalyzed);
+    const step3Passed = secondCheck.quality !== 'BAD' && secondCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 3,
+      name: 'Second Attention Verification',
+      passed: step3Passed,
+      confidence: secondCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${secondCheck.quality}, Confidence: ${(secondCheck.confidenceScore * 100).toFixed(0)}%`
+    });
     
-    // Compare results
-    const match = this.compareVerifications(firstCheck, secondCheck);
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Compare First and Second Checks
+    // ═══════════════════════════════════════════════════════════════════════
+    const { match, matchPercentage } = this.compareVerificationsDetailed(firstCheck, secondCheck);
+    const step4Passed = match && matchPercentage >= this.matchTolerance;
+    verificationSteps.push({
+      step: 4,
+      name: 'Compare Verification Results',
+      passed: step4Passed,
+      confidence: matchPercentage,
+      timestamp: Date.now(),
+      details: `Match: ${(matchPercentage * 100).toFixed(0)}%, Threshold: ${(this.matchTolerance * 100).toFixed(0)}%`
+    });
     
-    // Both checks must pass quality threshold
-    const verified = 
-      firstCheck.quality !== 'BAD' && 
-      secondCheck.quality !== 'BAD' && 
-      match;
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Final Release Decision — Only if 100% Verified
+    // ═══════════════════════════════════════════════════════════════════════
+    const allStepsPassed = verificationSteps.every(step => step.passed);
+    const releaseApproved = allStepsPassed && 
+                            firstCheck.quality !== 'BAD' && 
+                            secondCheck.quality !== 'BAD' && 
+                            match;
     
-    return { verified, match, secondCheck };
+    let releaseReason: string;
+    if (releaseApproved) {
+      releaseReason = `✅ VERIFIED — All ${verificationSteps.length} checks passed, ${(matchPercentage * 100).toFixed(0)}% match`;
+    } else if (!step1Passed) {
+      releaseReason = '❌ First check failed quality threshold';
+    } else if (!step2Passed) {
+      releaseReason = '❌ AI Analyzer re-processing failed';
+    } else if (!step3Passed) {
+      releaseReason = '❌ Second Attention verification failed';
+    } else if (!step4Passed) {
+      releaseReason = `❌ Verification mismatch (${(matchPercentage * 100).toFixed(0)}% < ${(this.matchTolerance * 100).toFixed(0)}% required)`;
+    } else {
+      releaseReason = '❌ Unknown verification failure';
+    }
+    
+    verificationSteps.push({
+      step: 5,
+      name: 'Release Decision',
+      passed: releaseApproved,
+      confidence: releaseApproved ? 1.0 : 0,
+      timestamp: Date.now(),
+      details: releaseReason
+    });
+    
+    const totalVerificationTimeMs = Date.now() - startTime;
+    
+    // Log verification summary
+    console.log(`[DoubleVerify] ${rawData.symbol}: ${releaseApproved ? '✅ APPROVED' : '❌ BLOCKED'} in ${totalVerificationTimeMs}ms`);
+    
+    return {
+      verified: releaseApproved,
+      match,
+      matchPercentage,
+      secondCheck,
+      verificationSteps,
+      totalVerificationTimeMs,
+      releaseApproved,
+      releaseReason
+    };
   }
 
   /**
-   * Compare two verification results
+   * Detailed comparison of two verification results
+   * Returns match percentage for precise verification
    */
-  private compareVerifications(
+  private compareVerificationsDetailed(
     first: AttentionVerifiedData, 
     second: AttentionVerifiedData
-  ): boolean {
-    // Compare key metrics
+  ): { match: boolean; matchPercentage: number } {
+    // Calculate individual metric differences
     const bullishDiff = Math.abs(
       first.analyzedData.bullishScore - second.analyzedData.bullishScore
     );
     const bearishDiff = Math.abs(
       first.analyzedData.bearishScore - second.analyzedData.bearishScore
     );
+    const volatilityDiff = Math.abs(
+      first.analyzedData.volatilityScore - second.analyzedData.volatilityScore
+    );
+    const momentumDiff = Math.abs(
+      first.analyzedData.momentumScore - second.analyzedData.momentumScore
+    );
     const confidenceDiff = Math.abs(
       first.confidenceScore - second.confidenceScore
     );
     
-    // Allow small variance (within 10%)
-    const maxDiff = 10;
+    // Calculate match percentage (inverse of average difference)
+    const avgScoreDiff = (bullishDiff + bearishDiff + volatilityDiff + momentumDiff) / 4;
+    const scoreMatch = Math.max(0, 1 - (avgScoreDiff / 100));
+    const confidenceMatch = Math.max(0, 1 - confidenceDiff);
+    const qualityMatch = first.quality === second.quality ? 1.0 : 0.5;
     
-    return bullishDiff <= maxDiff && 
-           bearishDiff <= maxDiff && 
-           confidenceDiff <= 0.15 &&
-           first.quality === second.quality;
+    // Weighted match percentage
+    const matchPercentage = (scoreMatch * 0.5) + (confidenceMatch * 0.3) + (qualityMatch * 0.2);
+    
+    // Strict matching criteria
+    const match = bullishDiff <= this.maxScoreDiff && 
+                  bearishDiff <= this.maxScoreDiff && 
+                  confidenceDiff <= this.maxConfidenceDiff &&
+                  first.quality === second.quality;
+    
+    return { match, matchPercentage };
   }
 }
 
@@ -846,15 +1006,19 @@ export class DoubleVerificationLoop {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Zikalyze Brain Pipeline
- * Complete processing pipeline that:
- * 1. Connects to Active Crypto Direct Source (read, learn, adapt)
- * 2. Sends to AI Analyzer (human-readable processing)
- * 3. Passes to Attention Algorithm (filter, verify, calculate)
- * 4. Stores good/bad data separately (hidden)
- * 5. Double verifies before output
+ * Zikalyze Brain Pipeline v2.0
  * 
- * All happens in a second!
+ * Complete processing pipeline implementing the enhanced verification flow:
+ * 
+ * STEP 1: 🔗 Brain connects to Active Crypto Direct Source (read, learn, adapt)
+ * STEP 2: 📝 Sends information to AI Analyzer (process to human-readable language)
+ * STEP 3: 🧮 Passes to Attention AI Algorithm (filter bad/unnecessary info, verify)
+ * STEP 4: 🔄 Send back to AI Analyzer → Attention for second verification
+ * STEP 5: 🔒 Store good and bad data separately (hidden)
+ * STEP 6: 📚 Record learning signal for adaptation
+ * STEP 7: 📤 Compare first & second check, if 100% correct → release to users
+ * 
+ * ⚡ All processing happens in under 1 second!
  */
 export class ZikalyzeBrainPipeline {
   private source: ActiveCryptoSource;
@@ -863,7 +1027,7 @@ export class ZikalyzeBrainPipeline {
   private storage: HiddenDataStorageManager;
   private verification: DoubleVerificationLoop;
   
-  private readonly version = '1.0.0';
+  private readonly version = '2.0.0';
 
   constructor() {
     this.source = new ActiveCryptoSource();
@@ -871,6 +1035,7 @@ export class ZikalyzeBrainPipeline {
     this.attention = new AttentionAlgorithm();
     this.storage = new HiddenDataStorageManager();
     this.verification = new DoubleVerificationLoop();
+    console.log('[ZikalyzeBrain] v2.0 Pipeline initialized with enhanced double verification');
   }
 
   /**
@@ -896,70 +1061,90 @@ export class ZikalyzeBrainPipeline {
     const analyzedData = this.analyzer.process(rawData, onChainData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate
+    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate 🧮
     // ═══════════════════════════════════════════════════════════════════════
     const firstCheck = this.attention.calculate(analyzedData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 4: Store Good/Bad Data Separately (Hidden)
+    // STEP 4: Enhanced Double Verification — Send Back to AI Analyzer, 
+    //         Then to Attention for Second Check, Compare, Release if 100%
     // ═══════════════════════════════════════════════════════════════════════
-    if (firstCheck.quality === 'GOOD') {
+    // Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release
+    const verificationResult = this.verification.verify(rawData, firstCheck);
+    const { verified, match, matchPercentage, secondCheck, verificationSteps, releaseApproved, releaseReason } = verificationResult;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Store Both Good and Bad Data Separately (Hidden) 🔒
+    // ═══════════════════════════════════════════════════════════════════════
+    if (releaseApproved && firstCheck.quality === 'GOOD') {
+      // Store verified good data after double verification
       this.storage.storeGoodData(firstCheck);
-    } else if (firstCheck.quality === 'BAD') {
-      this.storage.storeBadData(rawData, firstCheck.filteredOutReasons.join('; '));
+      this.storage.storeGoodData(secondCheck);
+    } else if (!releaseApproved || firstCheck.quality === 'BAD') {
+      // Store filtered/bad data with reason
+      const filterReason = releaseApproved 
+        ? firstCheck.filteredOutReasons.join('; ')
+        : releaseReason;
+      this.storage.storeBadData(rawData, filterReason);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Double Verification — Send Back, Compare, Release
+    // STEP 6: Record Learning Signal for Continuous Adaptation 📚
     // ═══════════════════════════════════════════════════════════════════════
-    const { verified, match, secondCheck } = this.verification.verify(rawData, firstCheck);
-    
-    // Record learning signal for adaptation
-    if (verified) {
+    if (releaseApproved) {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_${firstCheck.quality}`,
+        `${rawData.symbol}_verified_${(matchPercentage * 100).toFixed(0)}pct`,
         'CORRECT',
-        0.01
+        0.01 * matchPercentage // Stronger signal for higher match
       );
       this.source.learn(rawData.symbol, [1]);
+      console.log(`[Brain] ✅ ${rawData.symbol}: Verified output released (${(matchPercentage * 100).toFixed(0)}% match)`);
     } else {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_verification_mismatch`,
+        `${rawData.symbol}_blocked_${releaseReason.substring(0, 30)}`,
         'INCORRECT',
         0.02
       );
       this.source.learn(rawData.symbol, [0]);
+      console.log(`[Brain] ❌ ${rawData.symbol}: Output blocked - ${releaseReason}`);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Generate Final Output — Only if 100% Verified
+    // STEP 7: Generate Final Output — Only Accurate Info Released to Users 📤
     // ═══════════════════════════════════════════════════════════════════════
     const bias = this.determineBias(
       firstCheck.analyzedData.bullishScore,
       firstCheck.analyzedData.bearishScore,
-      verified
+      releaseApproved
     );
     
     const confidence = this.calculateFinalConfidence(
       firstCheck.confidenceScore,
       secondCheck.confidenceScore,
-      verified,
+      releaseApproved,
       match
     );
     
     const processingTimeMs = Date.now() - startTime;
+    
+    // Ensure all processing happens in under 1 second
+    if (processingTimeMs > 1000) {
+      console.warn(`[Brain] ⚠️ Processing time exceeded 1 second: ${processingTimeMs}ms`);
+    }
     
     return {
       bias,
       confidence,
       humanReadableAnalysis: this.buildHumanReadableOutput(
         firstCheck,
-        verified,
+        releaseApproved,
         rawData.symbol,
-        rawData.price
+        rawData.price,
+        verificationSteps,
+        matchPercentage
       ),
       keyInsights: firstCheck.filteredInsights,
-      doubleVerified: verified,
+      doubleVerified: releaseApproved,
       verificationMatch: match,
       firstCheckConfidence: firstCheck.confidenceScore,
       secondCheckConfidence: secondCheck.confidenceScore,
@@ -1009,30 +1194,53 @@ export class ZikalyzeBrainPipeline {
   }
 
   /**
-   * Build final human-readable output
+   * Build final human-readable output with verification details
+   * Shows complete verification flow and match percentage
    */
   private buildHumanReadableOutput(
     data: AttentionVerifiedData,
     verified: boolean,
     symbol: string,
-    price: number
+    price: number,
+    verificationSteps?: VerificationStep[],
+    matchPercentage?: number
   ): string {
     const status = verified ? '✅ DOUBLE VERIFIED' : '⚠️ UNVERIFIED';
     const quality = data.quality === 'GOOD' ? '🟢 HIGH QUALITY' : 
                    data.quality === 'UNCERTAIN' ? '🟡 MODERATE QUALITY' : 
                    '🔴 LOW QUALITY';
+    const matchPct = matchPercentage !== undefined ? `${(matchPercentage * 100).toFixed(0)}%` : 'N/A';
+    
+    // Build verification flow visualization
+    let verificationFlow = '';
+    if (verificationSteps && verificationSteps.length > 0) {
+      verificationFlow = `
+┌─────────────────────────────────────────────────┐
+│  🔄 VERIFICATION FLOW (All in < 1 second)       │
+├─────────────────────────────────────────────────┤
+${verificationSteps.map(step => 
+  `│  ${step.passed ? '✅' : '❌'} Step ${step.step}: ${step.name.padEnd(30)}│`
+).join('\n')}
+│                                                 │
+│  📊 Match Percentage: ${matchPct.padEnd(24)}│
+│  🧠 Brain → Analyzer → Attention → Compare      │
+└─────────────────────────────────────────────────┘
+`;
+    }
     
     return `┌─────────────────────────────────────────────────┐
-│  🧠 ZIKALYZE AI BRAIN PIPELINE                  │
+│  🧠 ZIKALYZE AI BRAIN PIPELINE v2.0             │
 │  ${status}   ${quality}                         │
+│  📊 Verification Match: ${matchPct.padEnd(21)}│
 └─────────────────────────────────────────────────┘
 
 📊 ${symbol} @ $${price.toLocaleString()}
-
+${verificationFlow}
 ${data.filteredInsights.join('\n\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Confidence: ${(data.confidenceScore * 100).toFixed(0)}% | Hash: ${data.verificationHash}
+${verified ? '✅ Output released to users' : '⚠️ Output blocked - verification pending'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
   }
 

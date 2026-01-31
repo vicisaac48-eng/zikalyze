@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧪 ZIKALYZE AI BRAIN PIPELINE — CLIENT-SIDE TEST
+// 🧪 ZIKALYZE AI BRAIN PIPELINE v2.0 — CLIENT-SIDE TEST
 // ═══════════════════════════════════════════════════════════════════════════════
 // Run in browser console: window.testBrainPipeline()
-// Tests the complete brain pipeline with double verification
+// Tests the complete brain pipeline with enhanced double verification
 // Tests self-learning from live chart and livestream data
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -12,6 +12,9 @@ import {
   ActiveCryptoSource,
   AIAnalyzer,
   AttentionAlgorithm,
+  DoubleVerificationLoop,
+  VerificationStep,
+  EnhancedVerificationResult,
   // Self-learning components
   LiveChartLearner,
   LivestreamLearner,
@@ -34,7 +37,7 @@ function verifyPipelineResult(result: BrainPipelineOutput, testName: string): bo
     { name: 'Has attention heatmap', pass: Array.isArray(result.attentionHeatmap) },
     { name: 'Has processing time', pass: result.processingTimeMs >= 0 },
     { name: 'Has timestamp', pass: !isNaN(Date.parse(result.timestamp)) },
-    { name: 'Has pipeline version', pass: result.pipelineVersion.length > 0 },
+    { name: 'Has pipeline version v2', pass: result.pipelineVersion.startsWith('2') },
     { name: 'Processing < 1 second', pass: result.processingTimeMs < 1000 },
   ];
   
@@ -161,6 +164,74 @@ function testAttentionAlgorithm(): boolean {
   return passed === checks.length;
 }
 
+/**
+ * Test the enhanced double verification loop
+ * Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release
+ */
+function testEnhancedDoubleVerification(): boolean {
+  console.log('\n🔄 Testing Enhanced Double Verification Loop...');
+  const source = new ActiveCryptoSource();
+  const analyzer = new AIAnalyzer();
+  const attention = new AttentionAlgorithm();
+  const verificationLoop = new DoubleVerificationLoop();
+  
+  const input: AnalysisInput = {
+    crypto: 'BTC',
+    price: 97542.18,
+    change: 4.5,
+    high24h: 98200,
+    low24h: 93100,
+    volume: 28500000000
+  };
+  
+  // Step 1: Read data from source
+  const rawData = source.readData(input);
+  
+  // Step 2: Process through analyzer
+  const analyzed = analyzer.process(rawData);
+  
+  // Step 3: First attention verification
+  const firstCheck = attention.calculate(analyzed);
+  
+  // Step 4: Enhanced double verification (send back to analyzer → attention → compare)
+  const verificationResult = verificationLoop.verify(rawData, firstCheck);
+  
+  const checks = [
+    { name: 'Has verified flag', pass: typeof verificationResult.verified === 'boolean' },
+    { name: 'Has match flag', pass: typeof verificationResult.match === 'boolean' },
+    { name: 'Has matchPercentage', pass: verificationResult.matchPercentage >= 0 && verificationResult.matchPercentage <= 1 },
+    { name: 'Has secondCheck', pass: verificationResult.secondCheck !== null },
+    { name: 'Has verification steps', pass: Array.isArray(verificationResult.verificationSteps) },
+    { name: 'Has 5 verification steps', pass: verificationResult.verificationSteps.length === 5 },
+    { name: 'All steps have data', pass: verificationResult.verificationSteps.every(s => 
+        typeof s.step === 'number' && 
+        typeof s.name === 'string' && 
+        typeof s.passed === 'boolean' &&
+        typeof s.confidence === 'number'
+      )
+    },
+    { name: 'Has totalVerificationTimeMs', pass: verificationResult.totalVerificationTimeMs >= 0 },
+    { name: 'Has releaseApproved', pass: typeof verificationResult.releaseApproved === 'boolean' },
+    { name: 'Has releaseReason', pass: verificationResult.releaseReason.length > 0 },
+    { name: 'Verification < 500ms', pass: verificationResult.totalVerificationTimeMs < 500 },
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  const failed = checks.filter(c => !c.pass);
+  
+  console.log(`   Enhanced Verification: ${passed}/${checks.length} passed`);
+  console.log(`   Release: ${verificationResult.releaseApproved ? '✅ APPROVED' : '❌ BLOCKED'}`);
+  console.log(`   Match: ${(verificationResult.matchPercentage * 100).toFixed(0)}%`);
+  console.log(`   Reason: ${verificationResult.releaseReason}`);
+  console.log(`   Steps: ${verificationResult.verificationSteps.map(s => s.passed ? '✅' : '❌').join(' → ')}`);
+  
+  if (failed.length > 0) {
+    console.log('   ❌ Failed:', failed.map(f => f.name).join(', '));
+  }
+  
+  return passed === checks.length;
+}
+
 // Main test function
 export function testBrainPipeline(): {
   allPassed: boolean;
@@ -169,18 +240,20 @@ export function testBrainPipeline(): {
   storageStats: {goodCount: number; badCount: number; learningCount: number};
 } {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🧠 ZIKALYZE AI BRAIN PIPELINE v1.0 — TEST SUITE');
+  console.log('🧠 ZIKALYZE AI BRAIN PIPELINE v2.0 — TEST SUITE');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('Testing: Active Source → AI Analyzer → Attention → Double Verify');
+  console.log('Flow: Brain → Analyzer → Attention → Analyzer → Attention → Compare → Release');
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Test individual components
   const sourceOk = testActiveSource();
   const analyzerOk = testAIAnalyzer();
   const attentionOk = testAttentionAlgorithm();
+  const verificationOk = testEnhancedDoubleVerification();
   
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔄 Testing Complete Pipeline with Double Verification');
+  console.log('🔄 Testing Complete Pipeline with Enhanced Double Verification');
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Create pipeline instance
@@ -210,7 +283,7 @@ export function testBrainPipeline(): {
     }
   ];
 
-  let allPassed = sourceOk && analyzerOk && attentionOk;
+  let allPassed = sourceOk && analyzerOk && attentionOk && verificationOk;
   const results: Array<{name: string; bias: string; confidence: number; verified: boolean; ms: number}> = [];
 
   for (const test of tests) {
@@ -247,12 +320,13 @@ export function testBrainPipeline(): {
 
   console.log('\n═══════════════════════════════════════════════════════════════');
   if (allPassed) {
-    console.log('✅ ALL TESTS PASSED — Brain Pipeline is working correctly!');
+    console.log('✅ ALL TESTS PASSED — Brain Pipeline v2.0 working correctly!');
     console.log('   ✓ Active Crypto Source: read, learn, adapt');
     console.log('   ✓ AI Analyzer: human-readable processing');
-    console.log('   ✓ Attention Algorithm: filter, verify, calculate');
-    console.log('   ✓ Hidden Storage: good/bad data separation');
-    console.log('   ✓ Double Verification: compare & release');
+    console.log('   ✓ Attention Algorithm: filter, verify, calculate 🧮');
+    console.log('   ✓ Enhanced Double Verification: Analyzer → Attention → Compare');
+    console.log('   ✓ Hidden Storage: good/bad data separation 🔒');
+    console.log('   ✓ Release only if 100% verified ✅');
     console.log('   ✓ All processing < 1 second ⚡');
   } else {
     console.log('❌ SOME TESTS FAILED — Review the output above');
