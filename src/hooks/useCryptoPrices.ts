@@ -472,9 +472,10 @@ export const useCryptoPrices = () => {
   }, []);
 
   const fetchPrices = useCallback(async () => {
-    // Prevent re-fetching if already initialized
-    if (pricesInitializedRef.current) return;
+    // Prevent re-fetching if already initialized (use both local ref and global flag)
+    if (pricesInitializedRef.current || globalPricesFetched) return;
     pricesInitializedRef.current = true;
+    globalPricesFetched = true;
     
     // PRIORITY 1: Load persisted live prices first (most recent data)
     // Since we only run once (pricesInitializedRef guards this), prices will be empty here
