@@ -53,93 +53,111 @@ async function backgroundLearn() {
   console.log('[SW Brain] Background learning cycle...');
   
   try {
-    // Fetch live prices
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${TOP_CRYPTOS.join(',')}&vs_currencies=usd&include_24hr_change=true`,
-      { cache: 'no-store' }
-    );
+    // Add timeout to prevent hanging on fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for SW
     
-    if (!response.ok) {
-      console.log('[SW Brain] Price fetch failed, will retry...');
-      return;
-    }
-    
-    const prices = await response.json();
-    const db = await initSWDB();
-    const timestamp = Date.now();
-    
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    
-    for (const [symbol, priceData] of Object.entries(prices)) {
-      // Get existing data
-      const getRequest = store.get(symbol);
+    try {
+      // Fetch live prices with timeout
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${TOP_CRYPTOS.join(',')}&vs_currencies=usd&include_24hr_change=true`,
+        { 
+          cache: 'no-store',
+          signal: controller.signal
+        }
+      );
       
-      getRequest.onsuccess = () => {
-        let learning = getRequest.result || {
-          symbol,
-          samplesCollected: 0,
-          volatility: 0,
-          avgVelocity: 0,
-          lastBias: 'NEUTRAL',
-          biasChanges: 0,
-          priceHistory: [],
-          supportLevels: [],
-          resistanceLevels: [],
-          offlineSamples: 0,
-          lastUpdated: timestamp
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.log('[SW Brain] Price fetch failed, will retry...');
+        return;
+      }
+      
+      const prices = await response.json();
+      const db = await initSWDB();
+      const timestamp = Date.now();
+      
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      for (const [symbol, priceData] of Object.entries(prices)) {
+        // Get existing data
+        const getRequest = store.get(symbol);
+        
+        getRequest.onsuccess = () => {
+          let learning = getRequest.result || {
+            symbol,
+            samplesCollected: 0,
+            volatility: 0,
+            avgVelocity: 0,
+            lastBias: 'NEUTRAL',
+            biasChanges: 0,
+            priceHistory: [],
+            supportLevels: [],
+            resistanceLevels: [],
+            offlineSamples: 0,
+            lastUpdated: timestamp
+          };
+          
+          // Add price point
+          learning.priceHistory.push({
+            price: priceData.usd,
+            change24h: priceData.usd_24h_change || 0,
+            timestamp
+          });
+          
+          // Keep last 720 samples (6 hours at 30s intervals)
+          if (learning.priceHistory.length > 720) {
+            learning.priceHistory = learning.priceHistory.slice(-720);
+          }
+          
+          // Calculate metrics
+          if (learning.priceHistory.length >= 2) {
+            const recentPrices = learning.priceHistory.slice(-10).map(p => p.price);
+            const changes = [];
+            for (let i = 1; i < recentPrices.length; i++) {
+              changes.push(Math.abs((recentPrices[i] - recentPrices[i-1]) / recentPrices[i-1] * 100));
+            }
+            const newVolatility = changes.length > 0 
+              ? changes.reduce((a, b) => a + b, 0) / changes.length 
+              : 0;
+            
+            // Exponential smoothing
+            learning.volatility = learning.volatility * 0.9 + newVolatility * 0.1;
+            
+            // Detect trend
+            const firstPrice = learning.priceHistory[0].price;
+            const lastPrice = learning.priceHistory[learning.priceHistory.length - 1].price;
+            const trendPct = ((lastPrice - firstPrice) / firstPrice) * 100;
+            
+            const newBias = trendPct > 1 ? 'LONG' : trendPct < -1 ? 'SHORT' : 'NEUTRAL';
+            if (learning.lastBias !== newBias) {
+              learning.biasChanges++;
+            }
+            learning.lastBias = newBias;
+          }
+          
+          learning.samplesCollected++;
+          learning.offlineSamples++;
+          learning.lastUpdated = timestamp;
+          
+          store.put(learning);
         };
-        
-        // Add price point
-        learning.priceHistory.push({
-          price: priceData.usd,
-          change24h: priceData.usd_24h_change || 0,
-          timestamp
-        });
-        
-        // Keep last 720 samples (6 hours at 30s intervals)
-        if (learning.priceHistory.length > 720) {
-          learning.priceHistory = learning.priceHistory.slice(-720);
-        }
-        
-        // Calculate metrics
-        if (learning.priceHistory.length >= 2) {
-          const recentPrices = learning.priceHistory.slice(-10).map(p => p.price);
-          const changes = [];
-          for (let i = 1; i < recentPrices.length; i++) {
-            changes.push(Math.abs((recentPrices[i] - recentPrices[i-1]) / recentPrices[i-1] * 100));
-          }
-          const newVolatility = changes.length > 0 
-            ? changes.reduce((a, b) => a + b, 0) / changes.length 
-            : 0;
-          
-          // Exponential smoothing
-          learning.volatility = learning.volatility * 0.9 + newVolatility * 0.1;
-          
-          // Detect trend
-          const firstPrice = learning.priceHistory[0].price;
-          const lastPrice = learning.priceHistory[learning.priceHistory.length - 1].price;
-          const trendPct = ((lastPrice - firstPrice) / firstPrice) * 100;
-          
-          const newBias = trendPct > 1 ? 'LONG' : trendPct < -1 ? 'SHORT' : 'NEUTRAL';
-          if (learning.lastBias !== newBias) {
-            learning.biasChanges++;
-          }
-          learning.lastBias = newBias;
-        }
-        
-        learning.samplesCollected++;
-        learning.offlineSamples++;
-        learning.lastUpdated = timestamp;
-        
-        store.put(learning);
-      };
+      }
+      
+      console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
+      
+      // Check for price alerts
+      await checkPriceAlerts(prices);
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        console.log('[SW Brain] Fetch timeout, will retry next cycle');
+      } else {
+        throw e;
+      }
     }
-    
-    console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
-    
-    // Check for price alerts
-    await checkPriceAlerts(prices);
     
   } catch (e) {
     console.error('[SW Brain] Learning error:', e);

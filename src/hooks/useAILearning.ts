@@ -107,7 +107,12 @@ async function getOfflineLearning(): Promise<OfflineLearningData[]> {
       return;
     }
     
-    const timeout = setTimeout(() => resolve([]), 3000);
+    // Timeout after 3 seconds to prevent hanging
+    const timeout = setTimeout(() => {
+      navigator.serviceWorker.removeEventListener('message', handler);
+      console.log('[AI Learning] Service Worker response timeout');
+      resolve([]);
+    }, 3000);
     
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'OFFLINE_LEARNING_DATA') {
@@ -118,7 +123,15 @@ async function getOfflineLearning(): Promise<OfflineLearningData[]> {
     };
     
     navigator.serviceWorker.addEventListener('message', handler);
-    navigator.serviceWorker.controller.postMessage({ type: 'GET_OFFLINE_LEARNING' });
+    
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: 'GET_OFFLINE_LEARNING' });
+    } catch (e) {
+      clearTimeout(timeout);
+      navigator.serviceWorker.removeEventListener('message', handler);
+      console.warn('[AI Learning] Failed to send message to Service Worker:', e);
+      resolve([]);
+    }
   });
 }
 

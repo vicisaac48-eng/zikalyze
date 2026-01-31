@@ -273,6 +273,12 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     
     if (!endpoints || endpoints.length === 0) return;
 
+    // Prevent infinite reconnection attempts
+    if (wsStateRef.current.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.log(`[OnChain] Max reconnect attempts reached for ${cryptoUpper}`);
+      return;
+    }
+
     // Cleanup existing
     if (wsStateRef.current.socket) {
       wsStateRef.current.socket.close();
@@ -284,9 +290,18 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     try {
       const ws = new WebSocket(wsUrl);
       wsStateRef.current.socket = ws;
+      
+      // Connection timeout to prevent hanging
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          console.log(`[OnChain] Connection timeout for ${cryptoUpper}`);
+          ws.close();
+        }
+      }, 10000); // 10s connection timeout
 
       ws.onopen = () => {
         if (!isMountedRef.current) return;
+        clearTimeout(connectionTimeout);
         wsStateRef.current.reconnectAttempts = 0;
         
         if (cryptoUpper === 'BTC') {
@@ -317,13 +332,18 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       };
 
       ws.onclose = () => {
+        clearTimeout(connectionTimeout);
         wsStateRef.current.socket = null;
         
         if (isMountedRef.current && wsStateRef.current.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
           const delay = BASE_RECONNECT_DELAY * Math.pow(2, wsStateRef.current.reconnectAttempts);
           wsStateRef.current.reconnectAttempts++;
-          wsStateRef.current.reconnectTimeout = setTimeout(connectBlockWebSocket, delay);
+          wsStateRef.current.reconnectTimeout = setTimeout(connectBlockWebSocket, Math.min(delay, 30000)); // Cap at 30s
         }
+      };
+      
+      ws.onerror = () => {
+        clearTimeout(connectionTimeout);
       };
     } catch { /* Ignore WebSocket connection errors */ }
   }, [crypto]);
