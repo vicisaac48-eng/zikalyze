@@ -112,3 +112,27 @@ This project supports automatic deployment to IPFS (InterPlanetary File System) 
 1. Get API keys from [Pinata Cloud](https://app.pinata.cloud/keys)
 2. Add `PINATA_API_KEY` and `PINATA_SECRET_KEY` as GitHub repository secrets
 3. Push to `main` branch to trigger automatic deployment
+
+
+## 📱 Android / Play Store Deployment
+
+Zikalyze can be built as a native Android app for distribution on the Google Play Store using Capacitor.
+
+### Quick Start
+
+```bash
+# Build web assets and sync with Android
+npm run android:build
+
+# Open in Android Studio
+npm run android:open
+
+# Run on a connected device
+npm run android:run
+```
+
+### Automated Builds
+
+The repository includes a GitHub Actions workflow that automatically builds the Android APK/AAB. Trigger a release build via the workflow dispatch in the Actions tab.
+
+For complete deployment instructions including signing, Play Store submission, and troubleshooting, see [Android Deployment Guide](./docs/ANDROID_DEPLOYMENT.md).
