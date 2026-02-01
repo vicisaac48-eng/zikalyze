@@ -968,7 +968,9 @@ export function performTopDownAnalysis(
   }
   
   // Add confluence quality
-  if (confluenceScore >= 70) {
+  if (confluenceScore === 100) {
+    reasoning.push(`🎯 PERFECT confluence (100%) — All timeframes aligned!`);
+  } else if (confluenceScore >= 70) {
     reasoning.push(`🎯 HIGH confluence (${confluenceScore}%) — Strong setup`);
   } else if (confluenceScore >= 50) {
     reasoning.push(`📊 MODERATE confluence (${confluenceScore}%) — Proceed with caution`);
