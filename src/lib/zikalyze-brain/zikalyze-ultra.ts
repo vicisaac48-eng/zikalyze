@@ -203,17 +203,17 @@ function calculateRSI(prices: number[], period: number): number {
 function calculateVWAP(candles: Array<{ high: number; low: number; close: number; volume: number }>): number {
   if (candles.length === 0) return 0;
   
-  let sumTPV = 0;
-  let sumV = 0;
+  let sumTypicalPriceVolume = 0;
+  let sumVolume = 0;
   
   for (const candle of candles) {
     // Typical price = (high + low + close) / 3
     const typicalPrice = (candle.high + candle.low + candle.close) / 3;
-    sumTPV += typicalPrice * candle.volume;
-    sumV += candle.volume;
+    sumTypicalPriceVolume += typicalPrice * candle.volume;
+    sumVolume += candle.volume;
   }
   
-  return sumV > 0 ? sumTPV / sumV : candles[candles.length - 1].close;
+  return sumVolume > 0 ? sumTypicalPriceVolume / sumVolume : candles[candles.length - 1].close;
 }
 
 /**
