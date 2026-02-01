@@ -715,10 +715,16 @@ export function performTopDownAnalysis(
     
     reasoning.push(`📊 Multi-TF Confluence: ${confluenceScore}%`);
     
+    // Only use multiTfData.confluence.strength if it doesn't incorrectly boost to 100%
+    // The 100% should only be reached when all 5 timeframes are aligned
+    const finalConfluenceScore = maxAlignedTFs === 5 
+      ? 100 
+      : Math.min(99, Math.max(confluenceScore, multiTfData.confluence.strength));
+    
     return {
       weekly, daily, h4, h1, m15,
       overallBias,
-      confluenceScore: Math.max(confluenceScore, multiTfData.confluence.strength),
+      confluenceScore: finalConfluenceScore,
       tradeableDirection,
       reasoning,
       attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : attentionHeatmap.slice(0, 4),
