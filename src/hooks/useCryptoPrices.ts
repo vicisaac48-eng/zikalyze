@@ -1073,25 +1073,39 @@ export const useCryptoPrices = () => {
     // Retry check after a short delay in case crypto list wasn't ready
     const timeoutId = setTimeout(checkAndConnect, 500);
     
-    // Capture refs for cleanup
-    const reconnectTimeouts = reconnectTimeoutsRef.current;
-    const binanceWs = binanceWsRef.current;
-    const okxWs = okxWsRef.current;
-    const bybitWs = bybitWsRef.current;
-    const krakenWs = krakenWsRef.current;
-    const coinbaseWs = coinbaseWsRef.current;
+    // Capture reconnect timeouts for cleanup (addresses ESLint ref stale warning)
+    const reconnectTimeouts = { ...reconnectTimeoutsRef.current };
     
     return () => {
       clearTimeout(timeoutId);
+      // Clear reconnect timeouts using captured snapshot
       Object.values(reconnectTimeouts).forEach(timeout => {
         clearTimeout(timeout);
       });
       
-      if (binanceWs) binanceWs.close();
-      if (okxWs) okxWs.close();
-      if (bybitWs) bybitWs.close();
-      if (krakenWs) krakenWs.close();
-      if (coinbaseWs) coinbaseWs.close();
+      // Close all WebSocket connections and clear refs
+      // Note: Using .current directly here is intentional - we want to close
+      // the current active connections at cleanup time, not stale refs
+      if (binanceWsRef.current) {
+        binanceWsRef.current.close();
+        binanceWsRef.current = null;
+      }
+      if (okxWsRef.current) {
+        okxWsRef.current.close();
+        okxWsRef.current = null;
+      }
+      if (bybitWsRef.current) {
+        bybitWsRef.current.close();
+        bybitWsRef.current = null;
+      }
+      if (krakenWsRef.current) {
+        krakenWsRef.current.close();
+        krakenWsRef.current = null;
+      }
+      if (coinbaseWsRef.current) {
+        coinbaseWsRef.current.close();
+        coinbaseWsRef.current = null;
+      }
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 

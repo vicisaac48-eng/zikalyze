@@ -321,16 +321,18 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     if (cryptoUpper === 'BTC' || cryptoUpper === 'ETH') {
       connectBlockWebSocket();
     }
-
-    // Capture ref for cleanup
+    
+    // Capture state for cleanup (addresses ESLint ref stale warning)
+    // These need to be captured after connectBlockWebSocket to get current values
     const wsState = wsStateRef.current;
     
     return () => {
       isMountedRef.current = false;
+      // Close socket on cleanup
       if (wsState.socket) {
         wsState.socket.close();
-        wsState.socket = null;
       }
+      // Clear the timeout reference
       if (wsState.reconnectTimeout) {
         clearTimeout(wsState.reconnectTimeout);
       }
