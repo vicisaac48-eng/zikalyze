@@ -657,11 +657,29 @@ export function performTopDownAnalysis(
     });
     
     const dominantWeight = Math.max(bullishWeight, bearishWeight);
-    const confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
     
     // Determine bias from REAL multi-TF confluence
     const bullishTFs = allTimeframes.filter(tf => tf.trend === 'BULLISH').length;
     const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH').length;
+    const maxAlignedTFs = Math.max(bullishTFs, bearishTFs);
+    
+    // Alignment-based confluence: 5/5 = 100%, 4/5 = 85-95%, 3/5 = 65-80%
+    // Uses weighted strength for fine-tuning when partial alignment
+    let confluenceScore: number;
+    if (maxAlignedTFs === 5) {
+      // All 5 timeframes aligned = 100% confluence
+      confluenceScore = 100;
+    } else if (maxAlignedTFs === 4) {
+      // 4/5 aligned = 85-95% based on strength
+      confluenceScore = 85 + Math.round((dominantWeight / totalWeight) * 10);
+    } else if (maxAlignedTFs === 3) {
+      // 3/5 aligned = 65-80% based on strength
+      confluenceScore = 65 + Math.round((dominantWeight / totalWeight) * 15);
+    } else {
+      // Less than 3 aligned = use weighted calculation (low confluence)
+      confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
+    }
+    
     const htfBullish = (weekly.trend === 'BULLISH' || daily.trend === 'BULLISH') && h4.trend !== 'BEARISH';
     const htfBearish = (weekly.trend === 'BEARISH' || daily.trend === 'BEARISH') && h4.trend !== 'BULLISH';
     
@@ -697,10 +715,16 @@ export function performTopDownAnalysis(
     
     reasoning.push(`📊 Multi-TF Confluence: ${confluenceScore}%`);
     
+    // Only use multiTfData.confluence.strength if it doesn't incorrectly boost to 100%
+    // The 100% should only be reached when all 5 timeframes are aligned
+    const finalConfluenceScore = maxAlignedTFs === 5 
+      ? 100 
+      : Math.min(99, Math.max(confluenceScore, multiTfData.confluence.strength));
+    
     return {
       weekly, daily, h4, h1, m15,
       overallBias,
-      confluenceScore: Math.max(confluenceScore, multiTfData.confluence.strength),
+      confluenceScore: finalConfluenceScore,
       tradeableDirection,
       reasoning,
       attentionHeatmap: attentionHeatmap.length === 4 ? attentionHeatmap : attentionHeatmap.slice(0, 4),
@@ -877,7 +901,26 @@ export function performTopDownAnalysis(
   
   // Confluence = how aligned all timeframes are with dominant direction
   const dominantWeight = Math.max(bullishWeight, bearishWeight);
-  const confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
+  const bullishTFs = allTimeframes.filter(tf => tf.trend === 'BULLISH').length;
+  const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH').length;
+  const maxAlignedTFs = Math.max(bullishTFs, bearishTFs);
+  
+  // Alignment-based confluence: 5/5 = 100%, 4/5 = 85-95%, 3/5 = 65-80%
+  // Uses weighted strength for fine-tuning when partial alignment
+  let confluenceScore: number;
+  if (maxAlignedTFs === 5) {
+    // All 5 timeframes aligned = 100% confluence
+    confluenceScore = 100;
+  } else if (maxAlignedTFs === 4) {
+    // 4/5 aligned = 85-95% based on strength
+    confluenceScore = 85 + Math.round((dominantWeight / totalWeight) * 10);
+  } else if (maxAlignedTFs === 3) {
+    // 3/5 aligned = 65-80% based on strength
+    confluenceScore = 65 + Math.round((dominantWeight / totalWeight) * 15);
+  } else {
+    // Less than 3 aligned = use weighted calculation (low confluence)
+    confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
+  }
   
   // ═══════════════════════════════════════════════════════════════════════════
   // 🎯 DETERMINE OVERALL BIAS & TRADEABLE DIRECTION
@@ -887,9 +930,7 @@ export function performTopDownAnalysis(
   let tradeableDirection: 'LONG' | 'SHORT' | 'NO_TRADE';
   const reasoning: string[] = [];
   
-  // Count how many timeframes align
-  const bullishTFs = allTimeframes.filter(tf => tf.trend === 'BULLISH').length;
-  const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH').length;
+  // HTF alignment check (bullishTFs and bearishTFs already calculated above)
   const htfBullish = weekly.trend === 'BULLISH' && daily.trend === 'BULLISH';
   const htfBearish = weekly.trend === 'BEARISH' && daily.trend === 'BEARISH';
   
@@ -933,7 +974,9 @@ export function performTopDownAnalysis(
   }
   
   // Add confluence quality
-  if (confluenceScore >= 70) {
+  if (confluenceScore === 100) {
+    reasoning.push(`🎯 PERFECT confluence (100%) — All timeframes aligned!`);
+  } else if (confluenceScore >= 70) {
     reasoning.push(`🎯 HIGH confluence (${confluenceScore}%) — Strong setup`);
   } else if (confluenceScore >= 50) {
     reasoning.push(`📊 MODERATE confluence (${confluenceScore}%) — Proceed with caution`);
