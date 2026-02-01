@@ -2539,13 +2539,13 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       description = '🤑 High greed in market - current sentiment is bullish';
     } 
     // Slight fear zone (36-45) - leaning bearish but not strong
-    else if (value < 46) {
+    else if (value <= 45) {
       biasModifier = -0.02; // Slight bearish sentiment
       contrarian = false;
       description = '😕 Slight fear - market sentiment leans cautious';
     }
     // Slight greed zone (55-64) - leaning bullish but not strong
-    else if (value > 54) {
+    else if (value >= 55) {
       biasModifier = 0.02; // Slight bullish sentiment
       contrarian = false;
       description = '🙂 Slight greed - market sentiment leans optimistic';

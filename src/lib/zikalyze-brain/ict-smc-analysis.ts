@@ -944,7 +944,7 @@ export function performICTSMCAnalysis(
       
       // Find the swing point to use as stop loss
       const recentSwingLow = candles.slice(-10).reduce((min, c) => Math.min(min, c.low), Infinity);
-      const recentSwingHigh = candles.slice(-10).reduce((max, c) => Math.max(max, c.high), 0);
+      const recentSwingHigh = candles.slice(-10).reduce((max, c) => Math.max(max, c.high), -Infinity);
       
       const stopLoss = isLong 
         ? recentSwingLow * 0.995
