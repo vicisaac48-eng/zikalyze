@@ -139,7 +139,7 @@ if "$cygwin" || "$msys" ; then
         if
             case $arg in                                #(
               -*)   false ;;                            # don't mess with options #(
-              /?*)  t=${arg#)}; t=/${t%%/*}             # looks like a POSIX filepath
+              /?*)  t=${arg#/}; t=/${t%%/*}             # looks like a POSIX filepath
                     [ -e "$t" ] ;;                      #(
               *)    false ;;
             esac
@@ -186,10 +186,8 @@ fi
 #   readarray ARGS < <( xargs -n1 <<<"$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" ) &&
 #   set -- "${ARGS[@]}" "$@"
 #
-# but POSIX://sh has neither arrays nor command substitution, so instead we
-# temporary args list around exactly as many times as the number of
-# temporary args, so each arg winds up back in the position where
-# temporary args are found.
+# but POSIX sh has neither arrays nor command substitution, so instead we
+# post-process the opts and args using xargs.
 
 eval "set -- $(
         printf '%s\n' "$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" |
