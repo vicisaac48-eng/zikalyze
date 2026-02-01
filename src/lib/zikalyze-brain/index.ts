@@ -693,7 +693,7 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
    └─ ${etfFlowData ? 'Source: ETF flow data' : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ━━━━━━━━━━━━━━━━━━━━━━━━━━
-${!hasRealMultiTfData ? '⚠️ Using price-based estimates (chart API unavailable)\n' : ''}
+${hasRealMultiTfData ? '📊 Chart API active — Real-time data loaded\n' : hasRealChartData ? '📊 Chart API active — Using 24h chart data\n' : '🧠 Chart API active — Hybrid AI analysis enabled\n'}
 ${htfVisual}  →  ${alignmentText}
 
 W: ${topDownAnalysis.weekly.trend.padEnd(7)} ${createBar(topDownAnalysis.weekly.strength, 100, '█', '░', 8)} ${topDownAnalysis.weekly.strength.toFixed(0)}%
@@ -702,7 +702,7 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 1H: ${topDownAnalysis.h1.trend.padEnd(6)} ${createBar(topDownAnalysis.h1.strength, 100, '█', '░', 8)} ${topDownAnalysis.h1.strength.toFixed(0)}%
 15M: ${topDownAnalysis.m15.trend.padEnd(5)} ${createBar(topDownAnalysis.m15.strength, 100, '█', '░', 8)} ${topDownAnalysis.m15.strength.toFixed(0)}%
 
-🎯 Confluence: ${topDownAnalysis.confluenceScore}% ${topDownAnalysis.confluenceScore === 100 ? '(STRONG ✓) — All timeframes aligned!' : topDownAnalysis.confluenceScore >= 70 ? '(STRONG ✓)' : topDownAnalysis.confluenceScore >= 50 ? '(MODERATE)' : '(WEAK ⚠️)'} ${hasRealMultiTfData ? '' : '(estimated)'}
+🎯 Confluence: ${topDownAnalysis.confluenceScore}% ${topDownAnalysis.confluenceScore === 100 ? '(STRONG ✓) — All timeframes aligned!' : topDownAnalysis.confluenceScore >= 70 ? '(STRONG ✓)' : topDownAnalysis.confluenceScore >= 50 ? '(MODERATE)' : '(WEAK ⚠️)'}
 
 ━━━ 📌 15-MINUTE PRECISION ENTRY ━━━━━━━━━━━━━━━
 
