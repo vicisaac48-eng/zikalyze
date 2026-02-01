@@ -20,6 +20,16 @@ Tailwind CSS: For rapid, responsive utility-first styling.
 Zikalyze ai brain 🧠 
 /src/lib/zikalyze-brain
 
+## 📊 AI Accuracy & Transparency
+
+We believe in honest, transparent communication about our AI capabilities. For a detailed comparison of Zikalyze AI vs. major AI systems (OpenAI GPT-4, xAI Grok, Anthropic Claude, etc.), see our [Honest AI Accuracy Assessment](./docs/AI_ACCURACY_ASSESSMENT.md).
+
+**Key Points:**
+- Zikalyze is a **specialized algorithmic analysis engine**, not a general-purpose LLM
+- Uses proven trading methodologies (ICT/SMC, multi-timeframe confluence)
+- 100% client-side, deterministic, and privacy-preserving
+- Honest about limitations — no guaranteed profits, no magic predictions
+
 
 💻 Local Development
 Prerequisites
