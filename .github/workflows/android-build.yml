@@ -61,12 +61,14 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
       
+      # Debug build
       - name: Build Debug APK
         if: github.event.inputs.build_type != 'release'
         working-directory: android
         run: ./gradlew assembleDebug
       
-      - name: Build Release APK
+      # Release build - unsigned (for beginners without keystore)
+      - name: Build Release APK (Unsigned)
         if: github.event.inputs.build_type == 'release'
         working-directory: android
         run: ./gradlew assembleRelease
@@ -76,6 +78,7 @@ jobs:
         working-directory: android
         run: ./gradlew bundleRelease
       
+      # Upload artifacts
       - name: Upload Debug APK
         if: github.event.inputs.build_type != 'release'
         uses: actions/upload-artifact@v4
@@ -99,3 +102,23 @@ jobs:
           name: zikalyze-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+      
+      # Build summary
+      - name: Build Summary
+        if: always()
+        run: |
+          echo "## 📱 Android Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | ${{ github.event.inputs.build_type || 'debug' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.build_type }}" == "release" ]; then
+            echo "### 📥 Download Instructions" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Scroll down to the **Artifacts** section below" >> $GITHUB_STEP_SUMMARY
+            echo "2. Download **zikalyze-release-aab** for Play Store upload" >> $GITHUB_STEP_SUMMARY
+            echo "3. Follow the [Play Store Upload Guide](../docs/PLAY_STORE_UPLOAD.md)" >> $GITHUB_STEP_SUMMARY
+          fi

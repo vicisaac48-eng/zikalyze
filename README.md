@@ -118,6 +118,10 @@ This project supports automatic deployment to IPFS (InterPlanetary File System) 
 
 Zikalyze can be built as a native Android app for distribution on the Google Play Store using Capacitor.
 
+### 🚀 New to Play Store? Start Here!
+
+**[📱 Play Store Upload Guide (Beginner-Friendly)](./docs/PLAY_STORE_UPLOAD.md)** - Step-by-step guide with screenshots!
+
 ### Quick Start
 
 ```bash
@@ -131,8 +135,12 @@ npm run android:open
 npm run android:run
 ```
 
-### Automated Builds
+### Build Your App (No Coding Required!)
 
-The repository includes a GitHub Actions workflow that automatically builds the Android APK/AAB. Trigger a release build via the workflow dispatch in the Actions tab.
+1. Go to the **Actions** tab in GitHub
+2. Click **"Android Build"** → **"Run workflow"**
+3. Select **"release"** and click **"Run workflow"**
+4. Download the `zikalyze-release-aab` artifact when complete
+5. Upload to Google Play Console
 
-For complete deployment instructions including signing, Play Store submission, and troubleshooting, see [Android Deployment Guide](./docs/ANDROID_DEPLOYMENT.md).
+For complete technical documentation, see [Android Deployment Guide](./docs/ANDROID_DEPLOYMENT.md).
