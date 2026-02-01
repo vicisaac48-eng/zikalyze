@@ -588,7 +588,8 @@ market data. Crypto markets are highly volatile and unpredictable.
     insights: keyInsights,
     macroCatalysts,
     volumeSpike,
-    precisionEntry,
+    // Use tightZone for consistency with analysis text output
+    precisionEntry: { ...precisionEntry, zone: tightZone },
     institutionalVsRetail,
     scenarios,
     timestamp: new Date().toISOString(),
