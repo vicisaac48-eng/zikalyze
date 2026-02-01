@@ -15,6 +15,7 @@ import { useAILearning } from "@/hooks/useAILearning";
 import { useRealTimeFearGreed } from "@/hooks/useRealTimeFearGreed";
 import { useAnalysisRateLimit } from "@/hooks/useAnalysisRateLimit";
 import { useBrainPipeline } from "@/hooks/useBrainPipeline";
+import { useZikalyzeUltra } from "@/hooks/useZikalyzeUltra";
 import { runClientSideAnalysis, AnalysisResult, LivestreamUpdate } from "@/lib/zikalyze-brain";
 import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brain/types";
 import { format } from "date-fns";
@@ -186,6 +187,17 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     isUnifiedBrainEnabled
   } = useBrainPipeline({ selfLearning: true, unified: true, language: i18n.language || 'en' });
 
+  // 🚀 Zikalyze Ultra — Most advanced analysis with real-time integration
+  const {
+    signal: ultraSignal,
+    regime: ultraRegime,
+    isAnalyzing: ultraAnalyzing,
+    analyze: analyzeWithUltra,
+    feedLivestreamUpdate: feedUltraLivestreamUpdate,
+    learnFromOutcome: ultraLearnFromOutcome,
+    analysisCount: ultraAnalysisCount
+  } = useZikalyzeUltra({ autoAnalyze: false, enableLearning: true });
+
   // Get current language code
   const currentLanguage = i18n.language || 'en';
 
@@ -253,6 +265,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     // Feed the livestream update to the brain pipeline for continuous learning
     feedLivestreamUpdate(livestreamUpdate);
     
+    // 🚀 Also feed to Zikalyze Ultra for advanced analysis learning
+    feedUltraLivestreamUpdate(livestreamUpdate);
+    
     // Log periodic updates for debugging (every 10 seconds based on lastUpdated changes)
     if (streamUpdateCount % 5 === 0) {
       console.log(
@@ -261,7 +276,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
         `Learning: ${isSelfLearningEnabled ? 'ACTIVE' : 'INACTIVE'}`
       );
     }
-  }, [crypto, liveData.price, liveData.change24h, liveData.volume, liveData.priceIsLive, liveData.dataSourcesSummary, liveData.lastUpdated, feedLivestreamUpdate, isSelfLearningEnabled, streamUpdateCount]);
+  }, [crypto, liveData.price, liveData.change24h, liveData.volume, liveData.priceIsLive, liveData.dataSourcesSummary, liveData.lastUpdated, feedLivestreamUpdate, feedUltraLivestreamUpdate, isSelfLearningEnabled, streamUpdateCount]);
 
   // 📊 Feed chart data to Brain Pipeline for pattern learning
   useEffect(() => {
@@ -287,6 +302,41 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     
     console.log(`[Brain Pipeline] Fed chart data: ${crypto} | Trend: ${chartTrendData.trend24h} | RSI: ${chartTrendData.rsi.toFixed(1)}`);
   }, [crypto, chartTrendData, feedChartData, isSelfLearningEnabled]);
+
+  // 🚀 Run Ultra analysis when chart data is available for enhanced signals
+  useEffect(() => {
+    if (!chartTrendData?.isLive || chartTrendData.candles.length < 20) return;
+    
+    try {
+      // Run Ultra analysis with chart data
+      const ultraResult = analyzeWithUltra({
+        candles: chartTrendData.candles,
+        trend24h: chartTrendData.trend24h,
+        trendStrength: chartTrendData.trendStrength,
+        higherHighs: chartTrendData.higherHighs,
+        higherLows: chartTrendData.higherLows,
+        lowerHighs: chartTrendData.lowerHighs,
+        lowerLows: chartTrendData.lowerLows,
+        ema9: chartTrendData.ema9,
+        ema21: chartTrendData.ema21,
+        rsi: chartTrendData.rsi,
+        volumeTrend: chartTrendData.volumeTrend,
+        priceVelocity: chartTrendData.priceVelocity,
+        isLive: chartTrendData.isLive,
+        source: chartTrendData.source
+      });
+      
+      if (streamUpdateCount % 10 === 0) {
+        console.log(
+          `[ZikalyzeUltra] Signal: ${ultraResult.signal} | Direction: ${ultraResult.direction} | ` +
+          `Confidence: ${(ultraResult.confidence * 100).toFixed(1)}% | Regime: ${ultraResult.regime}`
+        );
+      }
+    } catch (err) {
+      // Ultra analysis is optional, don't break the main flow
+      console.warn('[ZikalyzeUltra] Analysis failed:', err);
+    }
+  }, [chartTrendData, analyzeWithUltra, streamUpdateCount]);
 
   const runAnalysis = useCallback(async () => {
     // Check rate limit for guest users
