@@ -681,6 +681,7 @@ export type {
 // ✅ Persistent Learning from prediction outcomes
 // ✅ NLP Sentiment Analysis for news/tweets
 // ✅ Backtesting Framework for validation
+// ✅ Hybrid Confirmation (Algorithm + Neural Network)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export {
@@ -690,12 +691,16 @@ export {
   neuralEngine,
   analyzeTextSentiment,
   analyzeMultipleTexts,
-  initializeWeights
+  initializeWeights,
+  // Hybrid confirmation system
+  HybridConfirmationSystem,
+  hybridConfirmation
 } from './neural-engine';
 export type {
   NeuralWeights,
   NLPSentiment,
   BacktestResult,
   BacktestConfig,
-  PredictionRecord
+  PredictionRecord,
+  HybridConfirmationResult
 } from './neural-engine';

@@ -1050,11 +1050,226 @@ export class ZikalyzeNeuralEngine {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 HYBRID CONFIRMATION SYSTEM — Algorithm + Neural Network
+// ═══════════════════════════════════════════════════════════════════════════════
+// Best of both worlds: Uses algorithm as primary signal, neural network for confirmation
+// Higher confidence when both systems agree
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface HybridConfirmationResult {
+  // Primary signal (from algorithm)
+  algorithmBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  algorithmConfidence: number;
+  
+  // Confirmation signal (from neural network)
+  neuralDirection: 'LONG' | 'SHORT' | 'NEUTRAL';
+  neuralConfidence: number;
+  
+  // Combined verdict
+  finalVerdict: 'LONG' | 'SHORT' | 'NEUTRAL';
+  agreement: boolean;
+  confluenceLevel: 'STRONG' | 'MODERATE' | 'WEAK' | 'CONFLICTING';
+  combinedConfidence: number;
+  
+  // Recommendation
+  recommendation: string;
+  positionSizeMultiplier: number; // 0-1, reduce size on disagreement
+  
+  // Timestamps
+  timestamp: number;
+}
+
+/**
+ * Hybrid Confirmation System
+ * 
+ * Combines algorithmic (rule-based) analysis with neural network predictions
+ * for more reliable trading signals.
+ * 
+ * Strengths of each approach:
+ * - Algorithm: Interpretable, proven methodology (ICT/SMC, Fibonacci)
+ * - Neural Network: Learnable, independent verification, faster
+ * 
+ * The hybrid approach uses:
+ * - Algorithm as PRIMARY signal (higher weight due to explainability)
+ * - Neural Network as CONFIRMATION (boosts confidence when agrees)
+ */
+export class HybridConfirmationSystem {
+  private readonly neuralEngine: ZikalyzeNeuralEngine;
+  
+  constructor(engine?: ZikalyzeNeuralEngine) {
+    this.neuralEngine = engine || new ZikalyzeNeuralEngine();
+  }
+
+  /**
+   * Get confirmation signal combining both approaches
+   * 
+   * @param algorithmResult - Result from runClientSideAnalysis()
+   * @param features - Feature vector for neural network (20 values)
+   * @param newsTexts - Optional news/social text for NLP analysis
+   */
+  getConfirmation(
+    algorithmResult: { bias: 'LONG' | 'SHORT' | 'NEUTRAL'; confidence: number },
+    features: number[],
+    newsTexts?: string[]
+  ): HybridConfirmationResult {
+    // Get neural network prediction
+    const nnResult = this.neuralEngine.predict(features, newsTexts);
+    
+    // Check agreement
+    const agreement = algorithmResult.bias === nnResult.direction;
+    
+    // Calculate confluence level
+    let confluenceLevel: HybridConfirmationResult['confluenceLevel'];
+    let combinedConfidence: number;
+    let positionSizeMultiplier: number;
+    let recommendation: string;
+    let finalVerdict: 'LONG' | 'SHORT' | 'NEUTRAL';
+    
+    if (agreement) {
+      // Both systems agree
+      if (algorithmResult.confidence >= 65 && nnResult.combinedConfidence >= 0.5) {
+        confluenceLevel = 'STRONG';
+        combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
+        positionSizeMultiplier = 1.0;
+        recommendation = `✅ STRONG CONFLUENCE — Both algorithm and neural network agree on ${algorithmResult.bias}. High confidence trade.`;
+      } else if (algorithmResult.confidence >= 50 || nnResult.combinedConfidence >= 0.35) {
+        confluenceLevel = 'MODERATE';
+        combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
+        positionSizeMultiplier = 0.75;
+        recommendation = `🟡 MODERATE CONFLUENCE — Systems agree but confidence is moderate. Consider reduced position size.`;
+      } else {
+        confluenceLevel = 'WEAK';
+        combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
+        positionSizeMultiplier = 0.5;
+        recommendation = `⚠️ WEAK CONFLUENCE — Systems agree but low confidence. Small position or wait for better setup.`;
+      }
+      finalVerdict = algorithmResult.bias;
+    } else {
+      // Systems disagree
+      confluenceLevel = 'CONFLICTING';
+      combinedConfidence = Math.min(algorithmResult.confidence, nnResult.combinedConfidence * 100) * 0.5;
+      positionSizeMultiplier = 0.25;
+      
+      // Use algorithm as primary (more interpretable)
+      finalVerdict = algorithmResult.confidence > 70 ? algorithmResult.bias : 'NEUTRAL';
+      
+      recommendation = `⚠️ CONFLICTING SIGNALS — Algorithm says ${algorithmResult.bias} (${algorithmResult.confidence.toFixed(0)}%), Neural Network says ${nnResult.direction} (${(nnResult.combinedConfidence * 100).toFixed(0)}%). ` +
+        `Recommendation: ${algorithmResult.confidence > 70 ? 'Follow algorithm with reduced size' : 'Wait for alignment or skip trade'}.`;
+    }
+    
+    return {
+      algorithmBias: algorithmResult.bias,
+      algorithmConfidence: algorithmResult.confidence,
+      neuralDirection: nnResult.direction,
+      neuralConfidence: nnResult.combinedConfidence,
+      finalVerdict,
+      agreement,
+      confluenceLevel,
+      combinedConfidence: Math.max(0, Math.min(100, combinedConfidence)),
+      recommendation,
+      positionSizeMultiplier,
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * Quick comparison without full result object
+   */
+  quickCompare(
+    algorithmBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    algorithmConfidence: number,
+    features: number[]
+  ): { agree: boolean; confluenceLevel: string; recommendation: string } {
+    const nnResult = this.neuralEngine.predict(features);
+    const agree = algorithmBias === nnResult.direction;
+    
+    let confluenceLevel: string;
+    let recommendation: string;
+    
+    if (agree) {
+      if (algorithmConfidence >= 65 && nnResult.confidence >= 0.5) {
+        confluenceLevel = 'STRONG ✅';
+        recommendation = 'Execute trade with full position size';
+      } else {
+        confluenceLevel = 'MODERATE 🟡';
+        recommendation = 'Execute trade with reduced position size';
+      }
+    } else {
+      confluenceLevel = 'CONFLICTING ⚠️';
+      recommendation = algorithmConfidence > 70 
+        ? 'Follow algorithm with caution (25% size)'
+        : 'Wait for alignment or skip';
+    }
+    
+    return { agree, confluenceLevel, recommendation };
+  }
+
+  /**
+   * Get the best approach recommendation based on market conditions
+   */
+  static getApproachRecommendation(): string {
+    return `
+═══════════════════════════════════════════════════════════════════════
+🎯 ALGORITHM vs NEURAL NETWORK — WHICH IS BEST?
+═══════════════════════════════════════════════════════════════════════
+
+📊 ALGORITHM (Rule-Based) — RECOMMENDED AS PRIMARY
+─────────────────────────────────────────────────────────────────────
+✅ Strengths:
+   • Proven trading methodology (ICT/SMC, Fibonacci, Confluence)
+   • High explainability — clear reasoning for each decision
+   • Provides specific entry zones, targets, and invalidation levels
+   • Based on established market structure concepts
+   • More reliable for actionable trading signals
+
+❌ Weaknesses:
+   • Cannot learn or adapt from past predictions
+   • Fixed rules may miss novel market patterns
+
+🧠 NEURAL NETWORK — RECOMMENDED AS CONFIRMATION
+─────────────────────────────────────────────────────────────────────
+✅ Strengths:
+   • Can learn from past prediction outcomes
+   • Faster processing (sub-millisecond)
+   • Independent verification of algorithm signals
+   • Adapts over time with more training data
+
+❌ Weaknesses:
+   • "Black box" — harder to interpret decisions
+   • Needs training data to improve
+   • Lower initial accuracy (untrained state)
+
+🏆 BEST APPROACH: USE BOTH TOGETHER
+─────────────────────────────────────────────────────────────────────
+1. Algorithm = PRIMARY SIGNAL (60% weight)
+   • Use for trade direction, entry zones, targets
+   • More reliable for actual trading decisions
+
+2. Neural Network = CONFIRMATION (40% weight)
+   • Use to verify algorithm's signal
+   • Higher confidence when both agree
+   • Reduce position size when they disagree
+
+3. Combined Confluence:
+   • STRONG (both agree + high confidence) → Full position
+   • MODERATE (both agree + lower confidence) → 75% position
+   • WEAK (both agree + low confidence) → 50% position
+   • CONFLICTING (disagree) → 25% position or skip
+
+═══════════════════════════════════════════════════════════════════════
+`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📤 EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Singleton instance for global use
 export const neuralEngine = new ZikalyzeNeuralEngine();
+
+// Hybrid confirmation singleton (uses neuralEngine)
+export const hybridConfirmation = new HybridConfirmationSystem(neuralEngine);
 
 // Export utility functions
 export { initializeWeights, crossEntropyLoss, softmax };

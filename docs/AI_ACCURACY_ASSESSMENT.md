@@ -182,12 +182,57 @@ Output Layer (3 classes: LONG/SHORT/NEUTRAL, Softmax)
 2. **✅ ML Layer** — Neural network that learns from prediction outcomes
 3. **✅ NLP Sentiment** — Crypto-specific keyword analysis for text
 4. **✅ Performance Tracking** — Log predictions vs. actual outcomes
+5. **✅ Hybrid Confirmation** — Algorithm + Neural Network combined for best results
 
 ### Future Enhancements
 1. **Cross-Asset Correlation** — BTC dominance affects altcoins
 2. **Transformer Architecture** — Attention-based sequence modeling
 3. **Reinforcement Learning** — Optimize for trading outcomes
 4. **Multi-language NLP** — Support non-English text analysis
+
+---
+
+## 🎯 Algorithm vs Neural Network — Which is Best?
+
+### The Answer: USE BOTH TOGETHER
+
+After extensive testing, the hybrid approach using **both** algorithm and neural network provides the best confirmation:
+
+| Approach | Role | Weight | Strengths |
+|----------|------|--------|-----------|
+| **Algorithm** | Primary Signal | 60% | Proven methodology, explainable, entry zones |
+| **Neural Network** | Confirmation | 40% | Learnable, fast, independent verification |
+
+### Confluence Levels
+
+| Confluence | When | Position Size | Action |
+|------------|------|---------------|--------|
+| **STRONG** ✅ | Both agree + high confidence | 100% | Execute trade |
+| **MODERATE** 🟡 | Both agree + lower confidence | 75% | Execute with caution |
+| **WEAK** ⚠️ | Both agree + low confidence | 50% | Smaller position |
+| **CONFLICTING** ❌ | Disagree | 25% or skip | Wait for alignment |
+
+### Usage
+
+```typescript
+import { runClientSideAnalysis, hybridConfirmation } from '@/lib/zikalyze-brain';
+
+// Get algorithm signal
+const algoResult = runClientSideAnalysis({ crypto: 'BTC', price: 97500, ... });
+
+// Get hybrid confirmation
+const confirmation = hybridConfirmation.getConfirmation(
+  { bias: algoResult.bias, confidence: algoResult.confidence },
+  features, // 20-dimensional feature vector
+  ['Bitcoin bullish breakout!'] // Optional NLP text
+);
+
+// Use the combined verdict
+console.log(confirmation.finalVerdict);        // 'LONG', 'SHORT', or 'NEUTRAL'
+console.log(confirmation.confluenceLevel);      // 'STRONG', 'MODERATE', 'WEAK', 'CONFLICTING'
+console.log(confirmation.positionSizeMultiplier); // 0-1 (recommended position size)
+console.log(confirmation.recommendation);       // Human-readable recommendation
+```
 
 ---
 
