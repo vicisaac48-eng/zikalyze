@@ -322,14 +322,17 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       connectBlockWebSocket();
     }
 
+    // Capture ref for cleanup
+    const wsState = wsStateRef.current;
+    
     return () => {
       isMountedRef.current = false;
-      if (wsStateRef.current.socket) {
-        wsStateRef.current.socket.close();
-        wsStateRef.current.socket = null;
+      if (wsState.socket) {
+        wsState.socket.close();
+        wsState.socket = null;
       }
-      if (wsStateRef.current.reconnectTimeout) {
-        clearTimeout(wsStateRef.current.reconnectTimeout);
+      if (wsState.reconnectTimeout) {
+        clearTimeout(wsState.reconnectTimeout);
       }
     };
   }, [crypto, connectBlockWebSocket]);
