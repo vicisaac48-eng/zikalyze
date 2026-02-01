@@ -118,9 +118,14 @@ export function calculatePositionSize(
 // EXAMPLE 4: Combining ULTRA with Existing Brain Analysis
 // ═══════════════════════════════════════════════════════════════════════════════
 
+interface StandardBrainResult {
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  confidence: number;
+}
+
 export async function comprehensiveAnalysis(
   chartData: ChartTrendInput,
-  standardBrainResult: any
+  standardBrainResult: StandardBrainResult
 ) {
   // Get ULTRA signal
   const ultraSignal = analyzeWithUltra(chartData);

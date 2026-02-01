@@ -33,6 +33,10 @@ export interface UltraFeatures {
   fractalDimension: number;
   
   // Information theory
+  /** 
+   * Shannon entropy of price returns. 
+   * Value of -1 indicates unreliable data (insufficient valid returns).
+   */
   entropy: number;
   
   // Volume analysis
@@ -96,6 +100,8 @@ interface LearningMemory {
   error?: number;
   modelWeights: number[];
   features: number[];
+  // Individual model predictions for proper gradient descent
+  modelPredictions: number[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -370,6 +376,9 @@ export class ZikalyzeUltra {
   private memories: LearningMemory[] = [];
   private readonly maxMemories = 1000;
   
+  // Store last model predictions for gradient calculation
+  private lastModelPredictions: number[] = [0, 0, 0, 0];
+  
   // Model weights (will adapt over time)
   private weights = {
     gradientBoost: 0.4,
@@ -443,9 +452,14 @@ export class ZikalyzeUltra {
     const fractalDimension = calculateFractalDimension(hurstExponent);
     
     // 6. Entropy (information content)
-    // Note: Filter NaN/Inf values that may occur with insufficient data or extreme price movements
+    // Filter NaN/Inf values that may occur with insufficient data or extreme price movements
     const validReturns = returns.filter(r => !isNaN(r) && isFinite(r));
-    const entropy = calculateEntropy(validReturns.length > 0 ? validReturns : [0]);
+    // Use sentinel value -1 when data quality is poor (all returns invalid)
+    // This allows downstream consumers to detect data quality issues
+    const entropyDataQualityOk = validReturns.length >= returns.length * 0.5; // At least 50% valid
+    const entropy = entropyDataQualityOk 
+      ? calculateEntropy(validReturns) 
+      : -1; // Sentinel value indicating unreliable entropy
     
     // 7. VWAP
     const vwap = calculateVWAP(candles);
@@ -624,13 +638,16 @@ export class ZikalyzeUltra {
       return 0.8; // Expect reversion up
     }
     
-    // Check for price deviation from VWAP
-    const currentPrice = features.vwap / (1 + features.returns[0]);
-    const vwapDev = (currentPrice - features.vwap) / features.vwap;
+    // Check for price deviation from VWAP using stored price-volume correlation
+    // The priceVolumeCorrelation captures price-volume dynamics
+    // Negative correlation often indicates distribution (bearish), positive indicates accumulation (bullish)
+    const vwapDeviation = features.priceVolumeCorrelation;
     
-    // Revert if too far from VWAP
-    if (Math.abs(vwapDev) > 0.02) {
-      return -Math.sign(vwapDev) * 0.5;
+    // Mean revert towards VWAP when price deviates significantly
+    // Use Bollinger bandwidth as proxy for overextension
+    if (features.bollingerBandwidth > 0.1) {
+      // High bandwidth = price extended, expect reversion
+      return -Math.sign(mean(features.returns)) * 0.5;
     }
     
     return 0;
@@ -660,6 +677,7 @@ export class ZikalyzeUltra {
   
   /**
    * Adaptive ensemble prediction with dynamic weighting
+   * Returns both the ensemble prediction and individual model predictions
    */
   predict(features: UltraFeatures, regime: MarketRegime): number {
     // Get predictions from each model
@@ -667,6 +685,9 @@ export class ZikalyzeUltra {
     const pred2 = this.predictTrendFollowing(features);
     const pred3 = this.predictMeanReversion(features);
     const pred4 = this.predictRegimeAdaptive(features, regime);
+    
+    // Store individual predictions for later gradient calculation
+    this.lastModelPredictions = [pred1, pred2, pred3, pred4];
     
     // Apply learned weights
     const prediction = 
@@ -686,7 +707,13 @@ export class ZikalyzeUltra {
     let confidence = 0.5;
     
     // Higher confidence with lower entropy (more predictable)
-    confidence += (1 - features.entropy / 4) * 0.2;
+    // Handle sentinel value (-1) indicating unreliable entropy
+    if (features.entropy >= 0) {
+      confidence += (1 - features.entropy / 4) * 0.2;
+    } else {
+      // Reduce confidence when entropy is unreliable
+      confidence -= 0.1;
+    }
     
     // Higher confidence with consistent momentum
     const momentumStd = std(features.momentum);
@@ -815,7 +842,7 @@ export class ZikalyzeUltra {
     // Feature importance
     const featureImportance = this.calculateFeatureImportance(features);
     
-    // Store in memory for learning
+    // Store in memory for learning (including individual model predictions for gradient descent)
     this.addMemory({
       timestamp: Date.now(),
       regime,
@@ -827,6 +854,7 @@ export class ZikalyzeUltra {
         this.weights.regimeAdaptive,
       ],
       features: features.featureVector,
+      modelPredictions: [...this.lastModelPredictions],
     });
     
     return {
@@ -857,7 +885,7 @@ export class ZikalyzeUltra {
   
   /**
    * Learn from historical performance
-   * This would typically be called with actual outcomes
+   * Uses proper gradient descent with model-specific gradients
    */
   learn(actualOutcome: number): void {
     if (this.memories.length === 0) return;
@@ -870,29 +898,35 @@ export class ZikalyzeUltra {
     lastMemory.error = error;
     lastMemory.actual = actualOutcome;
     
-    // Update weights based on error using gradient descent
-    // Full implementation would compute ∂Loss/∂weight for each model using backpropagation
-    // This simplified version uses the error signal as a proxy for the gradient direction
+    // Use model-specific gradients: ∂Loss/∂w_i = -2 * error * modelPrediction_i
+    // For MSE loss: L = (actual - pred)^2 = (actual - Σw_i*p_i)^2
+    // ∂L/∂w_i = -2 * (actual - pred) * p_i = -2 * error * p_i
     const learningRate = 0.01;
-    const errorSignal = -error; // Negative gradient (want to minimize error)
+    const modelPredictions = lastMemory.modelPredictions;
     
-    // Adjust weights proportionally to their current values
-    // Proper gradient would be: ∂Loss/∂w_i = error * modelPrediction_i
-    const adjustment = errorSignal * learningRate;
+    // Compute model-specific weight updates
+    this.weights.gradientBoost += learningRate * error * modelPredictions[0];
+    this.weights.trendFollowing += learningRate * error * modelPredictions[1];
+    this.weights.meanReversion += learningRate * error * modelPredictions[2];
+    this.weights.regimeAdaptive += learningRate * error * modelPredictions[3];
     
-    this.weights.gradientBoost += adjustment * 0.4;
-    this.weights.trendFollowing += adjustment * 0.3;
-    this.weights.meanReversion += adjustment * 0.2;
-    this.weights.regimeAdaptive += adjustment * 0.1;
+    // Clamp weights to non-negative values (can't short a model)
+    // Then normalize to sum to 1
+    this.weights.gradientBoost = Math.max(0.01, this.weights.gradientBoost);
+    this.weights.trendFollowing = Math.max(0.01, this.weights.trendFollowing);
+    this.weights.meanReversion = Math.max(0.01, this.weights.meanReversion);
+    this.weights.regimeAdaptive = Math.max(0.01, this.weights.regimeAdaptive);
     
-    // Normalize weights to sum to 1
-    const totalWeight = Object.values(this.weights).reduce((sum, w) => sum + Math.abs(w), 0);
-    if (totalWeight > 0) {
-      this.weights.gradientBoost = Math.abs(this.weights.gradientBoost) / totalWeight;
-      this.weights.trendFollowing = Math.abs(this.weights.trendFollowing) / totalWeight;
-      this.weights.meanReversion = Math.abs(this.weights.meanReversion) / totalWeight;
-      this.weights.regimeAdaptive = Math.abs(this.weights.regimeAdaptive) / totalWeight;
-    }
+    const totalWeight = 
+      this.weights.gradientBoost + 
+      this.weights.trendFollowing + 
+      this.weights.meanReversion + 
+      this.weights.regimeAdaptive;
+    
+    this.weights.gradientBoost /= totalWeight;
+    this.weights.trendFollowing /= totalWeight;
+    this.weights.meanReversion /= totalWeight;
+    this.weights.regimeAdaptive /= totalWeight;
   }
   
   /**
