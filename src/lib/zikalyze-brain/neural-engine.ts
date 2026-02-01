@@ -1210,19 +1210,19 @@ export class HybridConfirmationSystem {
   ): string {
     const reasons: string[] = [];
     
-    // Feature indices (from index.ts feature vector):
-    // 0: price, 1: change, 2: high24h, 3: low24h, 4: pricePosition
-    // 5: volume, 6: avgVolume, 7: volatility proxy, 8: daily range %
-    // 9: RSI, 10: EMA9 deviation, 11: EMA21 deviation, 12: MACD signal
-    // 13: Volume ratio, 14: Volume trend, 15-16: Log volumes
-    // 17: Price position, 18: high24h, 19: low24h
+    // Feature indices from index.ts featureVector (0-indexed):
+    // [0]: Current price, [1]: Price 24h ago, [2-3]: Est. historical prices
+    // [4]: 24h change %, [5]: Normalized position, [6]: Volatility proxy
+    // [7]: Daily range %, [8]: RSI, [9]: EMA9 deviation, [10]: EMA21 deviation
+    // [11]: MACD signal, [12]: Volume ratio, [13]: Volume trend
+    // [14-15]: Log volumes, [16]: Price position (0-100%), [17-18]: 24h high/low
     
-    const priceChange = features[1] || 0;
-    const rsi = features[9] || 50;
-    const ema9Dev = features[10] || 0;
-    const macdSignal = features[12] || 0;
-    const volumeRatio = features[13] || 1;
-    const pricePosition = features[17] || 50;
+    const priceChange = features[4] || 0;
+    const rsi = features[8] || 50;
+    const ema9Dev = features[9] || 0;
+    const macdSignal = features[11] || 0;
+    const volumeRatio = features[12] || 1;
+    const pricePosition = features[16] || 50;
     
     if (nnResult.direction === 'LONG') {
       // Explain bullish signals

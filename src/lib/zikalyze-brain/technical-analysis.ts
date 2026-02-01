@@ -1136,7 +1136,7 @@ export function generatePrecisionEntry(
       zone: `$${support.toFixed(dec)} – $${resistance.toFixed(dec)}`,
       trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need 45%+)`,
       confirmation: detailedConfirmation,
-      invalidation: 'N/A — No entry zone active',
+      invalidation: 'N/A',
       volumeCondition: volumeStrength,
       structureStatus: 'Insufficient Confluence',
       movementPhase: 'Wait for setup'
