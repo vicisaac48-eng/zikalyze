@@ -588,7 +588,8 @@ market data. Crypto markets are highly volatile and unpredictable.
     insights: keyInsights,
     macroCatalysts,
     volumeSpike,
-    precisionEntry,
+    // Use tightZone for consistency with analysis text output
+    precisionEntry: { ...precisionEntry, zone: tightZone },
     institutionalVsRetail,
     scenarios,
     timestamp: new Date().toISOString(),
@@ -671,3 +672,35 @@ export type {
   EmergenceMetrics,
   EmergenceState
 } from './brain-pipeline';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 NEURAL ENGINE — True AI with Learning, NLP & Backtesting
+// ═══════════════════════════════════════════════════════════════════════════════
+// Addresses key limitations:
+// ✅ True Neural Network with trainable weights
+// ✅ Persistent Learning from prediction outcomes
+// ✅ NLP Sentiment Analysis for news/tweets
+// ✅ Backtesting Framework for validation
+// ✅ Hybrid Confirmation (Algorithm + Neural Network)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export {
+  ZikalyzeNeuralNetwork,
+  ZikalyzeNeuralEngine,
+  BacktestEngine,
+  neuralEngine,
+  analyzeTextSentiment,
+  analyzeMultipleTexts,
+  initializeWeights,
+  // Hybrid confirmation system
+  HybridConfirmationSystem,
+  hybridConfirmation
+} from './neural-engine';
+export type {
+  NeuralWeights,
+  NLPSentiment,
+  BacktestResult,
+  BacktestConfig,
+  PredictionRecord,
+  HybridConfirmationResult
+} from './neural-engine';
