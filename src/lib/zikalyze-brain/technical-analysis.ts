@@ -1103,12 +1103,40 @@ export function generatePrecisionEntry(
 
   // NO TRADE if confluence is low
   if (topDown.tradeableDirection === 'NO_TRADE' || topDown.confluenceScore < 45) {
+    // Generate detailed explanation for low confluence
+    const conflictDetails: string[] = [];
+    const allTimeframes = [
+      { name: 'Weekly', trend: topDown.weekly.trend },
+      { name: 'Daily', trend: topDown.daily.trend },
+      { name: '4H', trend: topDown.h4.trend },
+      { name: '1H', trend: topDown.h1.trend },
+      { name: '15M', trend: topDown.m15.trend }
+    ];
+    
+    const bullishTFs = allTimeframes.filter(tf => tf.trend === 'BULLISH');
+    const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH');
+    const neutralTFs = allTimeframes.filter(tf => tf.trend === 'NEUTRAL');
+    
+    if (bullishTFs.length > 0 && bearishTFs.length > 0) {
+      conflictDetails.push(`Conflicting: ${bullishTFs.map(t => t.name).join('/')} bullish vs ${bearishTFs.map(t => t.name).join('/')} bearish`);
+    }
+    if (neutralTFs.length >= 2) {
+      conflictDetails.push(`${neutralTFs.length} timeframes neutral (${neutralTFs.map(t => t.name).join(', ')})`);
+    }
+    if (topDown.confluenceScore < 45) {
+      conflictDetails.push(`Only ${topDown.confluenceScore}% alignment (min 45% required)`);
+    }
+    
+    const detailedConfirmation = conflictDetails.length > 0 
+      ? conflictDetails.join(' • ') 
+      : (topDown.reasoning[0] || 'Wait for alignment');
+    
     return {
       timing: 'AVOID',
       zone: `$${support.toFixed(dec)} – $${resistance.toFixed(dec)}`,
       trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need 45%+)`,
-      confirmation: topDown.reasoning[0] || 'Wait for alignment',
-      invalidation: 'N/A',
+      confirmation: detailedConfirmation,
+      invalidation: 'N/A — No entry zone active',
       volumeCondition: volumeStrength,
       structureStatus: 'Insufficient Confluence',
       movementPhase: 'Wait for setup'
