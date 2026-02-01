@@ -223,4 +223,15 @@ export interface AnalysisResult {
     combinedConfidence: number;
     usedBothSystems: boolean; // Confirms both algorithm and neural network were used
   };
+  // Trade Quality Assessment — Follow trend, wait for confirmation, avoid bad trades
+  tradeQuality?: {
+    followsTrend: boolean;           // True if trade direction aligns with HTF trend
+    hasConfirmation: boolean;        // True if multiple confirmations present
+    confirmationCount: number;       // Number of confirmations (0-5)
+    confirmations: string[];         // List of confirmations met
+    isBadTrade: boolean;             // True if trade should be avoided
+    badTradeReasons: string[];       // Reasons why this is a bad trade
+    qualityScore: number;            // 0-100 overall trade quality
+    recommendation: 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
+  };
 }
