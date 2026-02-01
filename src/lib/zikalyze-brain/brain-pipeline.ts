@@ -2477,7 +2477,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
   
   /**
    * Calculate Fear & Greed impact on analysis
-   * Uses contrarian signals at extremes and trend following in moderate zones
+   * Uses trend-following approach: don't trade against the trend, follow the trend 📉📈
    */
   private calculateFearGreedImpact(input: AnalysisInput): {
     value: number;
@@ -2509,51 +2509,51 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       diff > 3 ? 'RISING' : diff < -3 ? 'FALLING' : 'STABLE';
     
     // Calculate bias modifier based on Fear & Greed levels
-    // - At EXTREMES: Use contrarian approach (extreme fear = bullish, extreme greed = bearish)
-    // - At MODERATE levels: Follow sentiment (fear = bearish, greed = bullish) - describes current market mood
-    // - At SLIGHT levels: Small bias adjustment with accurate description
+    // - TREND FOLLOWING APPROACH: Don't trade against the trend, follow the trend 📉📈
+    // - At ALL levels: Follow sentiment (fear = bearish, greed = bullish)
+    // - Stronger signals at extreme levels
     let biasModifier = 0;
-    let contrarian = false;
+    let isExtreme = false; // True when at extreme fear/greed levels (stronger signal)
     let description = '';
     
-    // Contrarian signals at EXTREME levels (<=20 or >=80)
+    // Trend-following signals at EXTREME levels (<=20 or >=80)
     if (value <= 20) {
-      biasModifier = 0.15; // Bullish contrarian - buy when others are fearful
-      contrarian = true;
-      description = '🟢 Extreme fear - potential buying opportunity (contrarian signal)';
+      biasModifier = -0.15; // Follow the fear trend - bearish signal
+      isExtreme = true;
+      description = '🔴 Extreme fear - follow the bearish trend (trend-following signal)';
     } else if (value >= 80) {
-      biasModifier = -0.15; // Bearish contrarian - sell when others are greedy
-      contrarian = true;
-      description = '🔴 Extreme greed - potential selling opportunity (contrarian signal)';
+      biasModifier = 0.15; // Follow the greed trend - bullish signal
+      isExtreme = true;
+      description = '🟢 Extreme greed - follow the bullish trend (trend-following signal)';
     } 
     // Fear zone (21-35)
     else if (value <= 35) {
       biasModifier = -0.05; // Market is fearful, sentiment is bearish
-      contrarian = false;
+      isExtreme = false;
       description = '😰 Fear in market - current sentiment is bearish';
     } 
     // High greed zone (65-79)
     else if (value >= 65) {
       biasModifier = 0.05; // Market is greedy, sentiment is bullish
-      contrarian = false;
+      isExtreme = false;
       description = '🤑 High greed in market - current sentiment is bullish';
     } 
     // Slight fear zone (36-45) - leaning bearish but not strong
     else if (value <= 45) {
       biasModifier = -0.02; // Slight bearish sentiment
-      contrarian = false;
+      isExtreme = false;
       description = '😕 Slight fear - market sentiment leans cautious';
     }
     // Slight greed zone (55-64) - leaning bullish but not strong
     else if (value >= 55) {
       biasModifier = 0.02; // Slight bullish sentiment
-      contrarian = false;
+      isExtreme = false;
       description = '🙂 Slight greed - market sentiment leans optimistic';
     }
     // True neutral zone (46-54)
     else {
       biasModifier = 0;
-      contrarian = false;
+      isExtreme = false;
       description = '😐 Neutral sentiment - market is balanced';
     }
     
@@ -2570,7 +2570,9 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       value,
       trend,
       biasModifier,
-      contrarian,
+      // Note: 'contrarian' field name kept for API compatibility
+      // Now indicates if this is an extreme-level trend-following signal
+      contrarian: isExtreme,
       description,
       isLive
     };

@@ -1262,13 +1262,13 @@ export function calculateFinalBias(data: {
     bearishPoints += 2; 
   }
 
-  // 3. FEAR & GREED (weight: 2) — Contrarian
+  // 3. FEAR & GREED (weight: 2) — Trend Following: Don't trade against the trend 📉📈
   if (fearGreed < 25) { 
-    bullishPoints += 2; 
-    insights.push('😱 Extreme Fear — Contrarian BUY'); 
-  } else if (fearGreed > 75) { 
     bearishPoints += 2; 
-    insights.push('🤑 Extreme Greed — Contrarian SELL'); 
+    insights.push('😱 Extreme Fear — Follow Trend SELL'); 
+  } else if (fearGreed > 75) { 
+    bullishPoints += 2; 
+    insights.push('🤑 Extreme Greed — Follow Trend BUY'); 
   }
 
   // 4. INSTITUTIONAL BIAS (weight: 3)
