@@ -644,7 +644,10 @@ export {
   LivestreamLearner,
   SelfLearningBrainPipeline,
   // Unified Brain
-  UnifiedBrain
+  UnifiedBrain,
+  // Emergence Engine
+  EmergenceEngine,
+  globalEmergenceEngine
 } from './brain-pipeline';
 export type { 
   RawCryptoData, 
@@ -662,5 +665,9 @@ export type {
   VelocityPattern,
   SelfLearningOutput,
   // Unified Brain types
-  UnifiedBrainOutput
+  UnifiedBrainOutput,
+  // Emergence types
+  ComponentContribution,
+  EmergenceMetrics,
+  EmergenceState
 } from './brain-pipeline';
