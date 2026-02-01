@@ -249,6 +249,7 @@ export const useMultiSymbolLivePrice = (
       clearTimeout(initTimeout);
       cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbols.join(','), connect, cleanup]);
 
   // Apply fallback prices when not live

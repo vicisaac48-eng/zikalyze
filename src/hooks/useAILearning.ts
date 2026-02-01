@@ -169,12 +169,14 @@ export function useAILearning(symbol: string) {
     return () => {
       navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load patterns on mount/symbol change
   useEffect(() => {
     loadPatterns();
     loadGlobalLearning();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, userId]);
 
   // Load from localStorage first, then merge offline learning, then from DB

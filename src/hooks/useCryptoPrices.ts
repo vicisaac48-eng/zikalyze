@@ -660,6 +660,7 @@ export const useCryptoPrices = () => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run once on mount, use ref to track initialization
 
   // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
@@ -847,6 +848,7 @@ export const useCryptoPrices = () => {
       console.log(`[Binance] Connection failed, trying Bybit fallback...`);
       connectBybit();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatePrice]);
 
   // Connect to Bybit WebSocket - Fast updates, KAS support
@@ -1040,6 +1042,7 @@ export const useCryptoPrices = () => {
       console.log(`[Kraken] Connection failed, retrying...`);
       setTimeout(() => connectKraken(), 4000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatePrice]);
 
   // Initial fetch
@@ -1072,15 +1075,38 @@ export const useCryptoPrices = () => {
     
     return () => {
       clearTimeout(timeoutId);
+      
+      // Clear reconnect timeouts using current refs
+      // Note: Intentionally using .current to clear all current timeouts,
+      // including any that may have been added after effect setup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout);
       });
       
-      if (binanceWsRef.current) binanceWsRef.current.close();
-      if (okxWsRef.current) okxWsRef.current.close();
-      if (bybitWsRef.current) bybitWsRef.current.close();
-      if (krakenWsRef.current) krakenWsRef.current.close();
-      if (coinbaseWsRef.current) coinbaseWsRef.current.close();
+      // Close all WebSocket connections and clear refs
+      // Note: Using .current directly is intentional - we want to close
+      // the current active connections at cleanup time, not stale refs
+      if (binanceWsRef.current) {
+        binanceWsRef.current.close();
+        binanceWsRef.current = null;
+      }
+      if (okxWsRef.current) {
+        okxWsRef.current.close();
+        okxWsRef.current = null;
+      }
+      if (bybitWsRef.current) {
+        bybitWsRef.current.close();
+        bybitWsRef.current = null;
+      }
+      if (krakenWsRef.current) {
+        krakenWsRef.current.close();
+        krakenWsRef.current = null;
+      }
+      if (coinbaseWsRef.current) {
+        coinbaseWsRef.current.close();
+        coinbaseWsRef.current = null;
+      }
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 
@@ -1173,6 +1199,7 @@ export const useCryptoPrices = () => {
     if (prices.length > 0 && isLive) {
       fetchCoinCapFallback();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLive]); // Only run once when we go live
 
 // All price updates now come from WebSockets - no polling needed

@@ -558,6 +558,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, saveAnalysis, liveData.onChain, liveData.sentiment, getCachedAnalysis, getCacheAge, cacheAnalysis, markFreshData, onChainMetrics, chartAPI.chartTrendInput, chartAPI.multiTimeframe, chartTrendData, multiTfData, realTimeFearGreed, isRealTimeData, actualDataSource, canAnalyze, openRateLimitModal, recordAnalysis]);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -719,6 +720,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     if (streamUpdateCountRef.current % 10 === 0) {
       console.log(`[AI Learning] Sample #${streamUpdateCountRef.current}: $${currentPrice.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, multiTfData]);
 
   // Auto-start background learning on mount

@@ -321,15 +321,22 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     if (cryptoUpper === 'BTC' || cryptoUpper === 'ETH') {
       connectBlockWebSocket();
     }
-
+    
     return () => {
       isMountedRef.current = false;
-      if (wsStateRef.current.socket) {
-        wsStateRef.current.socket.close();
-        wsStateRef.current.socket = null;
+      // Close current WebSocket connection on cleanup
+      // Note: Intentionally using .current to close the actual current connection,
+      // not a snapshot - WebSocket may have reconnected since effect setup
+      /* eslint-disable react-hooks/exhaustive-deps */
+      const currentSocket = wsStateRef.current.socket;
+      const currentTimeout = wsStateRef.current.reconnectTimeout;
+      /* eslint-enable react-hooks/exhaustive-deps */
+      
+      if (currentSocket) {
+        currentSocket.close();
       }
-      if (wsStateRef.current.reconnectTimeout) {
-        clearTimeout(wsStateRef.current.reconnectTimeout);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
   }, [crypto, connectBlockWebSocket]);
