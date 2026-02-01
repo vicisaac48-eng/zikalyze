@@ -580,6 +580,7 @@ market data. Crypto markets are highly volatile and unpredictable.
   return {
     bias,
     confidence,
+    successProbability: successProb,
     analysis,
     insights: keyInsights,
     macroCatalysts,

@@ -179,6 +179,7 @@ export interface AnalysisInput {
 export interface AnalysisResult {
   bias: 'LONG' | 'SHORT' | 'NEUTRAL';
   confidence: number;
+  successProbability: number; // Calculated success probability based on confluence, timing, bias, and volume analysis
   analysis: string;
   insights: string[];
   macroCatalysts: MacroCatalyst[];
