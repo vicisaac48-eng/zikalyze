@@ -69,6 +69,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   // Background streaming state (hidden, always running)
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamUpdateCount, setStreamUpdateCount] = useState(0);
+  const streamUpdateCountRef = useRef(0); // Use ref for console log to avoid infinite loops
   const [priceHistory, setPriceHistory] = useState<{ price: number; timestamp: number }[]>([]);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const priceHistoryRef = useRef<{ price: number; timestamp: number }[]>([]);
@@ -709,13 +710,16 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     
     // Store latest analysis result for when user clicks Analyze
     setAnalysisResult(result);
-    setStreamUpdateCount(prev => prev + 1);
     
-    // Silent console log for debugging
-    if (streamUpdateCount % 10 === 0) {
-      console.log(`[AI Learning] Sample #${streamUpdateCount + 1}: $${currentPrice.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
+    // Update both ref and state for streamUpdateCount
+    streamUpdateCountRef.current += 1;
+    setStreamUpdateCount(streamUpdateCountRef.current);
+    
+    // Silent console log for debugging (use ref to avoid dependency issues)
+    if (streamUpdateCountRef.current % 10 === 0) {
+      console.log(`[AI Learning] Sample #${streamUpdateCountRef.current}: $${currentPrice.toFixed(2)}, bias=${result.bias}, conf=${result.confidence}%, vol=${volatility.toFixed(2)}%`);
     }
-  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, multiTfData, streamUpdateCount]);
+  }, [crypto, currentPrice, currentChange, currentHigh, currentLow, currentVolume, marketCap, currentLanguage, liveData.sentiment, onChainMetrics, chartTrendData, multiTfData]);
 
   // Auto-start background learning on mount
   useEffect(() => {
@@ -758,6 +762,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       // Reset local streaming data for new crypto (persistent data loads automatically via hook)
       priceHistoryRef.current = [];
       setPriceHistory([]);
+      streamUpdateCountRef.current = 0;
       setStreamUpdateCount(0);
       startLearningSession();
       console.log(`[AI Learning] Switched to ${crypto}, loading persistent learning data...`);
