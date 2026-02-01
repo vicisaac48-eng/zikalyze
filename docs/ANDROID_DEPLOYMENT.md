@@ -8,7 +8,7 @@ This guide explains how to build and publish Zikalyze to the Google Play Store.
 - Java JDK 17
 - Android Studio (for local development)
 - Google Play Console account
-- Android signing keystore (for release builds)
+- Android signing keystore (for release builds - [see how to create one](#1-create-a-release-keystore))
 
 ## Quick Start
 
