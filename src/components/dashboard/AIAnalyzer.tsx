@@ -14,7 +14,8 @@ import { useChartAPI } from "@/hooks/useChartAPI";
 import { useAILearning } from "@/hooks/useAILearning";
 import { useRealTimeFearGreed } from "@/hooks/useRealTimeFearGreed";
 import { useAnalysisRateLimit } from "@/hooks/useAnalysisRateLimit";
-import { runClientSideAnalysis, AnalysisResult } from "@/lib/zikalyze-brain";
+import { useBrainPipeline } from "@/hooks/useBrainPipeline";
+import { runClientSideAnalysis, AnalysisResult, LivestreamUpdate } from "@/lib/zikalyze-brain";
 import { MultiTimeframeInput, TimeframeAnalysisInput } from "@/lib/zikalyze-brain/types";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
@@ -169,6 +170,22 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     closeRateLimitModal
   } = useAnalysisRateLimit();
 
+  // 🧠 Unified Brain Pipeline — Self-learning from real-time and livestream data
+  const {
+    unifiedOutput,
+    ictAnalysis: brainIctAnalysis,
+    hasICTSetup: brainHasICTSetup,
+    isProcessing: brainProcessing,
+    analyze: unifiedAnalyze,
+    feedLivestreamUpdate,
+    feedChartData,
+    storageStats,
+    learningAdjustment,
+    hasReliableData,
+    isSelfLearningEnabled,
+    isUnifiedBrainEnabled
+  } = useBrainPipeline({ selfLearning: true, unified: true, language: i18n.language || 'en' });
+
   // Get current language code
   const currentLanguage = i18n.language || 'en';
 
@@ -217,6 +234,59 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       }
     };
   }, [fullAnalysis, scrollToBottom]);
+
+  // 🔗 Feed real-time livestream data to Brain Pipeline for self-learning
+  // This connects the model input with real-time and livestream WebSocket data
+  useEffect(() => {
+    if (!liveData.priceIsLive || !isSelfLearningEnabled) return;
+    
+    // Create LivestreamUpdate from current live data
+    const livestreamUpdate: LivestreamUpdate = {
+      symbol: crypto.toUpperCase(),
+      price: liveData.price,
+      change24h: liveData.change24h,
+      volume: liveData.volume,
+      source: liveData.dataSourcesSummary,
+      timestamp: liveData.lastUpdated
+    };
+    
+    // Feed the livestream update to the brain pipeline for continuous learning
+    feedLivestreamUpdate(livestreamUpdate);
+    
+    // Log periodic updates for debugging (every 10 seconds based on lastUpdated changes)
+    if (streamUpdateCount % 5 === 0) {
+      console.log(
+        `[Brain Pipeline] Fed livestream update: ${crypto} @ $${liveData.price.toFixed(2)} | ` +
+        `Change: ${liveData.change24h.toFixed(2)}% | Source: ${liveData.dataSourcesSummary} | ` +
+        `Learning: ${isSelfLearningEnabled ? 'ACTIVE' : 'INACTIVE'}`
+      );
+    }
+  }, [crypto, liveData.price, liveData.change24h, liveData.volume, liveData.priceIsLive, liveData.dataSourcesSummary, liveData.lastUpdated, feedLivestreamUpdate, isSelfLearningEnabled, streamUpdateCount]);
+
+  // 📊 Feed chart data to Brain Pipeline for pattern learning
+  useEffect(() => {
+    if (!chartTrendData?.isLive || !isSelfLearningEnabled) return;
+    
+    // Feed chart trend data for pattern learning
+    feedChartData(crypto.toUpperCase(), {
+      candles: chartTrendData.candles,
+      trend24h: chartTrendData.trend24h,
+      trendStrength: chartTrendData.trendStrength,
+      higherHighs: chartTrendData.higherHighs,
+      higherLows: chartTrendData.higherLows,
+      lowerHighs: chartTrendData.lowerHighs,
+      lowerLows: chartTrendData.lowerLows,
+      ema9: chartTrendData.ema9,
+      ema21: chartTrendData.ema21,
+      rsi: chartTrendData.rsi,
+      volumeTrend: chartTrendData.volumeTrend,
+      priceVelocity: chartTrendData.priceVelocity,
+      isLive: chartTrendData.isLive,
+      source: chartTrendData.source
+    });
+    
+    console.log(`[Brain Pipeline] Fed chart data: ${crypto} | Trend: ${chartTrendData.trend24h} | RSI: ${chartTrendData.rsi.toFixed(1)}`);
+  }, [crypto, chartTrendData, feedChartData, isSelfLearningEnabled]);
 
   const runAnalysis = useCallback(async () => {
     // Check rate limit for guest users
