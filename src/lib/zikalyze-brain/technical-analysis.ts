@@ -1070,6 +1070,9 @@ export function generatePrecisionEntry(
   bias: 'LONG' | 'SHORT' | 'NEUTRAL',
   volumeStrength: string
 ): PrecisionEntry {
+  // Minimum confluence threshold required to recommend a trade
+  const MIN_CONFLUENCE_THRESHOLD = 45;
+  
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
   
@@ -1102,7 +1105,7 @@ export function generatePrecisionEntry(
   let movementPhase = '';
 
   // NO TRADE if confluence is low
-  if (topDown.tradeableDirection === 'NO_TRADE' || topDown.confluenceScore < 45) {
+  if (topDown.tradeableDirection === 'NO_TRADE' || topDown.confluenceScore < MIN_CONFLUENCE_THRESHOLD) {
     // Generate detailed explanation for low confluence
     const conflictDetails: string[] = [];
     const allTimeframes = [
@@ -1123,8 +1126,8 @@ export function generatePrecisionEntry(
     if (neutralTFs.length >= 2) {
       conflictDetails.push(`${neutralTFs.length} timeframes neutral (${neutralTFs.map(t => t.name).join(', ')})`);
     }
-    if (topDown.confluenceScore < 45) {
-      conflictDetails.push(`Only ${topDown.confluenceScore}% alignment (min 45% required)`);
+    if (topDown.confluenceScore < MIN_CONFLUENCE_THRESHOLD) {
+      conflictDetails.push(`Only ${topDown.confluenceScore}% alignment (min ${MIN_CONFLUENCE_THRESHOLD}% required)`);
     }
     
     const detailedConfirmation = conflictDetails.length > 0 
@@ -1134,7 +1137,7 @@ export function generatePrecisionEntry(
     return {
       timing: 'AVOID',
       zone: `$${support.toFixed(dec)} – $${resistance.toFixed(dec)}`,
-      trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need 45%+)`,
+      trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need ${MIN_CONFLUENCE_THRESHOLD}%+)`,
       confirmation: detailedConfirmation,
       invalidation: 'N/A',
       volumeCondition: volumeStrength,

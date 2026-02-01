@@ -1208,6 +1208,8 @@ export class HybridConfirmationSystem {
     features: number[],
     nnResult: { direction: 'LONG' | 'SHORT' | 'NEUTRAL'; confidence: number; probs: number[] }
   ): string {
+    // Maximum number of reasoning items to include in explanation
+    const MAX_REASONING_ITEMS = 3;
     const reasons: string[] = [];
     
     // Feature indices from index.ts featureVector (0-indexed):
@@ -1248,7 +1250,7 @@ export class HybridConfirmationSystem {
       if (reasons.length === 0) reasons.push(`Mixed signals in feature space`);
     }
     
-    return reasons.slice(0, 3).join(', ');
+    return reasons.slice(0, MAX_REASONING_ITEMS).join(', ');
   }
 
   /**
