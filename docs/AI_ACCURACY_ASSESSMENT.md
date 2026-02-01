@@ -17,6 +17,7 @@ This document provides an **honest and transparent** assessment of Zikalyze AI's
 - **NLP:** Crypto-specific sentiment lexicon (100+ keywords)
 - **Backtesting:** Full historical validation framework
 - **Processing:** 100% client-side, runs in the browser
+- **Real-Time Data:** ✅ WebSocket connections to 5 major exchanges
 
 ### What It Does Well
 1. **Multi-timeframe technical analysis** (15M, 1H, 4H, 1D, Weekly)
@@ -31,6 +32,49 @@ This document provides an **honest and transparent** assessment of Zikalyze AI's
 10. **✅ Learning from outcomes** via backpropagation
 11. **✅ NLP sentiment analysis** for news and social text
 12. **✅ Backtesting validation** for accuracy metrics
+13. **✅ Live WebSocket streaming** from Binance, OKX, Bybit, Kraken, Coinbase
+
+---
+
+## 📡 Real-Time Data Connections
+
+### ✅ YES — Zikalyze Connects to Livestream Data!
+
+The platform streams **live price data via WebSocket** from 5 major exchanges:
+
+| Exchange | WebSocket URL | Coins |
+|----------|--------------|-------|
+| **Binance** | `wss://stream.binance.com:9443/ws` | 70+ coins |
+| **OKX** | `wss://ws.okx.com:8443/ws/v5/public` | 40+ coins |
+| **Bybit** | `wss://stream.bybit.com/v5/public/spot` | 30+ coins |
+| **Kraken** | `wss://ws.kraken.com` | 35+ coins |
+| **Coinbase** | `wss://ws-feed.exchange.coinbase.com` | 25+ coins |
+
+### Real-Time Features
+
+| Feature | Implementation | Status |
+|---------|---------------|--------|
+| **Live Prices** | `useBinanceLivePrice.ts` | ✅ Active |
+| **Ticker Stream** | `useTickerLiveStream.ts` | ✅ Active |
+| **Chart Updates** | `useRealtimeChartData.ts` | ✅ Active |
+| **Multi-Symbol** | `useMultiSymbolLivePrice.ts` | ✅ Active |
+| **Fear & Greed** | `useRealTimeFearGreed.ts` | ✅ Active |
+
+### How It Works
+
+```
+┌─────────────────┐     WebSocket     ┌─────────────────┐
+│   Exchange      │ ─────────────────→│  Zikalyze App   │
+│  (Binance/OKX)  │   Live Prices     │  (Browser)      │
+└─────────────────┘                   └─────────────────┘
+                                              │
+                                              ▼
+                                      ┌─────────────────┐
+                                      │   AI Brain      │
+                                      │   Pipeline      │
+                                      │   (Analysis)    │
+                                      └─────────────────┘
+```
 
 ---
 
