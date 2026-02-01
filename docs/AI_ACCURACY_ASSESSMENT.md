@@ -139,10 +139,42 @@ The platform streams **live price data via WebSocket** from 5 major exchanges:
 7. **✅ NLP Sentiment Analysis:** Crypto-specific lexicon for news/tweets
 8. **✅ Backtesting Framework:** Validate predictions against historical data
 
-### What We CANNOT Claim
-1. **Profit Guarantee:** Markets are inherently unpredictable
-2. **Superior to LLMs:** They serve completely different purposes
-3. **Perfect Predictions:** No AI can predict markets with 100% accuracy
+### What We CANNOT Claim (And Why This Is Honest)
+
+These are NOT bugs to fix — they are fundamental truths about AI and markets:
+
+#### 1. Cannot Beat LLMs at General Reasoning
+| AI System | Parameters | Training Data | Purpose |
+|-----------|------------|---------------|---------|
+| **GPT-4** | 175B+ | Trillions of tokens | General intelligence |
+| **Claude** | 175B+ | Trillions of tokens | General intelligence |
+| **Zikalyze** | ~6,000 | Domain-specific | Crypto analysis only |
+
+**Reality:** Zikalyze has 0.000003% of GPT-4's capacity. Claiming it can beat GPT-4 at reasoning would be dishonest marketing.
+
+**Our Strength:** Zikalyze is **specialized** — faster (<100ms), deterministic, $0 cost, and focused on crypto trading signals.
+
+#### 2. Cannot Make Perfect Market Predictions
+
+**Why this is fundamentally impossible for ANY AI:**
+
+| Factor | Example | Predictable? |
+|--------|---------|--------------|
+| Black Swan Events | COVID crash (March 2020) | ❌ No |
+| Regulatory Surprises | China crypto ban (2021) | ❌ No |
+| Whale Manipulation | Large sudden orders | ❌ No |
+| Human Irrationality | FOMO, panic selling | ❌ No |
+| Random News | Elon Musk tweets | ❌ No |
+
+**The Paradox:** If perfect predictions existed:
+- The predictor would become infinitely rich
+- Everyone would use it, making predictions self-invalidating
+- Markets would cease to function
+
+**Our Strength:** Zikalyze provides **probabilistic signals** with confidence levels and position sizing — honest about uncertainty rather than claiming false precision.
+
+#### 3. Cannot Guarantee Profits
+Markets are inherently unpredictable. Anyone claiming guaranteed profits is either lying or doesn't understand markets.
 
 ### ✅ FIXED Limitations (v2.0)
 
