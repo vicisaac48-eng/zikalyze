@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: "Zikalyze - AI Crypto Trading Analysis",
         short_name: "Zikalyze",
-        description: "AI-powered cryptocurrency trading analysis with Smart Money Concepts, ICT analysis, and real-time market insights. Get accurate predictions and alerts.",
+        description: "Zikalyze AI is a professional-grade cryptocurrency analysis platform designed to transform complex market data into actionable, high-signal insights. Built as a personal trading assistant, it utilizes agentic AI to synthesize technical indicators, on-chain whale activity, and macro catalysts into a scannable, business-grade dashboard.",
         theme_color: "#0a0f1a",
         background_color: "#0a0f1a",
         display: "standalone",
