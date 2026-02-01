@@ -507,28 +507,30 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 HYBRID CONFIRMATION — Algorithm + Neural Network Combined
   // ═══════════════════════════════════════════════════════════════════════════
-  // Build feature vector for neural network from current market data
+  // Build feature vector for neural network (20 features matching neural-engine.ts)
+  // When real chart data unavailable, we estimate values to ensure neural network always runs
+  const BIAS_DISPLAY_WIDTH = 7; // Padding for bias string alignment (longest: 'NEUTRAL')
   const featureVector: number[] = [
     price,                                        // 1: Current price
-    price * (1 - change / 100),                   // 2: Price 24h ago (derived)
-    price * 0.99,                                 // 3: Estimated price 10 periods ago
-    price * 0.98,                                 // 4: Estimated price 20 periods ago
+    price * (1 - change / 100),                   // 2: Reconstructed price 24h ago from known change
+    price * 0.99,                                 // 3: Estimated price ~10 periods ago (fallback when no historical data)
+    price * 0.98,                                 // 4: Estimated price ~20 periods ago (fallback when no historical data)
     change,                                       // 5: 24h change %
-    (pricePosition - 50) / 5,                     // 6: Position in range as return
-    Math.abs(change) * 0.5,                       // 7: Estimated shorter-term return
-    Math.abs(high24h - low24h) / price * 100,     // 8: Volatility proxy
-    chartTrendData?.rsi || 50,                    // 9: RSI (50 default)
-    chartTrendData?.ema9 ? (chartTrendData.ema9 / price - 1) * 100 : 0,  // 10: EMA9 deviation
-    chartTrendData?.ema21 ? (chartTrendData.ema21 / price - 1) * 100 : 0, // 11: EMA21 deviation
-    chartTrendData ? (chartTrendData.ema9 - chartTrendData.ema21) / price * 100 : 0, // 12: MACD proxy
-    volume > 0 && avgVolume > 0 ? volume / avgVolume : 1, // 13: Volume ratio
-    volumeSpike.isSpike ? 1.5 : 1,                // 14: Volume trend
-    Math.log(volume + 1),                         // 15: Log volume
-    Math.log(avgVolume + 1),                      // 16: Log avg volume
-    pricePosition,                                // 17: Price position %
-    high24h,                                      // 18: Highest high
-    low24h,                                       // 19: Lowest low
-    (high24h - low24h) * 0.1                      // 20: ATR proxy
+    (pricePosition - 50) / 5,                     // 6: Normalized position deviation from midpoint (-10 to +10 range)
+    Math.abs(change) * 0.5,                       // 7: Estimated short-term volatility proxy (half of 24h magnitude)
+    Math.abs(high24h - low24h) / price * 100,     // 8: Daily range as % of price (volatility)
+    chartTrendData?.rsi || 50,                    // 9: RSI (50 = neutral when unavailable)
+    chartTrendData?.ema9 ? (chartTrendData.ema9 / price - 1) * 100 : 0,  // 10: EMA9 deviation from price %
+    chartTrendData?.ema21 ? (chartTrendData.ema21 / price - 1) * 100 : 0, // 11: EMA21 deviation from price %
+    chartTrendData ? (chartTrendData.ema9 - chartTrendData.ema21) / price * 100 : 0, // 12: MACD signal proxy
+    volume > 0 && avgVolume > 0 ? volume / avgVolume : 1, // 13: Volume ratio vs average
+    volumeSpike.isSpike ? 1.5 : 1,                // 14: Volume trend multiplier
+    Math.log(volume + 1),                         // 15: Log-scaled current volume
+    Math.log(avgVolume + 1),                      // 16: Log-scaled average volume
+    pricePosition,                                // 17: Price position in 24h range (0-100%)
+    high24h,                                      // 18: 24h high price
+    low24h,                                       // 19: 24h low price
+    (high24h - low24h) * 0.1                      // 20: ATR proxy (10% of daily range)
   ];
 
   // Get hybrid confirmation using both algorithm and neural network
@@ -603,9 +605,9 @@ ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
 ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 
-📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(7)} ${hybridResult.algorithmConfidence.toFixed(0)}%
+📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
    └─ ICT/SMC, Fibonacci, Multi-TF Confluence
-🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(7)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
+🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(BIAS_DISPLAY_WIDTH)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
    └─ Trainable MLP, Pattern Recognition
 
 🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
