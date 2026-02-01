@@ -198,19 +198,22 @@ function calculateRSI(prices: number[], period: number): number {
 
 /**
  * Calculate VWAP (Volume Weighted Average Price)
+ * Uses the typical price formula: (high + low + close) / 3 for more accurate VWAP
  */
-function calculateVWAP(candles: Array<{ close: number; volume: number }>): number {
+function calculateVWAP(candles: Array<{ high: number; low: number; close: number; volume: number }>): number {
   if (candles.length === 0) return 0;
   
-  let sumPV = 0;
+  let sumTPV = 0;
   let sumV = 0;
   
   for (const candle of candles) {
-    sumPV += candle.close * candle.volume;
+    // Typical price = (high + low + close) / 3
+    const typicalPrice = (candle.high + candle.low + candle.close) / 3;
+    sumTPV += typicalPrice * candle.volume;
     sumV += candle.volume;
   }
   
-  return sumV > 0 ? sumPV / sumV : candles[candles.length - 1].close;
+  return sumV > 0 ? sumTPV / sumV : candles[candles.length - 1].close;
 }
 
 /**
