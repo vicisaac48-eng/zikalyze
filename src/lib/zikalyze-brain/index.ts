@@ -672,3 +672,30 @@ export type {
   EmergenceMetrics,
   EmergenceState
 } from './brain-pipeline';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 NEURAL ENGINE — True AI with Learning, NLP & Backtesting
+// ═══════════════════════════════════════════════════════════════════════════════
+// Addresses key limitations:
+// ✅ True Neural Network with trainable weights
+// ✅ Persistent Learning from prediction outcomes
+// ✅ NLP Sentiment Analysis for news/tweets
+// ✅ Backtesting Framework for validation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export {
+  ZikalyzeNeuralNetwork,
+  ZikalyzeNeuralEngine,
+  BacktestEngine,
+  neuralEngine,
+  analyzeTextSentiment,
+  analyzeMultipleTexts,
+  initializeWeights
+} from './neural-engine';
+export type {
+  NeuralWeights,
+  NLPSentiment,
+  BacktestResult,
+  BacktestConfig,
+  PredictionRecord
+} from './neural-engine';
