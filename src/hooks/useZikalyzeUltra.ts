@@ -17,6 +17,10 @@ import {
 import { ChartTrendInput } from '@/lib/zikalyze-brain/types';
 import { LivestreamUpdate } from '@/lib/zikalyze-brain';
 
+// Constants for configuration
+const MAX_PRICE_HISTORY_LENGTH = 500;
+const ONE_HOUR_MS = 3600000;
+
 interface UseZikalyzeUltraOptions {
   /** Enable automatic analysis when chart data updates */
   autoAnalyze?: boolean;
@@ -171,8 +175,8 @@ export function useZikalyzeUltra(
       timestamp: update.timestamp
     });
 
-    // Keep last 500 price points
-    if (priceHistoryRef.current.length > 500) {
+    // Keep last MAX_PRICE_HISTORY_LENGTH price points
+    if (priceHistoryRef.current.length > MAX_PRICE_HISTORY_LENGTH) {
       priceHistoryRef.current.shift();
     }
 
@@ -184,7 +188,7 @@ export function useZikalyzeUltra(
 
       // If significant time has passed (> 1 hour), learn from outcome
       const timeDiff = update.timestamp - lastLivestreamRef.current.timestamp;
-      if (timeDiff >= 3600000 && ultraRef.current) { // 1 hour
+      if (timeDiff >= ONE_HOUR_MS && ultraRef.current) {
         ultraRef.current.learn(actualReturn);
         console.log(
           `[ZikalyzeUltra] Learned from outcome: predicted ${signal.prediction.toFixed(4)}, ` +
