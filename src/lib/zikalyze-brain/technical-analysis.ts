@@ -663,27 +663,23 @@ export function performTopDownAnalysis(
     const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH').length;
     const maxAlignedTFs = Math.max(bullishTFs, bearishTFs);
     
-    // Base confluence from weighted strength calculation
-    const weightedConfluence = Math.round((dominantWeight / totalWeight) * 100);
-    
     // Alignment-based confluence: 5/5 = 100%, 4/5 = 85-95%, 3/5 = 65-80%
-    let alignmentConfluence: number;
+    // Uses weighted strength for fine-tuning when partial alignment
+    let confluenceScore: number;
     if (maxAlignedTFs === 5) {
       // All 5 timeframes aligned = 100% confluence
-      alignmentConfluence = 100;
+      confluenceScore = 100;
     } else if (maxAlignedTFs === 4) {
       // 4/5 aligned = 85-95% based on strength
-      alignmentConfluence = 85 + Math.round((dominantWeight / totalWeight) * 10);
+      confluenceScore = 85 + Math.round((dominantWeight / totalWeight) * 10);
     } else if (maxAlignedTFs === 3) {
       // 3/5 aligned = 65-80% based on strength
-      alignmentConfluence = 65 + Math.round((dominantWeight / totalWeight) * 15);
+      confluenceScore = 65 + Math.round((dominantWeight / totalWeight) * 15);
     } else {
       // Less than 3 aligned = use weighted calculation (low confluence)
-      alignmentConfluence = weightedConfluence;
+      confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
     }
     
-    // Final confluence: use alignment-based score (ensures 100% when all TFs aligned)
-    const confluenceScore = Math.max(alignmentConfluence, weightedConfluence);
     const htfBullish = (weekly.trend === 'BULLISH' || daily.trend === 'BULLISH') && h4.trend !== 'BEARISH';
     const htfBearish = (weekly.trend === 'BEARISH' || daily.trend === 'BEARISH') && h4.trend !== 'BULLISH';
     
@@ -903,27 +899,22 @@ export function performTopDownAnalysis(
   const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH').length;
   const maxAlignedTFs = Math.max(bullishTFs, bearishTFs);
   
-  // Base confluence from weighted strength calculation
-  const weightedConfluence = Math.round((dominantWeight / totalWeight) * 100);
-  
   // Alignment-based confluence: 5/5 = 100%, 4/5 = 85-95%, 3/5 = 65-80%
-  let alignmentConfluence: number;
+  // Uses weighted strength for fine-tuning when partial alignment
+  let confluenceScore: number;
   if (maxAlignedTFs === 5) {
     // All 5 timeframes aligned = 100% confluence
-    alignmentConfluence = 100;
+    confluenceScore = 100;
   } else if (maxAlignedTFs === 4) {
     // 4/5 aligned = 85-95% based on strength
-    alignmentConfluence = 85 + Math.round((dominantWeight / totalWeight) * 10);
+    confluenceScore = 85 + Math.round((dominantWeight / totalWeight) * 10);
   } else if (maxAlignedTFs === 3) {
     // 3/5 aligned = 65-80% based on strength
-    alignmentConfluence = 65 + Math.round((dominantWeight / totalWeight) * 15);
+    confluenceScore = 65 + Math.round((dominantWeight / totalWeight) * 15);
   } else {
     // Less than 3 aligned = use weighted calculation (low confluence)
-    alignmentConfluence = weightedConfluence;
+    confluenceScore = Math.round((dominantWeight / totalWeight) * 100);
   }
-  
-  // Final confluence: use alignment-based score (ensures 100% when all TFs aligned)
-  const confluenceScore = Math.max(alignmentConfluence, weightedConfluence);
   
   // ═══════════════════════════════════════════════════════════════════════════
   // 🎯 DETERMINE OVERALL BIAS & TRADEABLE DIRECTION
