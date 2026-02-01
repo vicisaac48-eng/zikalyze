@@ -322,19 +322,21 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       connectBlockWebSocket();
     }
     
-    // Capture state for cleanup (addresses ESLint ref stale warning)
-    // These need to be captured after connectBlockWebSocket to get current values
-    const wsState = wsStateRef.current;
-    
     return () => {
       isMountedRef.current = false;
-      // Close socket on cleanup
-      if (wsState.socket) {
-        wsState.socket.close();
+      // Close current WebSocket connection on cleanup
+      // Note: Intentionally using .current to close the actual current connection,
+      // not a snapshot - WebSocket may have reconnected since effect setup
+      /* eslint-disable react-hooks/exhaustive-deps */
+      const currentSocket = wsStateRef.current.socket;
+      const currentTimeout = wsStateRef.current.reconnectTimeout;
+      /* eslint-enable react-hooks/exhaustive-deps */
+      
+      if (currentSocket) {
+        currentSocket.close();
       }
-      // Clear the timeout reference
-      if (wsState.reconnectTimeout) {
-        clearTimeout(wsState.reconnectTimeout);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
   }, [crypto, connectBlockWebSocket]);

@@ -1073,18 +1073,19 @@ export const useCryptoPrices = () => {
     // Retry check after a short delay in case crypto list wasn't ready
     const timeoutId = setTimeout(checkAndConnect, 500);
     
-    // Capture reconnect timeouts for cleanup (addresses ESLint ref stale warning)
-    const reconnectTimeouts = { ...reconnectTimeoutsRef.current };
-    
     return () => {
       clearTimeout(timeoutId);
-      // Clear reconnect timeouts using captured snapshot
-      Object.values(reconnectTimeouts).forEach(timeout => {
+      
+      // Clear reconnect timeouts using current refs
+      // Note: Intentionally using .current to clear all current timeouts,
+      // including any that may have been added after effect setup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout);
       });
       
       // Close all WebSocket connections and clear refs
-      // Note: Using .current directly here is intentional - we want to close
+      // Note: Using .current directly is intentional - we want to close
       // the current active connections at cleanup time, not stale refs
       if (binanceWsRef.current) {
         binanceWsRef.current.close();
