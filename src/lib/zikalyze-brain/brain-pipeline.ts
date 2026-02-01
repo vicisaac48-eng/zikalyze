@@ -2463,13 +2463,15 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
   
   /**
    * Get sentiment label
+   * Thresholds: 0-20=EXTREME FEAR, 21-35=FEAR, 36-45=SLIGHT FEAR, 46-54=NEUTRAL, 55-64=SLIGHT GREED, 65-79=HIGH GREED, 80+=EXTREME GREED
    */
   private getSentimentLabel(fearGreed: number): string {
     if (fearGreed <= 20) return '😱 EXTREME FEAR';
     if (fearGreed <= 35) return '😰 FEAR';
-    if (fearGreed <= 50) return '😐 NEUTRAL';
-    if (fearGreed <= 65) return '😊 GREED';
-    if (fearGreed <= 80) return '🤑 HIGH GREED';
+    if (fearGreed <= 45) return '😕 SLIGHT FEAR';
+    if (fearGreed <= 54) return '😐 NEUTRAL';
+    if (fearGreed <= 64) return '🙂 SLIGHT GREED';
+    if (fearGreed <= 79) return '🤑 HIGH GREED';
     return '🔥 EXTREME GREED';
   }
   
@@ -2509,6 +2511,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     // Calculate bias modifier based on Fear & Greed levels
     // - At EXTREMES: Use contrarian approach (extreme fear = bullish, extreme greed = bearish)
     // - At MODERATE levels: Follow sentiment (fear = bearish, greed = bullish) - describes current market mood
+    // - At SLIGHT levels: Small bias adjustment with accurate description
     let biasModifier = 0;
     let contrarian = false;
     let description = '';
@@ -2523,19 +2526,35 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       contrarian = true;
       description = '🔴 Extreme greed - potential selling opportunity (contrarian signal)';
     } 
-    // Sentiment-following at MODERATE levels - describes current market mood
+    // Fear zone (21-35)
     else if (value <= 35) {
       biasModifier = -0.05; // Market is fearful, sentiment is bearish
       contrarian = false;
       description = '😰 Fear in market - current sentiment is bearish';
-    } else if (value >= 65) {
+    } 
+    // High greed zone (65-79)
+    else if (value >= 65) {
       biasModifier = 0.05; // Market is greedy, sentiment is bullish
       contrarian = false;
-      description = '😊 Greed in market - current sentiment is bullish';
-    } else {
+      description = '🤑 High greed in market - current sentiment is bullish';
+    } 
+    // Slight fear zone (36-45) - leaning bearish but not strong
+    else if (value < 46) {
+      biasModifier = -0.02; // Slight bearish sentiment
+      contrarian = false;
+      description = '😕 Slight fear - market sentiment leans cautious';
+    }
+    // Slight greed zone (55-64) - leaning bullish but not strong
+    else if (value > 54) {
+      biasModifier = 0.02; // Slight bullish sentiment
+      contrarian = false;
+      description = '🙂 Slight greed - market sentiment leans optimistic';
+    }
+    // True neutral zone (46-54)
+    else {
       biasModifier = 0;
       contrarian = false;
-      description = '😐 Neutral sentiment - no significant bias';
+      description = '😐 Neutral sentiment - market is balanced';
     }
     
     // Adjust based on trend

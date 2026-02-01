@@ -74,13 +74,15 @@ const createBar = (value: number, max: number = 100, filled = '█', empty = '�
 };
 
 // Helper: Fear & Greed emoji + label
+// Thresholds: 0-20=EXTREME FEAR, 21-35=FEAR, 36-45=SLIGHT FEAR, 46-54=NEUTRAL, 55-64=SLIGHT GREED, 65-79=HIGH GREED, 80+=EXTREME GREED
 const getFearGreedVisual = (value: number): { emoji: string; label: string; bar: string } => {
   const bar = createBar(value);
   if (value <= 20) return { emoji: '😱', label: 'EXTREME FEAR', bar };
   if (value <= 35) return { emoji: '😰', label: 'FEAR', bar };
-  if (value <= 50) return { emoji: '😐', label: 'NEUTRAL', bar };
-  if (value <= 65) return { emoji: '😊', label: 'GREED', bar };
-  if (value <= 80) return { emoji: '🤑', label: 'HIGH GREED', bar };
+  if (value <= 45) return { emoji: '😕', label: 'SLIGHT FEAR', bar };
+  if (value <= 54) return { emoji: '😐', label: 'NEUTRAL', bar };
+  if (value <= 64) return { emoji: '🙂', label: 'SLIGHT GREED', bar };
+  if (value <= 79) return { emoji: '🤑', label: 'HIGH GREED', bar };
   return { emoji: '🔥', label: 'EXTREME GREED', bar };
 };
 
