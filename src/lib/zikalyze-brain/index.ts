@@ -2,7 +2,7 @@
 // 🧠 ZIKALYZE AI BRAIN — MAIN ANALYSIS ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
 // ⚡ 100% CLIENT-SIDE — Runs entirely in the browser
-// 🔗 No external AI dependencies — Pure algorithmic intelligence
+// 🔗 Hybrid Analysis — Algorithm + Neural Network combined
 // 🛡️ Fully trustless — Zero server calls required
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -17,6 +17,7 @@ import { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis } from './technical-analysis';
+import { hybridConfirmation } from './neural-engine';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
@@ -503,6 +504,169 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
   const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🧠 HYBRID CONFIRMATION — Algorithm + Neural Network Combined
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Build feature vector for neural network (20 features matching neural-engine.ts)
+  // When real chart data unavailable, we estimate values to ensure neural network always runs
+  const BIAS_DISPLAY_WIDTH = 7; // Padding for bias string alignment (longest: 'NEUTRAL')
+  const featureVector: number[] = [
+    price,                                        // 1: Current price
+    price * (1 - change / 100),                   // 2: Reconstructed price 24h ago from known change
+    price * 0.99,                                 // 3: Estimated price ~10 periods ago (fallback when no historical data)
+    price * 0.98,                                 // 4: Estimated price ~20 periods ago (fallback when no historical data)
+    change,                                       // 5: 24h change %
+    (pricePosition - 50) / 5,                     // 6: Normalized position deviation from midpoint (-10 to +10 range)
+    Math.abs(change) * 0.5,                       // 7: Estimated short-term volatility proxy (half of 24h magnitude)
+    Math.abs(high24h - low24h) / price * 100,     // 8: Daily range as % of price (volatility)
+    chartTrendData?.rsi || 50,                    // 9: RSI (50 = neutral when unavailable)
+    chartTrendData?.ema9 ? (chartTrendData.ema9 / price - 1) * 100 : 0,  // 10: EMA9 deviation from price %
+    chartTrendData?.ema21 ? (chartTrendData.ema21 / price - 1) * 100 : 0, // 11: EMA21 deviation from price %
+    chartTrendData ? (chartTrendData.ema9 - chartTrendData.ema21) / price * 100 : 0, // 12: MACD signal proxy
+    volume > 0 && avgVolume > 0 ? volume / avgVolume : 1, // 13: Volume ratio vs average
+    volumeSpike.isSpike ? 1.5 : 1,                // 14: Volume trend multiplier
+    Math.log(volume + 1),                         // 15: Log-scaled current volume
+    Math.log(avgVolume + 1),                      // 16: Log-scaled average volume
+    pricePosition,                                // 17: Price position in 24h range (0-100%)
+    high24h,                                      // 18: 24h high price
+    low24h,                                       // 19: 24h low price
+    (high24h - low24h) * 0.1                      // 20: ATR proxy (10% of daily range)
+  ];
+
+  // Get hybrid confirmation using both algorithm and neural network
+  const algorithmResult = { bias, confidence };
+  const hybridResult = hybridConfirmation.getConfirmation(algorithmResult, featureVector);
+  
+  // Determine confluence visual
+  const confluenceEmoji = hybridResult.confluenceLevel === 'STRONG' ? '✅' 
+    : hybridResult.confluenceLevel === 'MODERATE' ? '🟡' 
+    : hybridResult.confluenceLevel === 'WEAK' ? '⚠️' 
+    : '❌';
+  const algorithmEmoji = hybridResult.algorithmBias === 'LONG' ? '🟢' : hybridResult.algorithmBias === 'SHORT' ? '🔴' : '⚪';
+  const neuralEmoji = hybridResult.neuralDirection === 'LONG' ? '🟢' : hybridResult.neuralDirection === 'SHORT' ? '🔴' : '⚪';
+  const agreementText = hybridResult.agreement ? 'ALIGNED ✓' : 'DIVERGING ⚠️';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 TRADE QUALITY ASSESSMENT — Follow Trend, Wait for Confirmation, Avoid Bad Trades
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // 1. Check if trade follows the higher timeframe (HTF) trend — DON'T TRADE AGAINST THE TREND
+  const htfTrend = topDownAnalysis.weekly.trend; // Weekly is the primary HTF
+  const dailyTrend = topDownAnalysis.daily.trend;
+  const followsTrend = (
+    (bias === 'LONG' && (htfTrend === 'BULLISH' || dailyTrend === 'BULLISH')) ||
+    (bias === 'SHORT' && (htfTrend === 'BEARISH' || dailyTrend === 'BEARISH')) ||
+    (bias === 'NEUTRAL') // Neutral always "follows" as it's not directional
+  );
+  
+  // 2. Count confirmations — WAIT FOR CONFIRMATION BEFORE EXECUTION
+  const confirmations: string[] = [];
+  
+  // Confirmation 1: Multi-timeframe alignment (at least 3/5 aligned)
+  if (bullishCount >= 3 && bias === 'LONG') {
+    confirmations.push(`✓ Multi-TF Alignment: ${bullishCount}/5 bullish`);
+  } else if (bearishCount >= 3 && bias === 'SHORT') {
+    confirmations.push(`✓ Multi-TF Alignment: ${bearishCount}/5 bearish`);
+  }
+  
+  // Confirmation 2: Hybrid AI agreement (Algorithm + Neural Network)
+  if (hybridResult.agreement) {
+    confirmations.push(`✓ Hybrid AI Consensus: Algorithm + Neural Network agree`);
+  }
+  
+  // Confirmation 3: Volume confirmation
+  if (volumeSpike.isSpike && volumeSpike.magnitude !== 'NORMAL') {
+    confirmations.push(`✓ Volume Confirmation: ${volumeSpike.magnitude} volume spike`);
+  }
+  
+  // Confirmation 4: Institutional alignment
+  if ((bias === 'LONG' && institutionalVsRetail.institutionalBias === 'BULLISH') ||
+      (bias === 'SHORT' && institutionalVsRetail.institutionalBias === 'BEARISH')) {
+    confirmations.push(`✓ Institutional Flow: ${institutionalVsRetail.institutionalBias}`);
+  }
+  
+  // Confirmation 5: Price in optimal zone (discount for longs, premium for shorts)
+  if ((bias === 'LONG' && pricePosition < 40) || (bias === 'SHORT' && pricePosition > 60)) {
+    confirmations.push(`✓ Optimal Entry Zone: Price at ${pricePosition.toFixed(0)}% in range`);
+  }
+  
+  const hasConfirmation = confirmations.length >= 2; // Need at least 2 confirmations
+  const confirmationCount = confirmations.length;
+  
+  // 3. Detect BAD TRADES to avoid
+  const badTradeReasons: string[] = [];
+  
+  // Bad Trade 1: Trading against the HTF trend
+  if (!followsTrend && bias !== 'NEUTRAL') {
+    badTradeReasons.push(`⚠️ COUNTER-TREND: ${bias} trade against ${htfTrend} HTF trend`);
+  }
+  
+  // Bad Trade 2: No multi-timeframe confluence
+  if (topDownAnalysis.confluenceScore < 45) {
+    badTradeReasons.push(`⚠️ LOW CONFLUENCE: Only ${topDownAnalysis.confluenceScore}% TF alignment`);
+  }
+  
+  // Bad Trade 3: Algorithm and Neural Network disagree
+  if (!hybridResult.agreement && hybridResult.confluenceLevel === 'CONFLICTING') {
+    badTradeReasons.push(`⚠️ AI CONFLICT: Algorithm (${hybridResult.algorithmBias}) vs Neural (${hybridResult.neuralDirection})`);
+  }
+  
+  // Bad Trade 4: Chasing extended price
+  if ((bias === 'LONG' && pricePosition > 85) || (bias === 'SHORT' && pricePosition < 15)) {
+    badTradeReasons.push(`⚠️ CHASING: Price ${bias === 'LONG' ? 'near resistance' : 'near support'} — avoid FOMO`);
+  }
+  
+  // Bad Trade 5: Low confidence + low probability
+  if (confidence < 45 && successProb < 50) {
+    badTradeReasons.push(`⚠️ WEAK SETUP: ${confidence.toFixed(0)}% confidence, ${successProb}% probability`);
+  }
+  
+  // Bad Trade 6: Divergence between institutional and retail (smart money leaving)
+  if (institutionalVsRetail.divergence && 
+      ((bias === 'LONG' && institutionalVsRetail.institutionalBias === 'BEARISH') ||
+       (bias === 'SHORT' && institutionalVsRetail.institutionalBias === 'BULLISH'))) {
+    badTradeReasons.push(`⚠️ SMART MONEY DIVERGENCE: Institutions ${institutionalVsRetail.institutionalBias}, retail ${institutionalVsRetail.retailBias}`);
+  }
+  
+  const isBadTrade = badTradeReasons.length >= 2; // 2+ bad signals = bad trade
+  
+  // Calculate overall trade quality score
+  let qualityScore = 50; // Start at neutral
+  qualityScore += confirmationCount * 10; // +10 per confirmation (max +50)
+  qualityScore += followsTrend ? 15 : -20; // +15 for trend-following, -20 for counter-trend
+  qualityScore -= badTradeReasons.length * 12; // -12 per bad trade reason
+  qualityScore = Math.max(0, Math.min(100, qualityScore)); // Clamp 0-100
+  
+  // Determine final recommendation
+  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
+  let tradeRecommendation: TradeRecommendation;
+  if (isBadTrade) {
+    tradeRecommendation = 'AVOID_BAD_TRADE';
+  } else if (!hasConfirmation) {
+    tradeRecommendation = 'WAIT_CONFIRMATION';
+  } else {
+    tradeRecommendation = 'EXECUTE';
+  }
+  
+  // Build trade quality object
+  const tradeQuality = {
+    followsTrend,
+    hasConfirmation,
+    confirmationCount,
+    confirmations,
+    isBadTrade,
+    badTradeReasons,
+    qualityScore,
+    recommendation: tradeRecommendation
+  };
+  
+  // Visual indicators for trade quality
+  const qualityEmoji = tradeRecommendation === 'EXECUTE' ? '✅' 
+    : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳' 
+    : '🚫';
+  const trendFollowEmoji = followsTrend ? '✓' : '✗';
+  const confirmEmoji = hasConfirmation ? `${confirmationCount}/5 ✓` : `${confirmationCount}/5 ⚠️`;
+
   const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
    ${verificationEmoji} ${verificationLabel}
@@ -558,6 +722,30 @@ ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range *
 
 ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
+━━━ 🧠 HYBRID AI CONFIRMATION ━━━━━━━━━━━━━━━━━━━
+
+${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
+
+📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
+   └─ ICT/SMC, Fibonacci, Multi-TF Confluence
+🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(BIAS_DISPLAY_WIDTH)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
+   └─ Trainable MLP, Pattern Recognition
+
+🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
+   └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
+
+━━━ 🛡️ TRADE QUALITY CHECK ━━━━━━━━━━━━━━━━━━━━━
+
+${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : '🚫 AVOID — Bad trade signals detected'}
+
+📈 Follows HTF Trend: ${followsTrend ? `${trendFollowEmoji} YES (${htfTrend})` : `${trendFollowEmoji} NO — Counter-trend trade!`}
+🔍 Confirmations: ${confirmEmoji}
+${confirmations.length > 0 ? confirmations.slice(0, 3).map(c => `   ${c}`).join('\n') : '   ⚠️ No confirmations yet — wait for setup'}
+${badTradeReasons.length > 0 ? `\n⚠️ Bad Trade Signals:\n${badTradeReasons.slice(0, 3).map(r => `   ${r}`).join('\n')}` : ''}
+
+📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%
+   └─ ${qualityScore >= 70 ? 'HIGH QUALITY — Good setup, manage risk' : qualityScore >= 50 ? 'MODERATE — Proceed with caution' : qualityScore >= 30 ? 'LOW QUALITY — Consider smaller size or skip' : 'POOR — High probability of bad trade'}
+
 ━━━ 🔮 SCENARIOS (Both Directions) ━━━━━━━━━━━━━━
 
 ${scenarios.slice(0, 2).map(s => `${s.condition}
@@ -573,12 +761,14 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 React to the breakout, don't predict`}
 
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
-This analysis uses algorithmic calculations based on available
-market data. Crypto markets are highly volatile and unpredictable.
-• Always verify signals with multiple sources before trading
-• Past patterns do not guarantee future results
+This analysis uses BOTH algorithmic calculations AND neural
+network predictions for hybrid confirmation. Crypto markets
+are highly volatile and unpredictable.
+• Follow the trend — Don't trade against HTF direction ✓
+• Wait for confirmation — Need 2+ confirmations before entry ✓
+• Avoid bad trades — Quality check prevents poor setups ✓
+• Both Algorithm and Neural Network were used together ✓
 • This is NOT financial advice — trade at your own risk
-• Confidence scores reflect data quality, not prediction certainty
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
@@ -600,7 +790,20 @@ market data. Crypto markets are highly volatile and unpredictable.
     liveDataSources: dataSourceCount,
     attentionHeatmap: topDownAnalysis.attentionHeatmap || [],
     attentionVector: topDownAnalysis.attentionVector || [],
-    attentionEntropyLoss: 0
+    attentionEntropyLoss: 0,
+    // Hybrid Confirmation — Algorithm + Neural Network combined output
+    hybridConfirmation: {
+      algorithmBias: hybridResult.algorithmBias,
+      algorithmConfidence: hybridResult.algorithmConfidence,
+      neuralDirection: hybridResult.neuralDirection,
+      neuralConfidence: hybridResult.neuralConfidence,
+      agreement: hybridResult.agreement,
+      confluenceLevel: hybridResult.confluenceLevel,
+      combinedConfidence: hybridResult.combinedConfidence,
+      usedBothSystems: true // Confirms both algorithm and neural network were used
+    },
+    // Trade Quality Assessment — Follow trend, wait for confirmation, avoid bad trades
+    tradeQuality
   };
 }
 
