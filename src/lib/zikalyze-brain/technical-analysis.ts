@@ -1070,6 +1070,9 @@ export function generatePrecisionEntry(
   bias: 'LONG' | 'SHORT' | 'NEUTRAL',
   volumeStrength: string
 ): PrecisionEntry {
+  // Minimum confluence threshold required to recommend a trade
+  const MIN_CONFLUENCE_THRESHOLD = 45;
+  
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
   
@@ -1102,12 +1105,40 @@ export function generatePrecisionEntry(
   let movementPhase = '';
 
   // NO TRADE if confluence is low
-  if (topDown.tradeableDirection === 'NO_TRADE' || topDown.confluenceScore < 45) {
+  if (topDown.tradeableDirection === 'NO_TRADE' || topDown.confluenceScore < MIN_CONFLUENCE_THRESHOLD) {
+    // Generate detailed explanation for low confluence
+    const conflictDetails: string[] = [];
+    const allTimeframes = [
+      { name: 'Weekly', trend: topDown.weekly.trend },
+      { name: 'Daily', trend: topDown.daily.trend },
+      { name: '4H', trend: topDown.h4.trend },
+      { name: '1H', trend: topDown.h1.trend },
+      { name: '15M', trend: topDown.m15.trend }
+    ];
+    
+    const bullishTFs = allTimeframes.filter(tf => tf.trend === 'BULLISH');
+    const bearishTFs = allTimeframes.filter(tf => tf.trend === 'BEARISH');
+    const neutralTFs = allTimeframes.filter(tf => tf.trend === 'NEUTRAL');
+    
+    if (bullishTFs.length > 0 && bearishTFs.length > 0) {
+      conflictDetails.push(`Conflicting: ${bullishTFs.map(t => t.name).join('/')} bullish vs ${bearishTFs.map(t => t.name).join('/')} bearish`);
+    }
+    if (neutralTFs.length >= 2) {
+      conflictDetails.push(`${neutralTFs.length} timeframes neutral (${neutralTFs.map(t => t.name).join(', ')})`);
+    }
+    if (topDown.confluenceScore < MIN_CONFLUENCE_THRESHOLD) {
+      conflictDetails.push(`Only ${topDown.confluenceScore}% alignment (min ${MIN_CONFLUENCE_THRESHOLD}% required)`);
+    }
+    
+    const detailedConfirmation = conflictDetails.length > 0 
+      ? conflictDetails.join(' • ') 
+      : (topDown.reasoning[0] || 'Wait for alignment');
+    
     return {
       timing: 'AVOID',
       zone: `$${support.toFixed(dec)} – $${resistance.toFixed(dec)}`,
-      trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need 45%+)`,
-      confirmation: topDown.reasoning[0] || 'Wait for alignment',
+      trigger: `⚠️ NO TRADE — ${topDown.confluenceScore}% confluence (need ${MIN_CONFLUENCE_THRESHOLD}%+)`,
+      confirmation: detailedConfirmation,
       invalidation: 'N/A',
       volumeCondition: volumeStrength,
       structureStatus: 'Insufficient Confluence',

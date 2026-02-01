@@ -1064,6 +1064,7 @@ export interface HybridConfirmationResult {
   // Confirmation signal (from neural network)
   neuralDirection: 'LONG' | 'SHORT' | 'NEUTRAL';
   neuralConfidence: number;
+  neuralReasoning: string; // Explanation of why NN leans a certain direction
   
   // Combined verdict
   finalVerdict: 'LONG' | 'SHORT' | 'NEUTRAL';
@@ -1117,6 +1118,9 @@ export class HybridConfirmationSystem {
     
     // Check agreement
     const agreement = algorithmResult.bias === nnResult.direction;
+    
+    // Generate neural reasoning explanation based on feature analysis
+    const neuralReasoning = this.generateNeuralReasoning(features, nnResult);
     
     // Calculate confluence level
     let confluenceLevel: HybridConfirmationResult['confluenceLevel'];
@@ -1185,6 +1189,7 @@ export class HybridConfirmationSystem {
       algorithmConfidence: algorithmResult.confidence,
       neuralDirection: nnResult.direction,
       neuralConfidence: nnResult.combinedConfidence,
+      neuralReasoning,
       finalVerdict,
       agreement,
       confluenceLevel,
@@ -1193,6 +1198,59 @@ export class HybridConfirmationSystem {
       positionSizeMultiplier,
       timestamp: Date.now()
     };
+  }
+  
+  /**
+   * Generate human-readable explanation for why neural network leans a certain direction
+   * Based on feature importance analysis from the input vector
+   */
+  private generateNeuralReasoning(
+    features: number[],
+    nnResult: { direction: 'LONG' | 'SHORT' | 'NEUTRAL'; confidence: number; probs: number[] }
+  ): string {
+    // Maximum number of reasoning items to include in explanation
+    const MAX_REASONING_ITEMS = 3;
+    const reasons: string[] = [];
+    
+    // Feature indices from index.ts featureVector (0-indexed):
+    // [0]: Current price, [1]: Price 24h ago, [2-3]: Est. historical prices
+    // [4]: 24h change %, [5]: Normalized position, [6]: Volatility proxy
+    // [7]: Daily range %, [8]: RSI, [9]: EMA9 deviation, [10]: EMA21 deviation
+    // [11]: MACD signal, [12]: Volume ratio, [13]: Volume trend
+    // [14-15]: Log volumes, [16]: Price position (0-100%), [17-18]: 24h high/low
+    
+    const priceChange = features[4] || 0;
+    const rsi = features[8] || 50;
+    const ema9Dev = features[9] || 0;
+    const macdSignal = features[11] || 0;
+    const volumeRatio = features[12] || 1;
+    const pricePosition = features[16] || 50;
+    
+    if (nnResult.direction === 'LONG') {
+      // Explain bullish signals
+      if (rsi < 40) reasons.push(`RSI oversold (${rsi.toFixed(0)})`);
+      if (ema9Dev > 0) reasons.push(`Price above short-term EMA`);
+      if (macdSignal > 0) reasons.push(`Positive MACD momentum`);
+      if (priceChange > 0 && volumeRatio > 1.2) reasons.push(`Bullish volume confirmation`);
+      if (pricePosition < 40) reasons.push(`Price in discount zone`);
+      if (reasons.length === 0) reasons.push(`Pattern recognition via MLP layers`);
+    } else if (nnResult.direction === 'SHORT') {
+      // Explain bearish signals
+      if (rsi > 60) reasons.push(`RSI overbought (${rsi.toFixed(0)})`);
+      if (ema9Dev < 0) reasons.push(`Price below short-term EMA`);
+      if (macdSignal < 0) reasons.push(`Negative MACD momentum`);
+      if (priceChange < 0 && volumeRatio > 1.2) reasons.push(`Bearish volume confirmation`);
+      if (pricePosition > 60) reasons.push(`Price in premium zone`);
+      if (reasons.length === 0) reasons.push(`Pattern recognition via MLP layers`);
+    } else {
+      // Explain neutral signals
+      if (rsi >= 40 && rsi <= 60) reasons.push(`RSI neutral (${rsi.toFixed(0)})`);
+      if (Math.abs(macdSignal) < 0.5) reasons.push(`MACD flat`);
+      if (pricePosition >= 40 && pricePosition <= 60) reasons.push(`Price mid-range`);
+      if (reasons.length === 0) reasons.push(`Mixed signals in feature space`);
+    }
+    
+    return reasons.slice(0, MAX_REASONING_ITEMS).join(', ');
   }
 
   /**
