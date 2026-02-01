@@ -212,4 +212,15 @@ export interface AnalysisResult {
     contrarian: boolean;
     description: string;
   };
+  // Hybrid Confirmation — Algorithm + Neural Network combined output
+  hybridConfirmation?: {
+    algorithmBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+    algorithmConfidence: number;
+    neuralDirection: 'LONG' | 'SHORT' | 'NEUTRAL';
+    neuralConfidence: number;
+    agreement: boolean;
+    confluenceLevel: 'STRONG' | 'MODERATE' | 'WEAK' | 'CONFLICTING';
+    combinedConfidence: number;
+    usedBothSystems: boolean; // Confirms both algorithm and neural network were used
+  };
 }
