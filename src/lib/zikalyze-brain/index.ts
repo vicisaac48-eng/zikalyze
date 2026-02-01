@@ -21,6 +21,9 @@ import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, per
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
 
+// Re-export ULTRA features for advanced analysis
+export * from './zikalyze-ultra';
+
 // Translation maps for multi-language support
 const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
