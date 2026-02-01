@@ -2513,47 +2513,47 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     // - At ALL levels: Follow sentiment (fear = bearish, greed = bullish)
     // - Stronger signals at extreme levels
     let biasModifier = 0;
-    let trendFollowing = false;
+    let isExtreme = false; // True when at extreme fear/greed levels (stronger signal)
     let description = '';
     
     // Trend-following signals at EXTREME levels (<=20 or >=80)
     if (value <= 20) {
       biasModifier = -0.15; // Follow the fear trend - bearish signal
-      trendFollowing = true;
+      isExtreme = true;
       description = '🔴 Extreme fear - follow the bearish trend (trend-following signal)';
     } else if (value >= 80) {
       biasModifier = 0.15; // Follow the greed trend - bullish signal
-      trendFollowing = true;
+      isExtreme = true;
       description = '🟢 Extreme greed - follow the bullish trend (trend-following signal)';
     } 
     // Fear zone (21-35)
     else if (value <= 35) {
       biasModifier = -0.05; // Market is fearful, sentiment is bearish
-      trendFollowing = false;
+      isExtreme = false;
       description = '😰 Fear in market - current sentiment is bearish';
     } 
     // High greed zone (65-79)
     else if (value >= 65) {
       biasModifier = 0.05; // Market is greedy, sentiment is bullish
-      trendFollowing = false;
+      isExtreme = false;
       description = '🤑 High greed in market - current sentiment is bullish';
     } 
     // Slight fear zone (36-45) - leaning bearish but not strong
     else if (value <= 45) {
       biasModifier = -0.02; // Slight bearish sentiment
-      trendFollowing = false;
+      isExtreme = false;
       description = '😕 Slight fear - market sentiment leans cautious';
     }
     // Slight greed zone (55-64) - leaning bullish but not strong
     else if (value >= 55) {
       biasModifier = 0.02; // Slight bullish sentiment
-      trendFollowing = false;
+      isExtreme = false;
       description = '🙂 Slight greed - market sentiment leans optimistic';
     }
     // True neutral zone (46-54)
     else {
       biasModifier = 0;
-      trendFollowing = false;
+      isExtreme = false;
       description = '😐 Neutral sentiment - market is balanced';
     }
     
@@ -2570,7 +2570,9 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       value,
       trend,
       biasModifier,
-      contrarian: trendFollowing, // Keep field name for API compatibility, but now represents trend-following
+      // Note: 'contrarian' field name kept for API compatibility
+      // Now indicates if this is an extreme-level trend-following signal
+      contrarian: isExtreme,
       description,
       isLive
     };
