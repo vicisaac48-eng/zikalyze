@@ -178,8 +178,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
 
   // Get sentiment values
-  const fearGreed = sentimentData?.fearGreed?.value || 50;
-  const socialSentiment = sentimentData?.social?.overall?.score || 50;
+  const fearGreed = sentimentData?.fearGreed?.value ?? 50;
+  const socialSentiment = sentimentData?.social?.overall?.score ?? 50;
   const fearGreedVisual = getFearGreedVisual(fearGreed);
 
   // Institutional vs Retail analysis

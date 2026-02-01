@@ -2291,7 +2291,7 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     // ═══════════════════════════════════════════════════════════════════════
     // STEP 5: Sentiment Analysis with Real-Time Fear & Greed
     // ═══════════════════════════════════════════════════════════════════════
-    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
+    const fearGreed = input.sentimentData?.fearGreed?.value ?? 50;
     const sentimentLabel = this.getSentimentLabel(fearGreed);
     
     // Calculate Fear & Greed impact on analysis (real-time integration)
@@ -2994,8 +2994,8 @@ export class CombinedBrain extends UnifiedBrain {
     
     const etfData = estimateETFFlowData(input.price, input.change, input.crypto);
     const onChainData = input.onChainData || estimateOnChainMetrics(input.crypto, input.price, input.change);
-    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
-    const socialSentiment = input.sentimentData?.social?.overall?.score || 50;
+    const fearGreed = input.sentimentData?.fearGreed?.value ?? 50;
+    const socialSentiment = input.sentimentData?.social?.overall?.score ?? 50;
     
     const institutionalVsRetail = analyzeInstitutionalVsRetail({
       etfFlow: etfData,

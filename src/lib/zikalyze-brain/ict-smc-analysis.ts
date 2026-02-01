@@ -775,7 +775,7 @@ export function performICTSMCAnalysis(
     aligned = htfBias === ltfBias && htfBias !== 'NEUTRAL';
     ltfConfirmation = ltfBias === htfBias;
     
-    confluenceScore = multiTfData.confluence?.strength || 50;
+    confluenceScore = multiTfData.confluence?.strength ?? 50;
   }
   
   // Generate trade setup if conditions align
