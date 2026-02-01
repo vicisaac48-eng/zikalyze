@@ -693,7 +693,6 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
    └─ ${etfFlowData ? 'Source: ETF flow data' : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ━━━━━━━━━━━━━━━━━━━━━━━━━━
-${hasRealMultiTfData ? '📊 Chart API active — Real-time data loaded\n' : hasRealChartData ? '📊 Chart API active — Using 24h chart data\n' : '🧠 Chart API active — Hybrid AI analysis enabled\n'}
 ${htfVisual}  →  ${alignmentText}
 
 W: ${topDownAnalysis.weekly.trend.padEnd(7)} ${createBar(topDownAnalysis.weekly.strength, 100, '█', '░', 8)} ${topDownAnalysis.weekly.strength.toFixed(0)}%
