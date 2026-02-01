@@ -866,6 +866,119 @@ export function performICTSMCAnalysis(
     }
   }
   
+  // LIQUIDITY_SWEEP Setup - When liquidity has been taken and price reverses
+  // Look for recently swept liquidity pools that indicate a potential reversal
+  if (!tradeSetup && liquidityPools.length > 0) {
+    const recentlySweptPool = liquidityPools.find(pool => {
+      // Check if the pool was recently swept (price moved through it)
+      if (pool.type === 'SSL' && htfBias === 'BULLISH') {
+        // SSL swept + bullish bias = potential long after liquidity grab
+        return pool.isSwept && currentPrice > pool.level;
+      }
+      if (pool.type === 'BSL' && htfBias === 'BEARISH') {
+        // BSL swept + bearish bias = potential short after liquidity grab
+        return pool.isSwept && currentPrice < pool.level;
+      }
+      return false;
+    });
+    
+    // Also check for trap scenarios - price swept liquidity but reversed
+    const trapScenario = displacement && (
+      (displacement.direction === 'BULLISH' && structure.lastBOS === 'BULLISH') ||
+      (displacement.direction === 'BEARISH' && structure.lastBOS === 'BEARISH')
+    );
+    
+    if (recentlySweptPool || trapScenario) {
+      const isLong = htfBias === 'BULLISH';
+      const direction: 'LONG' | 'SHORT' = isLong ? 'LONG' : 'SHORT';
+      const sweptLevel = recentlySweptPool?.level || (displacement?.startPrice ?? currentPrice);
+      const entry = currentPrice;
+      const stopLoss = isLong 
+        ? Math.min(sweptLevel * 0.995, currentPrice * 0.98) 
+        : Math.max(sweptLevel * 1.005, currentPrice * 1.02);
+      const riskAmount = Math.abs(entry - stopLoss);
+      
+      tradeSetup = {
+        type: 'LIQUIDITY_SWEEP',
+        direction,
+        entry,
+        stopLoss,
+        target1: isLong ? entry + riskAmount * 2 : entry - riskAmount * 2,
+        target2: isLong ? entry + riskAmount * 3.5 : entry - riskAmount * 3.5,
+        target3: isLong ? entry + riskAmount * 5 : entry - riskAmount * 5,
+        riskReward: 2,
+        reasoning: [
+          recentlySweptPool 
+            ? `${recentlySweptPool.type} liquidity swept at ${sweptLevel.toFixed(2)}` 
+            : 'Liquidity trap detected',
+          trapScenario ? `${displacement?.direction} displacement confirms reversal` : '',
+          `HTF bias: ${htfBias}`,
+          isLong ? 'Bears trapped below SSL' : 'Bulls trapped above BSL'
+        ].filter(Boolean),
+        confluence: [
+          aligned ? '✓ Multi-TF aligned' : '✗ TF not aligned',
+          displacement ? '✓ Displacement confirms' : '✗ No displacement',
+          structure.lastBOS ? `✓ BOS ${structure.lastBOS}` : '✗ No BOS',
+          ltfConfirmation ? '✓ LTF confirms' : '✗ LTF not confirmed'
+        ],
+        confidence: Math.min(85, 50 + (aligned ? 10 : 0) + (displacement ? 15 : 0) + 
+                           (trapScenario ? 10 : 0) + (ltfConfirmation ? 10 : 0))
+      };
+    }
+  }
+  
+  // BOS_CONTINUATION Setup - Trade continuation after confirmed Break of Structure
+  // When structure breaks in direction of HTF trend, look for pullback entry
+  if (!tradeSetup && structure.lastBOS && aligned) {
+    const bosAlignedWithHTF = (structure.lastBOS === 'BULLISH' && htfBias === 'BULLISH') ||
+                               (structure.lastBOS === 'BEARISH' && htfBias === 'BEARISH');
+    
+    // Check if price is in a good position for continuation entry
+    const inDiscountForLong = premiumDiscount.zone === 'DISCOUNT' && structure.lastBOS === 'BULLISH';
+    const inPremiumForShort = premiumDiscount.zone === 'PREMIUM' && structure.lastBOS === 'BEARISH';
+    
+    if (bosAlignedWithHTF && (inDiscountForLong || inPremiumForShort)) {
+      const isLong = structure.lastBOS === 'BULLISH';
+      const direction: 'LONG' | 'SHORT' = isLong ? 'LONG' : 'SHORT';
+      const entry = currentPrice;
+      
+      // Find the swing point to use as stop loss
+      const recentSwingLow = candles.slice(-10).reduce((min, c) => Math.min(min, c.low), Infinity);
+      const recentSwingHigh = candles.slice(-10).reduce((max, c) => Math.max(max, c.high), -Infinity);
+      
+      const stopLoss = isLong 
+        ? recentSwingLow * 0.995
+        : recentSwingHigh * 1.005;
+      const riskAmount = Math.abs(entry - stopLoss);
+      
+      tradeSetup = {
+        type: 'BOS_CONTINUATION',
+        direction,
+        entry,
+        stopLoss,
+        target1: isLong ? entry + riskAmount * 1.5 : entry - riskAmount * 1.5,
+        target2: isLong ? entry + riskAmount * 2.5 : entry - riskAmount * 2.5,
+        target3: isLong ? entry + riskAmount * 4 : entry - riskAmount * 4,
+        riskReward: 1.5,
+        reasoning: [
+          `BOS ${structure.lastBOS} confirmed - trend continuation`,
+          `Price in ${premiumDiscount.zone} zone (${premiumDiscount.fibLevel})`,
+          `HTF bias: ${htfBias}`,
+          structure.lastCHoCH ? `CHoCH ${structure.lastCHoCH} supports direction` : ''
+        ].filter(Boolean),
+        confluence: [
+          '✓ BOS confirmed',
+          aligned ? '✓ Multi-TF aligned' : '✗ TF not aligned',
+          premiumDiscount.optimalEntry ? '✓ Optimal entry zone' : '✗ Not optimal zone',
+          ltfConfirmation ? '✓ LTF confirms' : '✗ LTF not confirmed',
+          ote.isOTE ? '✓ In OTE zone' : '✗ Not in OTE'
+        ],
+        confidence: Math.min(85, 55 + (aligned ? 10 : 0) + (ote.isOTE ? 10 : 0) + 
+                           (ltfConfirmation ? 10 : 0))
+      };
+    }
+  }
+  
   // Generate pattern signature for learning
   const patternSignature = generatePatternSignature(
     structure, orderBlocks, fairValueGaps, premiumDiscount, htfBias
