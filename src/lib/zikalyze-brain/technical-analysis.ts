@@ -494,10 +494,10 @@ export function performTopDownAnalysis(
         }
         
         // Normalize features to [-1, 1] or [0, 1] range
-        const strength = (tf.trendStrength || 50) / 100; // [0, 1]
+        const strength = (tf.trendStrength ?? 50) / 100; // [0, 1]
         const trendNum = tf.trend === 'BULLISH' ? 1 : tf.trend === 'BEARISH' ? -1 : 0; // [-1, 1]
         const volNum = tf.volumeTrend === 'INCREASING' ? 1 : tf.volumeTrend === 'DECREASING' ? -1 : 0;
-        const rsiNorm = (tf.rsi || 50) / 100; // [0, 1]
+        const rsiNorm = (tf.rsi ?? 50) / 100; // [0, 1]
         const momentum = tf.higherHighs && tf.higherLows ? 1 : 
                         tf.lowerHighs && tf.lowerLows ? -1 : 0;
         

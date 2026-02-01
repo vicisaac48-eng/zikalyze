@@ -575,7 +575,7 @@ export function toChartTrendInput(analysis: ChartAnalysisResult): ChartTrendInpu
  */
 export async function getRSI(symbol: string, interval: ChartInterval = '1h'): Promise<number | null> {
   const analysis = await analyzeChart(symbol, interval, 50);
-  return analysis?.indicators.rsi || null;
+  return analysis?.indicators.rsi ?? null;
 }
 
 /**
@@ -596,7 +596,7 @@ export async function getEMAs(symbol: string, interval: ChartInterval = '1h'): P
  */
 export async function getMACD(symbol: string, interval: ChartInterval = '1h'): Promise<{ macd: number; signal: number; histogram: number } | null> {
   const analysis = await analyzeChart(symbol, interval, 50);
-  return analysis?.indicators.macd || null;
+  return analysis?.indicators.macd ?? null;
 }
 
 /**
