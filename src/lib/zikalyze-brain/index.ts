@@ -369,7 +369,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     if (bias === 'SHORT') {
       const bullishTerms = [
         'buy zone', 'Optimal buy', 'Deep discount', 'accumulation', 'Accumulation',
-        'bullish', 'BULLISH', 'uptrend', 'Uptrend', 'Contrarian BUY', 'buying',
+        'bullish', 'BULLISH', 'uptrend', 'Uptrend', 'Follow Trend BUY', 'buying',
         'confirms bulls', 'Strong uptrend', 'Bullish momentum', 'Mild bullish',
         'Institutions buying', 'Exchange outflows'
       ];
@@ -381,7 +381,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     if (bias === 'LONG') {
       const bearishTerms = [
         'sell zone', 'Optimal sell', 'Premium zone', 'distribution', 'Distribution',
-        'bearish', 'BEARISH', 'downtrend', 'Downtrend', 'Contrarian SELL', 'selling',
+        'bearish', 'BEARISH', 'downtrend', 'Downtrend', 'Follow Trend SELL', 'selling',
         'confirms bears', 'Strong downtrend', 'Bearish momentum', 'Mild bearish',
         'Institutions selling', 'Exchange inflows', 'Caution'
       ];
