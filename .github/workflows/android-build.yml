@@ -120,5 +120,5 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "1. Scroll down to the **Artifacts** section below" >> $GITHUB_STEP_SUMMARY
             echo "2. Download **zikalyze-release-aab** for Play Store upload" >> $GITHUB_STEP_SUMMARY
-            echo "3. Follow the [Play Store Upload Guide](../docs/PLAY_STORE_UPLOAD.md)" >> $GITHUB_STEP_SUMMARY
+            echo "3. Upload the AAB file to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
           fi
