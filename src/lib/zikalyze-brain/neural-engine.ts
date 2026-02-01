@@ -1131,17 +1131,32 @@ export class HybridConfirmationSystem {
         confluenceLevel = 'STRONG';
         combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
         positionSizeMultiplier = 1.0;
-        recommendation = `✅ STRONG CONFLUENCE — Both algorithm and neural network agree on ${algorithmResult.bias}. High confidence trade.`;
+        recommendation = `✅ STRONG CONFLUENCE — Both algorithm and neural network agree on ${algorithmResult.bias}.\n\n` +
+          `🎯 RECOMMENDED ACTION:\n` +
+          `   1. Enter ${algorithmResult.bias} with full position size (100%)\n` +
+          `   2. Set stop-loss at invalidation zone\n` +
+          `   3. Target levels based on analysis zones\n` +
+          `   4. High confidence — execute with conviction`;
       } else if (algorithmResult.confidence >= 50 || nnResult.combinedConfidence >= 0.35) {
         confluenceLevel = 'MODERATE';
         combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
         positionSizeMultiplier = 0.75;
-        recommendation = `🟡 MODERATE CONFLUENCE — Systems agree but confidence is moderate. Consider reduced position size.`;
+        recommendation = `🟡 MODERATE CONFLUENCE — Systems agree but confidence is moderate.\n\n` +
+          `🎯 RECOMMENDED ACTION:\n` +
+          `   1. Enter ${algorithmResult.bias} with 75% of normal position size\n` +
+          `   2. Set stop-loss at invalidation zone\n` +
+          `   3. Monitor for confluence upgrade (if NN confidence increases, add to position)\n` +
+          `   4. Consider tighter stops due to moderate confidence`;
       } else {
         confluenceLevel = 'WEAK';
         combinedConfidence = (algorithmResult.confidence * 0.6 + nnResult.combinedConfidence * 100 * 0.4);
         positionSizeMultiplier = 0.5;
-        recommendation = `⚠️ WEAK CONFLUENCE — Systems agree but low confidence. Small position or wait for better setup.`;
+        recommendation = `⚠️ WEAK CONFLUENCE — Systems agree but low confidence.\n\n` +
+          `🎯 RECOMMENDED ACTION:\n` +
+          `   1. Enter ${algorithmResult.bias} with 50% of normal position size OR wait\n` +
+          `   2. Set tight stop-loss at nearest invalidation\n` +
+          `   3. Consider scaling in if confirmation improves\n` +
+          `   4. Be ready to exit quickly if signal deteriorates`;
       }
       finalVerdict = algorithmResult.bias;
     } else {
@@ -1153,8 +1168,16 @@ export class HybridConfirmationSystem {
       // Use algorithm as primary (more interpretable)
       finalVerdict = algorithmResult.confidence > 70 ? algorithmResult.bias : 'NEUTRAL';
       
-      recommendation = `⚠️ CONFLICTING SIGNALS — Algorithm says ${algorithmResult.bias} (${algorithmResult.confidence.toFixed(0)}%), Neural Network says ${nnResult.direction} (${(nnResult.combinedConfidence * 100).toFixed(0)}%). ` +
-        `Recommendation: ${algorithmResult.confidence > 70 ? 'Follow algorithm with reduced size' : 'Wait for alignment or skip trade'}.`;
+      const action = algorithmResult.confidence > 70 
+        ? `Follow algorithm (${algorithmResult.bias}) with 25% position size` 
+        : 'Wait for alignment or skip this trade';
+      
+      recommendation = `❌ CONFLICTING SIGNALS — Algorithm says ${algorithmResult.bias} (${algorithmResult.confidence.toFixed(0)}%), Neural Network says ${nnResult.direction} (${(nnResult.combinedConfidence * 100).toFixed(0)}%).\n\n` +
+        `🎯 RECOMMENDED ACTION:\n` +
+        `   1. ${action}\n` +
+        `   2. Do NOT use full position size\n` +
+        `   3. Wait for both systems to align for better opportunity\n` +
+        `   4. If entering, use very tight stop-loss`;
     }
     
     return {
