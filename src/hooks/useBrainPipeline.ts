@@ -19,7 +19,8 @@ import {
   AnalysisInput,
   ChartTrendInput,
   LivestreamUpdate,
-  ICTSMCAnalysis
+  ICTSMCAnalysis,
+  EmergenceState
 } from '@/lib/zikalyze-brain';
 
 interface UseBrainPipelineOptions {
@@ -68,6 +69,9 @@ interface UseBrainPipelineReturn {
   // Self-learning status
   isSelfLearningEnabled: boolean;
   isUnifiedBrainEnabled: boolean;
+  // 🌐 Emergence — AI Brain Working Together as One
+  getEmergenceState: () => EmergenceState | null;
+  formatEmergenceStatus: () => string;
 }
 
 /**
@@ -395,6 +399,26 @@ export function useBrainPipeline(
   }, []);
 
   /**
+   * Get current emergence state - shows how AI components are working together
+   */
+  const getEmergenceState = useCallback((): EmergenceState | null => {
+    if (unifiedBrainRef.current) {
+      return unifiedBrainRef.current.getEmergenceState();
+    }
+    return null;
+  }, []);
+
+  /**
+   * Format emergence status as human-readable string
+   */
+  const formatEmergenceStatus = useCallback((): string => {
+    if (unifiedBrainRef.current) {
+      return unifiedBrainRef.current.formatEmergenceStatus();
+    }
+    return '⏳ Emergence engine not initialized';
+  }, []);
+
+  /**
    * Calculate average processing time
    */
   const averageProcessingTime = processingTimes.length > 0
@@ -421,7 +445,10 @@ export function useBrainPipeline(
     lastProcessingTime,
     averageProcessingTime,
     isSelfLearningEnabled: selfLearning,
-    isUnifiedBrainEnabled: unified
+    isUnifiedBrainEnabled: unified,
+    // 🌐 Emergence - AI Brain Working Together as One
+    getEmergenceState,
+    formatEmergenceStatus
   };
 }
 
