@@ -3509,6 +3509,9 @@ export class EmergenceEngine {
   private readonly emergenceThreshold = 70; // Score required for emergence
   private readonly synergyMultiplier = 1.25; // Amplification factor when synergy detected
   private readonly maxHistoryLength = 100;
+  private readonly maxReturnedHistory = 20; // History entries returned in getEmergenceState
+  private readonly maxComponentBonus = 20; // Maximum bonus from active components
+  private readonly componentBonusMultiplier = 5; // Bonus per additional active component
   
   constructor() {
     // Initialize core AI brain components
@@ -3623,7 +3626,10 @@ export class EmergenceEngine {
     const baseConfidence = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
     
     // Apply emergence amplification when many components are active
-    const componentBonus = Math.min(20, (activeComponents.length - 1) * 5);
+    const componentBonus = Math.min(
+      this.maxComponentBonus, 
+      (activeComponents.length - 1) * this.componentBonusMultiplier
+    );
     
     return Math.min(100, baseConfidence + componentBonus);
   }
@@ -3716,7 +3722,7 @@ export class EmergenceEngine {
     
     return {
       current,
-      history: this.emergenceHistory.slice(-20), // Last 20 measurements
+      history: this.emergenceHistory.slice(-this.maxReturnedHistory),
       trend,
       timeSinceEmergence
     };
@@ -3773,11 +3779,12 @@ export class EmergenceEngine {
       );
     }
     
-    // Update Self Learner (inferred from learning indicators)
+    // Update Self Learner (inferred from pipeline activity)
+    // Higher confidence if pipeline has been actively processing
     if (pipelineOutput) {
-      const hasLearning = pipelineOutput.timestamp !== undefined;
+      const isActive = pipelineOutput.timestamp !== undefined;
       this.updateComponent('SelfLearner',
-        hasLearning ? 0.75 : 0.5,
+        isActive ? 0.75 : 0.5,
         ['ActiveCryptoSource', 'ICTSMCAnalysis']
       );
     }
