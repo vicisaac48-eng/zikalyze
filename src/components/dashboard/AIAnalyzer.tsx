@@ -793,7 +793,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
             confidence={analysisResult.confidence}
             entryZone={analysisResult.precisionEntry.zone}
             timing={analysisResult.precisionEntry.timing}
-            successProbability={Math.min(88, 40 + Math.round(analysisResult.confidence * 0.3) + (analysisResult.precisionEntry.timing === 'NOW' ? 12 : 5))}
+            successProbability={analysisResult.successProbability}
             crypto={crypto}
             isVisible={true}
           />
