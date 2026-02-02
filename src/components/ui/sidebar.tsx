@@ -57,6 +57,17 @@ const SidebarProvider = React.forwardRef<
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
+
+  // Restore sidebar state from localStorage (for native apps) on mount
+  React.useEffect(() => {
+    if (isNativeApp && openProp === undefined) {
+      const stored = localStorage.getItem(SIDEBAR_COOKIE_NAME);
+      if (stored !== null) {
+        _setOpen(stored === "true");
+      }
+    }
+  }, [isNativeApp, openProp]);
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
