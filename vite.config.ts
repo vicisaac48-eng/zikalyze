@@ -53,6 +53,7 @@ export default defineConfig(({ mode }) => ({
         theme_color: "#0a0f1a",
         background_color: "#0a0f1a",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
         orientation: "any",
         scope: "./",
         start_url: "./#/",

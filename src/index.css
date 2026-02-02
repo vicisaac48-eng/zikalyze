@@ -89,6 +89,8 @@ All colors MUST be HSL.
     overscroll-behavior: none;
     /* Enable smooth momentum scrolling */
     -webkit-overflow-scrolling: touch;
+    /* Safe area padding for Android status bar / iOS notch */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* Ensure root element fills viewport */
@@ -358,6 +360,16 @@ All colors MUST be HSL.
   .mb-safe {
     margin-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     margin-bottom: max(constant(safe-area-inset-bottom, 0px), 16px);
+  }
+
+  /* Top safe area padding with minimum fallback - clears status bar on Android/iOS */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Margin-based top safe area for absolute/fixed positioning */
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, 0px);
   }
 
   /* Scrollbar styling - Cross-browser */

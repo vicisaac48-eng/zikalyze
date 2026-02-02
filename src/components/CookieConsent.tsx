@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Cookie, Shield, BarChart3, Target, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 const COOKIE_CONSENT_KEY = "zikalyze_cookie_consent";
 
@@ -23,13 +24,18 @@ export function CookieConsent() {
     marketing: false,
     preferences: false,
   });
+  const isNativeApp = useIsNativeApp();
 
   useEffect(() => {
+    // Don't show cookie consent on native apps (Android/PWA standalone)
+    if (isNativeApp) {
+      return;
+    }
     const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
     if (!consent) {
       setShow(true);
     }
-  }, []);
+  }, [isNativeApp]);
 
   const handleAcceptAll = () => {
     const allAccepted: CookiePreferences = {
