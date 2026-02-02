@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, TrendingUp, TrendingDown, BarChart3, Activity, PieChart, Menu } from "lucide-react";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { Search, User, TrendingUp, TrendingDown, BarChart3, Activity, PieChart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -16,7 +17,6 @@ const Analytics = () => {
   const { prices, loading } = useCryptoPrices();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const [timeframe, setTimeframe] = useState("24h");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
 
   const timeframes = ["1h", "24h", "7d", "30d", "1y"];
@@ -31,26 +31,15 @@ const Analytics = () => {
   const topGainers = [...prices].sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0)).slice(0, 3);
   const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar />
+      <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("analytics.title")}</h1>
-          </div>
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analytics.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -66,7 +55,7 @@ const Analytics = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-4 sm:p-4 md:p-6 md:space-y-6">
+        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Timeframe Filter */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
             {timeframes.map((tf) => (

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, RefreshCw, Menu } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, RefreshCw } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +39,6 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Load holdings from localStorage on mount
   const [holdings, setHoldings] = useState<Holding[]>(() => {
@@ -107,24 +107,15 @@ const Portfolio = () => {
     setHoldings(holdings.filter((h) => h.id !== id));
   };
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar />
+      <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64">
-        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>
+            <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>
             <div className="hidden sm:flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${loading ? "bg-warning" : "bg-success"} animate-pulse`} />
               <span className="text-xs text-muted-foreground">{loading ? t("portfolio.updating") : t("portfolio.livePrices")}</span>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, Volume2, VolumeX, BellOff, Music, Menu } from "lucide-react";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, Volume2, VolumeX, BellOff, Music } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -48,10 +49,7 @@ const Alerts = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleVolumeChange = (value: number[]) => {
     saveSettings({ soundVolume: value[0], soundEnabled: value[0] > 0 });
@@ -161,22 +159,15 @@ const Alerts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar />
+      <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <BellRing className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
-            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("alerts.title")}</h1>
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+          <div className="flex items-center gap-2">
+            <BellRing className="h-5 w-5 text-primary" />
+            <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("alerts.title")}</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -193,7 +184,7 @@ const Alerts = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-4 sm:p-4 md:p-6 md:space-y-6">
+        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Stats Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-6">

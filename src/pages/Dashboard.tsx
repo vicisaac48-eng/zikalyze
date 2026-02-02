@@ -1,7 +1,9 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, User, Menu } from "lucide-react";
+import { Search, User, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 
@@ -47,7 +49,6 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
   const { t } = useTranslation();
 
@@ -82,27 +83,15 @@ const Dashboard = () => {
       }
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   return (
     <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar />
+      <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64 safe-area-inset-bottom">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0 safe-area-inset-bottom">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Mobile menu button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
-          </div>
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -112,12 +101,18 @@ const Dashboard = () => {
                 className="w-48 lg:w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               {userName && (
                 <span className="text-xs font-medium text-foreground hidden sm:block sm:text-sm">
                   {userName}
                 </span>
               )}
+              {/* Settings link on mobile */}
+              <Link to="/dashboard/settings" className="md:hidden">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </Link>
               <Button variant="ghost" size="icon" className="rounded-full bg-secondary h-8 w-8 sm:h-10 sm:w-10">
                 <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
               </Button>
@@ -125,7 +120,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-4 sm:p-4 md:p-6 md:space-y-6">
+        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 

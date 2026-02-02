@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Menu } from "lucide-react";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -26,7 +27,6 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -34,7 +34,6 @@ const Settings = () => {
   }, []);
 
   const isDarkMode = mounted ? resolvedTheme === "dark" : true;
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleThemeToggle = (checked: boolean) => {
     setTheme(checked ? "dark" : "light");
@@ -87,22 +86,13 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+      <Sidebar />
+      <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
-          </div>
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
