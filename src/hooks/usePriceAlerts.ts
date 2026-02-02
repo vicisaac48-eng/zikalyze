@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { alertSound } from "@/lib/alertSound";
@@ -22,16 +22,13 @@ export interface PriceAlert {
 export const usePriceAlerts = () => {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const notificationPermission = useRef<NotificationPermission>("default");
   const { user } = useAuth();
   const { sendPriceAlertNotification, checkPriceMovement } = useSmartNotifications();
 
-  // Request notification permission on mount
+  // Request notification permission on mount (needed for toast and push notifications)
   useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission().then((permission) => {
-        notificationPermission.current = permission;
-      });
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
     }
   }, []);
 
@@ -223,33 +220,17 @@ export const usePriceAlerts = () => {
             console.error("Error playing alert sound:", err);
           }
 
-          // Send professional push notification
+          // Send push notification via service worker (handles both push and local display)
+          // This is the single source of notification - avoids duplicates
           await sendPriceAlertNotification(
             alert.symbol,
             alert.target_price,
             currentPrice,
             alert.condition
           );
-
-          // Show browser notification (auto-dismisses after 8 seconds)
-          if (
-            "Notification" in window &&
-            notificationPermission.current === "granted"
-          ) {
-            try {
-              const notification = new Notification(`🎯 ${alert.symbol} Price Alert Triggered!`, {
-                body: `${alert.symbol} is now ${alert.condition === "above" ? "above" : "below"} $${alert.target_price.toLocaleString()} • Current: $${currentPrice.toLocaleString()}`,
-                icon: `${import.meta.env.BASE_URL}pwa-192x192.png`,
-                tag: alert.id,
-                requireInteraction: false, // Auto-dismiss
-              });
-              
-              // Auto-close notification after 8 seconds
-              setTimeout(() => notification.close(), 8000);
-            } catch (err) {
-              console.error("Error showing notification:", err);
-            }
-          }
+          
+          // Note: Browser notification is now handled by the service worker via sendPriceAlertNotification
+          // to prevent duplicate notifications (previously we had both push AND browser notification)
 
           // Show toast notification (auto-dismisses after 6 seconds)
           toast.success(

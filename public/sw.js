@@ -148,8 +148,11 @@ async function backgroundLearn() {
       
       console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
       
-      // Check for price alerts
-      await checkPriceAlerts(prices);
+      // NOTE: Price alert checking is now handled exclusively by the main app (usePriceAlerts.ts)
+      // to prevent duplicate notifications. The service worker only handles:
+      // 1. Background AI learning for price patterns
+      // 2. Receiving and displaying push notifications from the server
+      // The main app sends push notifications via the edge function when alerts trigger
     } catch (e) {
       clearTimeout(timeoutId);
       if (e.name === 'AbortError') {

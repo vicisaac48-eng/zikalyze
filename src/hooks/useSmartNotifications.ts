@@ -79,6 +79,32 @@ export function useSmartNotifications() {
     return Date.now() - lastSent > cooldown;
   }, []);
 
+  // Fallback: Show local notification via service worker when push fails
+  const showLocalNotification = useCallback(async (notification: NotificationData): Promise<void> => {
+    if (!('serviceWorker' in navigator)) return;
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      if (registration.active) {
+        registration.active.postMessage({
+          type: 'SHOW_LOCAL_NOTIFICATION',
+          data: {
+            title: notification.title,
+            body: notification.body,
+            symbol: notification.symbol,
+            type: notification.type,
+            url: `/dashboard?crypto=${notification.symbol.toLowerCase()}`,
+            tag: `${notification.type}-${notification.symbol}-${Date.now()}`,
+            requireInteraction: notification.urgency === 'critical'
+          }
+        });
+        console.log('[SmartNotify] Local notification shown via SW');
+      }
+    } catch (err) {
+      console.error('[SmartNotify] Failed to show local notification:', err);
+    }
+  }, []);
+
   // Send push notification via edge function
   const sendPushNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
     if (!user?.id) return false;
@@ -104,8 +130,8 @@ export function useSmartNotifications() {
     }
 
     try {
-      // Send push notification
-      const { error } = await supabase.functions.invoke('send-push-notification', {
+      // Send push notification via edge function
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: {
           userId: user.id,
           title: notification.title,
@@ -119,6 +145,10 @@ export function useSmartNotifications() {
 
       if (error) {
         console.error('[SmartNotify] Push failed:', error);
+        // Fallback: Show local notification via service worker
+        await showLocalNotification(notification);
+      } else {
+        console.log(`[SmartNotify] Push sent successfully: ${data?.sent || 0} delivered`);
       }
 
       // Queue alert for email digest (fire and forget)
@@ -132,15 +162,23 @@ export function useSmartNotifications() {
         if (queueError) console.log('[SmartNotify] Digest queue failed:', queueError);
       });
 
-      // Update cooldown tracker
+      // Update cooldown tracker only on successful send
       lastNotifications.current[key] = Date.now();
       console.log(`[SmartNotify] Sent: ${notification.type} for ${notification.symbol}`);
       return true;
     } catch (err) {
       console.error('[SmartNotify] Error:', err);
-      return false;
+      // Fallback: Try to show local notification even if push fails
+      try {
+        await showLocalNotification(notification);
+        lastNotifications.current[key] = Date.now();
+        return true;
+      } catch (fallbackErr) {
+        console.error('[SmartNotify] Fallback notification also failed:', fallbackErr);
+        return false;
+      }
     }
-  }, [user?.id, canSendNotification, settings.notificationAlerts, settings.notifications]);
+  }, [user?.id, canSendNotification, showLocalNotification, settings.notificationAlerts, settings.notifications]);
 
   // Check for significant price movements
   const checkPriceMovement = useCallback(async (
