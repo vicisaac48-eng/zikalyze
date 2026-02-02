@@ -86,6 +86,9 @@ export function useSmartNotifications() {
     try {
       const registration = await navigator.serviceWorker.ready;
       if (registration.active) {
+        // Sanitize symbol for URL (only allow alphanumeric and hyphen)
+        const sanitizedSymbol = notification.symbol.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
+        
         registration.active.postMessage({
           type: 'SHOW_LOCAL_NOTIFICATION',
           data: {
@@ -93,8 +96,9 @@ export function useSmartNotifications() {
             body: notification.body,
             symbol: notification.symbol,
             type: notification.type,
-            url: `/dashboard?crypto=${notification.symbol.toLowerCase()}`,
-            tag: `${notification.type}-${notification.symbol}-${Date.now()}`,
+            url: `/dashboard?crypto=${sanitizedSymbol}`,
+            // Use consistent tag without timestamp to allow replacing duplicate notifications
+            tag: `${notification.type}-${notification.symbol}`,
             requireInteraction: notification.urgency === 'critical'
           }
         });
@@ -129,7 +133,12 @@ export function useSmartNotifications() {
       return false;
     }
 
+    let fallbackAttempted = false;
+    
     try {
+      // Sanitize symbol for URL
+      const sanitizedSymbol = notification.symbol.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
+      
       // Send push notification via edge function
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: {
@@ -139,7 +148,7 @@ export function useSmartNotifications() {
           symbol: notification.symbol,
           type: notification.type,
           urgency: notification.urgency,
-          url: `/dashboard?crypto=${notification.symbol.toLowerCase()}`
+          url: `/dashboard?crypto=${sanitizedSymbol}`
         }
       });
 
@@ -147,6 +156,7 @@ export function useSmartNotifications() {
       if (error) {
         console.error('[SmartNotify] Push failed:', error);
         // Fallback: Show local notification via service worker
+        fallbackAttempted = true;
         await showLocalNotification(notification);
         notificationShown = true;
       } else {
@@ -173,16 +183,17 @@ export function useSmartNotifications() {
       return notificationShown;
     } catch (err) {
       console.error('[SmartNotify] Error:', err);
-      // Fallback: Try to show local notification even if push fails
-      try {
-        await showLocalNotification(notification);
-        // Update cooldown for fallback notification too
-        lastNotifications.current[key] = Date.now();
-        return true;
-      } catch (fallbackErr) {
-        console.error('[SmartNotify] Fallback notification also failed:', fallbackErr);
-        return false;
+      // Only attempt fallback if we haven't already tried it
+      if (!fallbackAttempted) {
+        try {
+          await showLocalNotification(notification);
+          lastNotifications.current[key] = Date.now();
+          return true;
+        } catch (fallbackErr) {
+          console.error('[SmartNotify] Fallback notification also failed:', fallbackErr);
+        }
       }
+      return false;
     }
   }, [user?.id, canSendNotification, showLocalNotification, settings.notificationAlerts, settings.notifications]);
 
