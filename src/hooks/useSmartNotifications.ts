@@ -143,12 +143,15 @@ export function useSmartNotifications() {
         }
       });
 
+      let notificationShown = false;
       if (error) {
         console.error('[SmartNotify] Push failed:', error);
         // Fallback: Show local notification via service worker
         await showLocalNotification(notification);
+        notificationShown = true;
       } else {
         console.log(`[SmartNotify] Push sent successfully: ${data?.sent || 0} delivered`);
+        notificationShown = true;
       }
 
       // Queue alert for email digest (fire and forget)
@@ -162,15 +165,18 @@ export function useSmartNotifications() {
         if (queueError) console.log('[SmartNotify] Digest queue failed:', queueError);
       });
 
-      // Update cooldown tracker only on successful send
-      lastNotifications.current[key] = Date.now();
-      console.log(`[SmartNotify] Sent: ${notification.type} for ${notification.symbol}`);
-      return true;
+      // Update cooldown tracker when notification was shown (either via push or fallback)
+      if (notificationShown) {
+        lastNotifications.current[key] = Date.now();
+        console.log(`[SmartNotify] Sent: ${notification.type} for ${notification.symbol}`);
+      }
+      return notificationShown;
     } catch (err) {
       console.error('[SmartNotify] Error:', err);
       // Fallback: Try to show local notification even if push fails
       try {
         await showLocalNotification(notification);
+        // Update cooldown for fallback notification too
         lastNotifications.current[key] = Date.now();
         return true;
       } catch (fallbackErr) {
