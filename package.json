@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:health": "npx playwright test",
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",
     "android:build": "npm run build && npx cap sync android",
@@ -81,6 +82,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
