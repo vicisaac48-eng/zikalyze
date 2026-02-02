@@ -1,7 +1,6 @@
 package com.zikalyze.app;
 
 import android.os.Bundle;
-import android.view.WindowManager;
 import android.graphics.Color;
 
 import androidx.core.view.WindowCompat;
@@ -24,7 +23,7 @@ public class MainActivity extends BridgeActivity {
      * while ensuring the app is compatible with all Android device sizes and notch types.
      */
     private void setupEdgeToEdgeDisplay() {
-        // Enable edge-to-edge
+        // Enable edge-to-edge - let the app handle window insets via CSS safe-area-insets
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         
         // Set status bar and navigation bar to transparent so the WebView content
@@ -41,8 +40,5 @@ public class MainActivity extends BridgeActivity {
             insetsController.setAppearanceLightStatusBars(false);
             insetsController.setAppearanceLightNavigationBars(false);
         }
-        
-        // Ensure content can be laid out behind the system bars
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
     }
 }

@@ -7,8 +7,7 @@
         android:normalScreens="true"
         android:largeScreens="true"
         android:xlargeScreens="true"
-        android:anyDensity="true"
-        android:resizeable="true" />
+        android:anyDensity="true" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +25,7 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true"
+            android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
