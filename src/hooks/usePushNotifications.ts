@@ -258,7 +258,10 @@ export function usePushNotifications() {
       setIsLoading(true);
       
       if (isNativePlatform()) {
-        // Native platform - unregister from push notifications
+        // Native platform - clear local notification state
+        // Note: This clears delivered notifications and local subscription state.
+        // Full FCM token unregistration requires a backend API call to remove
+        // the token from your push notification server.
         await PushNotifications.removeAllDeliveredNotifications();
         localStorage.removeItem(FCM_TOKEN_KEY);
         localStorage.removeItem(PUSH_STATUS_KEY);
