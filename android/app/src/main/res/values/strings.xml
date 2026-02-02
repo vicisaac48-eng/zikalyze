@@ -4,4 +4,5 @@
     <string name="title_activity_main">Zikalyze</string>
     <string name="package_name">com.zikalyze.app</string>
     <string name="custom_url_scheme">com.zikalyze.app</string>
+    <string name="content_placeholder">Scroll content goes here. The header above stays fixed while this content scrolls underneath it.</string>
 </resources>
