@@ -118,6 +118,26 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 **Alternative (GitHub Actions):**
 - 📦 [View All Builds](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
 
+### 🔄 APK Updates After Merge/Pull Request
+
+The Android APK is **automatically built** whenever code is merged to the main branch. Here's how the process works:
+
+1. **After a PR is Merged**: When a pull request is merged into the `main` branch, a new APK build is automatically triggered via GitHub Actions.
+
+2. **Build Time**: The build typically takes 3-5 minutes to complete. You can monitor the build progress at [GitHub Actions](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml).
+
+3. **Download the New APK**: Once the build completes successfully, the download links above will automatically point to the latest version. Simply click the download button to get the newest APK.
+
+**To download APK from a specific Pull Request (before merge):**
+
+1. Go to the [Pull Requests page](https://github.com/vicisaac48-eng/zikalyze/pulls)
+2. Click on the PR you want to test
+3. Scroll down to the "Checks" section and click on "Android Build"
+4. Once the build completes, click "Summary" in the left sidebar
+5. Download the `zikalyze-debug-apk` artifact from the "Artifacts" section at the bottom
+
+> **Note**: Artifacts from PRs expire after 14 days. For permanent access, use the nightly.link download after the PR is merged.
+
 ### ✨ Android Native Features
 
 The native Android app includes optimizations not available in the web version:
