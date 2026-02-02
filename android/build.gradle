@@ -22,6 +22,17 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Force consistent Kotlin stdlib versions to prevent duplicate class errors
+    // Starting with Kotlin 1.8.0, kotlin-stdlib-jdk7 and kotlin-stdlib-jdk8 are merged into kotlin-stdlib
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name.startsWith('kotlin-stdlib')) {
+                details.useVersion '1.9.24'
+                details.because 'Force consistent Kotlin stdlib version to avoid duplicate class conflicts'
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {
