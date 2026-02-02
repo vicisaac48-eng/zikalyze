@@ -14,7 +14,7 @@
     "android:build": "npm run build && npx cap sync android",
     "android:run": "npm run build && npx cap sync android && npx cap run android"
   },
-  "engine": {
+  "engines": {
     "node": ">=22.0.0"
   },
   "dependencies": {
