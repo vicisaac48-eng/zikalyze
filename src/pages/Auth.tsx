@@ -514,28 +514,28 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background effects */}
+    <div className="min-h-[100dvh] bg-background flex items-center justify-center p-3 sm:p-4">
+      {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
+        <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-            <TrendingUp className="h-7 w-7 text-primary-foreground" />
+        {/* Logo - responsive sizing */}
+        <div className="flex items-center justify-center gap-2 mb-6 sm:gap-3 sm:mb-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-14 sm:w-14">
+            <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
           </div>
-          <span className="text-3xl font-bold text-foreground">Zikalyze</span>
+          <span className="text-2xl font-bold text-foreground sm:text-3xl">Zikalyze</span>
         </div>
 
-        {/* Auth Card */}
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-6 shadow-2xl">
+        {/* Auth Card - responsive padding */}
+        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-xl p-4 shadow-2xl sm:rounded-2xl sm:p-6">
           <Tabs defaultValue="signup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signup">{t("auth.signUp", "Sign Up")}</TabsTrigger>
-              <TabsTrigger value="signin">{t("auth.signIn", "Sign In")}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+              <TabsTrigger value="signup" className="text-sm sm:text-base">{t("auth.signUp", "Sign Up")}</TabsTrigger>
+              <TabsTrigger value="signin" className="text-sm sm:text-base">{t("auth.signIn", "Sign In")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signup">
@@ -547,7 +547,7 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="relative my-6">
+          <div className="relative my-4 sm:my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
@@ -558,7 +558,7 @@ const Auth = () => {
 
           <DemoModeAuth />
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
+          <p className="mt-4 text-center text-xs text-muted-foreground sm:mt-6">
             {t("auth.termsAgreement")}
           </p>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import { Search, User, TrendingUp, TrendingDown, BarChart3, Activity, PieChart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,12 +34,13 @@ const Analytics = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
+      <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">{t("analytics.title")}</h1>
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analytics.title")}</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -47,21 +49,21 @@ const Analytics = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Timeframe Filter */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
             {timeframes.map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm font-medium transition-all",
+                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap sm:px-4 sm:py-2 sm:text-sm",
                   timeframe === tf
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"

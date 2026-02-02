@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -86,12 +87,13 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
+      <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -100,13 +102,13 @@ const Settings = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">
             {tabs.map((tab) => (
