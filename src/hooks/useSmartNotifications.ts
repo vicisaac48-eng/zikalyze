@@ -163,17 +163,6 @@ export function useSmartNotifications() {
         notificationShown = true;
       }
 
-      // Queue alert for email digest (fire and forget)
-      supabase.from('alert_digest_queue').insert({
-        user_id: user.id,
-        alert_type: notification.type,
-        symbol: notification.symbol,
-        title: notification.title,
-        body: notification.body,
-      }).then(({ error: queueError }) => {
-        if (queueError) console.log('[SmartNotify] Digest queue failed:', queueError);
-      });
-
       // Update cooldown tracker when notification was shown (either via push or fallback)
       if (notificationShown) {
         lastNotifications.current[key] = Date.now();
