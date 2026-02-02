@@ -109,17 +109,59 @@ export interface PredictionRecord {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Xavier/Glorot initialization for weights
+ * Deterministic seeded random number generator (Mulberry32)
+ * Ensures identical weight initialization across Android and web platforms
+ * Same seed = same sequence of numbers on any device
  */
-function xavierInit(fanIn: number, fanOut: number): number[][] {
+class SeededRandom {
+  private state: number;
+  
+  constructor(seed: number = 42) {
+    this.state = seed;
+  }
+  
+  /**
+   * Generate next random number in [0, 1) range
+   * Uses Mulberry32 algorithm for cross-platform consistency
+   */
+  next(): number {
+    this.state |= 0;
+    this.state = this.state + 0x6D2B79F5 | 0;
+    let t = Math.imul(this.state ^ this.state >>> 15, 1 | this.state);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+  
+  /**
+   * Reset to a new seed
+   */
+  setSeed(seed: number): void {
+    this.state = seed;
+  }
+}
+
+// Global seeded RNG for weight initialization - seed 42 ensures consistency
+const weightInitRng = new SeededRandom(42);
+
+/**
+ * Xavier/Glorot initialization for weights (DETERMINISTIC)
+ * Uses seeded RNG to ensure identical weights on Android and web
+ * @param fanIn - Number of input neurons
+ * @param fanOut - Number of output neurons
+ * @param layerSeed - Additional seed offset for each layer
+ */
+function xavierInit(fanIn: number, fanOut: number, layerSeed: number = 0): number[][] {
+  // Reset RNG with layer-specific seed for reproducibility
+  weightInitRng.setSeed(42 + layerSeed * 1000);
+  
   const stddev = Math.sqrt(2.0 / (fanIn + fanOut));
   const weights: number[][] = [];
   for (let i = 0; i < fanOut; i++) {
     const row: number[] = [];
     for (let j = 0; j < fanIn; j++) {
-      // Box-Muller transform for normal distribution
-      const u1 = Math.random();
-      const u2 = Math.random();
+      // Box-Muller transform for normal distribution using seeded RNG
+      const u1 = Math.max(EPSILON, weightInitRng.next()); // Avoid log(0)
+      const u2 = weightInitRng.next();
       const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
       row.push(z * stddev);
     }
@@ -129,15 +171,16 @@ function xavierInit(fanIn: number, fanOut: number): number[][] {
 }
 
 /**
- * Initialize neural network weights
+ * Initialize neural network weights (DETERMINISTIC)
+ * Uses layer-specific seeds to ensure identical initialization on all platforms
  */
 function initializeWeights(inputDim: number = FEATURE_VECTOR_SIZE): NeuralWeights {
   return {
-    W1: xavierInit(inputDim, 64),
+    W1: xavierInit(inputDim, 64, 1),  // Layer 1 seed
     b1: new Array(64).fill(0),
-    W2: xavierInit(64, 32),
+    W2: xavierInit(64, 32, 2),        // Layer 2 seed
     b2: new Array(32).fill(0),
-    W3: xavierInit(32, 3),
+    W3: xavierInit(32, 3, 3),         // Layer 3 seed
     b3: new Array(3).fill(0),
     trainingEpochs: 0,
     lastTrainingLoss: Infinity,
