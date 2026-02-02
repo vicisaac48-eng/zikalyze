@@ -135,7 +135,7 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 
 ### 📥 Download APK
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK-green?style=for-the-badge&logo=android)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK%20(Cookie--Free)-green?style=for-the-badge&logo=android)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
 
 **Direct Download Links:**
 - 🔗 [**Download Latest Debug APK**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Latest successful build from main branch (includes cookie-free state management)
