@@ -37,7 +37,7 @@ const Analyzer = () => {
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
