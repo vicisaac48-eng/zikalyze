@@ -104,6 +104,32 @@ GitHub Codespaces:
 Launch a cloud-based development environment directly from the repository.
 
 
+## 📱 Android App
+
+Zikalyze is available as a native Android app! You can download and install the APK from our GitHub Actions.
+
+### Download APK
+
+1. Go to [GitHub Actions](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml)
+2. Click on the latest successful workflow run
+3. Scroll down to the **Artifacts** section
+4. Download `zikalyze-debug-apk` (or `zikalyze-release-apk` for production)
+5. On your Android device, enable "Install from unknown sources" in Settings
+6. Install the downloaded APK file
+
+> **Note**: The APK artifacts expire after 14 days (debug) or 30 days (release). Download the latest version regularly.
+
+### Direct Link (Latest Build)
+
+Visit our [Android Build Workflow](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) to download the latest APK.
+
+### Alternative: PWA Installation
+
+You can also install Zikalyze as a Progressive Web App (PWA) directly from your browser:
+1. Visit https://zikalyze.com on your Android device
+2. Tap the menu (⋮) → "Add to Home screen"
+3. The app will work offline with full functionality
+
 ## 🌐 IPFS Deployment
 
 This project supports automatic deployment to IPFS (InterPlanetary File System) via Pinata. For detailed instructions on setting up IPFS deployment, see [IPFS_DEPLOYMENT.md](./IPFS_DEPLOYMENT.md).
