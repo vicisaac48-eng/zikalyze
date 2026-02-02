@@ -86,46 +86,60 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!isNativePlatform()) return;
 
-    // Registration success listener
-    const registrationListener = PushNotifications.addListener('registration', (token: Token) => {
-      console.log('Push registration success, token:', token.value);
-      setFcmToken(token.value);
-      localStorage.setItem(FCM_TOKEN_KEY, token.value);
-      localStorage.setItem(PUSH_STATUS_KEY, 'true');
-      setIsSubscribed(true);
-    });
+    // Store listener handles for cleanup
+    let registrationHandle: Awaited<ReturnType<typeof PushNotifications.addListener>> | null = null;
+    let registrationErrorHandle: Awaited<ReturnType<typeof PushNotifications.addListener>> | null = null;
+    let pushReceivedHandle: Awaited<ReturnType<typeof PushNotifications.addListener>> | null = null;
+    let pushActionHandle: Awaited<ReturnType<typeof PushNotifications.addListener>> | null = null;
 
-    // Registration error listener
-    const registrationErrorListener = PushNotifications.addListener('registrationError', (error) => {
-      console.error('Push registration error:', error);
-      toast.error('Failed to register for push notifications');
-    });
+    const setupListeners = async () => {
+      try {
+        // Registration success listener
+        registrationHandle = await PushNotifications.addListener('registration', (token: Token) => {
+          console.log('Push registration success, token:', token.value);
+          setFcmToken(token.value);
+          localStorage.setItem(FCM_TOKEN_KEY, token.value);
+          localStorage.setItem(PUSH_STATUS_KEY, 'true');
+          setIsSubscribed(true);
+        });
 
-    // Push notification received (foreground)
-    const pushReceivedListener = PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-      console.log('Push notification received:', notification);
-      // Show a toast for foreground notifications
-      toast.info(notification.title || 'Zikalyze Alert', {
-        description: notification.body,
-      });
-    });
+        // Registration error listener
+        registrationErrorHandle = await PushNotifications.addListener('registrationError', (error) => {
+          console.error('Push registration error:', error);
+          toast.error('Failed to register for push notifications');
+        });
 
-    // Push notification action performed (tapped)
-    const pushActionListener = PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
-      console.log('Push notification action performed:', action);
-      // Handle notification tap - navigate to relevant page
-      const data = action.notification.data;
-      if (data?.url) {
-        window.location.hash = data.url;
+        // Push notification received (foreground)
+        pushReceivedHandle = await PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+          console.log('Push notification received:', notification);
+          // Show a toast for foreground notifications
+          toast.info(notification.title || 'Zikalyze alert', {
+            description: notification.body,
+          });
+        });
+
+        // Push notification action performed (tapped)
+        pushActionHandle = await PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+          console.log('Push notification action performed:', action);
+          // Handle notification tap - navigate to relevant page
+          const data = action.notification.data;
+          if (data?.url) {
+            window.location.hash = data.url;
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up push notification listeners:', error);
       }
-    });
+    };
+
+    setupListeners();
 
     // Cleanup listeners on unmount
     return () => {
-      registrationListener.then(l => l.remove());
-      registrationErrorListener.then(l => l.remove());
-      pushReceivedListener.then(l => l.remove());
-      pushActionListener.then(l => l.remove());
+      registrationHandle?.remove();
+      registrationErrorHandle?.remove();
+      pushReceivedHandle?.remove();
+      pushActionHandle?.remove();
     };
   }, []);
 
