@@ -1,8 +1,43 @@
-// Audio utility for playing notification sounds
+// Audio utility for playing notification sounds with native haptic feedback
 import { getSoundVolume, getSoundType, SoundType, isSoundEnabled } from "@/hooks/useSettings";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+import { Capacitor } from "@capacitor/core";
 
 // Volume multiplier for louder output
 const VOLUME_BOOST = 1.4;
+
+// Check if running on native platform (Android/iOS)
+const isNativePlatform = (): boolean => {
+  return Capacitor.isNativePlatform();
+};
+
+// Trigger native haptic feedback for alerts
+const triggerHapticFeedback = async (intensity: "light" | "medium" | "heavy" = "medium"): Promise<void> => {
+  if (!isNativePlatform()) return;
+  
+  try {
+    const style = intensity === "light" ? ImpactStyle.Light 
+                : intensity === "heavy" ? ImpactStyle.Heavy 
+                : ImpactStyle.Medium;
+    await Haptics.impact({ style });
+  } catch (error) {
+    console.warn("Haptic feedback failed:", error);
+  }
+};
+
+// Trigger notification-style haptic feedback
+const triggerNotificationHaptic = async (type: "success" | "warning" | "error" = "success"): Promise<void> => {
+  if (!isNativePlatform()) return;
+  
+  try {
+    const notifType = type === "warning" ? NotificationType.Warning
+                    : type === "error" ? NotificationType.Error
+                    : NotificationType.Success;
+    await Haptics.notification({ type: notifType });
+  } catch (error) {
+    console.warn("Notification haptic failed:", error);
+  }
+};
 
 class AlertSoundPlayer {
   private audioContext: AudioContext | null = null;
@@ -44,7 +79,7 @@ class AlertSoundPlayer {
     }
   }
 
-  // Play alert sound based on selected type
+  // Play alert sound based on selected type with native haptic feedback
   async playAlertSound(overrideType?: SoundType): Promise<void> {
     // Check if sound is enabled
     if (!isSoundEnabled()) return;
@@ -54,6 +89,10 @@ class AlertSoundPlayer {
     this.isPlaying = true;
 
     const soundType = overrideType || getSoundType();
+
+    // Trigger haptic feedback on native platforms (Android/iOS)
+    // This gives native-like tactile feedback with the alert sound
+    triggerNotificationHaptic("success");
 
     try {
       switch (soundType) {
@@ -290,16 +329,23 @@ class AlertSoundPlayer {
     }
   }
 
-  // Play a simple beep for testing
+  // Play a simple beep for testing - includes light haptic feedback on native
   async playTestSound(soundType?: SoundType): Promise<void> {
-    // Also unlock when testing
+    // Unlock audio context first
     this.unlock();
+    
+    // Trigger light haptic for test sound (feels more native on Android/iOS)
+    triggerHapticFeedback("light");
+    
     await this.playAlertSound(soundType);
   }
 }
 
 // Singleton instance
 export const alertSound = new AlertSoundPlayer();
+
+// Export haptic functions for use throughout the app
+export { triggerHapticFeedback, triggerNotificationHaptic, isNativePlatform };
 
 // Auto-unlock on first user interaction
 if (typeof window !== "undefined") {
