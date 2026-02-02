@@ -99,6 +99,29 @@ All colors MUST be HSL.
     min-height: 100dvh;
     min-height: -webkit-fill-available;
   }
+
+  /* Android WebView scroll behavior optimization */
+  /* This ensures smooth scrolling without affecting sticky headers */
+  main {
+    /* Enable hardware-accelerated scrolling on Android */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Smooth overscroll handling */
+    overscroll-behavior-y: contain;
+    /* Momentum scrolling for Android WebView */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sticky header optimization for Android */
+  /* Ensures headers remain fixed during scroll without jitter */
+  header[class*="sticky"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+    /* Prevent subpixel rendering issues on Android */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
 }
 
 @layer utilities {

@@ -164,7 +164,7 @@ const Alerts = () => {
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 py-2 sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2">
             <BellRing className="h-5 w-5 text-primary" />
             <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("alerts.title")}</h1>
