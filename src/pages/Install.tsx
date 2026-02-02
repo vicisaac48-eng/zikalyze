@@ -221,6 +221,37 @@ const Install = () => {
                   </TabsContent>
 
                   <TabsContent value="android" className="space-y-3 mt-0">
+                    {/* Native APK Download Option */}
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Download className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-foreground mb-1">
+                            <Smartphone className="w-4 h-4 inline mr-1" />
+                            {t("install.android.nativeTitle", "Download Native APK (Recommended)")}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {t("install.android.nativeDesc", "Get the full native Android experience with better performance and push notifications.")}
+                          </p>
+                          <a 
+                            href="https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            {t("install.android.downloadApk", "Download APK from GitHub")}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      {t("install.android.orPwa", "— or install as PWA —")}
+                    </p>
+
                     <InstallStep
                       step={1}
                       icon={Chrome}
