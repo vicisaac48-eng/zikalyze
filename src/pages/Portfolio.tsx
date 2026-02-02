@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, RefreshCw } from "lucide-react";
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, RefreshCw, Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Load holdings from localStorage on mount
   const [holdings, setHoldings] = useState<Holding[]>(() => {
@@ -106,28 +107,38 @@ const Portfolio = () => {
     setHoldings(holdings.filter((h) => h.id !== id));
   };
 
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
-      <main className="ml-16 lg:ml-64">
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-foreground">{t("portfolio.title")}</h1>
-            <div className="flex items-center gap-2">
+      <main className="md:ml-16 lg:ml-64">
+        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 md:hidden"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>
+            <div className="hidden sm:flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${loading ? "bg-warning" : "bg-success"} animate-pulse`} />
               <span className="text-xs text-muted-foreground">{loading ? t("portfolio.updating") : t("portfolio.livePrices")}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={loading}>
+            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={loading} className="h-8 w-8 sm:h-10 sm:w-10">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2 h-8 px-2 text-xs sm:h-10 sm:px-4 sm:text-sm">
                   <Plus className="h-4 w-4" />
-                  {t("portfolio.addHolding")}
+                  <span className="hidden sm:inline">{t("portfolio.addHolding")}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border">

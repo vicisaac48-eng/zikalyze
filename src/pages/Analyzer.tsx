@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User } from "lucide-react";
+import { Search, User, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -11,6 +11,7 @@ import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { getPriceBySymbol, loading, isLive } = useCryptoPrices();
   const { t } = useTranslation();
 
@@ -28,16 +29,27 @@ const Analyzer = () => {
   };
 
   const selected = cryptoData[selectedCrypto];
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
-      <main className="ml-16 lg:ml-64">
+      <main className="md:ml-16 lg:ml-64">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">{t("analyzer.title")}</h1>
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between border-b border-border px-3 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 md:hidden"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -46,13 +58,13 @@ const Analyzer = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-3 space-y-4 sm:p-4 md:p-6 md:space-y-6">
           {/* Crypto Selection */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 

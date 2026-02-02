@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, User } from "lucide-react";
+import { Search, User, Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -47,6 +47,7 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
   const { t } = useTranslation();
 
@@ -81,14 +82,27 @@ const Dashboard = () => {
       }
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
-      <main className="ml-16 lg:ml-64 safe-area-inset-bottom">
+      <main className="md:ml-16 lg:ml-64 safe-area-inset-bottom">
         {/* Header */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile menu button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 md:hidden"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
+          </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
