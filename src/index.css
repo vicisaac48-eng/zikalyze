@@ -101,25 +101,38 @@ All colors MUST be HSL.
   }
 
   /* Android WebView scroll behavior optimization */
-  /* This ensures smooth scrolling without affecting sticky headers */
+  /* Use will-change instead of transform to avoid breaking fixed positioning */
   main {
-    /* Enable hardware-accelerated scrolling on Android */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
     /* Smooth overscroll handling */
     overscroll-behavior-y: contain;
     /* Momentum scrolling for Android WebView */
     -webkit-overflow-scrolling: touch;
+    /* Use will-change for hardware acceleration instead of transform */
+    /* This doesn't create a new containing block like transform does */
+    will-change: scroll-position;
   }
 
-  /* Sticky header optimization for Android */
-  /* Ensures headers remain fixed during scroll without jitter */
-  header[class*="sticky"] {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+  /* Stable header for mobile/Android - stays fixed during scroll like WhatsApp */
+  /* Uses sticky with enhanced stability for reliable Android behavior */
+  header.fixed-header {
+    position: sticky;
+    top: 0;
     /* Prevent subpixel rendering issues on Android */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    /* Ensure it stays above all content */
+    z-index: 50;
+    /* Hardware acceleration hint - replaces translateZ(0) hack */
+    will-change: transform;
+    /* Ensure the header doesn't get pushed by content */
+    flex-shrink: 0;
+  }
+
+  /* Legacy sticky header optimization - keep for fallback */
+  header[class*="sticky"] {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
   }
 }
 
