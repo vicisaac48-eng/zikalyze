@@ -125,9 +125,11 @@ class SeededRandom {
    * Uses Mulberry32 algorithm for cross-platform consistency
    */
   next(): number {
-    this.state |= 0;
-    this.state = this.state + 0x6D2B79F5 | 0;
-    let t = Math.imul(this.state ^ this.state >>> 15, 1 | this.state);
+    // Convert to 32-bit integer for consistent bit operations
+    let s = this.state | 0;
+    s = s + 0x6D2B79F5 | 0;
+    this.state = s;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   }
@@ -143,6 +145,9 @@ class SeededRandom {
 // Global seeded RNG for weight initialization - seed 42 ensures consistency
 const weightInitRng = new SeededRandom(42);
 
+/** Seed offset multiplier for distinct RNG sequences per layer */
+const LAYER_SEED_OFFSET = 1000;
+
 /**
  * Xavier/Glorot initialization for weights (DETERMINISTIC)
  * Uses seeded RNG to ensure identical weights on Android and web
@@ -152,7 +157,7 @@ const weightInitRng = new SeededRandom(42);
  */
 function xavierInit(fanIn: number, fanOut: number, layerSeed: number = 0): number[][] {
   // Reset RNG with layer-specific seed for reproducibility
-  weightInitRng.setSeed(42 + layerSeed * 1000);
+  weightInitRng.setSeed(42 + layerSeed * LAYER_SEED_OFFSET);
   
   const stddev = Math.sqrt(2.0 / (fanIn + fanOut));
   const weights: number[][] = [];
@@ -160,7 +165,9 @@ function xavierInit(fanIn: number, fanOut: number, layerSeed: number = 0): numbe
     const row: number[] = [];
     for (let j = 0; j < fanIn; j++) {
       // Box-Muller transform for normal distribution using seeded RNG
-      const u1 = Math.max(EPSILON, weightInitRng.next()); // Avoid log(0)
+      // Clamp u1 to EPSILON to avoid log(0). With EPSILON=1e-12, the bias
+      // in the distribution tail is negligible for neural network initialization.
+      const u1 = Math.max(EPSILON, weightInitRng.next());
       const u2 = weightInitRng.next();
       const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
       row.push(z * stddev);
