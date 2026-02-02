@@ -106,22 +106,24 @@ Launch a cloud-based development environment directly from the repository.
 
 ## 📱 Android App
 
-Zikalyze is available as a native Android app! You can download and install the APK from our GitHub Actions.
+Zikalyze is available as a native Android app! Download and install the APK directly.
 
-### Download APK
+### 📥 Download APK
 
-1. Go to [GitHub Actions](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml)
-2. Click on the latest successful workflow run
-3. Scroll down to the **Artifacts** section
-4. Download `zikalyze-debug-apk` (or `zikalyze-release-apk` for production)
-5. On your Android device, enable "Install from unknown sources" in Settings
-6. Install the downloaded APK file
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-green?style=for-the-badge&logo=android)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
 
-> **Note**: The APK artifacts expire after 14 days (debug) or 30 days (release). Download the latest version regularly.
+**Direct Download Links:**
+- 🔗 [**Download Latest Debug APK**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Latest successful build from main branch
 
-### Direct Link (Latest Build)
+**Alternative (GitHub Actions):**
+- 📦 [View All Builds](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
 
-Visit our [Android Build Workflow](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) to download the latest APK.
+### Installation Instructions
+
+1. Download the ZIP file from the link above
+2. Extract to get `app-debug.apk`
+3. On your Android device, enable **"Install from unknown sources"** in Settings → Security
+4. Transfer the APK to your device and install
 
 ### Alternative: PWA Installation
 
