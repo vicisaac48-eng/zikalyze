@@ -62,7 +62,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
   const handleNavClick = () => {
     // Close sidebar on mobile after navigation
-    if (onToggle && window.innerWidth < 768) {
+    // Check if we're on mobile using matchMedia (more reliable than innerWidth)
+    if (isOpen && onToggle && window.matchMedia('(max-width: 767px)').matches) {
       onToggle();
     }
   };
