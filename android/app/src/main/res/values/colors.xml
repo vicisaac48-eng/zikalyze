@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#050810</color>
     <color name="colorAccent">#6366f1</color>
     <color name="splashBackground">#0a0f1a</color>
+    <!-- Icon background color matching the logo's mint/cyan background -->
+    <color name="ic_launcher_background">#9EFFE1</color>
 </resources>

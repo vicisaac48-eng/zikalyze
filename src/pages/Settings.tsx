@@ -2,17 +2,17 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Volume1, Play, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { useSettings } from "@/hooks/useSettings";
-import { alertSound } from "@/lib/alertSound";
+import { useSettings, SoundType } from "@/hooks/useSettings";
+import { alertSound, isNativePlatform } from "@/lib/alertSound";
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import EmailDigestSettings from "@/components/settings/EmailDigestSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -330,8 +330,17 @@ const Settings = () => {
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Notification Preferences</h3>
                   
-                  {/* Basic Toggles */}
+                  {/* Native App Indicator */}
+                  {isNativePlatform() && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm">
+                      <Smartphone className="h-4 w-4" />
+                      <span>Native mode active — Haptic feedback enabled</span>
+                    </div>
+                  )}
+                  
+                  {/* Sound Settings Section */}
                   <div className="space-y-4">
+                    {/* Sound Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div className="flex items-center gap-3">
                         {settings.soundEnabled ? (
@@ -341,7 +350,10 @@ const Settings = () => {
                         )}
                         <div>
                           <div className="font-medium text-foreground">Alert Sounds</div>
-                          <div className="text-sm text-muted-foreground">Play sound when alerts trigger</div>
+                          <div className="text-sm text-muted-foreground">
+                            Play sound when alerts trigger
+                            {isNativePlatform() && " (with haptic feedback)"}
+                          </div>
                         </div>
                       </div>
                       <Switch 
@@ -350,6 +362,69 @@ const Settings = () => {
                       />
                     </div>
 
+                    {/* Volume Slider - Only shown when sound is enabled */}
+                    {settings.soundEnabled && (
+                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Volume1 className="h-5 w-5 text-primary" />
+                            <div>
+                              <div className="font-medium text-foreground">Volume</div>
+                              <div className="text-sm text-muted-foreground">Adjust alert volume</div>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium text-primary">
+                            {Math.round(settings.soundVolume * 100)}%
+                          </span>
+                        </div>
+                        <Slider
+                          value={[settings.soundVolume * 100]}
+                          onValueChange={(value) => saveSettings({ soundVolume: value[0] / 100 })}
+                          min={10}
+                          max={100}
+                          step={10}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
+                    {/* Sound Type Selection - Only shown when sound is enabled */}
+                    {settings.soundEnabled && (
+                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
+                        <div className="font-medium text-foreground">Alert Sound Type</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(["chime", "beep", "bell"] as SoundType[]).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => {
+                                saveSettings({ soundType: type });
+                                alertSound.playTestSound(type);
+                              }}
+                              className={cn(
+                                "flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all",
+                                settings.soundType === type
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border bg-background hover:border-primary/50 text-muted-foreground"
+                              )}
+                            >
+                              <Play className="h-4 w-4" />
+                              <span className="text-xs font-medium capitalize">{type}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => alertSound.playTestSound()}
+                          className="w-full gap-2"
+                        >
+                          <Play className="h-4 w-4" />
+                          Test Sound
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Push Notifications Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div>
                         <div className="font-medium text-foreground">Push Notifications</div>
@@ -365,11 +440,6 @@ const Settings = () => {
                   {/* Push Notification Settings */}
                   <div className="border-t border-border pt-6">
                     <NotificationSettings />
-                  </div>
-
-                  {/* Email Digest Settings */}
-                  <div className="border-t border-border pt-6">
-                    <EmailDigestSettings />
                   </div>
                 </div>
               )}
