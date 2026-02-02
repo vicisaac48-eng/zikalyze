@@ -236,13 +236,13 @@ const Install = () => {
                             {t("install.android.nativeDesc", "Get the full native Android experience with better performance and push notifications.")}
                           </p>
                           <a 
-                            href="https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml" 
+                            href="https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
                           >
                             <Download className="w-4 h-4" />
-                            {t("install.android.downloadApk", "Download APK from GitHub")}
+                            {t("install.android.downloadLatestApk", "Download Latest APK")}
                           </a>
                         </div>
                       </div>
