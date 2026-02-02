@@ -138,7 +138,7 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 [![Download APK](https://img.shields.io/badge/Download-Android%20APK-green?style=for-the-badge&logo=android)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
 
 **Direct Download Links:**
-- 🔗 [**Download Latest Debug APK**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Latest successful build from main branch
+- 🔗 [**Download Latest Debug APK**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Latest successful build from main branch (includes cookie-free state management)
 
 **Alternative (GitHub Actions):**
 - 📦 [View All Builds](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
@@ -169,7 +169,7 @@ The native Android app includes optimizations not available in the web version:
 
 - **🔔 Native Push Notifications** - Receive real-time price alerts via Firebase Cloud Messaging (FCM)
 - **📱 Sticky Headers** - Optimized scrolling behavior with fixed headers that don't jitter during scroll
-- **🚫 No Cookie Popups** - Clean native experience without web-specific consent dialogs
+- **🚫 No Cookie Popups** - Clean native experience without web-specific consent dialogs; sidebar state uses localStorage instead of cookies for reliable persistence
 - **⚡ Hardware Acceleration** - GPU-accelerated scrolling and animations for smooth performance
 - **📳 Haptic Feedback** - Native vibration feedback on alerts and interactions
 - **🔒 Secure Storage** - Local data stored securely on device
