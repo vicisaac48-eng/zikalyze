@@ -165,7 +165,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-card p-3 sm:rounded-2xl sm:p-4 md:p-6">
+      <div className="rounded-xl border border-border bg-card p-3 mb-4 sm:rounded-2xl sm:p-4 md:p-6 md:mb-0">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <h3 className="text-base font-bold text-foreground sm:text-lg">Top 100 Cryptocurrencies</h3>
           <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           </div>
         )}
         
-        <div className="overflow-x-auto -mx-3 px-3 sm:-mx-0 sm:px-0 custom-scrollbar">
+        <div className="overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar">
           <table className="w-full min-w-[320px]">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">

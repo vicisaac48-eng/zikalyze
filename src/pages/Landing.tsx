@@ -319,16 +319,16 @@ const Landing = () => {
               onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
             >
               {/* Browser Chrome Header */}
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-t-xl border-b border-border sm:px-4 sm:py-2.5">
-                <div className="flex gap-1.5 sm:gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-destructive/70 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-warning/70 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-success/70 sm:h-3 sm:w-3" />
+              <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-sm px-2 py-1.5 rounded-t-xl border-b border-border sm:gap-2 sm:px-4 sm:py-2.5">
+                <div className="flex gap-1 shrink-0 sm:gap-2">
+                  <div className="h-2 w-2 rounded-full bg-destructive/70 sm:h-3 sm:w-3" />
+                  <div className="h-2 w-2 rounded-full bg-warning/70 sm:h-3 sm:w-3" />
+                  <div className="h-2 w-2 rounded-full bg-success/70 sm:h-3 sm:w-3" />
                 </div>
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="flex items-center gap-2 bg-background/50 rounded-lg px-3 py-1 text-xs text-muted-foreground sm:px-4 sm:py-1.5 sm:text-sm">
-                    <Shield className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
-                    <span>zikalyze.com</span>
+                <div className="flex-1 flex items-center justify-center min-w-0">
+                  <div className="flex items-center gap-1.5 bg-background/50 rounded-lg px-2 py-0.5 text-[10px] text-muted-foreground max-w-full sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm">
+                    <Shield className="h-2.5 w-2.5 text-success shrink-0 sm:h-3.5 sm:w-3.5" />
+                    <span className="truncate">zikalyze.com</span>
                   </div>
                 </div>
               </div>
