@@ -135,13 +135,13 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 
 ### 📥 Download APK
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK%20(Cookie--Free)-green?style=for-the-badge&logo=android)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
+> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)**
+
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
 
 **Direct Download Links:**
-- 🔗 [**Download Latest Debug APK**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Latest successful build from main branch (includes cookie-free state management)
-
-**Alternative (GitHub Actions):**
-- 📦 [View All Builds](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
+- 📲 [**Download Latest APK (Recommended)**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - One-click download, no login required
+- 📦 [View All Builds on GitHub](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
 
 ### 🔄 APK Updates After Merge/Pull Request
 

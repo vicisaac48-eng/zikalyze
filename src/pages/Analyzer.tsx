@@ -6,6 +6,7 @@ import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
@@ -14,6 +15,7 @@ const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const { getPriceBySymbol, loading, isLive } = useCryptoPrices();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
 
   const cryptoData: Record<string, { name: string; price: number; change: number }> = {
     BTC: { name: "Bitcoin", price: getPriceBySymbol("BTC")?.current_price || 86512, change: getPriceBySymbol("BTC")?.price_change_percentage_24h || -4.87 },
@@ -36,8 +38,8 @@ const Analyzer = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
-        {/* Header - Fixed positioning for stable Android scrolling */}
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -54,7 +56,7 @@ const Analyzer = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <div className={`p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Crypto Selection */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 

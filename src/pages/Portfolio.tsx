@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Holding {
@@ -39,6 +40,7 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
+  const isNativeApp = useIsNativeApp();
   
   // Load holdings from localStorage on mount
   const [holdings, setHoldings] = useState<Holding[]>(() => {
@@ -113,7 +115,7 @@ const Portfolio = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>
             <div className="hidden sm:flex items-center gap-2">
@@ -186,7 +188,7 @@ const Portfolio = () => {
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className={`p-6 space-y-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="bg-card border-border">

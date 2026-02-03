@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AnalyticsChart from "@/components/dashboard/AnalyticsChart";
 import PredictiveChart from "@/components/dashboard/PredictiveChart";
 import DonutChart from "@/components/dashboard/DonutChart";
@@ -18,6 +19,7 @@ const Analytics = () => {
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const [timeframe, setTimeframe] = useState("24h");
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
 
   const timeframes = ["1h", "24h", "7d", "30d", "1y"];
 
@@ -37,8 +39,8 @@ const Analytics = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
-        {/* Header - Fixed positioning for stable Android scrolling */}
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analytics.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -55,7 +57,7 @@ const Analytics = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <div className={`p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Timeframe Filter */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
             {timeframes.map((tf) => (
