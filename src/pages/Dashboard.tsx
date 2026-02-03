@@ -6,6 +6,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const Dashboard = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
 
   // Save selected crypto to localStorage whenever it changes
   useEffect(() => {
@@ -89,8 +91,8 @@ const Dashboard = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0 safe-area-inset-bottom">
-        {/* Header - Fixed positioning for stable Android scrolling like WhatsApp */}
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -120,7 +122,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="fixed-header-content p-3 pb-6 space-y-3 sm:p-4 sm:pb-8 sm:space-y-4 md:p-6 md:space-y-6">
+        <div className={`p-3 pb-6 space-y-3 sm:p-4 sm:pb-8 sm:space-y-4 md:p-6 md:space-y-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 

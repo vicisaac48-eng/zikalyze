@@ -112,48 +112,55 @@ All colors MUST be HSL.
     will-change: scroll-position;
   }
 
-  /* Stable header for mobile/Android - stays truly fixed during scroll like WhatsApp */
-  /* Uses fixed positioning for reliable Android WebView behavior */
+  /* Stable header for web - uses sticky positioning (default behavior) */
   header.fixed-header {
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
-    /* On desktop, account for sidebar width */
-    /* Prevent subpixel rendering issues on Android */
+    /* Prevent subpixel rendering issues */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     /* Ensure it stays above all content */
     z-index: 50;
-    /* Hardware acceleration for smooth fixed positioning on Android */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* Hardware acceleration hint */
+    will-change: transform;
     /* Ensure the header doesn't get pushed by content */
     flex-shrink: 0;
   }
 
-  /* Adjust fixed header position on desktop with sidebar */
+  /* Android-only: Truly fixed header for stable scrolling on Android WebView (like WhatsApp) */
+  /* This class is applied conditionally via React when running on native/Android platform */
+  header.fixed-header.android-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Hardware acceleration for smooth fixed positioning on Android */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Adjust fixed header position on desktop with sidebar (Android only) */
   @media (min-width: 768px) {
-    header.fixed-header {
+    header.fixed-header.android-fixed {
       left: 4rem; /* md:ml-16 = 64px = 4rem */
     }
   }
 
   @media (min-width: 1024px) {
-    header.fixed-header {
+    header.fixed-header.android-fixed {
       left: 16rem; /* lg:ml-64 = 256px = 16rem */
     }
   }
 
-  /* Content area spacing to account for fixed header */
+  /* Content area spacing to account for fixed header (Android only) */
   /* Header height on mobile: py-2 (0.5rem * 2) + content (~2.5rem) = ~3.5rem */
-  .fixed-header-content {
+  .android-fixed-content {
     padding-top: 3.5rem;
   }
 
   /* Header height on tablet/desktop: py-4 (1rem * 2) + content (~2.5rem) = ~4.5rem */
   @media (min-width: 640px) {
-    .fixed-header-content {
+    .android-fixed-content {
       padding-top: 4.5rem;
     }
   }

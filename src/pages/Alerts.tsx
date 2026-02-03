@@ -22,6 +22,7 @@ import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useSettings, SoundType } from "@/hooks/useSettings";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { alertSound } from "@/lib/alertSound";
@@ -43,6 +44,7 @@ const Alerts = () => {
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
   const { settings, saveSettings } = useSettings();
+  const isNativeApp = useIsNativeApp();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -163,8 +165,8 @@ const Alerts = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
-        {/* Header - Fixed positioning for stable Android scrolling */}
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2">
             <BellRing className="h-5 w-5 text-primary" />
             <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("alerts.title")}</h1>
@@ -184,7 +186,7 @@ const Alerts = () => {
           </div>
         </header>
 
-        <div className="fixed-header-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <div className={`p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Stats Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-6">

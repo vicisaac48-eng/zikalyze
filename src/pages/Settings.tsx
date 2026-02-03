@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useSettings, SoundType } from "@/hooks/useSettings";
 import { alertSound, isNativePlatform } from "@/lib/alertSound";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,7 @@ const Settings = () => {
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
   const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
+  const isNativeApp = useIsNativeApp();
   
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -90,8 +92,8 @@ const Settings = () => {
       <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
-        {/* Header - Fixed positioning for stable Android scrolling */}
-        <header className="fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -108,7 +110,7 @@ const Settings = () => {
           </div>
         </header>
 
-        <div className="fixed-header-content p-3 sm:p-4 md:p-6">
+        <div className={`p-3 sm:p-4 md:p-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">
             {tabs.map((tab) => (
