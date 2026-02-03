@@ -186,7 +186,7 @@ const Portfolio = () => {
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="fixed-header-content p-6 space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="bg-card border-border">

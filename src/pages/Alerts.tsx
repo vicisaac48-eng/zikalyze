@@ -184,7 +184,7 @@ const Alerts = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <div className="fixed-header-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Stats Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-6">
