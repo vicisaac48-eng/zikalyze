@@ -120,7 +120,7 @@ All colors MUST be HSL.
   header.fixed-header {
     position: sticky;
     top: 0;
-    height: var(--header-height-mobile);
+    min-height: var(--header-height-mobile);
     /* Prevent subpixel rendering issues */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -134,7 +134,7 @@ All colors MUST be HSL.
 
   @media (min-width: 640px) {
     header.fixed-header {
-      height: var(--header-height-desktop);
+      min-height: var(--header-height-desktop);
     }
   }
 
@@ -165,14 +165,12 @@ All colors MUST be HSL.
 
   /* Content area spacing to account for header - applies to all platforms */
   /* Uses CSS variables for consistent header height */
-  .main-content,
-  .android-fixed-content {
+  .main-content {
     padding-top: var(--header-height-mobile);
   }
 
   @media (min-width: 640px) {
-    .main-content,
-    .android-fixed-content {
+    .main-content {
       padding-top: var(--header-height-desktop);
     }
   }
