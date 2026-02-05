@@ -110,7 +110,7 @@ const Settings = () => {
           </div>
         </header>
 
-        <div className={`p-3 sm:p-4 md:p-6${isNativeApp ? ' android-fixed-content' : ''}`}>
+        <div className={`main-content p-3 sm:p-4 md:p-6${isNativeApp ? ' android-fixed-content' : ''}`}>
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">
             {tabs.map((tab) => (
