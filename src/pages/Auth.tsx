@@ -29,16 +29,16 @@ const DemoModeAuth = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="text-center py-4">
-      <Sparkles className="h-8 w-8 text-primary mx-auto mb-3" />
-      <h3 className="text-base font-semibold mb-2">Just Exploring?</h3>
-      <p className="text-sm text-muted-foreground mb-3">
+    <div className="text-center py-3">
+      <Sparkles className="h-6 w-6 text-primary mx-auto mb-2" />
+      <h3 className="text-sm font-semibold mb-1.5">Just Exploring?</h3>
+      <p className="text-xs text-muted-foreground mb-2.5">
         Try the dashboard without creating an account.
       </p>
       <Button 
         variant="outline"
         onClick={() => navigate("/dashboard")}
-        className="w-full"
+        className="w-full h-9 text-sm"
       >
         Explore Dashboard
       </Button>
@@ -123,21 +123,21 @@ const SignUpForm = () => {
 
   if (generatedKey) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="text-center">
-          <div className="h-12 w-12 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-3">
-            <Check className="h-6 w-6 text-success" />
+          <div className="h-10 w-10 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-2">
+            <Check className="h-5 w-5 text-success" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Wallet Created!</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <h3 className="text-base font-semibold mb-1.5">Wallet Created!</h3>
+          <p className="text-xs text-muted-foreground mb-3">
             Save your private key securely. You'll need it to sign in.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30">
-          <div className="flex items-start gap-2 mb-2">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-destructive">
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+          <div className="flex items-start gap-1.5 mb-1.5">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-destructive">
               Important: Save this key now!
             </p>
           </div>
@@ -146,31 +146,31 @@ const SignUpForm = () => {
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label>Your Private Key</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Your Private Key</Label>
           <div className="relative">
             <Input
               value={generatedKey}
               readOnly
-              className="pr-10 font-mono text-xs"
+              className="pr-9 font-mono text-xs h-9"
             />
             <button
               onClick={copyPrivateKey}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
           </div>
         </div>
 
-        <div className="p-3 rounded-lg bg-muted/50 text-sm">
-          <p className="font-medium mb-1">Recovery tip:</p>
+        <div className="p-2.5 rounded-md bg-muted/50 text-xs">
+          <p className="font-medium mb-0.5">Recovery tip:</p>
           <p className="text-muted-foreground text-xs">
             You can recover your wallet using the same username and password. Use strong, unique credentials for better security.
           </p>
         </div>
 
-        <Button onClick={continueToApp} className="w-full">
+        <Button onClick={continueToApp} className="w-full h-9 text-sm">
           Continue to Dashboard
         </Button>
       </div>
@@ -178,60 +178,60 @@ const SignUpForm = () => {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="signup-username">Username</Label>
+    <form onSubmit={handleSignUp} className="space-y-3">
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-username" className="text-xs">Username</Label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             id="signup-username"
             type="text"
             placeholder="Enter username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9 text-sm"
             minLength={4}
             required
           />
         </div>
-        <p className="text-xs text-muted-foreground">Used for wallet recovery. Min 4 characters.</p>
+        <p className="text-xs text-muted-foreground">Recovery requires min 4 chars.</p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-password">Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-password" className="text-xs">Password</Label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             id="signup-password"
             type={showPassword ? "text" : "password"}
             placeholder="Create password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-9 pr-9 h-9 text-sm"
             minLength={8}
             required
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-confirm">Confirm Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-confirm" className="text-xs">Confirm Password</Label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             id="signup-confirm"
             type={showPassword ? "text" : "password"}
             placeholder="Confirm password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="pl-10"
+            className="pl-9 h-9 text-sm"
             minLength={8}
             required
           />
@@ -254,16 +254,16 @@ const SignUpForm = () => {
 
       {/* Rate limit warning */}
       {isBlocked && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-          <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
+        <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/30 text-xs">
+          <Shield className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
           <p className="text-destructive">
-            Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
+            Too many attempts. Wait {formatRetryTime(retryAfterSeconds)}.
           </p>
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={isProcessing || isBlocked}>
-        {isBlocked ? "Access Temporarily Blocked" : isProcessing ? "Creating Wallet..." : "Create Wallet"}
+      <Button type="submit" className="w-full h-9 text-sm" disabled={isProcessing || isBlocked}>
+        {isBlocked ? "Blocked" : isProcessing ? "Creating..." : "Create Wallet"}
       </Button>
     </form>
   );
@@ -346,13 +346,13 @@ const SignInForm = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2 p-1 bg-muted rounded-lg">
+    <div className="space-y-3">
+      <div className="flex gap-1.5 p-0.5 bg-muted rounded-md">
         <button
           type="button"
           onClick={() => setMode("key")}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-            mode === "key" ? "bg-background text-foreground shadow" : "text-muted-foreground"
+          className={`flex-1 py-1.5 px-2.5 rounded text-xs font-medium transition-colors ${
+            mode === "key" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
           }`}
         >
           Private Key
@@ -360,8 +360,8 @@ const SignInForm = () => {
         <button
           type="button"
           onClick={() => setMode("recover")}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-            mode === "recover" ? "bg-background text-foreground shadow" : "text-muted-foreground"
+          className={`flex-1 py-1.5 px-2.5 rounded text-xs font-medium transition-colors ${
+            mode === "recover" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
           }`}
         >
           Recover Wallet
@@ -369,26 +369,26 @@ const SignInForm = () => {
       </div>
 
       {mode === "key" ? (
-        <form onSubmit={handleSignInWithKey} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="private-key">Private Key</Label>
+        <form onSubmit={handleSignInWithKey} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="private-key" className="text-xs">Private Key</Label>
             <div className="relative">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Key className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 id="private-key"
                 type={showKey ? "text" : "password"}
                 placeholder="0x..."
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
-                className="pl-10 pr-10 font-mono text-xs"
+                className="pl-9 pr-9 font-mono text-xs h-9"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -412,55 +412,55 @@ const SignInForm = () => {
 
           {/* Rate limit warning */}
           {isBlocked && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-              <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/30 text-xs">
+              <Shield className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
               <p className="text-destructive">
-                Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
+                Too many attempts. Wait {formatRetryTime(retryAfterSeconds)}.
               </p>
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isProcessing || isBlocked}>
-            {isBlocked ? "Access Temporarily Blocked" : isProcessing ? "Signing In..." : "Sign In"}
+          <Button type="submit" className="w-full h-9 text-sm" disabled={isProcessing || isBlocked}>
+            {isBlocked ? "Blocked" : isProcessing ? "Signing In..." : "Sign In"}
           </Button>
         </form>
       ) : (
-        <form onSubmit={handleRecover} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="recover-username">Username</Label>
+        <form onSubmit={handleRecover} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="recover-username" className="text-xs">Username</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 id="recover-username"
                 type="text"
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-9 text-sm"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="recover-password">Password</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="recover-password" className="text-xs">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 id="recover-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
+                className="pl-9 pr-9 h-9 text-sm"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
@@ -485,16 +485,16 @@ const SignInForm = () => {
 
           {/* Rate limit warning */}
           {isBlocked && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-              <Shield className="h-4 w-4 text-destructive flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/30 text-xs">
+              <Shield className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
               <p className="text-destructive">
-                Too many attempts. Please wait {formatRetryTime(retryAfterSeconds)} before trying again.
+                Too many attempts. Wait {formatRetryTime(retryAfterSeconds)}.
               </p>
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isProcessing || isBlocked}>
-            {isBlocked ? "Access Temporarily Blocked" : isProcessing ? "Recovering..." : "Recover Wallet"}
+          <Button type="submit" className="w-full h-9 text-sm" disabled={isProcessing || isBlocked}>
+            {isBlocked ? "Blocked" : isProcessing ? "Recovering..." : "Recover Wallet"}
           </Button>
         </form>
       )}
@@ -514,28 +514,28 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <div className="min-h-[100dvh] bg-background flex items-center justify-center p-3 sm:p-4">
-      {/* Background effects - reduced on mobile for performance */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
-        <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
+    <div className="h-screen overflow-hidden bg-background flex items-center justify-center">
+      {/* Stabilized background layer */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+        <div className="absolute top-[8%] left-[5%] w-36 h-36 bg-primary/20 rounded-full blur-2xl sm:w-48 sm:h-48" />
+        <div className="absolute bottom-[8%] right-[5%] w-40 h-40 bg-accent/20 rounded-full blur-2xl sm:w-56 sm:h-56" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo - responsive sizing */}
-        <div className="flex items-center justify-center gap-2 mb-6 sm:gap-3 sm:mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-14 sm:w-14">
-            <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
+      <div className="relative z-10 w-full max-w-md px-4 py-3 sm:px-6 sm:py-4 max-h-screen overflow-y-auto custom-scrollbar">
+        {/* Branding section - compact */}
+        <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary sm:h-12 sm:w-12">
+            <TrendingUp className="h-5 w-5 text-primary-foreground sm:h-6 sm:w-6" />
           </div>
-          <span className="text-2xl font-bold text-foreground sm:text-3xl">Zikalyze</span>
+          <span className="text-xl font-bold text-foreground sm:text-2xl">Zikalyze</span>
         </div>
 
-        {/* Auth Card - responsive padding */}
-        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-xl p-4 shadow-2xl sm:rounded-2xl sm:p-6">
+        {/* Compact auth container */}
+        <div className="rounded-lg border border-border bg-card/90 backdrop-blur-lg p-3.5 shadow-xl sm:rounded-xl sm:p-5">
           <Tabs defaultValue="signup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
-              <TabsTrigger value="signup" className="text-sm sm:text-base">{t("auth.signUp", "Sign Up")}</TabsTrigger>
-              <TabsTrigger value="signin" className="text-sm sm:text-base">{t("auth.signIn", "Sign In")}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
+              <TabsTrigger value="signup" className="text-xs sm:text-sm">{t("auth.signUp", "Sign Up")}</TabsTrigger>
+              <TabsTrigger value="signin" className="text-xs sm:text-sm">{t("auth.signIn", "Sign In")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signup">
@@ -547,7 +547,7 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="relative my-4 sm:my-6">
+          <div className="relative my-3 sm:my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
@@ -558,7 +558,7 @@ const Auth = () => {
 
           <DemoModeAuth />
 
-          <p className="mt-4 text-center text-xs text-muted-foreground sm:mt-6">
+          <p className="mt-3 text-center text-xs text-muted-foreground sm:mt-4">
             {t("auth.termsAgreement")}
           </p>
         </div>
