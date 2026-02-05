@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, Volume2, VolumeX, BellOff, Music } from "lucide-react";
+import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,11 +20,11 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useSettings, SoundType } from "@/hooks/useSettings";
+
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { alertSound } from "@/lib/alertSound";
+
 import { toast } from "sonner";
 
 interface TriggeredAlert {
@@ -43,7 +42,6 @@ const Alerts = () => {
   const { prices, getPriceBySymbol } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
-  const { settings, saveSettings } = useSettings();
   const isNativeApp = useIsNativeApp();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
@@ -52,18 +50,6 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
-
-  const handleVolumeChange = (value: number[]) => {
-    saveSettings({ soundVolume: value[0], soundEnabled: value[0] > 0 });
-  };
-
-  const handleSoundTypeChange = (value: SoundType) => {
-    saveSettings({ soundType: value });
-  };
-
-  const handleToggleMute = () => {
-    saveSettings({ soundEnabled: !settings.soundEnabled });
-  };
 
   // Fetch triggered alerts history
   useEffect(() => {
@@ -142,15 +128,6 @@ const Alerts = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  const handleTestSound = () => {
-    if (!settings.soundEnabled) {
-      toast.warning(t("alerts.soundMuted") || "Sound is muted");
-      return;
-    }
-    alertSound.playTestSound(settings.soundType);
-    toast.info(t("alerts.testSound") + "...");
-  };
-
   const handleTogglePush = async () => {
     if (isSubscribed) {
       await unsubscribe();
@@ -226,7 +203,7 @@ const Alerts = () => {
             </div>
           </div>
 
-          {/* Tabs and Test Sound */}
+          {/* Tabs and Push Notifications */}
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
               <button
@@ -259,76 +236,27 @@ const Alerts = () => {
                 {t("alerts.alertHistory")}
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              {/* Sound Type Selector */}
-              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
-                <Music className="h-4 w-4 text-muted-foreground" />
-                <Select value={settings.soundType} onValueChange={handleSoundTypeChange}>
-                  <SelectTrigger className="w-24 h-7 text-xs border-0 bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="chime">Chime</SelectItem>
-                    <SelectItem value="beep">Beep</SelectItem>
-                    <SelectItem value="bell">Bell</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* Volume Slider with Mute Toggle */}
-              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
-                <button
-                  onClick={handleToggleMute}
-                  className="hover:text-foreground transition-colors"
-                  title={settings.soundEnabled ? "Mute" : "Unmute"}
-                >
-                  {settings.soundEnabled ? (
-                    <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <VolumeX className="h-4 w-4 text-destructive" />
-                  )}
-                </button>
-                <Slider
-                  value={[settings.soundEnabled ? settings.soundVolume : 0]}
-                  onValueChange={handleVolumeChange}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  className="w-24"
-                  disabled={!settings.soundEnabled}
-                />
-                <span className={cn(
-                  "text-xs w-8",
-                  settings.soundEnabled ? "text-muted-foreground" : "text-destructive"
-                )}>
-                  {settings.soundEnabled ? `${Math.round(settings.soundVolume * 100)}%` : "Off"}
-                </span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleTestSound} className="gap-2" disabled={!settings.soundEnabled}>
-                <Volume2 className="h-4 w-4" />
-                {t("alerts.testSound")}
+            {isSupported && (
+              <Button 
+                variant={isSubscribed ? "default" : "outline"} 
+                size="sm" 
+                onClick={handleTogglePush}
+                disabled={pushLoading}
+                className="gap-2"
+              >
+                {isSubscribed ? (
+                  <>
+                    <BellRing className="h-4 w-4" />
+                    {t("alerts.pushOn")}
+                  </>
+                ) : (
+                  <>
+                    <BellOff className="h-4 w-4" />
+                    {t("alerts.enablePush")}
+                  </>
+                )}
               </Button>
-              {isSupported && (
-                <Button 
-                  variant={isSubscribed ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={handleTogglePush}
-                  disabled={pushLoading}
-                  className="gap-2"
-                >
-                  {isSubscribed ? (
-                    <>
-                      <BellRing className="h-4 w-4" />
-                      {t("alerts.pushOn")}
-                    </>
-                  ) : (
-                    <>
-                      <BellOff className="h-4 w-4" />
-                      {t("alerts.enablePush")}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Content */}
