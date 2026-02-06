@@ -174,6 +174,100 @@ export interface AnalysisInput {
   priceDataAge?: number; // Age in milliseconds
   chartDataAge?: number; // Age in milliseconds
   fearGreedDataAge?: number; // Age in milliseconds
+  // Layer Gamma — Human Hybrid Narrative Filter input
+  narrativeContext?: LayerGammaInput;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 TRI-MODULAR ANALYSIS TYPES — Senior Quant Strategist Output
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Layer Alpha — Rule-Based Algorithm Analysis (ICT/SMC)
+ */
+export interface LayerAlphaResult {
+  signal: '🔴 SHORT' | '🟢 LONG' | '⚪ NEUTRAL';
+  orderBlocks: Array<{ type: 'BULLISH' | 'BEARISH'; level: number; strength: number }>;
+  liquidityVoids: Array<{ type: 'BSL' | 'SSL'; level: number }>;
+  fibLevels: Array<{ level: string; price: number; significance: 'HIGH' | 'MEDIUM' | 'LOW' }>;
+  timeframe4H: { trend: string; structure: string };
+  timeframe15M: { trend: string; structure: string };
+  priceActionBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  confidence: number;
+}
+
+/**
+ * Layer Beta — Neural Network Pattern Recognition
+ */
+export interface LayerBetaResult {
+  signal: '🔴 SHORT' | '🟢 LONG' | '⚪ NEUTRAL';
+  rsiAnalysis: { value: number; condition: 'OVERBOUGHT' | 'OVERSOLD' | 'NEUTRAL' };
+  macdAnalysis: { histogram: number; signal: string; momentum: 'BULLISH' | 'BEARISH' | 'NEUTRAL' };
+  hiddenCorrelations: string[];
+  fearGreedComparison: { current: number; historicalExtremeFear: number; similarity: number };
+  marketPhase: 'DISTRIBUTION' | 'ACCUMULATION' | 'CAPITULATION' | 'EUPHORIA' | 'NEUTRAL';
+  reversalProbability: number;
+  confidence: number;
+}
+
+/**
+ * Layer Gamma — Human Hybrid Narrative Filter
+ */
+export interface LayerGammaInput {
+  userContext?: string;           // User-provided news/context
+  macroEvents?: string[];         // Upcoming macro events
+  sentiment?: string;             // Overall market sentiment from news
+  psychologicalLevels?: number[]; // Price levels with psychological significance
+}
+
+export interface LayerGammaResult {
+  action: 'OVERRIDE' | 'VALIDATE' | 'NEUTRAL';
+  narrativeAnalysis: string;
+  psychologicalLevels: Array<{ price: number; type: 'SUPPORT' | 'RESISTANCE'; reason: string }>;
+  macroImpact: 'BULLISH' | 'BEARISH' | 'VOLATILE' | 'NEUTRAL';
+  positionSizeAdjustment: 'REDUCE' | 'INCREASE' | 'MAINTAIN' | 'EXIT';
+  confidence: number;
+}
+
+/**
+ * Tri-Modular Analysis — Complete Output
+ */
+export interface TriModularAnalysis {
+  // The three layers
+  layerAlpha: LayerAlphaResult;
+  layerBeta: LayerBetaResult;
+  layerGamma: LayerGammaResult;
+  
+  // Final Output Requirements
+  weightedConfidenceScore: {
+    direction: 'LONG' | 'SHORT' | 'NEUTRAL';
+    percentage: number;
+    breakdown: {
+      alphaContribution: number;
+      betaContribution: number;
+      gammaContribution: number;
+    };
+  };
+  
+  conflictReport: {
+    hasConflict: boolean;
+    description: string;
+    reversalSignalFromNN: boolean;
+    algorithmMissing: string | null;
+  };
+  
+  humanInTheLoopVerdict: {
+    positionSizeRecommendation: 'FULL' | '75%' | '50%' | '25%' | 'AVOID';
+    reasoning: string;
+    upcomingMacroRisk: string | null;
+    waitTime: string | null;  // e.g., "Wait 2 hours for Jobless Claims"
+  };
+  
+  killSwitchLevel: {
+    price: number;
+    reason: string;
+    allLayersAgree: boolean;
+  };
 }
 
 export interface AnalysisResult {
@@ -251,4 +345,6 @@ export interface AnalysisResult {
     candlestickConfirmation: string;                  // Entry trigger description
     candlestickStrength: number;                      // Pattern strength 0-100
   };
+  // Tri-Modular Analysis — Senior Quant Strategist Output
+  triModularAnalysis?: TriModularAnalysis;
 }

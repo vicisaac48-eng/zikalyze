@@ -18,12 +18,16 @@ import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institu
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation } from './neural-engine';
+import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
 
 // Re-export ULTRA features for advanced analysis
 export * from './zikalyze-ultra';
+
+// Re-export Tri-Modular Analysis for direct access
+export * from './tri-modular-analysis';
 
 // Translation maps for multi-language support
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -492,7 +496,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
       : precisionEntry.timing === 'WAIT_BREAKOUT'
         ? 'Await breakout'
         : 'No clear entry';
-  const tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
+  // Note: tldr will be recalculated after regimeConsensus to account for skipTrade
+  let tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD FINAL ANALYSIS — Dense, Visual, Actionable
@@ -564,6 +569,30 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   
   // Log regime detection
   console.log(`[Regime] ADX=${adxResult.adx.toFixed(1)} → ${adxResult.regime} | Master: ${regimeConsensus.masterControl} | Weights: Algo=${(regimeConsensus.algorithmWeight*100).toFixed(0)}%, NN=${(regimeConsensus.neuralWeight*100).toFixed(0)}%`);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 TRI-MODULAR ANALYSIS — Senior Quant Strategist Intelligence
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  const triModularAnalysis = performTriModularAnalysis(
+    price,
+    high24h,
+    low24h,
+    change,
+    chartTrendData,
+    fearGreed,
+    input.narrativeContext,
+    macroCatalysts
+  );
+  
+  // Generate formatted Tri-Modular output for inclusion in analysis
+  const triModularOutput = formatTriModularOutput(triModularAnalysis, crypto, price);
+  
+  // Generate simplified summary for beginners
+  const simplifiedSummary = generateSimplifiedSummary(triModularAnalysis, crypto, price);
+  
+  // Log Tri-Modular summary
+  console.log(`[Tri-Modular] ${triModularAnalysis.weightedConfidenceScore.percentage}% ${triModularAnalysis.weightedConfidenceScore.direction} | Kill Switch: $${triModularAnalysis.killSwitchLevel.price.toFixed(2)}`);
   
   // Regime visual indicators
   const regimeEmoji = adxResult.regime === 'TRENDING' ? '📈' : adxResult.regime === 'RANGING' ? '↔️' : '🔄';
@@ -670,9 +699,13 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   qualityScore = Math.max(0, Math.min(100, qualityScore)); // Clamp 0-100
   
   // Determine final recommendation
-  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
+  // Include regimeConsensus.skipTrade to ensure alignment with regime-weighted consensus
+  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE' | 'SKIPPED_NN_FILTER';
   let tradeRecommendation: TradeRecommendation;
-  if (isBadTrade) {
+  if (regimeConsensus.skipTrade) {
+    // Neural network filter failed — trade should be skipped
+    tradeRecommendation = 'SKIPPED_NN_FILTER';
+  } else if (isBadTrade) {
     tradeRecommendation = 'AVOID_BAD_TRADE';
   } else if (!hasConfirmation) {
     tradeRecommendation = 'WAIT_CONFIRMATION';
@@ -695,11 +728,19 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // Visual indicators for trade quality
   const qualityEmoji = tradeRecommendation === 'EXECUTE' ? '✅' 
     : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳' 
+    : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️'
     : '🚫';
   const trendFollowEmoji = followsTrend ? '✓' : '✗';
   const confirmEmoji = hasConfirmation ? `${confirmationCount}/5 ✓` : `${confirmationCount}/5 ⚠️`;
 
-  const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  // Update TL;DR to reflect regimeConsensus.skipTrade status
+  if (regimeConsensus.skipTrade) {
+    const updatedActionWord = 'Trade skipped (NN filter)';
+    tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${updatedActionWord}`;
+  }
+
+  const analysis = `${simplifiedSummary}
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
    ${verificationEmoji} ${verificationLabel}
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -739,7 +780,7 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 
 ━━━ 📌 15-MINUTE PRECISION ENTRY ━━━━━━━━━━━━━━━
 
-⏱️ ${precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
+⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
 
 📍 Entry Zone: ${tightZone}
    └─ Trigger: ${precisionEntry.trigger}
@@ -799,7 +840,7 @@ ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
 
 ━━━ 🛡️ TRADE QUALITY CHECK ━━━━━━━━━━━━━━━━━━━━━
 
-${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : '🚫 AVOID — Bad trade signals detected'}
+${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️ SKIPPED — Neural Network filter below threshold' : '🚫 AVOID — Bad trade signals detected'}
 
 📈 Follows HTF Trend: ${followsTrend ? `${trendFollowEmoji} YES (${htfTrend})` : `${trendFollowEmoji} NO — Counter-trend trade!`}
 🔍 Confirmations: ${confirmEmoji}
@@ -822,7 +863,7 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 Consider flipping short or exiting longs` : `↔️ BREAKOUT SCENARIO: Watch $${high24h.toFixed(decimals)} (up) / $${low24h.toFixed(decimals)} (down)
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
-
+${triModularOutput}
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
@@ -831,6 +872,7 @@ are highly volatile and unpredictable.
 • Wait for confirmation — Need 2+ confirmations before entry ✓
 • Avoid bad trades — Quality check prevents poor setups ✓
 • Both Algorithm and Neural Network were used together ✓
+• Tri-Modular Analysis with Kill Switch included ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
@@ -883,7 +925,9 @@ are highly volatile and unpredictable.
       candlestickPattern: regimeConsensus.candlestickConfirmation.pattern,
       candlestickConfirmation: regimeConsensus.candlestickConfirmation.entryTrigger,
       candlestickStrength: regimeConsensus.candlestickConfirmation.strength
-    }
+    },
+    // Tri-Modular Analysis — Senior Quant Strategist Intelligence
+    triModularAnalysis
   };
 }
 
