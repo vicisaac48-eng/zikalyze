@@ -119,7 +119,7 @@ const Landing = () => {
       </div>
 
       {/* Header */}
-      <header className={`fixed-header relative z-10 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12 lg:px-16 xl:px-24 bg-background/95 backdrop-blur-sm${
+      <header className={`fixed-header relative z-10 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12 lg:px-16 xl:px-24 bg-background${
         isNativeApp ? ' android-fixed' : ''
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
