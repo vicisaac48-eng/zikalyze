@@ -155,9 +155,9 @@ All colors MUST be HSL.
     overflow-y: auto;
     /* Ensure body doesn't extend beyond viewport width */
     max-width: 100vw;
-    /* Allow vertical scrolling and zoom manipulation - pan-y alone can block scrolling in some Android WebViews */
-    /* Using manipulation allows both pan and pinch-zoom, ensuring scroll works reliably */
-    touch-action: pan-y pinch-zoom;
+    /* Only allow vertical scrolling - no pinch-zoom for native app feel */
+    /* Combined with viewport meta tag user-scalable=no for complete zoom prevention */
+    touch-action: pan-y;
     /* Enable momentum scrolling on Android */
     -webkit-overflow-scrolling: touch;
   }
@@ -171,8 +171,8 @@ All colors MUST be HSL.
     max-width: 100vw;
     /* Full height to enable proper scrolling */
     min-height: 100%;
-    /* Allow touch scrolling */
-    touch-action: pan-y pinch-zoom;
+    /* Only allow vertical scrolling - no pinch-zoom for native app feel */
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -181,8 +181,8 @@ All colors MUST be HSL.
     /* Enable vertical scrolling within the page container */
     overflow-y: auto;
     overflow-x: hidden;
-    /* Allow touch gestures for scrolling */
-    touch-action: pan-y pinch-zoom;
+    /* Only allow vertical scrolling - no pinch-zoom for native app feel */
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -249,8 +249,8 @@ All colors MUST be HSL.
 
   /* Android-specific main content scrolling fix */
   html.android-native main {
-    /* Ensure main element allows touch scrolling */
-    touch-action: pan-y pinch-zoom;
+    /* Only allow vertical scrolling - no pinch-zoom for native app feel */
+    touch-action: pan-y;
     /* Main element should not create its own scroll container - 
        content scrolls via the body/window scroll */
     overflow-y: auto;
