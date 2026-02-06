@@ -142,7 +142,8 @@ All colors MUST be HSL.
   /* This class is applied conditionally via React when running on native/Android platform */
   header.fixed-header.android-fixed {
     position: fixed;
-    top: 0;
+    /* Position below the status bar (notifications, network, battery icons) */
+    top: env(safe-area-inset-top, 0px);
     left: 0;
     right: 0;
     /* Hardware acceleration for smooth fixed positioning on Android */
@@ -160,18 +161,6 @@ All colors MUST be HSL.
   @media (min-width: 1024px) {
     header.fixed-header.android-fixed {
       left: 16rem; /* lg:ml-64 = 256px = 16rem */
-    }
-  }
-
-  /* Content area spacing to account for header - applies to all platforms */
-  /* Uses CSS variables for consistent header height */
-  .main-content {
-    padding-top: var(--header-height-mobile);
-  }
-
-  @media (min-width: 640px) {
-    .main-content {
-      padding-top: var(--header-height-desktop);
     }
   }
 
@@ -531,6 +520,18 @@ All colors MUST be HSL.
     
     .glow-cyan, .glow-purple, .glow-success, .glow-warning {
       box-shadow: none;
+    }
+  }
+
+  /* Content area spacing to account for fixed header on Android/native apps */
+  /* Must use !important to override Tailwind padding utilities like p-3 */
+  .main-content {
+    padding-top: var(--header-height-mobile) !important;
+  }
+
+  @media (min-width: 640px) {
+    .main-content {
+      padding-top: var(--header-height-desktop) !important;
     }
   }
 }
