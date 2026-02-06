@@ -616,7 +616,7 @@ const Landing = () => {
         {/* Stats */}
         <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-4xl sm:mt-20 sm:gap-8 md:grid-cols-4 lg:mt-28 lg:gap-12 xl:max-w-5xl">
           {[
-            { label: t("landing.accuracyRate"), value: "80%", icon: Activity },
+            { label: t("landing.accuracyRate"), value: "60%", icon: Activity },
             { label: t("landing.activeUsers"), value: userCount !== null ? `${Math.floor(userCount / 1000)}K+` : "25K+", icon: TrendingUp },
             { label: t("landing.predictionsPerDay"), value: "50K+", icon: Brain },
             { label: t("landing.marketsTracked"), value: "200+", icon: BarChart3 },
