@@ -142,7 +142,8 @@ All colors MUST be HSL.
   /* This class is applied conditionally via React when running on native/Android platform */
   header.fixed-header.android-fixed {
     position: fixed;
-    top: 0;
+    /* Position below the status bar (notifications, network, battery icons) */
+    top: env(safe-area-inset-top, 0px);
     left: 0;
     right: 0;
     /* Hardware acceleration for smooth fixed positioning on Android */
