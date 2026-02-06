@@ -77,18 +77,11 @@ jobs:
           # Also create a versioned copy for reference
           cp android/app/build/outputs/apk/debug/app-debug.apk ./zikalyze-${{ steps.version.outputs.version }}.apk
       
-      - name: Delete existing latest release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Delete the existing 'latest' release if it exists
-          gh release delete latest --yes --cleanup-tag || true
-      
       - name: Create Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create latest \
+          gh release create ${{ steps.version.outputs.version }} \
             --title "🚀 Zikalyze Latest Build" \
             --notes "## 📱 Zikalyze Android APK - Latest Build
 
