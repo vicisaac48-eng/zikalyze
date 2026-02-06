@@ -90,9 +90,7 @@ All colors MUST be HSL.
      Only allow vertical scrolling (pan-y) - like WhatsApp, Instagram, etc.
      The .android-native class is added in main.tsx when running on Capacitor Android */
   html.android-native {
-    /* Only allow vertical panning - no horizontal swipe movement */
-    touch-action: pan-y;
-    /* Prevent any horizontal overflow */
+    /* Prevent any horizontal overflow on the main page */
     overflow-x: hidden;
   }
 
@@ -101,6 +99,8 @@ All colors MUST be HSL.
     overflow-x: hidden;
     /* Ensure body doesn't extend beyond viewport width */
     max-width: 100vw;
+    /* Only allow vertical panning on body - no horizontal swipe of the entire page */
+    touch-action: pan-y;
   }
 
   html.android-native #root {
@@ -108,6 +108,16 @@ All colors MUST be HSL.
     overflow-x: hidden;
     /* Ensure root doesn't extend beyond viewport width */
     max-width: 100vw;
+  }
+
+  /* Allow horizontal scrolling in specific containers with overflow-x-auto */
+  /* This ensures crypto card ticker and other horizontal scroll areas work on Android */
+  html.android-native .overflow-x-auto,
+  html.android-native [class*="overflow-x-auto"] {
+    /* Re-enable horizontal panning for scrollable containers */
+    touch-action: pan-x pan-y;
+    /* Ensure overflow-x works */
+    overflow-x: auto !important;
   }
 
   body {
