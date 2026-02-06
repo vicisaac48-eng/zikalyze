@@ -129,11 +129,16 @@ export function useSmartNotifications() {
     try {
       const id = generateNotificationId();
       
+      // Determine if this is a critical notification that should be ongoing
+      const isCritical = notification.urgency === 'critical';
+      
       await LocalNotifications.schedule({
         notifications: [{
           id,
           title: notification.title,
           body: notification.body,
+          // Expanded text shown when user pulls down on notification
+          largeBody: notification.body,
           sound: 'default',
           smallIcon: ANDROID_NOTIFICATION_ICON,
           // Use the notification channel we created (required for Android 8.0+)
@@ -146,7 +151,10 @@ export function useSmartNotifications() {
           },
           // Schedule immediately
           schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
+          // Auto-cancel when tapped
           autoCancel: true,
+          // Critical notifications stay on screen until dismissed
+          ongoing: false,
         }]
       });
       
