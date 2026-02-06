@@ -1,9 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Real-Time Live Streaming Hook for Crypto Ticker
 // Connects DIRECTLY to exchange WebSockets for instant price updates
+// Multi-exchange fallback ensures real-time data even if primary fails
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef, useCallback } from "react";
+
+// Connection configuration
+const CONNECTION_TIMEOUT_MS = 8000;    // Timeout before trying fallback exchanges
+const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
+const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -21,9 +27,32 @@ const BINANCE_TICKER_SYMBOLS: Record<string, string> = {
   DOT: "dotusdt",
 };
 
-// OKX symbol mappings (for KAS which isn't on Binance)
+// OKX symbol mappings - ALL ticker symbols for fallback when Binance fails
 const OKX_TICKER_SYMBOLS: Record<string, string> = {
+  BTC: "BTC-USDT",
+  ETH: "ETH-USDT",
+  SOL: "SOL-USDT",
+  XRP: "XRP-USDT",
+  DOGE: "DOGE-USDT",
   KAS: "KAS-USDT",
+  ADA: "ADA-USDT",
+  AVAX: "AVAX-USDT",
+  LINK: "LINK-USDT",
+  DOT: "DOT-USDT",
+};
+
+// Bybit symbol mappings - Additional fallback exchange
+const BYBIT_TICKER_SYMBOLS: Record<string, string> = {
+  BTC: "BTCUSDT",
+  ETH: "ETHUSDT",
+  SOL: "SOLUSDT",
+  XRP: "XRPUSDT",
+  DOGE: "DOGEUSDT",
+  KAS: "KASUSDT",
+  ADA: "ADAUSDT",
+  AVAX: "AVAXUSDT",
+  LINK: "LINKUSDT",
+  DOT: "DOTUSDT",
 };
 
 export interface TickerPrice {
@@ -44,7 +73,8 @@ export const useTickerLiveStream = () => {
   
   const binanceWsRef = useRef<WebSocket | null>(null);
   const okxWsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const bybitWsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
   // Update a single ticker price
   const updateTicker = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
@@ -78,7 +108,16 @@ export const useTickerLiveStream = () => {
       
       const ws = new WebSocket(wsUrl);
       
+      // Connection timeout - if not connected within timeout, close and rely on fallback exchanges
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          console.log(`[Ticker LiveStream] Binance connection timeout, using fallback exchanges...`);
+          ws.close();
+        }
+      }, CONNECTION_TIMEOUT_MS);
+      
       ws.onopen = () => {
+        clearTimeout(connectionTimeout);
         console.log(`[Ticker LiveStream] ✓ Binance connected - LIVE streaming active`);
         setIsConnected(true);
         setSources(prev => prev.includes("Binance") ? prev : [...prev, "Binance"]);
@@ -118,42 +157,48 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onerror = () => {
-        console.log(`[Ticker LiveStream] Binance error, will reconnect...`);
+        clearTimeout(connectionTimeout);
+        console.log(`[Ticker LiveStream] Binance error, will use fallback exchanges...`);
       };
       
       ws.onclose = (e) => {
-        setSources(prev => prev.filter(s => s !== "Binance"));
-        setIsConnected(prev => sources.length > 1);
+        clearTimeout(connectionTimeout);
+        setSources(prev => {
+          const newSources = prev.filter(s => s !== "Binance");
+          // Update connected state based on remaining sources
+          setIsConnected(newSources.length > 0);
+          return newSources;
+        });
         
-        // Reconnect after delay
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
+        // Reconnect after delay with jitter
+        if (reconnectTimeoutsRef.current.binance) {
+          clearTimeout(reconnectTimeoutsRef.current.binance);
         }
-        const delay = 2000 + Math.random() * 2000;
+        const delay = RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MS;
         console.log(`[Ticker LiveStream] Binance disconnected (${e.code}), reconnecting in ${Math.round(delay)}ms...`);
-        reconnectTimeoutRef.current = setTimeout(connectBinance, delay);
+        reconnectTimeoutsRef.current.binance = setTimeout(connectBinance, delay);
       };
       
       binanceWsRef.current = ws;
     } catch (err) {
       console.log(`[Ticker LiveStream] Binance connection failed:`, err);
     }
-  }, [updateTicker, sources.length]);
+  }, [updateTicker]);
 
-  // Connect to OKX for KAS (not on Binance)
+  // Connect to OKX - Primary for KAS, fallback for all coins if Binance fails
   const connectOKX = useCallback(() => {
     if (okxWsRef.current?.readyState === WebSocket.OPEN) return;
     
     try {
-      console.log(`[Ticker LiveStream] Connecting to OKX for KAS...`);
+      console.log(`[Ticker LiveStream] Connecting to OKX for ${Object.keys(OKX_TICKER_SYMBOLS).length} coins...`);
       const ws = new WebSocket("wss://ws.okx.com:8443/ws/v5/public");
       
       ws.onopen = () => {
-        console.log(`[Ticker LiveStream] ✓ OKX connected for KAS`);
+        console.log(`[Ticker LiveStream] ✓ OKX connected - real-time streaming active`);
         setSources(prev => prev.includes("OKX") ? prev : [...prev, "OKX"]);
         setIsConnected(true);
         
-        // Subscribe to KAS ticker
+        // Subscribe to ALL ticker symbols for full coverage
         ws.send(JSON.stringify({
           op: "subscribe",
           args: Object.values(OKX_TICKER_SYMBOLS).map(instId => ({
@@ -168,7 +213,7 @@ export const useTickerLiveStream = () => {
           const message = JSON.parse(event.data);
           if (message.arg?.channel === "tickers" && message.data?.[0]) {
             const ticker = message.data[0];
-            // Extract symbol: KAS-USDT -> KAS
+            // Extract symbol: BTC-USDT -> BTC
             const instId = ticker.instId || "";
             
             const entry = Object.entries(OKX_TICKER_SYMBOLS).find(
@@ -201,9 +246,16 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onclose = () => {
-        setSources(prev => prev.filter(s => s !== "OKX"));
+        setSources(prev => {
+          const newSources = prev.filter(s => s !== "OKX");
+          setIsConnected(newSources.length > 0);
+          return newSources;
+        });
         // Reconnect after delay
-        setTimeout(connectOKX, 3000);
+        if (reconnectTimeoutsRef.current.okx) {
+          clearTimeout(reconnectTimeoutsRef.current.okx);
+        }
+        reconnectTimeoutsRef.current.okx = setTimeout(connectOKX, 3000);
       };
       
       okxWsRef.current = ws;
@@ -212,27 +264,114 @@ export const useTickerLiveStream = () => {
     }
   }, [updateTicker]);
 
-  // Initialize connections
+  // Connect to Bybit - Additional fallback exchange
+  const connectBybit = useCallback(() => {
+    if (bybitWsRef.current?.readyState === WebSocket.OPEN) return;
+    
+    try {
+      console.log(`[Ticker LiveStream] Connecting to Bybit for ${Object.keys(BYBIT_TICKER_SYMBOLS).length} coins...`);
+      const ws = new WebSocket("wss://stream.bybit.com/v5/public/spot");
+      
+      ws.onopen = () => {
+        console.log(`[Ticker LiveStream] ✓ Bybit connected - real-time streaming active`);
+        setSources(prev => prev.includes("Bybit") ? prev : [...prev, "Bybit"]);
+        setIsConnected(true);
+        
+        // Subscribe to all ticker symbols
+        const symbols = Object.values(BYBIT_TICKER_SYMBOLS).map(s => `tickers.${s}`);
+        ws.send(JSON.stringify({ op: "subscribe", args: symbols }));
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.topic?.startsWith('tickers.') && data.data) {
+            const ticker = data.data;
+            // Extract symbol: BTCUSDT -> BTC
+            const rawSymbol = ticker.symbol?.replace(/USDT$/, '').toUpperCase();
+            
+            const entry = Object.entries(BYBIT_TICKER_SYMBOLS).find(
+              ([symbol]) => symbol === rawSymbol
+            );
+            
+            if (entry && ticker.lastPrice) {
+              const [symbol] = entry;
+              const price = parseFloat(ticker.lastPrice);
+              
+              if (price > 0) {
+                updateTicker(symbol, {
+                  price,
+                  change24h: parseFloat(ticker.price24hPcnt || '0') * 100,
+                  high24h: parseFloat(ticker.highPrice24h || '0'),
+                  low24h: parseFloat(ticker.lowPrice24h || '0'),
+                  volume: parseFloat(ticker.turnover24h || '0'),
+                }, "Bybit");
+              }
+            }
+          }
+        } catch {
+          // Silent parse errors
+        }
+      };
+      
+      ws.onerror = () => {
+        console.log(`[Ticker LiveStream] Bybit error`);
+      };
+      
+      ws.onclose = () => {
+        setSources(prev => {
+          const newSources = prev.filter(s => s !== "Bybit");
+          setIsConnected(newSources.length > 0);
+          return newSources;
+        });
+        // Reconnect after delay
+        if (reconnectTimeoutsRef.current.bybit) {
+          clearTimeout(reconnectTimeoutsRef.current.bybit);
+        }
+        reconnectTimeoutsRef.current.bybit = setTimeout(connectBybit, 3000);
+      };
+      
+      bybitWsRef.current = ws;
+    } catch (err) {
+      console.log(`[Ticker LiveStream] Bybit connection failed:`, err);
+    }
+  }, [updateTicker]);
+
+  // Initialize connections - connect to multiple exchanges for redundancy
   useEffect(() => {
     console.log(`[Ticker LiveStream] 🚀 Starting real-time price streaming for ${TICKER_SYMBOLS.length} coins...`);
     
-    // Connect to exchanges
+    // Connect to all exchanges for maximum coverage and reliability
+    // Binance first (most reliable), then OKX (for KAS), then Bybit (additional coverage)
     connectBinance();
-    setTimeout(connectOKX, 500); // Slight delay for OKX
+    setTimeout(connectOKX, 300);  // Slight delay for OKX
+    setTimeout(connectBybit, 600); // Slight delay for Bybit
     
     // Cleanup on unmount
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      // Copy ref values to local variables for cleanup
+      const timeouts = { ...reconnectTimeoutsRef.current };
+      const binanceWs = binanceWsRef.current;
+      const okxWs = okxWsRef.current;
+      const bybitWs = bybitWsRef.current;
+      
+      // Clear all reconnect timeouts
+      Object.values(timeouts).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+      
+      // Close all WebSocket connections
+      if (binanceWs) {
+        binanceWs.close();
       }
-      if (binanceWsRef.current) {
-        binanceWsRef.current.close();
+      if (okxWs) {
+        okxWs.close();
       }
-      if (okxWsRef.current) {
-        okxWsRef.current.close();
+      if (bybitWs) {
+        bybitWs.close();
       }
     };
-  }, [connectBinance, connectOKX]);
+  }, [connectBinance, connectOKX, connectBybit]);
 
   // Helper to get price for a symbol
   const getPrice = useCallback((symbol: string): TickerPrice | undefined => {
