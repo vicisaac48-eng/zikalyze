@@ -135,13 +135,14 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 
 ### 📥 Download APK
 
-> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)**
+> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://github.com/vicisaac48-eng/zikalyze/releases/latest)**
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip)
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vicisaac48-eng/zikalyze/releases/latest)
 
-**Direct Download Links:**
-- 📲 [**Download Latest APK (Recommended)**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - One-click download, no login required
-- 📦 [View All Builds on GitHub](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml) - Select a specific build version
+**Download Links:**
+- 📲 [**Download from Latest Release (Permanent)**](https://github.com/vicisaac48-eng/zikalyze/releases/latest) - Permanent download link, always up-to-date
+- 🔗 [**Nightly Build Download**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Alternative download (no login required)
+- 📦 [View All Releases](https://github.com/vicisaac48-eng/zikalyze/releases) - Browse all available versions
 
 ### 🔄 APK Updates After Merge/Pull Request
 
@@ -161,7 +162,7 @@ The Android APK is **automatically built** whenever code is merged to the main b
 4. Once the build completes, click "Summary" in the left sidebar
 5. Download the `zikalyze-debug-apk` artifact from the "Artifacts" section at the bottom
 
-> **Note**: Artifacts from PRs expire after 14 days. For permanent access, use the nightly.link download after the PR is merged.
+> **Note**: Artifacts from PRs expire after 14 days. For permanent access, use the [Latest Release](https://github.com/vicisaac48-eng/zikalyze/releases/latest) download after the PR is merged.
 
 ### ✨ Android Native Features
 
