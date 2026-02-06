@@ -163,18 +163,6 @@ All colors MUST be HSL.
     }
   }
 
-  /* Content area spacing to account for header - applies to all platforms */
-  /* Uses CSS variables for consistent header height */
-  .main-content {
-    padding-top: var(--header-height-mobile);
-  }
-
-  @media (min-width: 640px) {
-    .main-content {
-      padding-top: var(--header-height-desktop);
-    }
-  }
-
   /* Legacy sticky header optimization - keep for fallback */
   header[class*="sticky"] {
     backface-visibility: hidden;
@@ -531,6 +519,18 @@ All colors MUST be HSL.
     
     .glow-cyan, .glow-purple, .glow-success, .glow-warning {
       box-shadow: none;
+    }
+  }
+
+  /* Content area spacing to account for fixed header on Android/native apps */
+  /* Must use !important to override Tailwind padding utilities like p-3 */
+  .main-content {
+    padding-top: var(--header-height-mobile) !important;
+  }
+
+  @media (min-width: 640px) {
+    .main-content {
+      padding-top: var(--header-height-desktop) !important;
     }
   }
 }
