@@ -25,7 +25,11 @@ interface NotificationPayload {
 export function useLocalNotifications() {
   const [hasPermission, setHasPermission] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const notificationIdCounter = useRef(1);
+  
+  // Generate unique notification ID using timestamp + random to avoid collisions
+  const generateNotificationId = useCallback((): number => {
+    return (Date.now() % 1000000) * 1000 + Math.floor(Math.random() * 1000);
+  }, []);
 
   // Initialize and check permissions
   useEffect(() => {
@@ -106,7 +110,7 @@ export function useLocalNotifications() {
 
     if (isNativePlatform()) {
       try {
-        const id = payload.id || notificationIdCounter.current++;
+        const id = payload.id || generateNotificationId();
         
         const notification: LocalNotificationSchema = {
           id,
@@ -126,7 +130,7 @@ export function useLocalNotifications() {
         };
 
         await LocalNotifications.schedule(options);
-        console.log('[LocalNotifications] Notification scheduled:', id);
+        console.log(`[LocalNotifications] Notification scheduled: ${payload.title}`);
         return true;
       } catch (error) {
         console.error('[LocalNotifications] Schedule error:', error);
@@ -160,7 +164,7 @@ export function useLocalNotifications() {
         return false;
       }
     }
-  }, [hasPermission, requestPermission]);
+  }, [hasPermission, requestPermission, generateNotificationId]);
 
   // Show a price alert notification with specific formatting
   const showPriceAlert = useCallback(async (

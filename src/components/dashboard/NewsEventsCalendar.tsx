@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,7 @@ import {
   parseISO,
   addDays,
 } from "date-fns";
+import { useSmartNotifications } from "@/hooks/useSmartNotifications";
 
 interface CalendarEvent {
   id: string;
@@ -278,6 +279,10 @@ const NewsEventsCalendar = ({ crypto }: NewsEventsCalendarProps) => {
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>(() => getScheduledEvents());
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  
+  // Smart notifications for imminent events
+  const { sendNewsEventNotification } = useSmartNotifications();
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
 
   // Load events
   const loadEvents = useCallback(() => {
@@ -304,6 +309,51 @@ const NewsEventsCalendar = ({ crypto }: NewsEventsCalendarProps) => {
     }, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Check for imminent high-impact events and send notifications (every 5 minutes)
+  useEffect(() => {
+    const checkImminentEvents = async () => {
+      const now = new Date();
+      
+      for (const event of events) {
+        // Skip if already notified
+        if (notifiedEventsRef.current.has(event.id)) continue;
+        
+        const minutesUntil = differenceInMinutes(event.date, now);
+        
+        // Send notification for high-impact events within 60 minutes
+        if (event.impact === 'high' && minutesUntil > 0 && minutesUntil <= 60) {
+          const sent = await sendNewsEventNotification(
+            event.event,
+            event.impact,
+            event.countdown,
+            event.category
+          );
+          if (sent) {
+            notifiedEventsRef.current.add(event.id);
+          }
+        }
+        
+        // Send notification for medium-impact events within 30 minutes
+        if (event.impact === 'medium' && minutesUntil > 0 && minutesUntil <= 30) {
+          const sent = await sendNewsEventNotification(
+            event.event,
+            event.impact,
+            event.countdown,
+            event.category
+          );
+          if (sent) {
+            notifiedEventsRef.current.add(event.id);
+          }
+        }
+      }
+    };
+
+    // Check immediately and then every 5 minutes
+    checkImminentEvents();
+    const interval = setInterval(checkImminentEvents, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [events, sendNewsEventNotification]);
 
   // Calendar days for current month view
   const calendarDays = useMemo(() => {

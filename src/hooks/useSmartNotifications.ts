@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSettings, NotificationAlertSettings } from '@/hooks/useSettings';
 
 interface NotificationData {
-  type: 'price_alert' | 'price_surge' | 'price_drop' | 'sentiment_shift' | 'whale_activity' | 'volume_spike';
+  type: 'price_alert' | 'price_surge' | 'price_drop' | 'sentiment_shift' | 'whale_activity' | 'volume_spike' | 'news_event';
   symbol: string;
   title: string;
   body: string;
@@ -35,6 +35,7 @@ const COOLDOWNS = {
   sentiment_shift: 15 * 60 * 1000, // 15 min
   whale_activity: 10 * 60 * 1000, // 10 min
   volume_spike: 10 * 60 * 1000,
+  news_event: 30 * 60 * 1000, // 30 min for news events
 };
 
 // Get thresholds from settings
@@ -56,6 +57,7 @@ function isNotificationEnabled(type: NotificationData['type'], alertSettings: No
     'sentiment_shift': 'sentimentShifts',
     'whale_activity': 'whaleActivity',
     'volume_spike': 'volumeSpikes',
+    'news_event': 'newsEvents',
   };
   return !!alertSettings[typeMap[type]];
 }
@@ -70,8 +72,11 @@ const isNativePlatform = (): boolean => {
   return Capacitor.isNativePlatform();
 };
 
-// Counter for notification IDs
-let notificationIdCounter = 1;
+// Generate unique notification ID using timestamp + random to avoid collisions
+const generateNotificationId = (): number => {
+  // Use last 6 digits of timestamp + random 3 digits (0-999)
+  return (Date.now() % 1000000) * 1000 + Math.floor(Math.random() * 1000);
+};
 
 export function useSmartNotifications() {
   const { user } = useAuth();
@@ -110,7 +115,7 @@ export function useSmartNotifications() {
   // Show native local notification on Android/iOS
   const showNativeLocalNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
     try {
-      const id = notificationIdCounter++;
+      const id = generateNotificationId();
       
       await LocalNotifications.schedule({
         notifications: [{
@@ -131,7 +136,7 @@ export function useSmartNotifications() {
         }]
       });
       
-      console.log(`[SmartNotify] Native notification scheduled: ${notification.title}`);
+      console.log(`[SmartNotify] Native notification scheduled: ${notification.title} (${notification.symbol})`);
       return true;
     } catch (err) {
       console.error('[SmartNotify] Native notification error:', err);
@@ -428,6 +433,26 @@ export function useSmartNotifications() {
     });
   }, [sendPushNotification]);
 
+  // Send news/macro event notification
+  const sendNewsEventNotification = useCallback(async (
+    eventName: string,
+    impact: 'high' | 'medium' | 'low',
+    countdown: string,
+    category: string
+  ): Promise<boolean> => {
+    const emoji = impact === 'high' ? '🔥' : impact === 'medium' ? '📰' : '📋';
+    const urgency = impact === 'high' ? 'high' : impact === 'medium' ? 'medium' : 'low';
+    
+    return sendPushNotification({
+      type: 'news_event',
+      symbol: category.toUpperCase(),
+      title: `${emoji} ${eventName}`,
+      body: `${countdown} • Impact: ${impact.toUpperCase()} • Category: ${category}`,
+      urgency,
+      data: { event: eventName, impact, countdown, category }
+    });
+  }, [sendPushNotification]);
+
   // Reset snapshots on unmount
   useEffect(() => {
     return () => {
@@ -442,6 +467,7 @@ export function useSmartNotifications() {
     checkSentimentShift,
     checkWhaleActivity,
     sendPriceAlertNotification,
+    sendNewsEventNotification,
     sendPushNotification
   };
 }
