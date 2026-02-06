@@ -879,7 +879,7 @@ export function generateSimplifiedSummary(
   return `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    📱 QUICK SUMMARY FOR ${crypto} 
-   (Beginner-Friendly)
+   (Zikalyze AI Analysis)
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🎯 WHAT TO DO: ${action}
