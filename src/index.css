@@ -123,8 +123,9 @@ All colors MUST be HSL.
   html {
     /* Color scheme follows the theme class for proper system UI integration */
     color-scheme: dark;
-    /* Smooth scrolling */
-    scroll-behavior: smooth;
+    /* Removed scroll-behavior: smooth for better scroll stability */
+    /* Smooth scrolling can cause jank on mobile devices and interfere with native scroll momentum */
+    /* Use .scroll-smooth utility class when smooth scrolling is explicitly needed */
     /* Consistent height across all devices */
     height: 100%;
     height: -webkit-fill-available;
