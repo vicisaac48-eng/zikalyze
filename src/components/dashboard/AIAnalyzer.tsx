@@ -51,6 +51,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crypto-analy
 const CHARS_PER_FRAME = 12; // Much faster rendering
 const FRAME_INTERVAL = 8; // 120fps smooth
 const STREAMING_INTERVAL = 2000; // Re-process every 2 seconds when streaming
+const SCROLL_COMPLETION_DELAY = 50; // Delay for DOM update before final smooth scroll
 
 const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap, isLive }: AIAnalyzerProps) => {
   const { t, i18n } = useTranslation();
@@ -79,6 +80,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const completionScrollDoneRef = useRef(false);
   
   // Comprehensive live market data (prices, on-chain, sentiment)
   const liveData = useLiveMarketData(crypto, price, change, high24h, low24h, volume);
@@ -209,18 +211,30 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
     t("analyzer.generating", "Generating insights...")
   ];
 
-  // Smooth scroll to bottom
-  const scrollToBottom = useCallback(() => {
+  // Scroll to bottom - uses instant scroll during animation to prevent flickering
+  // Only uses smooth scroll when animation completes
+  const scrollToBottom = useCallback((smooth = false) => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth"
-      });
+      if (smooth) {
+        // Smooth scroll for user-triggered or completion scrolls
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: "smooth"
+        });
+      } else {
+        // Instant scroll during animation to prevent flickering from overlapping smooth scrolls
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
     }
   }, []);
 
   // Smooth typewriter effect using requestAnimationFrame
   useEffect(() => {
+    // Reset completion scroll flag when new analysis starts
+    if (fullAnalysis.length === 0) {
+      completionScrollDoneRef.current = false;
+    }
+    
     const animate = (timestamp: number) => {
       if (timestamp - lastFrameTimeRef.current >= FRAME_INTERVAL) {
         if (charIndexRef.current < fullAnalysis.length) {
@@ -228,7 +242,15 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
           setDisplayedText(fullAnalysis.slice(0, nextIndex));
           charIndexRef.current = nextIndex;
           lastFrameTimeRef.current = timestamp;
-          scrollToBottom();
+          // Use instant scroll during animation to prevent flickering
+          scrollToBottom(false);
+          
+          // If animation just completed, do one final smooth scroll for polish (only once)
+          if (charIndexRef.current >= fullAnalysis.length && !completionScrollDoneRef.current) {
+            completionScrollDoneRef.current = true;
+            // Small delay to let the DOM update, then smooth scroll
+            setTimeout(() => scrollToBottom(true), SCROLL_COMPLETION_DELAY);
+          }
         }
       }
       
@@ -1224,7 +1246,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
               {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
             </Button>
           )}
-        <div ref={scrollContainerRef} className="min-h-[180px] max-h-[350px] overflow-y-auto p-4 rounded-xl bg-background/50 border border-border/50 scroll-smooth">
+        <div ref={scrollContainerRef} className="min-h-[180px] max-h-[350px] overflow-y-auto p-4 rounded-xl bg-background/50 border border-border/50">
           {/* Selected History Indicator */}
           {selectedHistory && (
             <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-lg">
