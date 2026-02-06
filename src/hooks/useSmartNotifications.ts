@@ -129,9 +129,6 @@ export function useSmartNotifications() {
     try {
       const id = generateNotificationId();
       
-      // Determine if this is a critical notification that should be ongoing
-      const isCritical = notification.urgency === 'critical';
-      
       await LocalNotifications.schedule({
         notifications: [{
           id,
@@ -151,10 +148,8 @@ export function useSmartNotifications() {
           },
           // Schedule immediately
           schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
-          // Auto-cancel when tapped
+          // Auto-cancel when tapped for good UX
           autoCancel: true,
-          // Critical notifications stay on screen until dismissed
-          ongoing: false,
         }]
       });
       
