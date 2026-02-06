@@ -767,7 +767,39 @@ export function generateSimplifiedSummary(
   crypto: string,
   price: number
 ): string {
-  const { weightedConfidenceScore, conflictReport, humanInTheLoopVerdict, killSwitchLevel, layerBeta } = analysis;
+  // Validate required properties with safe defaults
+  const weightedConfidenceScore = analysis?.weightedConfidenceScore ?? { 
+    direction: 'NEUTRAL' as const, 
+    percentage: 50,
+    breakdown: { alphaContribution: 0, betaContribution: 0, gammaContribution: 0 }
+  };
+  const conflictReport = analysis?.conflictReport ?? { 
+    hasConflict: false, 
+    description: 'Analysis unavailable',
+    reversalSignalFromNN: false,
+    algorithmMissing: null
+  };
+  const humanInTheLoopVerdict = analysis?.humanInTheLoopVerdict ?? { 
+    positionSizeRecommendation: 'AVOID' as const, 
+    reasoning: 'Insufficient data for recommendation',
+    upcomingMacroRisk: null,
+    waitTime: null
+  };
+  const killSwitchLevel = analysis?.killSwitchLevel ?? { 
+    price: price, 
+    reason: 'Default to current price',
+    allLayersAgree: false
+  };
+  const layerBeta = analysis?.layerBeta ?? { 
+    marketPhase: 'NEUTRAL' as const,
+    signal: '⚪ NEUTRAL' as const,
+    confidence: 50,
+    rsiAnalysis: { value: 50, condition: 'NEUTRAL' as const },
+    macdAnalysis: { histogram: 0, signal: 'Neutral', momentum: 'NEUTRAL' as const },
+    hiddenCorrelations: [],
+    fearGreedComparison: { current: 50, historicalExtremeFear: 12, similarity: 50 },
+    reversalProbability: 30
+  };
   
   // Determine decimals based on price
   const decimals = price < 1 ? 6 : price < 10 ? 4 : price < 1000 ? 2 : 0;
@@ -821,6 +853,11 @@ export function generateSimplifiedSummary(
     ? '⚠️ Our analysis systems disagree - be extra careful'
     : '✅ Our analysis systems agree - stronger signal';
 
+  // Ensure reasoning has a user-friendly fallback
+  const reasoningText = humanInTheLoopVerdict.reasoning && humanInTheLoopVerdict.reasoning.trim() 
+    ? humanInTheLoopVerdict.reasoning 
+    : 'Based on current market conditions';
+
   return `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    📱 QUICK SUMMARY FOR ${crypto} 
@@ -835,7 +872,7 @@ ${marketMood}
 💰 HOW MUCH TO RISK:
    ${positionAdvice}
    
-   Why? ${humanInTheLoopVerdict.reasoning}
+   Why? ${reasoningText}
 
 🚨 WHEN TO EXIT:
    ${exitExplanation}
