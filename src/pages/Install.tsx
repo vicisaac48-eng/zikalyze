@@ -18,6 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
+// App version from package.json
+const APP_VERSION = "1.1.0";
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -134,7 +137,6 @@ const Install = () => {
                   src={zikalyzeLogo} 
                   alt="Zikalyze" 
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg relative z-10"
-                  style={{ imageRendering: 'crisp-edges' }}
                 />
               </div>
             </div>
@@ -160,7 +162,7 @@ const Install = () => {
               {t("install.freeBadge", "Free")}
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium">
-              v1.1.0
+              v{APP_VERSION}
             </span>
           </div>
         </div>
