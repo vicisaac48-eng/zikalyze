@@ -125,9 +125,11 @@ All colors MUST be HSL.
     color-scheme: dark;
     /* Smooth scrolling - required for Android scroll to work properly */
     scroll-behavior: smooth;
-    /* Consistent height across all devices */
-    height: 100%;
-    height: -webkit-fill-available;
+    /* Ensure the html element can scroll */
+    overflow-y: auto !important;
+    /* Height settings for proper scroll behavior */
+    height: auto;
+    min-height: 100%;
     /* Disable pinch-to-zoom on Android native app (set via Capacitor detection in main.tsx) */
     /* This CSS is a fallback - the viewport meta tag is the primary control */
     touch-action: pan-x pan-y;
@@ -198,10 +200,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    /* Ensure consistent rendering across all devices */
-    min-height: 100vh;
-    min-height: 100dvh; /* Dynamic viewport height for mobile */
-    min-height: -webkit-fill-available; /* Safari fallback */
+    /* Ensure the body itself can scroll */
+    overflow-y: auto !important;
+    /* Height settings for proper scroll behavior */
+    height: auto;
+    min-height: 100%;
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
     /* Enable smooth momentum scrolling */
@@ -329,6 +332,12 @@ All colors MUST be HSL.
      CROSS-BROWSER & CROSS-DEVICE UTILITIES
      Consistent styling across all platforms
      ======================================== */
+
+  /* Main container wrapper for scrolling */
+  .main-container {
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /* Makes scrolling smooth on mobile */
+  }
 
   /* Glow effects - Clean and professional */
   .glow-cyan {
