@@ -19,6 +19,12 @@ interface UsePullToRefreshReturn {
   indicatorStyle: React.CSSProperties;
 }
 
+// Helper function to check if at the top of the scroll container
+const checkIfAtTop = (): boolean => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  return scrollTop <= 0;
+};
+
 /**
  * Hook for implementing native-style pull-to-refresh functionality.
  * Only active on native Android/PWA apps, does nothing on web.
@@ -39,12 +45,29 @@ export function usePullToRefresh({
   const startYRef = useRef<number>(0);
   const currentYRef = useRef<number>(0);
   const isAtTopRef = useRef<boolean>(true);
+  // Use ref to avoid stale closure in event handlers
+  const isPullingRef = useRef<boolean>(false);
+  const isRefreshingRef = useRef<boolean>(false);
+  const pullDistanceRef = useRef<number>(0);
 
   const canRefresh = pullDistance >= threshold;
 
+  // Sync refs with state
+  useEffect(() => {
+    isPullingRef.current = isPulling;
+  }, [isPulling]);
+
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
+
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
+
   // Handle the refresh action
   const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
+    if (isRefreshingRef.current) return;
 
     setIsRefreshing(true);
     try {
@@ -55,7 +78,7 @@ export function usePullToRefresh({
       setIsRefreshing(false);
       setPullDistance(0);
     }
-  }, [onRefresh, isRefreshing]);
+  }, [onRefresh]);
 
   // Touch event handlers
   useEffect(() => {
@@ -65,26 +88,20 @@ export function usePullToRefresh({
     const container = containerRef.current;
     if (!container) return;
 
-    const checkIfAtTop = (): boolean => {
-      // Check if we're at the very top of the scroll container
-      // We need to check the main scrollable element
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      return scrollTop <= 0;
-    };
-
     const handleTouchStart = (e: TouchEvent) => {
-      if (isRefreshing) return;
+      if (isRefreshingRef.current) return;
 
       isAtTopRef.current = checkIfAtTop();
       if (!isAtTopRef.current) return;
 
       startYRef.current = e.touches[0].clientY;
       currentYRef.current = startYRef.current;
+      isPullingRef.current = true;
       setIsPulling(true);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isRefreshing || !isPulling) return;
+      if (isRefreshingRef.current || !isPullingRef.current) return;
       if (!isAtTopRef.current) return;
 
       currentYRef.current = e.touches[0].clientY;
@@ -117,11 +134,14 @@ export function usePullToRefresh({
     };
 
     const handleTouchEnd = () => {
-      if (isRefreshing) return;
+      if (isRefreshingRef.current) return;
 
+      const canTriggerRefresh = pullDistanceRef.current >= threshold;
+      
+      isPullingRef.current = false;
       setIsPulling(false);
 
-      if (canRefresh && isAtTopRef.current) {
+      if (canTriggerRefresh && isAtTopRef.current) {
         handleRefresh();
       } else {
         // Animate back to zero
@@ -141,7 +161,7 @@ export function usePullToRefresh({
       container.removeEventListener("touchend", handleTouchEnd);
       container.removeEventListener("touchcancel", handleTouchEnd);
     };
-  }, [isNativeApp, disabled, isPulling, isRefreshing, canRefresh, handleRefresh, resistance, maxPull]);
+  }, [isNativeApp, disabled, handleRefresh, resistance, maxPull, threshold]);
 
   // Content transform style
   const contentStyle: React.CSSProperties = {

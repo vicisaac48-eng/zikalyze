@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export function PullToRefresh({
   disabled = false,
   className,
 }: PullToRefreshProps) {
+  const { t } = useTranslation();
   const {
     pullDistance,
     isRefreshing,
@@ -74,7 +76,7 @@ export function PullToRefresh({
             top: "calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile, 2.25rem) + 60px)",
           }}
         >
-          <span className="text-xs text-primary font-medium">Refreshing...</span>
+          <span className="text-xs text-primary font-medium">{t("common.refreshing", "Refreshing...")}</span>
         </div>
       )}
 
@@ -86,7 +88,7 @@ export function PullToRefresh({
             top: "calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile, 2.25rem) + 60px)",
           }}
         >
-          <span className="text-xs text-primary font-medium">Release to refresh</span>
+          <span className="text-xs text-primary font-medium">{t("common.releaseToRefresh", "Release to refresh")}</span>
         </div>
       )}
 
@@ -98,7 +100,7 @@ export function PullToRefresh({
             top: "calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile, 2.25rem) + 60px)",
           }}
         >
-          <span className="text-xs text-muted-foreground">Pull down to refresh</span>
+          <span className="text-xs text-muted-foreground">{t("common.pullToRefresh", "Pull down to refresh")}</span>
         </div>
       )}
     </div>
