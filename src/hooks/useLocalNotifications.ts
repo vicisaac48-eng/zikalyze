@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { useCallback, useEffect, useState } from 'react';
 import { LocalNotifications, ScheduleOptions, LocalNotificationSchema } from '@capacitor/local-notifications';
-
-// Check if running on a native platform (Android/iOS)
-const isNativePlatform = (): boolean => {
-  return Capacitor.isNativePlatform();
-};
+import { 
+  isNativePlatform, 
+  generateNotificationId, 
+  IMMEDIATE_NOTIFICATION_DELAY_MS 
+} from '@/lib/notification-utils';
 
 interface NotificationPayload {
   id?: number;
@@ -17,6 +16,9 @@ interface NotificationPayload {
   largeIcon?: string;
 }
 
+// Android notification icon
+const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
+
 /**
  * Hook for showing local notifications on native Android/iOS platforms.
  * Uses Capacitor's LocalNotifications plugin which works without Firebase.
@@ -25,11 +27,6 @@ interface NotificationPayload {
 export function useLocalNotifications() {
   const [hasPermission, setHasPermission] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  
-  // Generate unique notification ID using timestamp + random to avoid collisions
-  const generateNotificationId = useCallback((): number => {
-    return (Date.now() % 1000000) * 1000 + Math.floor(Math.random() * 1000);
-  }, []);
 
   // Initialize and check permissions
   useEffect(() => {
@@ -117,11 +114,11 @@ export function useLocalNotifications() {
           title: payload.title,
           body: payload.body,
           sound: payload.sound || 'default',
-          smallIcon: payload.smallIcon || 'ic_stat_icon_config_sample',
+          smallIcon: payload.smallIcon || ANDROID_NOTIFICATION_ICON,
           largeIcon: payload.largeIcon,
           extra: payload.data,
           // Show immediately
-          schedule: { at: new Date(Date.now() + 100) }, // 100ms from now
+          schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
           autoCancel: true,
         };
 
@@ -164,7 +161,7 @@ export function useLocalNotifications() {
         return false;
       }
     }
-  }, [hasPermission, requestPermission, generateNotificationId]);
+  }, [hasPermission, requestPermission]);
 
   // Show a price alert notification with specific formatting
   const showPriceAlert = useCallback(async (

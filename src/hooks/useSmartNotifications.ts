@@ -1,9 +1,14 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings, NotificationAlertSettings } from '@/hooks/useSettings';
+import { 
+  isNativePlatform, 
+  generateNotificationId, 
+  sanitizeSymbol,
+  IMMEDIATE_NOTIFICATION_DELAY_MS 
+} from '@/lib/notification-utils';
 
 interface NotificationData {
   type: 'price_alert' | 'price_surge' | 'price_drop' | 'sentiment_shift' | 'whale_activity' | 'volume_spike' | 'news_event';
@@ -62,21 +67,8 @@ function isNotificationEnabled(type: NotificationData['type'], alertSettings: No
   return !!alertSettings[typeMap[type]];
 }
 
-// Sanitize symbol for URL (only allow alphanumeric and hyphen)
-function sanitizeSymbol(symbol: string): string {
-  return symbol.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
-}
-
-// Check if running on native platform
-const isNativePlatform = (): boolean => {
-  return Capacitor.isNativePlatform();
-};
-
-// Generate unique notification ID using timestamp + random to avoid collisions
-const generateNotificationId = (): number => {
-  // Use last 6 digits of timestamp + random 3 digits (0-999)
-  return (Date.now() % 1000000) * 1000 + Math.floor(Math.random() * 1000);
-};
+// Android notification icon - use the default Capacitor icon
+const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
 
 export function useSmartNotifications() {
   const { user } = useAuth();
@@ -123,15 +115,15 @@ export function useSmartNotifications() {
           title: notification.title,
           body: notification.body,
           sound: 'default',
-          smallIcon: 'ic_stat_icon_config_sample',
+          smallIcon: ANDROID_NOTIFICATION_ICON,
           extra: {
             type: notification.type,
             symbol: notification.symbol,
             url: `/dashboard?crypto=${sanitizeSymbol(notification.symbol)}`,
             ...notification.data
           },
-          // Schedule immediately (100ms from now)
-          schedule: { at: new Date(Date.now() + 100) },
+          // Schedule immediately
+          schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
           autoCancel: true,
         }]
       });

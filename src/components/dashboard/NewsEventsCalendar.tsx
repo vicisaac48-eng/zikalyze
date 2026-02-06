@@ -54,6 +54,9 @@ interface NewsEventsCalendarProps {
   crypto?: string;
 }
 
+// Interval for checking imminent events (5 minutes)
+const CHECK_IMMINENT_EVENTS_INTERVAL_MS = 5 * 60 * 1000;
+
 // Real scheduled macro economic events with accurate dates for 2025-2026
 const getScheduledEvents = (): CalendarEvent[] => {
   const now = new Date();
@@ -351,7 +354,7 @@ const NewsEventsCalendar = ({ crypto }: NewsEventsCalendarProps) => {
 
     // Check immediately and then every 5 minutes
     checkImminentEvents();
-    const interval = setInterval(checkImminentEvents, 5 * 60 * 1000);
+    const interval = setInterval(checkImminentEvents, CHECK_IMMINENT_EVENTS_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [events, sendNewsEventNotification]);
 
