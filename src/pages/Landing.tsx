@@ -108,7 +108,7 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-y-auto overflow-x-hidden">
       {/* Cookie Consent Dialog */}
       <CookieConsent />
       {/* Animated Background */}

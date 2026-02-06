@@ -123,7 +123,7 @@ All colors MUST be HSL.
   html {
     /* Color scheme follows the theme class for proper system UI integration */
     color-scheme: dark;
-    /* Smooth scrolling */
+    /* Smooth scrolling - required for Android scroll to work properly */
     scroll-behavior: smooth;
     /* Consistent height across all devices */
     height: 100%;
