@@ -1,4 +1,6 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings, NotificationAlertSettings } from '@/hooks/useSettings';
@@ -63,12 +65,33 @@ function sanitizeSymbol(symbol: string): string {
   return symbol.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
 }
 
+// Check if running on native platform
+const isNativePlatform = (): boolean => {
+  return Capacitor.isNativePlatform();
+};
+
+// Counter for notification IDs
+let notificationIdCounter = 1;
+
 export function useSmartNotifications() {
   const { user } = useAuth();
   const { settings } = useSettings();
   const lastNotifications = useRef<Record<string, number>>({});
   const priceSnapshots = useRef<Record<string, PriceSnapshot>>({});
   const sentimentSnapshot = useRef<SentimentSnapshot | null>(null);
+  const nativePermissionChecked = useRef(false);
+
+  // Request native notification permissions on first use
+  useEffect(() => {
+    if (isNativePlatform() && !nativePermissionChecked.current) {
+      nativePermissionChecked.current = true;
+      LocalNotifications.requestPermissions().then(result => {
+        console.log('[SmartNotify] Native notification permission:', result.display);
+      }).catch(err => {
+        console.error('[SmartNotify] Permission request error:', err);
+      });
+    }
+  }, []);
 
   // Memoize thresholds from settings
   const thresholds = useMemo(() => 
@@ -84,8 +107,46 @@ export function useSmartNotifications() {
     return Date.now() - lastSent > cooldown;
   }, []);
 
-  // Fallback: Show local notification via service worker when push fails
+  // Show native local notification on Android/iOS
+  const showNativeLocalNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
+    try {
+      const id = notificationIdCounter++;
+      
+      await LocalNotifications.schedule({
+        notifications: [{
+          id,
+          title: notification.title,
+          body: notification.body,
+          sound: 'default',
+          smallIcon: 'ic_stat_icon_config_sample',
+          extra: {
+            type: notification.type,
+            symbol: notification.symbol,
+            url: `/dashboard?crypto=${sanitizeSymbol(notification.symbol)}`,
+            ...notification.data
+          },
+          // Schedule immediately (100ms from now)
+          schedule: { at: new Date(Date.now() + 100) },
+          autoCancel: true,
+        }]
+      });
+      
+      console.log(`[SmartNotify] Native notification scheduled: ${notification.title}`);
+      return true;
+    } catch (err) {
+      console.error('[SmartNotify] Native notification error:', err);
+      return false;
+    }
+  }, []);
+
+  // Fallback: Show local notification via service worker when push fails (for web)
   const showLocalNotification = useCallback(async (notification: NotificationData): Promise<void> => {
+    // On native platforms, use Capacitor LocalNotifications instead
+    if (isNativePlatform()) {
+      await showNativeLocalNotification(notification);
+      return;
+    }
+    
     if (!('serviceWorker' in navigator)) return;
     
     try {
@@ -109,9 +170,9 @@ export function useSmartNotifications() {
     } catch (err) {
       console.error('[SmartNotify] Failed to show local notification:', err);
     }
-  }, []);
+  }, [showNativeLocalNotification]);
 
-  // Send push notification via edge function
+  // Send push notification via edge function (web) or local notification (native)
   const sendPushNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
     if (!user?.id) return false;
     
@@ -135,8 +196,26 @@ export function useSmartNotifications() {
       return false;
     }
 
-    let fallbackAttempted = false;
     let notificationShown = false;
+    
+    // On native platforms, use local notifications directly
+    // This works without Firebase/FCM setup
+    if (isNativePlatform()) {
+      try {
+        notificationShown = await showNativeLocalNotification(notification);
+        if (notificationShown) {
+          lastNotifications.current[key] = Date.now();
+          console.log(`[SmartNotify] Native notification sent: ${notification.type} for ${notification.symbol}`);
+        }
+        return notificationShown;
+      } catch (err) {
+        console.error('[SmartNotify] Native notification error:', err);
+        return false;
+      }
+    }
+
+    // On web, try edge function first, then fall back to service worker
+    let fallbackAttempted = false;
     
     try {
       // Send push notification via edge function
@@ -183,7 +262,7 @@ export function useSmartNotifications() {
       }
       return notificationShown;
     }
-  }, [user?.id, canSendNotification, showLocalNotification, settings.notificationAlerts, settings.notifications]);
+  }, [user?.id, canSendNotification, showLocalNotification, showNativeLocalNotification, settings.notificationAlerts, settings.notifications]);
 
   // Check for significant price movements
   const checkPriceMovement = useCallback(async (
