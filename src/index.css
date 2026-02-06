@@ -56,9 +56,9 @@ All colors MUST be HSL.
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 168 76% 73%;
     
-    /* Header height for consistent spacing - match actual header size */
-    --header-height-mobile: 2.5rem;
-    --header-height-desktop: 3.5rem;
+    /* Header height for consistent spacing - minimal gap below header */
+    --header-height-mobile: 2.25rem;
+    --header-height-desktop: 3rem;
   }
 
 }
