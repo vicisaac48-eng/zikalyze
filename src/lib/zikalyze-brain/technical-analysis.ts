@@ -38,6 +38,464 @@ export interface TopDownAnalysis {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 📊 MARKET REGIME DETECTION — ADX-Based Trending vs Ranging Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type MarketRegimeType = 'TRENDING' | 'RANGING' | 'TRANSITIONAL';
+
+export interface ADXResult {
+  adx: number;              // ADX value (0-100)
+  plusDI: number;           // +DI value
+  minusDI: number;          // -DI value
+  regime: MarketRegimeType; // TRENDING (ADX>25), RANGING (ADX<20), TRANSITIONAL (20-25)
+  trendDirection: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; // Based on +DI vs -DI
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+}
+
+export interface RegimeWeightedConsensus {
+  regime: MarketRegimeType;
+  adxValue: number;
+  masterControl: 'ALGORITHM' | 'NEURAL_NETWORK';
+  algorithmWeight: number;  // 0-1 weight for Algorithm
+  neuralWeight: number;     // 0-1 weight for Neural Network
+  weightedScore: number;    // Final weighted consensus score
+  skipTrade: boolean;       // True if NN confidence < 51% in TRENDING mode
+  skipReason?: string;      // Reason for skipping
+  supportZone: number;      // Key support level
+  resistanceZone: number;   // Key resistance level
+  stopLoss: number;         // Recommended stop loss level
+  candlestickConfirmation: CandlestickConfirmation;
+}
+
+export interface CandlestickConfirmation {
+  pattern: string;          // Pattern name (e.g., "Bullish Engulfing")
+  type: 'REVERSAL' | 'CONTINUATION';
+  bias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  strength: number;         // Pattern strength 0-100
+  description: string;      // User-friendly explanation
+  entryTrigger: string;     // What should happen before entry
+}
+
+/**
+ * Calculate ADX (Average Directional Index) from price data
+ * ADX measures trend strength: >25 = trending, <20 = ranging
+ * 
+ * @param candles - OHLC candle data
+ * @param period - ATR/ADX period (default 14)
+ * @returns ADX result with regime classification
+ */
+export function calculateADX(
+  candles: Array<{ high: number; low: number; close: number }>,
+  period: number = 14
+): ADXResult {
+  if (candles.length < period + 1) {
+    // Not enough data — estimate from price action
+    const lastCandle = candles[candles.length - 1] || { high: 0, low: 0, close: 0 };
+    const range = lastCandle.high - lastCandle.low;
+    const estimatedADX = Math.min(50, Math.max(15, (range / lastCandle.close) * 1000));
+    
+    return {
+      adx: estimatedADX,
+      plusDI: 50,
+      minusDI: 50,
+      regime: estimatedADX > 25 ? 'TRENDING' : estimatedADX < 20 ? 'RANGING' : 'TRANSITIONAL',
+      trendDirection: 'NEUTRAL',
+      strength: 'WEAK'
+    };
+  }
+
+  // Calculate True Range (TR), +DM, -DM for each candle
+  const tr: number[] = [];
+  const plusDM: number[] = [];
+  const minusDM: number[] = [];
+
+  for (let i = 1; i < candles.length; i++) {
+    const curr = candles[i];
+    const prev = candles[i - 1];
+    
+    // True Range = max(high-low, |high-prevClose|, |low-prevClose|)
+    const trueRange = Math.max(
+      curr.high - curr.low,
+      Math.abs(curr.high - prev.close),
+      Math.abs(curr.low - prev.close)
+    );
+    tr.push(trueRange);
+    
+    // Directional Movement
+    const upMove = curr.high - prev.high;
+    const downMove = prev.low - curr.low;
+    
+    plusDM.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDM.push(downMove > upMove && downMove > 0 ? downMove : 0);
+  }
+
+  // Calculate smoothed values using Wilder's smoothing
+  const smoothedTR = wilderSmoothing(tr, period);
+  const smoothedPlusDM = wilderSmoothing(plusDM, period);
+  const smoothedMinusDM = wilderSmoothing(minusDM, period);
+
+  // Calculate +DI and -DI
+  const lastTR = smoothedTR[smoothedTR.length - 1] || 1;
+  const plusDI = (smoothedPlusDM[smoothedPlusDM.length - 1] / lastTR) * 100;
+  const minusDI = (smoothedMinusDM[smoothedMinusDM.length - 1] / lastTR) * 100;
+
+  // Calculate DX (Directional Index)
+  const dx: number[] = [];
+  for (let i = 0; i < Math.min(smoothedPlusDM.length, smoothedMinusDM.length); i++) {
+    const pDI = smoothedTR[i] > 0 ? (smoothedPlusDM[i] / smoothedTR[i]) * 100 : 0;
+    const mDI = smoothedTR[i] > 0 ? (smoothedMinusDM[i] / smoothedTR[i]) * 100 : 0;
+    const sum = pDI + mDI;
+    dx.push(sum > 0 ? Math.abs(pDI - mDI) / sum * 100 : 0);
+  }
+
+  // Calculate ADX as smoothed average of DX
+  const smoothedDX = wilderSmoothing(dx, period);
+  const adx = smoothedDX[smoothedDX.length - 1] || 25;
+
+  // Determine regime
+  let regime: MarketRegimeType;
+  if (adx > 25) regime = 'TRENDING';
+  else if (adx < 20) regime = 'RANGING';
+  else regime = 'TRANSITIONAL';
+
+  // Determine trend direction
+  let trendDirection: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  if (plusDI > minusDI + 5) trendDirection = 'BULLISH';
+  else if (minusDI > plusDI + 5) trendDirection = 'BEARISH';
+  else trendDirection = 'NEUTRAL';
+
+  // Determine strength
+  let strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  if (adx > 40) strength = 'STRONG';
+  else if (adx > 25) strength = 'MODERATE';
+  else strength = 'WEAK';
+
+  return { adx, plusDI, minusDI, regime, trendDirection, strength };
+}
+
+/**
+ * Wilder's Smoothing Method (EMA variant)
+ */
+function wilderSmoothing(data: number[], period: number): number[] {
+  if (data.length === 0) return [];
+  
+  const result: number[] = [];
+  let sum = 0;
+  
+  // Initial SMA for first 'period' values
+  for (let i = 0; i < Math.min(period, data.length); i++) {
+    sum += data[i];
+    result.push(sum / (i + 1));
+  }
+  
+  // Wilder's smoothing for rest: S_t = S_{t-1} - (S_{t-1}/period) + V_t
+  for (let i = period; i < data.length; i++) {
+    const prev = result[result.length - 1];
+    const smoothed = prev - (prev / period) + data[i];
+    result.push(smoothed);
+  }
+  
+  return result;
+}
+
+/**
+ * Detect candlestick patterns for entry confirmation
+ */
+export function detectCandlestickPattern(
+  candles: Array<{ open: number; high: number; low: number; close: number }>,
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL'
+): CandlestickConfirmation {
+  if (candles.length < 3) {
+    return {
+      pattern: 'Insufficient Data',
+      type: 'CONTINUATION',
+      bias: 'NEUTRAL',
+      strength: 0,
+      description: 'Need at least 3 candles for pattern detection',
+      entryTrigger: 'Wait for more price data'
+    };
+  }
+
+  const latest = candles[candles.length - 1];
+  const prev = candles[candles.length - 2];
+  const prevPrev = candles[candles.length - 3];
+
+  const latestBody = Math.abs(latest.close - latest.open);
+  const prevBody = Math.abs(prev.close - prev.open);
+  const latestRange = latest.high - latest.low;
+  const prevRange = prev.high - prev.low;
+
+  const isBullishCandle = latest.close > latest.open;
+  const isBearishCandle = latest.close < latest.open;
+  const isPrevBullish = prev.close > prev.open;
+  const isPrevBearish = prev.close < prev.open;
+
+  // Pattern detection based on current bias
+  if (bias === 'LONG') {
+    // Bullish Engulfing
+    if (isBullishCandle && isPrevBearish && 
+        latest.open <= prev.close && latest.close >= prev.open &&
+        latestBody > prevBody) {
+      return {
+        pattern: 'Bullish Engulfing',
+        type: 'REVERSAL',
+        bias: 'BULLISH',
+        strength: 85,
+        description: 'Strong bullish reversal pattern — buyers overwhelmed sellers',
+        entryTrigger: 'Enter on break above engulfing candle high: $' + latest.high.toFixed(2)
+      };
+    }
+
+    // Hammer
+    const lowerWick = Math.min(latest.open, latest.close) - latest.low;
+    const upperWick = latest.high - Math.max(latest.open, latest.close);
+    if (lowerWick >= latestBody * 2 && upperWick < latestBody * 0.5 && isBullishCandle) {
+      return {
+        pattern: 'Hammer',
+        type: 'REVERSAL',
+        bias: 'BULLISH',
+        strength: 75,
+        description: 'Bullish reversal at support — long wick shows buyer rejection',
+        entryTrigger: 'Enter on close above hammer high with volume confirmation'
+      };
+    }
+
+    // Morning Star (3-candle pattern)
+    if (prevPrev.close < prevPrev.open && // First: bearish
+        Math.abs(prev.close - prev.open) < prevRange * 0.3 && // Second: small body (doji-like)
+        latest.close > latest.open && latest.close > (prevPrev.open + prevPrev.close) / 2) { // Third: bullish closes above midpoint
+      return {
+        pattern: 'Morning Star',
+        type: 'REVERSAL',
+        bias: 'BULLISH',
+        strength: 80,
+        description: 'Three-candle bullish reversal — indecision followed by buyer takeover',
+        entryTrigger: 'Enter on pullback to star candle zone: $' + prev.close.toFixed(2)
+      };
+    }
+
+    // Bullish Pin Bar
+    if (lowerWick >= latestRange * 0.6 && latestBody < latestRange * 0.25) {
+      return {
+        pattern: 'Bullish Pin Bar',
+        type: 'REVERSAL',
+        bias: 'BULLISH',
+        strength: 70,
+        description: 'Price rejected lower levels — potential support found',
+        entryTrigger: 'Enter on break above pin bar high with stop below low'
+      };
+    }
+  }
+
+  if (bias === 'SHORT') {
+    // Bearish Engulfing
+    if (isBearishCandle && isPrevBullish && 
+        latest.open >= prev.close && latest.close <= prev.open &&
+        latestBody > prevBody) {
+      return {
+        pattern: 'Bearish Engulfing',
+        type: 'REVERSAL',
+        bias: 'BEARISH',
+        strength: 85,
+        description: 'Strong bearish reversal pattern — sellers overwhelmed buyers',
+        entryTrigger: 'Enter on break below engulfing candle low: $' + latest.low.toFixed(2)
+      };
+    }
+
+    // Shooting Star
+    const upperWickShort = latest.high - Math.max(latest.open, latest.close);
+    const lowerWickShort = Math.min(latest.open, latest.close) - latest.low;
+    if (upperWickShort >= latestBody * 2 && lowerWickShort < latestBody * 0.5 && isBearishCandle) {
+      return {
+        pattern: 'Shooting Star',
+        type: 'REVERSAL',
+        bias: 'BEARISH',
+        strength: 75,
+        description: 'Bearish reversal at resistance — long upper wick shows seller rejection',
+        entryTrigger: 'Enter on close below shooting star low with volume'
+      };
+    }
+
+    // Evening Star (3-candle pattern)
+    if (prevPrev.close > prevPrev.open && // First: bullish
+        Math.abs(prev.close - prev.open) < prevRange * 0.3 && // Second: small body (doji-like)
+        latest.close < latest.open && latest.close < (prevPrev.open + prevPrev.close) / 2) { // Third: bearish closes below midpoint
+      return {
+        pattern: 'Evening Star',
+        type: 'REVERSAL',
+        bias: 'BEARISH',
+        strength: 80,
+        description: 'Three-candle bearish reversal — indecision followed by seller takeover',
+        entryTrigger: 'Enter on pullback to star candle zone: $' + prev.close.toFixed(2)
+      };
+    }
+
+    // Bearish Pin Bar
+    if (upperWickShort >= latestRange * 0.6 && latestBody < latestRange * 0.25) {
+      return {
+        pattern: 'Bearish Pin Bar',
+        type: 'REVERSAL',
+        bias: 'BEARISH',
+        strength: 70,
+        description: 'Price rejected higher levels — potential resistance found',
+        entryTrigger: 'Enter on break below pin bar low with stop above high'
+      };
+    }
+  }
+
+  // Default: Look for continuation patterns
+  if (isBullishCandle && isPrevBullish) {
+    return {
+      pattern: 'Bullish Continuation',
+      type: 'CONTINUATION',
+      bias: 'BULLISH',
+      strength: 55,
+      description: 'Consecutive bullish candles — momentum continuation',
+      entryTrigger: 'Wait for pullback to support before entering'
+    };
+  }
+
+  if (isBearishCandle && isPrevBearish) {
+    return {
+      pattern: 'Bearish Continuation',
+      type: 'CONTINUATION',
+      bias: 'BEARISH',
+      strength: 55,
+      description: 'Consecutive bearish candles — momentum continuation',
+      entryTrigger: 'Wait for pullback to resistance before entering'
+    };
+  }
+
+  // Doji — indecision
+  if (latestBody < latestRange * 0.1) {
+    return {
+      pattern: 'Doji',
+      type: 'REVERSAL',
+      bias: 'NEUTRAL',
+      strength: 50,
+      description: 'Indecision candle — wait for next candle confirmation',
+      entryTrigger: 'Do not enter until direction is confirmed by next candle'
+    };
+  }
+
+  return {
+    pattern: 'No Clear Pattern',
+    type: 'CONTINUATION',
+    bias: 'NEUTRAL',
+    strength: 40,
+    description: 'No strong candlestick pattern detected — await clearer signal',
+    entryTrigger: 'Wait for defined pattern before entry'
+  };
+}
+
+/**
+ * Calculate Regime-Weighted Consensus Score
+ * IF TRENDING (ADX>25): Algorithm 70%, Neural Network 30%
+ * IF RANGING (ADX<20): Neural Network 70%, Algorithm 30%
+ */
+export function calculateRegimeWeightedConsensus(
+  adxResult: ADXResult,
+  algorithmBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+  algorithmConfidence: number,
+  neuralDirection: 'LONG' | 'SHORT' | 'NEUTRAL',
+  neuralConfidence: number,
+  price: number,
+  high24h: number,
+  low24h: number,
+  candles?: Array<{ open: number; high: number; low: number; close: number }>
+): RegimeWeightedConsensus {
+  const range = high24h - low24h;
+  
+  // Determine weights based on regime
+  let algorithmWeight: number;
+  let neuralWeight: number;
+  let masterControl: 'ALGORITHM' | 'NEURAL_NETWORK';
+  
+  if (adxResult.regime === 'TRENDING') {
+    // TRENDING: Algorithm is primary (70%), Neural as filter
+    algorithmWeight = 0.70;
+    neuralWeight = 0.30;
+    masterControl = 'ALGORITHM';
+  } else if (adxResult.regime === 'RANGING') {
+    // RANGING: Neural Network is primary (70%), Algorithm for stops
+    algorithmWeight = 0.30;
+    neuralWeight = 0.70;
+    masterControl = 'NEURAL_NETWORK';
+  } else {
+    // TRANSITIONAL: Equal weighting
+    algorithmWeight = 0.50;
+    neuralWeight = 0.50;
+    masterControl = neuralConfidence > algorithmConfidence ? 'NEURAL_NETWORK' : 'ALGORITHM';
+  }
+
+  // Check skip condition: In TRENDING mode, skip if Neural < 51%
+  let skipTrade = false;
+  let skipReason: string | undefined;
+  
+  if (adxResult.regime === 'TRENDING' && neuralConfidence < 0.51) {
+    skipTrade = true;
+    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < 51% threshold`;
+  }
+
+  // Calculate weighted score
+  const algorithmScore = algorithmBias === 'NEUTRAL' ? 50 : algorithmConfidence;
+  const neuralScore = neuralDirection === 'NEUTRAL' ? 50 : neuralConfidence * 100;
+  
+  const weightedScore = (algorithmScore * algorithmWeight) + (neuralScore * neuralWeight);
+
+  // Calculate support/resistance zones using ICT concepts
+  const fib382 = low24h + range * 0.382;
+  const fib618 = low24h + range * 0.618;
+  
+  // Support: 38.2% fib or recent low
+  const supportZone = algorithmBias === 'LONG' ? fib382 : low24h - range * 0.05;
+  
+  // Resistance: 61.8% fib or recent high
+  const resistanceZone = algorithmBias === 'SHORT' ? fib618 : high24h + range * 0.05;
+
+  // Stop Loss based on regime
+  let stopLoss: number;
+  if (adxResult.regime === 'TRENDING') {
+    // In trending, use tighter stops based on ATR/structure
+    stopLoss = algorithmBias === 'LONG' 
+      ? low24h - range * 0.1  // Below recent low
+      : high24h + range * 0.1; // Above recent high
+  } else {
+    // In ranging, use structural high/low as stop
+    stopLoss = algorithmBias === 'LONG'
+      ? low24h - range * 0.05  // Tight stop at structure low
+      : high24h + range * 0.05; // Tight stop at structure high
+  }
+
+  // Detect candlestick confirmation
+  const candlestickConfirmation = candles && candles.length >= 3
+    ? detectCandlestickPattern(candles, algorithmBias)
+    : {
+        pattern: 'Awaiting Data',
+        type: 'CONTINUATION' as const,
+        bias: 'NEUTRAL' as const,
+        strength: 0,
+        description: 'Need candle data for pattern detection',
+        entryTrigger: 'Ensure chart data is available'
+      };
+
+  return {
+    regime: adxResult.regime,
+    adxValue: adxResult.adx,
+    masterControl,
+    algorithmWeight,
+    neuralWeight,
+    weightedScore,
+    skipTrade,
+    skipReason,
+    supportZone,
+    resistanceZone,
+    stopLoss,
+    candlestickConfirmation
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 🧠 NEURAL NETWORK PRIMITIVES — Attention, ReLU, Cross-Entropy
 // ═══════════════════════════════════════════════════════════════════════════════
 
