@@ -8,8 +8,7 @@ import {
   Target,
   Waves,
   Save,
-  RotateCcw,
-  Calendar
+  RotateCcw
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -66,7 +65,6 @@ const NotificationSettings = () => {
       sentimentShifts: true,
       whaleActivity: true,
       volumeSpikes: true,
-      newsEvents: true,
       priceChangeThreshold: 5,
       volumeSpikeThreshold: 50,
       sentimentShiftThreshold: 15,
@@ -125,14 +123,6 @@ const NotificationSettings = () => {
       icon: BarChart3,
       color: "text-primary",
       bgColor: "bg-primary/20",
-    },
-    {
-      key: "newsEvents" as const,
-      label: "News & Events",
-      description: "Macro events and economic calendar alerts",
-      icon: Calendar,
-      color: "text-chart-purple",
-      bgColor: "bg-chart-purple/20",
     },
   ];
 

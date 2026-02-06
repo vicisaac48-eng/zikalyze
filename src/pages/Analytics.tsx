@@ -1,8 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User, TrendingUp, TrendingDown, BarChart3, Activity, PieChart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,16 +15,11 @@ import VolumeChart from "@/components/dashboard/VolumeChart";
 import { cn } from "@/lib/utils";
 
 const Analytics = () => {
-  const { prices, loading, refetch } = useCryptoPrices();
+  const { prices, loading } = useCryptoPrices();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const [timeframe, setTimeframe] = useState("24h");
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
-
-  // Pull-to-refresh handler
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
 
   const timeframes = ["1h", "24h", "7d", "30d", "1y"];
 
@@ -40,10 +34,9 @@ const Analytics = () => {
   const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <BottomNav />
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -208,7 +201,6 @@ const Analytics = () => {
         </div>
       </main>
     </div>
-    </PullToRefresh>
   );
 };
 

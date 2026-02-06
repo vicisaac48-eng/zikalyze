@@ -35,14 +35,6 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
-    },
-    LocalNotifications: {
-      // Small icon shown in status bar (required for Android)
-      smallIcon: 'ic_stat_icon_config_sample',
-      // Large icon shown in notification drawer
-      iconColor: '#5EEAD4',
-      // Sound to play
-      sound: 'default'
     }
   }
 };

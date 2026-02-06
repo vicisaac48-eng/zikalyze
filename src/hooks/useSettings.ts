@@ -10,7 +10,6 @@ export interface NotificationAlertSettings {
   sentimentShifts: boolean;
   whaleActivity: boolean;
   volumeSpikes: boolean;
-  newsEvents: boolean; // New: macro/news event alerts
   
   // Thresholds
   priceChangeThreshold: number; // percentage
@@ -41,7 +40,6 @@ const DEFAULT_NOTIFICATION_ALERTS: NotificationAlertSettings = {
   sentimentShifts: true,
   whaleActivity: true,
   volumeSpikes: true,
-  newsEvents: true,
   priceChangeThreshold: 5,
   volumeSpikeThreshold: 50,
   sentimentShiftThreshold: 15,

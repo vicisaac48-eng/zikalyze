@@ -1,8 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,9 @@ import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
-  const { getPriceBySymbol, loading, isLive, refetch } = useCryptoPrices();
+  const { getPriceBySymbol, loading, isLive } = useCryptoPrices();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
-
-  // Pull-to-refresh handler
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
 
   const cryptoData: Record<string, { name: string; price: number; change: number }> = {
     BTC: { name: "Bitcoin", price: getPriceBySymbol("BTC")?.current_price || 86512, change: getPriceBySymbol("BTC")?.price_change_percentage_24h || -4.87 },
@@ -39,10 +33,9 @@ const Analyzer = () => {
   const selected = cryptoData[selectedCrypto];
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <BottomNav />
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -162,7 +155,6 @@ const Analyzer = () => {
         </div>
       </main>
     </div>
-    </PullToRefresh>
   );
 };
 

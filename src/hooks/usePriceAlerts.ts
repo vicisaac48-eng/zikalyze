@@ -5,7 +5,6 @@ import { alertSound } from "@/lib/alertSound";
 import { isSoundEnabled } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotifications } from "@/hooks/useSmartNotifications";
-import { syncPriceAlertsForBackground } from "@/lib/background-price-monitor";
 
 export interface PriceAlert {
   id: string;
@@ -59,19 +58,6 @@ export const usePriceAlerts = () => {
         condition: item.condition as "above" | "below",
       }));
       setAlerts(typedData);
-      
-      // Sync alerts to localStorage for background monitoring on Android
-      // This allows the background task to check alerts when app is closed
-      syncPriceAlertsForBackground(
-        typedData
-          .filter(a => !a.is_triggered)
-          .map(a => ({
-            id: a.id,
-            symbol: a.symbol,
-            target_price: a.target_price,
-            condition: a.condition
-          }))
-      );
     } catch (err) {
       console.error("Error in fetchAlerts:", err);
     } finally {

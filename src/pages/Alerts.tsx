@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,8 +38,8 @@ interface TriggeredAlert {
 }
 
 const Alerts = () => {
-  const { alerts, loading, removeAlert, refetch, checkAlerts } = usePriceAlerts();
-  const { prices, getPriceBySymbol, refetch: refetchPrices } = useCryptoPrices();
+  const { alerts, loading, removeAlert } = usePriceAlerts();
+  const { prices, getPriceBySymbol } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
   const isNativeApp = useIsNativeApp();
@@ -51,27 +50,6 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
-  
-  // Track last alert check time to throttle checks
-  const lastAlertCheckRef = useRef<number>(0);
-  
-  // Check alerts whenever prices update (same pattern as Top100CryptoList)
-  // This ensures push notifications work even when user is on the Alerts page
-  useEffect(() => {
-    if (prices.length > 0 && alerts.length > 0) {
-      // Throttle alert checks to every 2 seconds to prevent spam
-      const now = Date.now();
-      if (now - lastAlertCheckRef.current > 2000) {
-        lastAlertCheckRef.current = now;
-        checkAlerts(prices);
-      }
-    }
-  }, [prices, alerts, checkAlerts]);
-
-  // Pull-to-refresh handler
-  const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch(), refetchPrices()]);
-  }, [refetch, refetchPrices]);
 
   // Fetch triggered alerts history
   useEffect(() => {
@@ -159,10 +137,9 @@ const Alerts = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <BottomNav />
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -688,7 +665,6 @@ const Alerts = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-    </PullToRefresh>
   );
 };
 

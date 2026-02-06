@@ -1,4 +1,3 @@
-import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Zap, LineChart, PlayCircle, UserPlus, ChartCandlestick, Bell, Rocket, CheckCircle2 } from "lucide-react";
@@ -108,7 +107,7 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-y-auto overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-hidden">
       {/* Cookie Consent Dialog */}
       <CookieConsent />
       {/* Animated Background */}
@@ -616,7 +615,7 @@ const Landing = () => {
         {/* Stats */}
         <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-4xl sm:mt-20 sm:gap-8 md:grid-cols-4 lg:mt-28 lg:gap-12 xl:max-w-5xl">
           {[
-            { label: t("landing.accuracyRate"), value: "60%", icon: Activity },
+            { label: t("landing.accuracyRate"), value: "80%", icon: Activity },
             { label: t("landing.activeUsers"), value: userCount !== null ? `${Math.floor(userCount / 1000)}K+` : "25K+", icon: TrendingUp },
             { label: t("landing.predictionsPerDay"), value: "50K+", icon: Brain },
             { label: t("landing.marketsTracked"), value: "200+", icon: BarChart3 },
@@ -695,3 +694,4 @@ const Landing = () => {
 };
 
 export default Landing;
+___BEGIN___COMMAND_DONE_MARKER___0
