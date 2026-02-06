@@ -91,38 +91,52 @@ export function usePullToRefresh({
     const handleTouchStart = (e: TouchEvent) => {
       if (isRefreshingRef.current) return;
 
-      isAtTopRef.current = checkIfAtTop();
-      if (!isAtTopRef.current) return;
-
+      // Record the starting position but DON'T set isPulling yet
+      // We'll only set isPulling to true once we confirm user is pulling down from top
       startYRef.current = e.touches[0].clientY;
       currentYRef.current = startYRef.current;
-      isPullingRef.current = true;
-      setIsPulling(true);
+      isAtTopRef.current = checkIfAtTop();
+      // Don't set isPulling here - let touchmove decide based on direction
+      isPullingRef.current = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isRefreshingRef.current || !isPullingRef.current) return;
-      if (!isAtTopRef.current) return;
+      if (isRefreshingRef.current) return;
 
       currentYRef.current = e.touches[0].clientY;
       const rawDistance = currentYRef.current - startYRef.current;
 
-      // Only trigger pull-to-refresh on downward swipe (positive rawDistance)
-      // If user is scrolling UP (negative rawDistance), cancel pull state and let normal scroll happen
+      // If scrolling up (negative distance), always allow normal scroll
       if (rawDistance <= 0) {
-        // Reset pull state so normal scrolling can resume
-        isPullingRef.current = false;
-        setIsPulling(false);
-        setPullDistance(0);
+        if (isPullingRef.current) {
+          isPullingRef.current = false;
+          setIsPulling(false);
+          setPullDistance(0);
+        }
+        // Let the browser handle normal upward scrolling
         return;
       }
 
-      // If we're not at top anymore, cancel the pull
-      if (!checkIfAtTop() && rawDistance > 0) {
-        isPullingRef.current = false;
-        setIsPulling(false);
-        setPullDistance(0);
+      // Only activate pull-to-refresh if:
+      // 1. We started at the top of the page
+      // 2. User is pulling DOWN (positive rawDistance)
+      // 3. We're still at the top (or very close)
+      const currentlyAtTop = checkIfAtTop();
+      
+      if (!isAtTopRef.current || !currentlyAtTop) {
+        // Not at top - cancel any pull state and let normal scroll happen
+        if (isPullingRef.current) {
+          isPullingRef.current = false;
+          setIsPulling(false);
+          setPullDistance(0);
+        }
         return;
+      }
+
+      // Now we're confirmed pulling down from the top - activate pull-to-refresh
+      if (!isPullingRef.current) {
+        isPullingRef.current = true;
+        setIsPulling(true);
       }
 
       // Apply resistance to make the pull feel natural
@@ -131,8 +145,9 @@ export function usePullToRefresh({
         maxPull
       );
 
-      // Prevent default scroll when pulling to refresh
-      if (resistedDistance > 10) {
+      // Only prevent default when we're actively pulling for refresh (past a small threshold)
+      // This ensures normal touch scrolling still works in other scenarios
+      if (resistedDistance > 15 && isPullingRef.current) {
         e.preventDefault();
       }
 
