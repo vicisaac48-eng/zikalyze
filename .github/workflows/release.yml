@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '**.md'
+      - '**/*.md'
       - 'docs/**'
   workflow_dispatch:
     inputs:
@@ -70,8 +70,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Generated version: $VERSION"
       
-      - name: Rename APK with version
+      - name: Prepare APK files
         run: |
+          # Create a fixed-name APK for stable download URL
+          cp android/app/build/outputs/apk/debug/app-debug.apk ./zikalyze-latest.apk
+          # Also create a versioned copy for reference
           cp android/app/build/outputs/apk/debug/app-debug.apk ./zikalyze-${{ steps.version.outputs.version }}.apk
       
       - name: Delete existing latest release
@@ -79,7 +82,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # Delete the existing 'latest' release if it exists
-          gh release delete latest --yes || true
+          gh release delete latest --yes --cleanup-tag || true
       
       - name: Create Release
         env:
@@ -96,7 +99,9 @@ jobs:
 
           ## 📥 Download & Install
 
-          1. Download the APK file below
+          **Permanent Download URL:** \`https://github.com/${{ github.repository }}/releases/latest/download/zikalyze-latest.apk\`
+
+          1. Download the APK file below (use **zikalyze-latest.apk** for a stable URL)
           2. On your Android device, enable **Install from unknown sources** in Settings → Security
           3. Open the downloaded APK file to install
 
@@ -111,6 +116,7 @@ jobs:
           ---
           *This release is automatically updated with every push to main.*" \
             --latest \
+            ./zikalyze-latest.apk \
             ./zikalyze-${{ steps.version.outputs.version }}.apk
       
       - name: Release Summary
@@ -119,6 +125,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Download URL:** https://github.com/${{ github.repository }}/releases/latest/download/zikalyze-${{ steps.version.outputs.version }}.apk" >> $GITHUB_STEP_SUMMARY
+          echo "**Permanent Download URL:** https://github.com/${{ github.repository }}/releases/latest/download/zikalyze-latest.apk" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Latest Release Page:** https://github.com/${{ github.repository }}/releases/latest" >> $GITHUB_STEP_SUMMARY

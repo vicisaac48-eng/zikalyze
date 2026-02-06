@@ -135,13 +135,13 @@ Zikalyze is available as a native Android app! Download and install the APK dire
 
 ### 📥 Download APK
 
-> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://github.com/vicisaac48-eng/zikalyze/releases/latest)**
+> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk)**
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vicisaac48-eng/zikalyze/releases/latest)
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk)
 
 **Download Links:**
-- 📲 [**Download from Latest Release (Permanent)**](https://github.com/vicisaac48-eng/zikalyze/releases/latest) - Permanent download link, always up-to-date
-- 🔗 [**Nightly Build Download**](https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip) - Alternative download (no login required)
+- 📲 [**Direct APK Download (Permanent URL)**](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk) - Permanent download link that always works
+- 🔗 [**View Latest Release**](https://github.com/vicisaac48-eng/zikalyze/releases/latest) - Browse release page for details
 - 📦 [View All Releases](https://github.com/vicisaac48-eng/zikalyze/releases) - Browse all available versions
 
 ### 🔄 APK Updates After Merge/Pull Request
