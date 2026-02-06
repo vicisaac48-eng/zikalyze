@@ -234,4 +234,21 @@ export interface AnalysisResult {
     qualityScore: number;            // 0-100 overall trade quality
     recommendation: 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
   };
+  // Regime-Weighted Consensus — ADX-based Algorithm vs Neural Network weighting
+  regimeConsensus?: {
+    regime: 'TRENDING' | 'RANGING' | 'TRANSITIONAL';  // Market regime based on ADX
+    adxValue: number;                                  // ADX value (0-100)
+    masterControl: 'ALGORITHM' | 'NEURAL_NETWORK';    // Which system has primary control
+    algorithmWeight: number;                          // 0-1 weight for Algorithm
+    neuralWeight: number;                             // 0-1 weight for Neural Network
+    weightedScore: number;                            // Final weighted consensus score
+    skipTrade: boolean;                               // True if trade should be skipped
+    skipReason?: string;                              // Reason for skipping
+    supportZone: number;                              // Key support level
+    resistanceZone: number;                           // Key resistance level
+    stopLoss: number;                                 // Recommended stop loss level
+    candlestickPattern: string;                       // Detected candlestick pattern
+    candlestickConfirmation: string;                  // Entry trigger description
+    candlestickStrength: number;                      // Pattern strength 0-100
+  };
 }

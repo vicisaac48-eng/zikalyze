@@ -16,7 +16,7 @@ import { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 import { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis } from './technical-analysis';
+import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation } from './neural-engine';
 
 // Re-export chart API for direct access to chart data
@@ -537,6 +537,38 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const algorithmResult = { bias, confidence };
   const hybridResult = hybridConfirmation.getConfirmation(algorithmResult, featureVector);
   
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 📊 REGIME-WEIGHTED CONSENSUS — ADX-Based Algorithm vs Neural Network Weighting
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Calculate ADX and determine market regime
+  const candleData = chartTrendData?.candles?.map(c => ({
+    high: c.high,
+    low: c.low,
+    close: c.close
+  })) || [];
+  
+  const adxResult = calculateADX(candleData, 14);
+  
+  // Calculate regime-weighted consensus
+  const regimeConsensus = calculateRegimeWeightedConsensus(
+    adxResult,
+    hybridResult.algorithmBias,
+    hybridResult.algorithmConfidence,
+    hybridResult.neuralDirection,
+    hybridResult.neuralConfidence,
+    price,
+    high24h,
+    low24h,
+    chartTrendData?.candles
+  );
+  
+  // Log regime detection
+  console.log(`[Regime] ADX=${adxResult.adx.toFixed(1)} → ${adxResult.regime} | Master: ${regimeConsensus.masterControl} | Weights: Algo=${(regimeConsensus.algorithmWeight*100).toFixed(0)}%, NN=${(regimeConsensus.neuralWeight*100).toFixed(0)}%`);
+  
+  // Regime visual indicators
+  const regimeEmoji = adxResult.regime === 'TRENDING' ? '📈' : adxResult.regime === 'RANGING' ? '↔️' : '🔄';
+  const masterEmoji = regimeConsensus.masterControl === 'ALGORITHM' ? '🤖' : '🧠';
+
   // Determine confluence visual
   const confluenceEmoji = hybridResult.confluenceLevel === 'STRONG' ? '✅' 
     : hybridResult.confluenceLevel === 'MODERATE' ? '🟡' 
@@ -735,6 +767,36 @@ ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
    └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
 
+━━━ ${regimeEmoji} REGIME-WEIGHTED CONSENSUS ━━━━━━━━━━━━━━━
+
+📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
+   └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Algorithm prioritized' : adxResult.regime === 'RANGING' ? 'Sideways chop — Neural Network prioritized' : 'Transitional — Balanced weighting'}
+
+${masterEmoji} Master Control: ${regimeConsensus.masterControl}
+   └─ Weights: Algorithm ${(regimeConsensus.algorithmWeight * 100).toFixed(0)}% | Neural ${(regimeConsensus.neuralWeight * 100).toFixed(0)}%
+
+📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}%
+   └─ ${adxResult.regime === 'TRENDING' 
+        ? `ICT/SMC structures define entry, NN filters (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
+        : adxResult.regime === 'RANGING'
+          ? 'Pattern recognition spots fake-outs, Algorithm sets stops'
+          : 'Equal weighting — Watch for regime shift'}
+
+🎯 Support Zone: $${regimeConsensus.supportZone.toFixed(decimals)}
+🎯 Resistance Zone: $${regimeConsensus.resistanceZone.toFixed(decimals)}
+🛑 Stop Loss: $${regimeConsensus.stopLoss.toFixed(decimals)}${regimeConsensus.skipTrade ? `
+
+⚠️ TRADE SKIPPED: ${regimeConsensus.skipReason}` : ''}
+
+━━━ 🕯️ CANDLESTICK CONFIRMATION ━━━━━━━━━━━━━━━━━
+
+📍 Pattern: ${regimeConsensus.candlestickConfirmation.pattern} (${regimeConsensus.candlestickConfirmation.bias})
+   └─ Type: ${regimeConsensus.candlestickConfirmation.type} | Strength: ${regimeConsensus.candlestickConfirmation.strength}%
+
+💡 ${regimeConsensus.candlestickConfirmation.description}
+
+⏱️ Entry Trigger: ${regimeConsensus.candlestickConfirmation.entryTrigger}
+
 ━━━ 🛡️ TRADE QUALITY CHECK ━━━━━━━━━━━━━━━━━━━━━
 
 ${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : '🚫 AVOID — Bad trade signals detected'}
@@ -804,7 +866,24 @@ are highly volatile and unpredictable.
       usedBothSystems: true // Confirms both algorithm and neural network were used
     },
     // Trade Quality Assessment — Follow trend, wait for confirmation, avoid bad trades
-    tradeQuality
+    tradeQuality,
+    // Regime-Weighted Consensus — ADX-based Algorithm vs Neural Network weighting
+    regimeConsensus: {
+      regime: regimeConsensus.regime,
+      adxValue: regimeConsensus.adxValue,
+      masterControl: regimeConsensus.masterControl,
+      algorithmWeight: regimeConsensus.algorithmWeight,
+      neuralWeight: regimeConsensus.neuralWeight,
+      weightedScore: regimeConsensus.weightedScore,
+      skipTrade: regimeConsensus.skipTrade,
+      skipReason: regimeConsensus.skipReason,
+      supportZone: regimeConsensus.supportZone,
+      resistanceZone: regimeConsensus.resistanceZone,
+      stopLoss: regimeConsensus.stopLoss,
+      candlestickPattern: regimeConsensus.candlestickConfirmation.pattern,
+      candlestickConfirmation: regimeConsensus.candlestickConfirmation.entryTrigger,
+      candlestickStrength: regimeConsensus.candlestickConfirmation.strength
+    }
   };
 }
 
@@ -814,7 +893,8 @@ export { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork } from './technical-analysis';
+export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork, calculateADX, calculateRegimeWeightedConsensus, detectCandlestickPattern } from './technical-analysis';
+export type { MarketRegimeType, ADXResult, RegimeWeightedConsensus, CandlestickConfirmation } from './technical-analysis';
 // ICT/SMC Analysis with multi-timeframe
 export {
   performICTSMCAnalysis,
