@@ -588,8 +588,12 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // Generate formatted Tri-Modular output for inclusion in analysis
   const triModularOutput = formatTriModularOutput(triModularAnalysis, crypto, price);
   
-  // Generate simplified summary for beginners
-  const simplifiedSummary = generateSimplifiedSummary(triModularAnalysis, crypto, price);
+  // Generate simplified summary for beginners - pass skipTrade info to ensure consistent messaging
+  const simplifiedSummary = generateSimplifiedSummary(triModularAnalysis, crypto, price, {
+    skipTrade: regimeConsensus.skipTrade,
+    skipReason: regimeConsensus.skipReason,
+    neuralConfidence: hybridResult.neuralConfidence
+  });
   
   // Log Tri-Modular summary
   console.log(`[Tri-Modular] ${triModularAnalysis.weightedConfidenceScore.percentage}% ${triModularAnalysis.weightedConfidenceScore.direction} | Kill Switch: $${triModularAnalysis.killSwitchLevel.price.toFixed(2)}`);
@@ -816,7 +820,7 @@ ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
    └─ Weights: Algorithm ${(regimeConsensus.algorithmWeight * 100).toFixed(0)}% | Neural ${(regimeConsensus.neuralWeight * 100).toFixed(0)}%
 
-📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}%
+📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}% (combined algo + AI — differs from directional confidence)
    └─ ${adxResult.regime === 'TRENDING' 
         ? `ICT/SMC structures define entry, NN filters (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
         : adxResult.regime === 'RANGING'
