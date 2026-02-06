@@ -25,6 +25,34 @@ import {
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🔧 CONFIGURATION CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Historical extreme fear level (Level 12) referenced in market analysis */
+const HISTORICAL_EXTREME_FEAR_LEVEL = 12;
+
+/** Layer weights for Tri-Modular synthesis (must sum to 1.0) */
+const LAYER_ALPHA_WEIGHT = 0.40;  // Algorithm (Rule-Based)
+const LAYER_BETA_WEIGHT = 0.35;   // Neural Network (Pattern Recognition)
+const LAYER_GAMMA_WEIGHT = 0.25;  // Human Hybrid (Narrative Filter)
+
+/** Amplification factor when Layer Gamma overrides technicals */
+const GAMMA_OVERRIDE_AMPLIFICATION = 1.5;
+
+/** Threshold for determining directional bias from weighted direction */
+const DIRECTIONAL_THRESHOLD = 0.15;
+
+/** Confidence score bounds */
+const MAX_CONFIDENCE = 95;
+const MIN_CONFIDENCE = 30;
+const CONFIDENCE_NORMALIZATION_FACTOR = 0.9;
+
+/** Keywords for sentiment analysis in narrative context */
+const HAWKISH_KEYWORDS = ['hawkish', 'rate hike', 'inflation', 'tightening', 'fed', 'sell', 'bearish', 'dump', 'crash'];
+const DOVISH_KEYWORDS = ['dovish', 'rate cut', 'stimulus', 'easing', 'buy', 'bullish', 'pump', 'rally'];
+const VOLATILITY_KEYWORDS = ['jobs', 'cpi', 'fomc', 'announcement', 'release', 'data', 'report'];
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📊 LAYER ALPHA — Rule-Based Algorithm Analysis (ICT/SMC)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -190,8 +218,7 @@ export function analyzeLayerBeta(
   
   // Fear & Greed comparison with historical extremes
   const currentFearGreed = fearGreedValue || 50;
-  const historicalExtremeFear = 12; // Level 12 is referenced as "Extreme Fear" in problem
-  const similarity = 100 - Math.abs(currentFearGreed - historicalExtremeFear);
+  const similarity = 100 - Math.abs(currentFearGreed - HISTORICAL_EXTREME_FEAR_LEVEL);
   
   // Market Phase Detection
   let marketPhase: LayerBetaResult['marketPhase'];
@@ -247,7 +274,7 @@ export function analyzeLayerBeta(
     rsiAnalysis: { value: rsi, condition: rsiCondition },
     macdAnalysis: { histogram: macdHistogram, signal: macdSignal, momentum: macdMomentum },
     hiddenCorrelations,
-    fearGreedComparison: { current: currentFearGreed, historicalExtremeFear, similarity },
+    fearGreedComparison: { current: currentFearGreed, historicalExtremeFear: HISTORICAL_EXTREME_FEAR_LEVEL, similarity },
     marketPhase,
     reversalProbability,
     confidence: Math.min(90, confidence)
@@ -320,24 +347,19 @@ export function analyzeLayerGamma(
   // Process user context for sentiment
   const contextLower = userContext.toLowerCase();
   
-  // Hawkish/Bearish keywords
-  const hawkishKeywords = ['hawkish', 'rate hike', 'inflation', 'tightening', 'fed', 'sell', 'bearish', 'dump', 'crash'];
-  const dovishKeywords = ['dovish', 'rate cut', 'stimulus', 'easing', 'buy', 'bullish', 'pump', 'rally'];
-  const volatilityKeywords = ['jobs', 'cpi', 'fomc', 'announcement', 'release', 'data', 'report'];
-  
   let hawkishCount = 0;
   let dovishCount = 0;
   let volatilityRisk = false;
   
-  for (const keyword of hawkishKeywords) {
+  for (const keyword of HAWKISH_KEYWORDS) {
     if (contextLower.includes(keyword)) hawkishCount++;
   }
   
-  for (const keyword of dovishKeywords) {
+  for (const keyword of DOVISH_KEYWORDS) {
     if (contextLower.includes(keyword)) dovishCount++;
   }
   
-  for (const keyword of volatilityKeywords) {
+  for (const keyword of VOLATILITY_KEYWORDS) {
     if (contextLower.includes(keyword)) volatilityRisk = true;
   }
   
@@ -441,12 +463,8 @@ export function performTriModularAnalysis(
   
   // ═══════════════════════════════════════════════════════════════════════════
   // Calculate Weighted Confidence Score
+  // Layer weights: Alpha 40% + Beta 35% + Gamma 25% = 100%
   // ═══════════════════════════════════════════════════════════════════════════
-  
-  // Weights: Alpha 40%, Beta 35%, Gamma 25%
-  const ALPHA_WEIGHT = 0.40;
-  const BETA_WEIGHT = 0.35;
-  const GAMMA_WEIGHT = 0.25;
   
   // Direction scores (-1 = SHORT, 0 = NEUTRAL, 1 = LONG)
   const alphaDirection = layerAlpha.priceActionBias === 'BULLISH' ? 1 
@@ -456,31 +474,31 @@ export function performTriModularAnalysis(
   const gammaDirection = layerGamma.macroImpact === 'BULLISH' ? 1 
     : layerGamma.macroImpact === 'BEARISH' ? -1 : 0;
   
-  // If gamma overrides, adjust direction
+  // If gamma overrides, amplify its directional effect
   let effectiveGammaDirection = gammaDirection;
   if (layerGamma.action === 'OVERRIDE') {
-    effectiveGammaDirection = gammaDirection * 1.5; // Amplify override effect
+    effectiveGammaDirection = gammaDirection * GAMMA_OVERRIDE_AMPLIFICATION;
   }
   
-  // Calculate weighted direction
+  // Calculate weighted direction using configured layer weights
   const weightedDirection = 
-    alphaDirection * ALPHA_WEIGHT * (layerAlpha.confidence / 100) +
-    betaDirection * BETA_WEIGHT * (layerBeta.confidence / 100) +
-    effectiveGammaDirection * GAMMA_WEIGHT * (layerGamma.confidence / 100);
+    alphaDirection * LAYER_ALPHA_WEIGHT * (layerAlpha.confidence / 100) +
+    betaDirection * LAYER_BETA_WEIGHT * (layerBeta.confidence / 100) +
+    effectiveGammaDirection * LAYER_GAMMA_WEIGHT * (layerGamma.confidence / 100);
   
-  // Determine final direction
+  // Determine final direction using directional threshold
   const finalDirection: 'LONG' | 'SHORT' | 'NEUTRAL' = 
-    weightedDirection > 0.15 ? 'LONG' 
-    : weightedDirection < -0.15 ? 'SHORT' 
+    weightedDirection > DIRECTIONAL_THRESHOLD ? 'LONG' 
+    : weightedDirection < -DIRECTIONAL_THRESHOLD ? 'SHORT' 
     : 'NEUTRAL';
   
-  // Calculate confidence percentage
-  const alphaContribution = alphaDirection * ALPHA_WEIGHT * layerAlpha.confidence;
-  const betaContribution = betaDirection * BETA_WEIGHT * layerBeta.confidence;
-  const gammaContribution = effectiveGammaDirection * GAMMA_WEIGHT * layerGamma.confidence;
+  // Calculate confidence percentage with configured layer weights
+  const alphaContribution = alphaDirection * LAYER_ALPHA_WEIGHT * layerAlpha.confidence;
+  const betaContribution = betaDirection * LAYER_BETA_WEIGHT * layerBeta.confidence;
+  const gammaContribution = effectiveGammaDirection * LAYER_GAMMA_WEIGHT * layerGamma.confidence;
   
   const rawConfidence = Math.abs(alphaContribution) + Math.abs(betaContribution) + Math.abs(gammaContribution);
-  const normalizedConfidence = Math.min(95, Math.max(30, rawConfidence / 0.9));
+  const normalizedConfidence = Math.min(MAX_CONFIDENCE, Math.max(MIN_CONFIDENCE, rawConfidence / CONFIDENCE_NORMALIZATION_FACTOR));
   
   // ═══════════════════════════════════════════════════════════════════════════
   // Generate Conflict Report
