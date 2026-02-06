@@ -1,10 +1,11 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
@@ -50,9 +51,14 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
-  const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
+  const { prices, loading, isLive, getPriceBySymbol, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   // Save selected crypto to localStorage whenever it changes
   useEffect(() => {
@@ -86,9 +92,10 @@ const Dashboard = () => {
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
-      <Sidebar />
-      <BottomNav />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
+        <Sidebar />
+        <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0 safe-area-inset-bottom">
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
@@ -222,6 +229,7 @@ const Dashboard = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

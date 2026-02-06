@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Volume1, Play, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,13 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Pull-to-refresh handler - Settings page doesn't have much to refresh,
+  // but we provide the consistent pull-to-refresh UI for native app feel
+  const handleRefresh = useCallback(async () => {
+    // Small delay to show the refresh animation
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }, []);
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -87,9 +95,10 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <BottomNav />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -518,6 +527,7 @@ const Settings = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 
