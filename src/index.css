@@ -56,9 +56,9 @@ All colors MUST be HSL.
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 168 76% 73%;
     
-    /* Header height for consistent spacing */
-    --header-height-mobile: 3.5rem;
-    --header-height-desktop: 4.5rem;
+    /* Header height - tight fit, content immediately below header */
+    --header-height-mobile: 2.25rem;
+    --header-height-desktop: 3rem;
   }
 
 }
@@ -81,6 +81,9 @@ All colors MUST be HSL.
     /* Consistent height across all devices */
     height: 100%;
     height: -webkit-fill-available;
+    /* Disable pinch-to-zoom on Android native app (set via Capacitor detection in main.tsx) */
+    /* This CSS is a fallback - the viewport meta tag is the primary control */
+    touch-action: pan-x pan-y;
   }
 
   body {
@@ -95,6 +98,24 @@ All colors MUST be HSL.
     -webkit-overflow-scrolling: touch;
     /* Safe area padding for Android status bar / iOS notch */
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Status bar overlay - masks content that scrolls into the status bar area on Android */
+  /* This is how native apps like WhatsApp prevent content from being visible in the status bar area */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Height matches the safe area inset (status bar height) */
+    height: env(safe-area-inset-top, 0px);
+    /* Same background color as the app */
+    background-color: hsl(var(--background));
+    /* Above everything including the header (z-index: 1000) */
+    z-index: 9999;
+    /* Prevent any interaction with this overlay */
+    pointer-events: none;
   }
 
   /* Ensure root element fills viewport */
