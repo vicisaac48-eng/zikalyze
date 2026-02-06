@@ -753,3 +753,106 @@ ${layerGamma.psychologicalLevels.length > 0
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📱 SIMPLIFIED SUMMARY — Beginner-Friendly Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Generate a simplified, beginner-friendly summary of the analysis
+ * Uses plain English instead of trading jargon
+ */
+export function generateSimplifiedSummary(
+  analysis: TriModularAnalysis,
+  crypto: string,
+  price: number
+): string {
+  const { weightedConfidenceScore, conflictReport, humanInTheLoopVerdict, killSwitchLevel, layerBeta } = analysis;
+  
+  // Determine decimals based on price
+  const decimals = price < 1 ? 6 : price < 10 ? 4 : price < 1000 ? 2 : 0;
+  
+  // Convert direction to simple action
+  const action = weightedConfidenceScore.direction === 'LONG' 
+    ? '📈 Consider BUYING' 
+    : weightedConfidenceScore.direction === 'SHORT' 
+      ? '📉 Consider SELLING' 
+      : '⏸️ WAIT and watch';
+  
+  // Convert confidence to simple terms
+  const confidenceLevel = weightedConfidenceScore.percentage >= 75 
+    ? 'HIGH confidence' 
+    : weightedConfidenceScore.percentage >= 55 
+      ? 'MEDIUM confidence' 
+      : 'LOW confidence';
+  
+  // Simple explanation of market mood
+  const marketMood = layerBeta.marketPhase === 'EUPHORIA' 
+    ? '🎉 Market is very excited (could reverse soon)'
+    : layerBeta.marketPhase === 'CAPITULATION'
+      ? '😰 Market is panicking (could bounce soon)'
+      : layerBeta.marketPhase === 'ACCUMULATION'
+        ? '🛒 Smart money may be buying quietly'
+        : layerBeta.marketPhase === 'DISTRIBUTION'
+          ? '💸 Smart money may be selling quietly'
+          : '😐 Market is calm, no extreme emotions';
+  
+  // Simple position size recommendation
+  const positionAdvice = humanInTheLoopVerdict.positionSizeRecommendation === 'FULL'
+    ? '💪 Full position OK if you\'re comfortable'
+    : humanInTheLoopVerdict.positionSizeRecommendation === '75%'
+      ? '👍 Use about 3/4 of your planned amount'
+      : humanInTheLoopVerdict.positionSizeRecommendation === '50%'
+        ? '✋ Use only half your planned amount'
+        : humanInTheLoopVerdict.positionSizeRecommendation === '25%'
+          ? '⚠️ Use only 1/4 - high uncertainty'
+          : '🛑 Skip this trade - conditions not favorable';
+  
+  // Simple kill switch explanation
+  const exitPrice = killSwitchLevel.price.toFixed(decimals);
+  const exitExplanation = weightedConfidenceScore.direction === 'LONG'
+    ? `If price drops below $${exitPrice}, consider exiting`
+    : weightedConfidenceScore.direction === 'SHORT'
+      ? `If price rises above $${exitPrice}, consider exiting`
+      : `Watch for breakout above or below $${exitPrice}`;
+
+  // Agreement indicator
+  const agreementStatus = conflictReport.hasConflict
+    ? '⚠️ Our analysis systems disagree - be extra careful'
+    : '✅ Our analysis systems agree - stronger signal';
+
+  return `
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   📱 QUICK SUMMARY FOR ${crypto} 
+   (Beginner-Friendly)
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+🎯 WHAT TO DO: ${action}
+   Confidence: ${confidenceLevel} (${weightedConfidenceScore.percentage}%)
+
+${marketMood}
+
+💰 HOW MUCH TO RISK:
+   ${positionAdvice}
+   
+   Why? ${humanInTheLoopVerdict.reasoning}
+
+🚨 WHEN TO EXIT:
+   ${exitExplanation}
+
+${agreementStatus}
+
+━━━ 📚 WHAT THE TERMS MEAN ━━━━━━━━━━━━━━━━━━━━━━
+
+• "LONG" = Expecting price to go UP (buy)
+• "SHORT" = Expecting price to go DOWN (sell)
+• "Kill Switch" = Price where you should exit the trade
+• "Confluence" = Multiple signals agreeing together
+• "Position Size" = How much money to put in the trade
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ Remember: This is NOT financial advice. 
+   Only trade what you can afford to lose.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+}

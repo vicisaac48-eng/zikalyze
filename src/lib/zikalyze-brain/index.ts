@@ -18,7 +18,7 @@ import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institu
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation } from './neural-engine';
-import { performTriModularAnalysis, formatTriModularOutput } from './tri-modular-analysis';
+import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
@@ -588,6 +588,9 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // Generate formatted Tri-Modular output for inclusion in analysis
   const triModularOutput = formatTriModularOutput(triModularAnalysis, crypto, price);
   
+  // Generate simplified summary for beginners
+  const simplifiedSummary = generateSimplifiedSummary(triModularAnalysis, crypto, price);
+  
   // Log Tri-Modular summary
   console.log(`[Tri-Modular] ${triModularAnalysis.weightedConfidenceScore.percentage}% ${triModularAnalysis.weightedConfidenceScore.direction} | Kill Switch: $${triModularAnalysis.killSwitchLevel.price.toFixed(2)}`);
   
@@ -736,7 +739,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${updatedActionWord}`;
   }
 
-  const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  const analysis = `${simplifiedSummary}
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
    ${verificationEmoji} ${verificationLabel}
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
