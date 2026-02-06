@@ -492,7 +492,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
       : precisionEntry.timing === 'WAIT_BREAKOUT'
         ? 'Await breakout'
         : 'No clear entry';
-  const tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
+  // Note: tldr will be recalculated after regimeConsensus to account for skipTrade
+  let tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD FINAL ANALYSIS — Dense, Visual, Actionable
@@ -670,9 +671,13 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   qualityScore = Math.max(0, Math.min(100, qualityScore)); // Clamp 0-100
   
   // Determine final recommendation
-  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
+  // Include regimeConsensus.skipTrade to ensure alignment with regime-weighted consensus
+  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE' | 'SKIPPED_NN_FILTER';
   let tradeRecommendation: TradeRecommendation;
-  if (isBadTrade) {
+  if (regimeConsensus.skipTrade) {
+    // Neural network filter failed — trade should be skipped
+    tradeRecommendation = 'SKIPPED_NN_FILTER';
+  } else if (isBadTrade) {
     tradeRecommendation = 'AVOID_BAD_TRADE';
   } else if (!hasConfirmation) {
     tradeRecommendation = 'WAIT_CONFIRMATION';
@@ -695,9 +700,16 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // Visual indicators for trade quality
   const qualityEmoji = tradeRecommendation === 'EXECUTE' ? '✅' 
     : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳' 
+    : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️'
     : '🚫';
   const trendFollowEmoji = followsTrend ? '✓' : '✗';
   const confirmEmoji = hasConfirmation ? `${confirmationCount}/5 ✓` : `${confirmationCount}/5 ⚠️`;
+
+  // Update TL;DR to reflect regimeConsensus.skipTrade status
+  if (regimeConsensus.skipTrade) {
+    const updatedActionWord = 'Trade skipped (NN filter)';
+    tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${updatedActionWord}`;
+  }
 
   const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
@@ -739,7 +751,7 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 
 ━━━ 📌 15-MINUTE PRECISION ENTRY ━━━━━━━━━━━━━━━
 
-⏱️ ${precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
+⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
 
 📍 Entry Zone: ${tightZone}
    └─ Trigger: ${precisionEntry.trigger}
@@ -799,7 +811,7 @@ ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
 
 ━━━ 🛡️ TRADE QUALITY CHECK ━━━━━━━━━━━━━━━━━━━━━
 
-${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : '🚫 AVOID — Bad trade signals detected'}
+${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️ SKIPPED — Neural Network filter below threshold' : '🚫 AVOID — Bad trade signals detected'}
 
 📈 Follows HTF Trend: ${followsTrend ? `${trendFollowEmoji} YES (${htfTrend})` : `${trendFollowEmoji} NO — Counter-trend trade!`}
 🔍 Confirmations: ${confirmEmoji}
