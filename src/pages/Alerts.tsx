@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
-import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff, Volume2, VolumeX, Volume1, Play } from "lucide-react";
+import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 
 import {
   AlertDialog,
@@ -22,8 +20,6 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useSettings, SoundType } from "@/hooks/useSettings";
-import { alertSound } from "@/lib/alertSound";
 
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +42,6 @@ const Alerts = () => {
   const { prices, getPriceBySymbol } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
-  const { settings, saveSettings } = useSettings();
   const isNativeApp = useIsNativeApp();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
@@ -55,14 +50,6 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
-
-  // Sound toggle handler
-  const handleSoundToggle = (checked: boolean) => {
-    saveSettings({ soundEnabled: checked });
-    if (checked) {
-      alertSound.playTestSound();
-    }
-  };
 
   // Fetch triggered alerts history
   useEffect(() => {
@@ -344,90 +331,6 @@ const Alerts = () => {
                   </>
                 )}
               </Button>
-            )}
-          </div>
-
-          {/* Sound Settings - Shown on mobile web to match Android functionality */}
-          <div className={cn(
-            "border border-border bg-card md:hidden",
-            "rounded-2xl p-4 space-y-3"
-          )}>
-            {/* Sound Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {settings.soundEnabled ? (
-                  <Volume2 className="h-4 w-4 text-primary" />
-                ) : (
-                  <VolumeX className="h-4 w-4 text-muted-foreground" />
-                )}
-                <div>
-                  <div className="font-medium text-foreground text-sm">Alert Sounds</div>
-                  <div className="text-xs text-muted-foreground">Play sound when alerts trigger</div>
-                </div>
-              </div>
-              <Switch 
-                checked={settings.soundEnabled}
-                onCheckedChange={handleSoundToggle}
-              />
-            </div>
-
-            {/* Volume Slider - Only shown when sound is enabled */}
-            {settings.soundEnabled && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Volume1 className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">Volume</span>
-                  </div>
-                  <span className="text-xs font-medium text-primary">
-                    {Math.round(settings.soundVolume * 100)}%
-                  </span>
-                </div>
-                <Slider
-                  value={[settings.soundVolume * 100]}
-                  onValueChange={(value) => saveSettings({ soundVolume: value[0] / 100 })}
-                  min={10}
-                  max={100}
-                  step={10}
-                  className="w-full"
-                />
-              </div>
-            )}
-
-            {/* Sound Type Selection - Only shown when sound is enabled */}
-            {settings.soundEnabled && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <div className="text-sm font-medium text-foreground">Sound Type</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["chime", "beep", "bell"] as SoundType[]).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        saveSettings({ soundType: type });
-                        alertSound.playTestSound(type);
-                      }}
-                      className={cn(
-                        "flex flex-col items-center gap-1 p-2 rounded-lg border transition-all",
-                        settings.soundType === type
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background hover:border-primary/50 text-muted-foreground"
-                      )}
-                    >
-                      <Play className="h-3 w-3" />
-                      <span className="text-xs font-medium capitalize">{type}</span>
-                    </button>
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => alertSound.playTestSound()}
-                  className="w-full gap-2 mt-2"
-                >
-                  <Play className="h-3 w-3" />
-                  Test Sound
-                </Button>
-              </div>
             )}
           </div>
 
