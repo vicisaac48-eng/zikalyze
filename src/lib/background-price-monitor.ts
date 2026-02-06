@@ -12,7 +12,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { generateNotificationId } from '@/lib/notification-utils';
+import { generateNotificationId, IMMEDIATE_NOTIFICATION_DELAY_MS } from '@/lib/notification-utils';
 
 // Background fetch configuration
 export const BACKGROUND_FETCH_CONFIG = {
@@ -25,15 +25,20 @@ export const BACKGROUND_FETCH_CONFIG = {
 // Crypto symbols to monitor in background
 const BACKGROUND_MONITOR_SYMBOLS = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE'];
 
+// CoinGecko IDs for API requests
+const COINGECKO_IDS = ['bitcoin', 'ethereum', 'solana', 'ripple', 'dogecoin'];
+
 // Price alert thresholds for background monitoring
 const BACKGROUND_PRICE_CHANGE_THRESHOLD = 5; // 5% change triggers notification
 
 // Storage keys for background price data
 const STORAGE_KEY_LAST_PRICES = 'zikalyze_bg_last_prices';
 const STORAGE_KEY_PRICE_ALERTS = 'zikalyze_bg_price_alerts';
+const STORAGE_KEY_TRIGGERED_ALERTS = 'zikalyze_bg_triggered_alerts';
 
 // Android notification channel ID
 const ANDROID_CHANNEL_ID = 'price-alerts';
+// This icon name matches the drawable resource in android/app/src/main/res/drawable/
 const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
 
 interface PriceData {
@@ -55,9 +60,10 @@ interface SavedPriceAlert {
  */
 async function fetchCurrentPrices(): Promise<Record<string, PriceData>> {
   try {
-    const symbols = BACKGROUND_MONITOR_SYMBOLS.map(s => s.toLowerCase()).join(',');
+    // Use the COINGECKO_IDS constant for the API request
+    const ids = COINGECKO_IDS.join(',');
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,dogecoin&vs_currencies=usd&include_24hr_change=true`
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
     );
     
     if (!response.ok) {
@@ -122,6 +128,32 @@ function getLastPrices(): Record<string, PriceData> {
 }
 
 /**
+ * Gets IDs of alerts that have already been triggered in background
+ * This prevents duplicate notifications for the same alert
+ */
+function getTriggeredAlertIds(): Set<string> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_TRIGGERED_ALERTS);
+    return new Set(stored ? JSON.parse(stored) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Marks an alert as triggered in background
+ */
+function markAlertAsTriggered(alertId: string): void {
+  try {
+    const triggered = getTriggeredAlertIds();
+    triggered.add(alertId);
+    localStorage.setItem(STORAGE_KEY_TRIGGERED_ALERTS, JSON.stringify([...triggered]));
+  } catch (error) {
+    console.error('[BackgroundMonitor] Failed to mark alert as triggered:', error);
+  }
+}
+
+/**
  * Saves current prices to localStorage
  */
 function saveLastPrices(prices: Record<string, PriceData>): void {
@@ -155,7 +187,8 @@ async function sendBackgroundNotification(
           symbol,
           url: `/dashboard?crypto=${symbol.toLowerCase()}`
         },
-        schedule: { at: new Date(Date.now() + 100) },
+        // Use the shared constant for notification delay
+        schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
         autoCancel: true,
       }]
     });
@@ -179,6 +212,7 @@ async function checkPricesAndNotify(): Promise<void> {
   
   const lastPrices = getLastPrices();
   const priceAlerts = getSavedPriceAlerts();
+  const triggeredAlertIds = getTriggeredAlertIds();
   
   // Check for significant price movements
   for (const [symbol, current] of Object.entries(currentPrices)) {
@@ -203,6 +237,12 @@ async function checkPricesAndNotify(): Promise<void> {
     // Check user-defined price alerts
     for (const alert of priceAlerts) {
       if (alert.symbol === symbol) {
+        // Skip if this alert was already triggered in a previous background check
+        // This prevents duplicate notifications for the same alert
+        if (triggeredAlertIds.has(alert.id)) {
+          continue;
+        }
+        
         const shouldTrigger = 
           (alert.condition === 'above' && current.price >= alert.target_price) ||
           (alert.condition === 'below' && current.price <= alert.target_price);
@@ -215,6 +255,9 @@ async function checkPricesAndNotify(): Promise<void> {
             `${symbol} is now ${alert.condition} $${alert.target_price.toLocaleString()} • Current: $${current.price.toLocaleString()}`,
             symbol
           );
+          
+          // Mark this alert as triggered to prevent duplicate notifications
+          markAlertAsTriggered(alert.id);
         }
       }
     }
@@ -289,9 +332,19 @@ export async function initializeBackgroundFetch(): Promise<void> {
 /**
  * Saves price alerts to localStorage for background monitoring
  * Call this when user creates/updates alerts
+ * Also clears previously triggered alerts so they can trigger again if recreated
  */
 export function syncPriceAlertsForBackground(alerts: SavedPriceAlert[]): void {
   try {
+    // Get current alert IDs
+    const currentAlertIds = new Set(alerts.map(a => a.id));
+    
+    // Clean up triggered alerts that no longer exist (alert was deleted/replaced)
+    const triggeredIds = getTriggeredAlertIds();
+    const cleanedTriggeredIds = [...triggeredIds].filter(id => currentAlertIds.has(id));
+    localStorage.setItem(STORAGE_KEY_TRIGGERED_ALERTS, JSON.stringify(cleanedTriggeredIds));
+    
+    // Save current alerts
     localStorage.setItem(STORAGE_KEY_PRICE_ALERTS, JSON.stringify(alerts));
     console.log(`[BackgroundMonitor] Synced ${alerts.length} price alerts for background monitoring`);
   } catch (error) {
@@ -306,6 +359,7 @@ export function clearBackgroundData(): void {
   try {
     localStorage.removeItem(STORAGE_KEY_LAST_PRICES);
     localStorage.removeItem(STORAGE_KEY_PRICE_ALERTS);
+    localStorage.removeItem(STORAGE_KEY_TRIGGERED_ALERTS);
     console.log('[BackgroundMonitor] Background data cleared');
   } catch (error) {
     console.error('[BackgroundMonitor] Failed to clear background data:', error);
