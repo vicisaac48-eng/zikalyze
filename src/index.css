@@ -528,7 +528,9 @@ All colors MUST be HSL.
   /* Content area spacing to account for fixed header on Android/native apps */
   /* Must use !important to override Tailwind padding utilities like p-3 */
   .main-content {
-    padding-top: var(--header-height-mobile) !important;
+    /* On Android, add safe-area-inset-top (status bar height) + header height */
+    /* calc() with env() fallback to 0 for web browsers */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
     /* Create stacking context below the fixed header without affecting positioning */
     isolation: isolate;
     z-index: 1;
@@ -536,7 +538,7 @@ All colors MUST be HSL.
 
   @media (min-width: 640px) {
     .main-content {
-      padding-top: var(--header-height-desktop) !important;
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
 }
