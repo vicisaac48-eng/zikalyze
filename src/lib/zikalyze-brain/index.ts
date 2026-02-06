@@ -18,12 +18,16 @@ import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institu
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation } from './neural-engine';
+import { performTriModularAnalysis, formatTriModularOutput } from './tri-modular-analysis';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
 
 // Re-export ULTRA features for advanced analysis
 export * from './zikalyze-ultra';
+
+// Re-export Tri-Modular Analysis for direct access
+export * from './tri-modular-analysis';
 
 // Translation maps for multi-language support
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -566,6 +570,27 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   // Log regime detection
   console.log(`[Regime] ADX=${adxResult.adx.toFixed(1)} → ${adxResult.regime} | Master: ${regimeConsensus.masterControl} | Weights: Algo=${(regimeConsensus.algorithmWeight*100).toFixed(0)}%, NN=${(regimeConsensus.neuralWeight*100).toFixed(0)}%`);
   
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 TRI-MODULAR ANALYSIS — Senior Quant Strategist Intelligence
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  const triModularAnalysis = performTriModularAnalysis(
+    price,
+    high24h,
+    low24h,
+    change,
+    chartTrendData,
+    fearGreed,
+    input.narrativeContext,
+    macroCatalysts
+  );
+  
+  // Generate formatted Tri-Modular output for inclusion in analysis
+  const triModularOutput = formatTriModularOutput(triModularAnalysis, crypto, price);
+  
+  // Log Tri-Modular summary
+  console.log(`[Tri-Modular] ${triModularAnalysis.weightedConfidenceScore.percentage}% ${triModularAnalysis.weightedConfidenceScore.direction} | Kill Switch: $${triModularAnalysis.killSwitchLevel.price.toFixed(2)}`);
+  
   // Regime visual indicators
   const regimeEmoji = adxResult.regime === 'TRENDING' ? '📈' : adxResult.regime === 'RANGING' ? '↔️' : '🔄';
   const masterEmoji = regimeConsensus.masterControl === 'ALGORITHM' ? '🤖' : '🧠';
@@ -834,7 +859,7 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 Consider flipping short or exiting longs` : `↔️ BREAKOUT SCENARIO: Watch $${high24h.toFixed(decimals)} (up) / $${low24h.toFixed(decimals)} (down)
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
-
+${triModularOutput}
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
@@ -843,6 +868,7 @@ are highly volatile and unpredictable.
 • Wait for confirmation — Need 2+ confirmations before entry ✓
 • Avoid bad trades — Quality check prevents poor setups ✓
 • Both Algorithm and Neural Network were used together ✓
+• Tri-Modular Analysis with Kill Switch included ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
@@ -895,7 +921,9 @@ are highly volatile and unpredictable.
       candlestickPattern: regimeConsensus.candlestickConfirmation.pattern,
       candlestickConfirmation: regimeConsensus.candlestickConfirmation.entryTrigger,
       candlestickStrength: regimeConsensus.candlestickConfirmation.strength
-    }
+    },
+    // Tri-Modular Analysis — Senior Quant Strategist Intelligence
+    triModularAnalysis
   };
 }
 
