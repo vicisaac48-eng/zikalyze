@@ -236,7 +236,7 @@ const Install = () => {
                             {t("install.android.nativeDesc", "Get the full native Android experience with better performance and push notifications.")}
                           </p>
                           <a 
-                            href="https://nightly.link/vicisaac48-eng/zikalyze/workflows/android-build/main/zikalyze-debug-apk.zip" 
+                            href="https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
