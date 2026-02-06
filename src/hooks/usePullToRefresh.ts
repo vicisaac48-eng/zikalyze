@@ -107,14 +107,20 @@ export function usePullToRefresh({
       currentYRef.current = e.touches[0].clientY;
       const rawDistance = currentYRef.current - startYRef.current;
 
-      // Only trigger pull-to-refresh on downward swipe
+      // Only trigger pull-to-refresh on downward swipe (positive rawDistance)
+      // If user is scrolling UP (negative rawDistance), cancel pull state and let normal scroll happen
       if (rawDistance <= 0) {
+        // Reset pull state so normal scrolling can resume
+        isPullingRef.current = false;
+        setIsPulling(false);
         setPullDistance(0);
         return;
       }
 
       // If we're not at top anymore, cancel the pull
       if (!checkIfAtTop() && rawDistance > 0) {
+        isPullingRef.current = false;
+        setIsPulling(false);
         setPullDistance(0);
         return;
       }
