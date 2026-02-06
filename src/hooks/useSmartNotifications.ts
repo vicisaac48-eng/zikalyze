@@ -1,10 +1,17 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings, NotificationAlertSettings } from '@/hooks/useSettings';
+import { 
+  isNativePlatform, 
+  generateNotificationId, 
+  sanitizeSymbol,
+  IMMEDIATE_NOTIFICATION_DELAY_MS 
+} from '@/lib/notification-utils';
 
 interface NotificationData {
-  type: 'price_alert' | 'price_surge' | 'price_drop' | 'sentiment_shift' | 'whale_activity' | 'volume_spike';
+  type: 'price_alert' | 'price_surge' | 'price_drop' | 'sentiment_shift' | 'whale_activity' | 'volume_spike' | 'news_event';
   symbol: string;
   title: string;
   body: string;
@@ -33,6 +40,7 @@ const COOLDOWNS = {
   sentiment_shift: 15 * 60 * 1000, // 15 min
   whale_activity: 10 * 60 * 1000, // 10 min
   volume_spike: 10 * 60 * 1000,
+  news_event: 30 * 60 * 1000, // 30 min for news events
 };
 
 // Get thresholds from settings
@@ -54,14 +62,16 @@ function isNotificationEnabled(type: NotificationData['type'], alertSettings: No
     'sentiment_shift': 'sentimentShifts',
     'whale_activity': 'whaleActivity',
     'volume_spike': 'volumeSpikes',
+    'news_event': 'newsEvents',
   };
   return !!alertSettings[typeMap[type]];
 }
 
-// Sanitize symbol for URL (only allow alphanumeric and hyphen)
-function sanitizeSymbol(symbol: string): string {
-  return symbol.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
-}
+// Android notification icon - use the default Capacitor icon
+const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
+
+// Notification channel ID for Android 8.0+ (required)
+const ANDROID_CHANNEL_ID = 'price-alerts';
 
 export function useSmartNotifications() {
   const { user } = useAuth();
@@ -69,6 +79,36 @@ export function useSmartNotifications() {
   const lastNotifications = useRef<Record<string, number>>({});
   const priceSnapshots = useRef<Record<string, PriceSnapshot>>({});
   const sentimentSnapshot = useRef<SentimentSnapshot | null>(null);
+  const nativePermissionChecked = useRef(false);
+
+  // Request native notification permissions and create channel on first use
+  useEffect(() => {
+    if (isNativePlatform() && !nativePermissionChecked.current) {
+      nativePermissionChecked.current = true;
+      
+      // Create notification channel for Android 8.0+ (required for notifications to show)
+      // Chain the promises to ensure channel exists before requesting permissions
+      LocalNotifications.createChannel({
+        id: ANDROID_CHANNEL_ID,
+        name: 'Price Alerts',
+        description: 'Notifications for cryptocurrency price alerts and market movements',
+        importance: 5, // IMPORTANCE_HIGH - makes sound and shows as heads-up notification
+        visibility: 1, // VISIBILITY_PUBLIC
+        sound: 'default',
+        vibration: true,
+        lights: true,
+        lightColor: '#5EEAD4'
+      }).then(() => {
+        console.log('[SmartNotify] Notification channel created');
+        // Request permissions after channel is created
+        return LocalNotifications.requestPermissions();
+      }).then(result => {
+        console.log('[SmartNotify] Native notification permission:', result.display);
+      }).catch(err => {
+        console.error('[SmartNotify] Notification setup error:', err);
+      });
+    }
+  }, []);
 
   // Memoize thresholds from settings
   const thresholds = useMemo(() => 
@@ -84,8 +124,48 @@ export function useSmartNotifications() {
     return Date.now() - lastSent > cooldown;
   }, []);
 
-  // Fallback: Show local notification via service worker when push fails
+  // Show native local notification on Android/iOS
+  const showNativeLocalNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
+    try {
+      const id = generateNotificationId();
+      
+      await LocalNotifications.schedule({
+        notifications: [{
+          id,
+          title: notification.title,
+          body: notification.body,
+          sound: 'default',
+          smallIcon: ANDROID_NOTIFICATION_ICON,
+          // Use the notification channel we created (required for Android 8.0+)
+          channelId: ANDROID_CHANNEL_ID,
+          extra: {
+            type: notification.type,
+            symbol: notification.symbol,
+            url: `/dashboard?crypto=${sanitizeSymbol(notification.symbol)}`,
+            ...notification.data
+          },
+          // Schedule immediately
+          schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
+          autoCancel: true,
+        }]
+      });
+      
+      console.log(`[SmartNotify] Native notification scheduled: ${notification.title} (${notification.symbol})`);
+      return true;
+    } catch (err) {
+      console.error('[SmartNotify] Native notification error:', err);
+      return false;
+    }
+  }, []);
+
+  // Fallback: Show local notification via service worker when push fails (for web)
   const showLocalNotification = useCallback(async (notification: NotificationData): Promise<void> => {
+    // On native platforms, use Capacitor LocalNotifications instead
+    if (isNativePlatform()) {
+      await showNativeLocalNotification(notification);
+      return;
+    }
+    
     if (!('serviceWorker' in navigator)) return;
     
     try {
@@ -109,9 +189,9 @@ export function useSmartNotifications() {
     } catch (err) {
       console.error('[SmartNotify] Failed to show local notification:', err);
     }
-  }, []);
+  }, [showNativeLocalNotification]);
 
-  // Send push notification via edge function
+  // Send push notification via edge function (web) or local notification (native)
   const sendPushNotification = useCallback(async (notification: NotificationData): Promise<boolean> => {
     if (!user?.id) return false;
     
@@ -135,8 +215,26 @@ export function useSmartNotifications() {
       return false;
     }
 
-    let fallbackAttempted = false;
     let notificationShown = false;
+    
+    // On native platforms, use local notifications directly
+    // This works without Firebase/FCM setup
+    if (isNativePlatform()) {
+      try {
+        notificationShown = await showNativeLocalNotification(notification);
+        if (notificationShown) {
+          lastNotifications.current[key] = Date.now();
+          console.log(`[SmartNotify] Native notification sent: ${notification.type} for ${notification.symbol}`);
+        }
+        return notificationShown;
+      } catch (err) {
+        console.error('[SmartNotify] Native notification error:', err);
+        return false;
+      }
+    }
+
+    // On web, try edge function first, then fall back to service worker
+    let fallbackAttempted = false;
     
     try {
       // Send push notification via edge function
@@ -183,7 +281,7 @@ export function useSmartNotifications() {
       }
       return notificationShown;
     }
-  }, [user?.id, canSendNotification, showLocalNotification, settings.notificationAlerts, settings.notifications]);
+  }, [user?.id, canSendNotification, showLocalNotification, showNativeLocalNotification, settings.notificationAlerts, settings.notifications]);
 
   // Check for significant price movements
   const checkPriceMovement = useCallback(async (
@@ -349,6 +447,26 @@ export function useSmartNotifications() {
     });
   }, [sendPushNotification]);
 
+  // Send news/macro event notification
+  const sendNewsEventNotification = useCallback(async (
+    eventName: string,
+    impact: 'high' | 'medium' | 'low',
+    countdown: string,
+    category: string
+  ): Promise<boolean> => {
+    const emoji = impact === 'high' ? '🔥' : impact === 'medium' ? '📰' : '📋';
+    const urgency = impact === 'high' ? 'high' : impact === 'medium' ? 'medium' : 'low';
+    
+    return sendPushNotification({
+      type: 'news_event',
+      symbol: category.toUpperCase(),
+      title: `${emoji} ${eventName}`,
+      body: `${countdown} • Impact: ${impact.toUpperCase()} • Category: ${category}`,
+      urgency,
+      data: { event: eventName, impact, countdown, category }
+    });
+  }, [sendPushNotification]);
+
   // Reset snapshots on unmount
   useEffect(() => {
     return () => {
@@ -363,6 +481,7 @@ export function useSmartNotifications() {
     checkSentimentShift,
     checkWhaleActivity,
     sendPriceAlertNotification,
+    sendNewsEventNotification,
     sendPushNotification
   };
 }

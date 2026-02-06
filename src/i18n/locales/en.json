@@ -9,7 +9,10 @@
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "returnHome": "Return to Home",
-    "back": "Back"
+    "back": "Back",
+    "refreshing": "Refreshing...",
+    "releaseToRefresh": "Release to refresh",
+    "pullToRefresh": "Pull down to refresh"
   },
   "landing": {
     "heroTagline": "AI-Powered Crypto Analysis",

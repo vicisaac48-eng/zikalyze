@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,8 @@ interface TriggeredAlert {
 }
 
 const Alerts = () => {
-  const { alerts, loading, removeAlert } = usePriceAlerts();
-  const { prices, getPriceBySymbol } = useCryptoPrices();
+  const { alerts, loading, removeAlert, refetch } = usePriceAlerts();
+  const { prices, getPriceBySymbol, refetch: refetchPrices } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
   const isNativeApp = useIsNativeApp();
@@ -50,6 +51,11 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetch(), refetchPrices()]);
+  }, [refetch, refetchPrices]);
 
   // Fetch triggered alerts history
   useEffect(() => {
@@ -137,9 +143,10 @@ const Alerts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <BottomNav />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -665,6 +672,7 @@ const Alerts = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </PullToRefresh>
   );
 };
 
