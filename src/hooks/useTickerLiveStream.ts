@@ -6,6 +6,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// Connection configuration
+const CONNECTION_TIMEOUT_MS = 8000;    // Timeout before trying fallback exchanges
+const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
+const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
+
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
 
@@ -70,7 +75,6 @@ export const useTickerLiveStream = () => {
   const okxWsRef = useRef<WebSocket | null>(null);
   const bybitWsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
-  const binanceFailedRef = useRef(false);
   
   // Update a single ticker price
   const updateTicker = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
@@ -104,19 +108,17 @@ export const useTickerLiveStream = () => {
       
       const ws = new WebSocket(wsUrl);
       
-      // Connection timeout - if not connected within 8 seconds, try fallbacks
+      // Connection timeout - if not connected within timeout, close and rely on fallback exchanges
       const connectionTimeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
           console.log(`[Ticker LiveStream] Binance connection timeout, using fallback exchanges...`);
-          binanceFailedRef.current = true;
           ws.close();
         }
-      }, 8000);
+      }, CONNECTION_TIMEOUT_MS);
       
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
         console.log(`[Ticker LiveStream] ✓ Binance connected - LIVE streaming active`);
-        binanceFailedRef.current = false;
         setIsConnected(true);
         setSources(prev => prev.includes("Binance") ? prev : [...prev, "Binance"]);
       };
@@ -157,7 +159,6 @@ export const useTickerLiveStream = () => {
       ws.onerror = () => {
         clearTimeout(connectionTimeout);
         console.log(`[Ticker LiveStream] Binance error, will use fallback exchanges...`);
-        binanceFailedRef.current = true;
       };
       
       ws.onclose = (e) => {
@@ -169,11 +170,11 @@ export const useTickerLiveStream = () => {
           return newSources;
         });
         
-        // Reconnect after delay
+        // Reconnect after delay with jitter
         if (reconnectTimeoutsRef.current.binance) {
           clearTimeout(reconnectTimeoutsRef.current.binance);
         }
-        const delay = 2000 + Math.random() * 2000;
+        const delay = RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MS;
         console.log(`[Ticker LiveStream] Binance disconnected (${e.code}), reconnecting in ${Math.round(delay)}ms...`);
         reconnectTimeoutsRef.current.binance = setTimeout(connectBinance, delay);
       };
@@ -181,7 +182,6 @@ export const useTickerLiveStream = () => {
       binanceWsRef.current = ws;
     } catch (err) {
       console.log(`[Ticker LiveStream] Binance connection failed:`, err);
-      binanceFailedRef.current = true;
     }
   }, [updateTicker]);
 
