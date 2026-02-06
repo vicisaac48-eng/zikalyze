@@ -70,6 +70,9 @@ function isNotificationEnabled(type: NotificationData['type'], alertSettings: No
 // Android notification icon - use the default Capacitor icon
 const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
 
+// Notification channel ID for Android 8.0+ (required)
+const ANDROID_CHANNEL_ID = 'price-alerts';
+
 export function useSmartNotifications() {
   const { user } = useAuth();
   const { settings } = useSettings();
@@ -78,10 +81,28 @@ export function useSmartNotifications() {
   const sentimentSnapshot = useRef<SentimentSnapshot | null>(null);
   const nativePermissionChecked = useRef(false);
 
-  // Request native notification permissions on first use
+  // Request native notification permissions and create channel on first use
   useEffect(() => {
     if (isNativePlatform() && !nativePermissionChecked.current) {
       nativePermissionChecked.current = true;
+      
+      // Create notification channel for Android 8.0+ (required for notifications to show)
+      LocalNotifications.createChannel({
+        id: ANDROID_CHANNEL_ID,
+        name: 'Price Alerts',
+        description: 'Notifications for cryptocurrency price alerts and market movements',
+        importance: 5, // IMPORTANCE_HIGH - makes sound and shows as heads-up notification
+        visibility: 1, // VISIBILITY_PUBLIC
+        sound: 'default',
+        vibration: true,
+        lights: true,
+        lightColor: '#5EEAD4'
+      }).then(() => {
+        console.log('[SmartNotify] Notification channel created');
+      }).catch(err => {
+        console.error('[SmartNotify] Channel creation error:', err);
+      });
+
       LocalNotifications.requestPermissions().then(result => {
         console.log('[SmartNotify] Native notification permission:', result.display);
       }).catch(err => {
@@ -116,6 +137,8 @@ export function useSmartNotifications() {
           body: notification.body,
           sound: 'default',
           smallIcon: ANDROID_NOTIFICATION_ICON,
+          // Use the notification channel we created (required for Android 8.0+)
+          channelId: ANDROID_CHANNEL_ID,
           extra: {
             type: notification.type,
             symbol: notification.symbol,
