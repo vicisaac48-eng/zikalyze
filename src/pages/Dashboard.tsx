@@ -122,7 +122,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="main-content px-3 pt-2 pb-6 space-y-2 sm:px-4 sm:pt-3 sm:pb-8 sm:space-y-3 md:px-6 md:space-y-4">
+        <div className="main-content px-3 pb-6 space-y-2 sm:px-4 sm:pb-8 sm:space-y-3 md:px-6 md:space-y-4">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 

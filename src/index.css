@@ -56,10 +56,9 @@ All colors MUST be HSL.
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 168 76% 73%;
     
-    /* Header height for consistent spacing - matches actual header height exactly */
-    /* GitHub-style: content starts immediately below header, no visible gap */
-    --header-height-mobile: 2.75rem;
-    --header-height-desktop: 3.5rem;
+    /* Header height - exact match to actual header, no visible gap */
+    --header-height-mobile: 2.5rem;
+    --header-height-desktop: 3.25rem;
   }
 
 }
