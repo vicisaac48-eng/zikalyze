@@ -251,8 +251,9 @@ All colors MUST be HSL.
   html.android-native main {
     /* Ensure main element allows touch scrolling */
     touch-action: pan-y pinch-zoom;
-    /* Enable vertical overflow scrolling */
-    overflow-y: visible;
+    /* Main element should not create its own scroll container - 
+       content scrolls via the body/window scroll */
+    overflow-y: auto;
     /* Prevent any horizontal scroll interference */
     overflow-x: hidden;
     /* Momentum scrolling for smooth Android experience */
