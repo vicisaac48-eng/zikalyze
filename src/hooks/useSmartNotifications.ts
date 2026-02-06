@@ -87,6 +87,7 @@ export function useSmartNotifications() {
       nativePermissionChecked.current = true;
       
       // Create notification channel for Android 8.0+ (required for notifications to show)
+      // Chain the promises to ensure channel exists before requesting permissions
       LocalNotifications.createChannel({
         id: ANDROID_CHANNEL_ID,
         name: 'Price Alerts',
@@ -99,14 +100,12 @@ export function useSmartNotifications() {
         lightColor: '#5EEAD4'
       }).then(() => {
         console.log('[SmartNotify] Notification channel created');
-      }).catch(err => {
-        console.error('[SmartNotify] Channel creation error:', err);
-      });
-
-      LocalNotifications.requestPermissions().then(result => {
+        // Request permissions after channel is created
+        return LocalNotifications.requestPermissions();
+      }).then(result => {
         console.log('[SmartNotify] Native notification permission:', result.display);
       }).catch(err => {
-        console.error('[SmartNotify] Permission request error:', err);
+        console.error('[SmartNotify] Notification setup error:', err);
       });
     }
   }, []);
