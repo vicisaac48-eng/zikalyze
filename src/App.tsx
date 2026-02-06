@@ -80,7 +80,7 @@ const AppErrorFallback = () => (
 
 const App = () => (
   <ErrorBoundary fallback={<AppErrorFallback />}>
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
           <TooltipProvider>
