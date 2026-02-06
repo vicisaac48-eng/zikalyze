@@ -148,9 +148,15 @@ All colors MUST be HSL.
     right: 0;
     /* High z-index to ensure header stays above all scrolling content */
     z-index: 1000;
+    /* Explicit opaque background to prevent content bleeding through on Android WebView */
+    /* Uses the design system CSS variable for consistency */
+    background-color: hsl(var(--background));
     /* Hardware acceleration for smooth fixed positioning on Android */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+    /* Prevent content from bleeding through during scroll on Android */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Adjust fixed header position on desktop with sidebar (Android only) */
@@ -532,8 +538,12 @@ All colors MUST be HSL.
     /* calc() with env() fallback to 0 for web browsers */
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
     /* Create stacking context below the fixed header without affecting positioning */
+    /* isolation: isolate creates a new stacking context with implicit z-index: 0 */
+    /* which keeps content below the fixed header (z-index: 1000) */
     isolation: isolate;
-    z-index: 1;
+    /* Ensure content stays below the fixed header by setting position relative with z-index 0 */
+    position: relative;
+    z-index: 0;
   }
 
   @media (min-width: 640px) {
