@@ -189,6 +189,18 @@ You can also install Zikalyze as a Progressive Web App (PWA) directly from your 
 2. Tap the menu (⋮) → "Add to Home screen"
 3. The app will work offline with full functionality
 
+### 🏪 Publishing to Google Play Store
+
+Want to publish Zikalyze to the Google Play Store? See our comprehensive guide:
+
+📖 **[Play Store Deployment Guide](./docs/PLAYSTORE_DEPLOYMENT.md)**
+
+The guide covers:
+- Generating AAB (Android App Bundle) files via GitHub Actions
+- Setting up your Play Console listing
+- Signing your app
+- Submitting for review
+
 ## 🌐 IPFS Deployment
 
 This project supports automatic deployment to IPFS (InterPlanetary File System) via Pinata. For detailed instructions on setting up IPFS deployment, see [IPFS_DEPLOYMENT.md](./IPFS_DEPLOYMENT.md).
