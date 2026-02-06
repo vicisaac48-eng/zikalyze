@@ -29,7 +29,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const { getPrice, isConnected, sources } = useTickerLiveStream();
   
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
+    <div className="flex gap-1.5 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
       {cryptoMeta.map((crypto) => {
         // Priority: Live stream > CryptoPrice from parent
         const liveStreamPrice = getPrice(crypto.symbol);
@@ -51,7 +51,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
             key={crypto.symbol}
             onClick={() => onSelect(crypto.symbol)}
             className={cn(
-              "flex flex-col gap-1 rounded-xl border px-3 py-2 transition-all relative flex-shrink-0 min-w-[100px] sm:min-w-0 sm:px-4 sm:py-3",
+              "flex flex-col gap-0.5 rounded-xl border px-2.5 py-1.5 transition-all relative flex-shrink-0 min-w-[90px] sm:min-w-0 sm:gap-1 sm:px-4 sm:py-3",
               selected === crypto.symbol
                 ? "border-primary bg-primary/10"
                 : "border-border bg-card hover:border-primary/50"
