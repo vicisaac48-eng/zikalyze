@@ -97,6 +97,24 @@ All colors MUST be HSL.
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  /* Status bar overlay - masks content that scrolls into the status bar area on Android */
+  /* This is how native apps like WhatsApp prevent content from being visible in the status bar area */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Height matches the safe area inset (status bar height) */
+    height: env(safe-area-inset-top, 0px);
+    /* Same background color as the app */
+    background-color: hsl(var(--background));
+    /* Above everything including the header (z-index: 1000) */
+    z-index: 9999;
+    /* Prevent any interaction with this overlay */
+    pointer-events: none;
+  }
+
   /* Ensure root element fills viewport */
   #root {
     min-height: 100vh;
