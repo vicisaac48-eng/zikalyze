@@ -230,6 +230,10 @@ export function detectCandlestickPattern(
   const isPrevBullish = prev.close > prev.open;
   const isPrevBearish = prev.close < prev.open;
 
+  // Calculate wicks once for all pattern checks
+  const lowerWick = Math.min(latest.open, latest.close) - latest.low;
+  const upperWick = latest.high - Math.max(latest.open, latest.close);
+
   // Pattern detection based on current bias
   if (bias === 'LONG') {
     // Bullish Engulfing
@@ -242,13 +246,11 @@ export function detectCandlestickPattern(
         bias: 'BULLISH',
         strength: 85,
         description: 'Strong bullish reversal pattern — buyers overwhelmed sellers',
-        entryTrigger: 'Enter on break above engulfing candle high: $' + latest.high.toFixed(2)
+        entryTrigger: `Enter on break above engulfing candle high: $${latest.high.toFixed(4)}`
       };
     }
 
     // Hammer
-    const lowerWick = Math.min(latest.open, latest.close) - latest.low;
-    const upperWick = latest.high - Math.max(latest.open, latest.close);
     if (lowerWick >= latestBody * 2 && upperWick < latestBody * 0.5 && isBullishCandle) {
       return {
         pattern: 'Hammer',
@@ -270,7 +272,7 @@ export function detectCandlestickPattern(
         bias: 'BULLISH',
         strength: 80,
         description: 'Three-candle bullish reversal — indecision followed by buyer takeover',
-        entryTrigger: 'Enter on pullback to star candle zone: $' + prev.close.toFixed(2)
+        entryTrigger: `Enter on pullback to star candle zone: $${prev.close.toFixed(4)}`
       };
     }
 
@@ -298,14 +300,12 @@ export function detectCandlestickPattern(
         bias: 'BEARISH',
         strength: 85,
         description: 'Strong bearish reversal pattern — sellers overwhelmed buyers',
-        entryTrigger: 'Enter on break below engulfing candle low: $' + latest.low.toFixed(2)
+        entryTrigger: `Enter on break below engulfing candle low: $${latest.low.toFixed(4)}`
       };
     }
 
-    // Shooting Star
-    const upperWickShort = latest.high - Math.max(latest.open, latest.close);
-    const lowerWickShort = Math.min(latest.open, latest.close) - latest.low;
-    if (upperWickShort >= latestBody * 2 && lowerWickShort < latestBody * 0.5 && isBearishCandle) {
+    // Shooting Star (uses upperWick and lowerWick calculated above)
+    if (upperWick >= latestBody * 2 && lowerWick < latestBody * 0.5 && isBearishCandle) {
       return {
         pattern: 'Shooting Star',
         type: 'REVERSAL',
@@ -326,12 +326,12 @@ export function detectCandlestickPattern(
         bias: 'BEARISH',
         strength: 80,
         description: 'Three-candle bearish reversal — indecision followed by seller takeover',
-        entryTrigger: 'Enter on pullback to star candle zone: $' + prev.close.toFixed(2)
+        entryTrigger: `Enter on pullback to star candle zone: $${prev.close.toFixed(4)}`
       };
     }
 
-    // Bearish Pin Bar
-    if (upperWickShort >= latestRange * 0.6 && latestBody < latestRange * 0.25) {
+    // Bearish Pin Bar (uses upperWick calculated above)
+    if (upperWick >= latestRange * 0.6 && latestBody < latestRange * 0.25) {
       return {
         pattern: 'Bearish Pin Bar',
         type: 'REVERSAL',
@@ -404,6 +404,9 @@ export function calculateRegimeWeightedConsensus(
   low24h: number,
   candles?: Array<{ open: number; high: number; low: number; close: number }>
 ): RegimeWeightedConsensus {
+  // Neural Network confidence threshold for trending regime filter
+  const NEURAL_CONFIDENCE_THRESHOLD_TRENDING = 0.51;
+  
   const range = high24h - low24h;
   
   // Determine weights based on regime
@@ -428,13 +431,13 @@ export function calculateRegimeWeightedConsensus(
     masterControl = neuralConfidence > algorithmConfidence ? 'NEURAL_NETWORK' : 'ALGORITHM';
   }
 
-  // Check skip condition: In TRENDING mode, skip if Neural < 51%
+  // Check skip condition: In TRENDING mode, skip if Neural < threshold
   let skipTrade = false;
   let skipReason: string | undefined;
   
-  if (adxResult.regime === 'TRENDING' && neuralConfidence < 0.51) {
+  if (adxResult.regime === 'TRENDING' && neuralConfidence < NEURAL_CONFIDENCE_THRESHOLD_TRENDING) {
     skipTrade = true;
-    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < 51% threshold`;
+    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < ${(NEURAL_CONFIDENCE_THRESHOLD_TRENDING * 100).toFixed(0)}% threshold`;
   }
 
   // Calculate weighted score
