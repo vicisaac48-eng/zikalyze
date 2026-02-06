@@ -18,6 +18,10 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
       'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
     );
   }
+  
+  // Add Android-specific class to html element for native app styling
+  // This enables vertical-only scrolling like native Android apps (no horizontal body movement)
+  document.documentElement.classList.add('android-native');
 }
 
 // Register service worker for offline caching
