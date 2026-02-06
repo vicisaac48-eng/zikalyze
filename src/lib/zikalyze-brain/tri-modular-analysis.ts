@@ -765,7 +765,8 @@ ${layerGamma.psychologicalLevels.length > 0
 export function generateSimplifiedSummary(
   analysis: TriModularAnalysis,
   crypto: string,
-  price: number
+  price: number,
+  skipTradeInfo?: { skipTrade: boolean; skipReason?: string; neuralConfidence?: number }
 ): string {
   // Validate required properties with safe defaults
   const weightedConfidenceScore = analysis?.weightedConfidenceScore ?? { 
@@ -804,12 +805,29 @@ export function generateSimplifiedSummary(
   // Determine decimals based on price
   const decimals = price < 1 ? 6 : price < 10 ? 4 : price < 1000 ? 2 : 0;
   
-  // Convert direction to simple action
-  const action = weightedConfidenceScore.direction === 'LONG' 
-    ? '📈 Consider BUYING' 
-    : weightedConfidenceScore.direction === 'SHORT' 
-      ? '📉 Consider SELLING' 
-      : '⏸️ WAIT and watch';
+  // Check if trade should be skipped (NN Filter or other safety filters failed)
+  const isTradeSkipped = skipTradeInfo?.skipTrade ?? false;
+  
+  // Convert direction to simple action - but override if trade is skipped
+  let action: string;
+  if (isTradeSkipped) {
+    action = '🔴 NO TRADE / WAITING';
+  } else {
+    action = weightedConfidenceScore.direction === 'LONG' 
+      ? '📈 Consider BUYING' 
+      : weightedConfidenceScore.direction === 'SHORT' 
+        ? '📉 Consider SELLING' 
+        : '⏸️ WAIT and watch';
+  }
+  
+  // Generate skip reason explanation for beginners if trade is skipped
+  const skipExplanation = isTradeSkipped && skipTradeInfo?.skipReason
+    ? `\n🛑 WHY NO TRADE:\n   ${skipTradeInfo.skipReason}${
+        skipTradeInfo.neuralConfidence !== undefined
+          ? `\n   (AI confidence: ${(skipTradeInfo.neuralConfidence * 100).toFixed(0)}% - needs 51% to proceed)`
+          : ''
+      }\n`
+    : '';
   
   // Convert confidence to simple terms
   const confidenceLevel = weightedConfidenceScore.percentage >= 75 
@@ -861,12 +879,12 @@ export function generateSimplifiedSummary(
   return `
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    📱 QUICK SUMMARY FOR ${crypto} 
-   (Beginner-Friendly)
+   (Zikalyze AI Analysis)
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🎯 WHAT TO DO: ${action}
    Confidence: ${confidenceLevel} (${weightedConfidenceScore.percentage}%)
-
+${skipExplanation}
 ${marketMood}
 
 💰 HOW MUCH TO RISK:
