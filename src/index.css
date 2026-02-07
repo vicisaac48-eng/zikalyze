@@ -89,23 +89,31 @@ All colors MUST be HSL.
   /* The android-native class is added to html element in main.tsx when running on Android */
   html.android-native {
     /* Only allow vertical scrolling on Android - no horizontal panning */
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     /* Prevent horizontal overflow on Android */
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    /* Ensure html is exactly viewport width */
+    width: 100%;
   }
 
   html.android-native body {
     /* Prevent horizontal overflow on Android body */
-    overflow-x: hidden;
+    overflow-x: hidden !important;
     /* Explicitly enable vertical scrolling for proper scroll restoration after input blur */
     overflow-y: auto !important;
     /* Ensure vertical-only touch action propagates */
-    touch-action: pan-y;
+    touch-action: pan-y !important;
+    /* Prevent body from being wider than viewport */
+    width: 100%;
+    /* Prevent any horizontal movement */
+    overscroll-behavior-x: none;
   }
 
   html.android-native #root {
     /* Prevent horizontal overflow on root container */
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    /* Ensure root doesn't exceed viewport width */
+    width: 100%;
   }
 
   /* Android: Enable vertical scroll on all content containers */
