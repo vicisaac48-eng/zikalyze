@@ -108,6 +108,34 @@ All colors MUST be HSL.
     overflow-x: hidden;
   }
 
+  /* Android: Enable vertical scroll on all content containers */
+  /* This fixes the issue where touching body/card content doesn't scroll */
+  html.android-native main,
+  html.android-native .main-content,
+  html.android-native .min-h-screen {
+    /* Allow vertical scrolling when touching these elements */
+    touch-action: pan-y;
+    /* Enable momentum scrolling on Android WebView */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Android: Enable vertical scroll on card and content elements */
+  /* Cards are common touchpoints so they need touch-action: pan-y */
+  html.android-native .bg-card,
+  html.android-native .rounded-xl,
+  html.android-native .rounded-2xl,
+  html.android-native [class*="border-border"] {
+    /* Allow vertical scrolling when touching card elements */
+    touch-action: pan-y;
+  }
+
+  /* Android: Exception for horizontal scroll areas (crypto ticker, time filters) */
+  /* These need both pan-x and pan-y to allow horizontal scrolling */
+  html.android-native .overflow-x-auto {
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
   body {
     @apply bg-background text-foreground;
     /* Ensure consistent rendering across all devices */
