@@ -19,11 +19,14 @@ interface UsePullToRefreshReturn {
   indicatorStyle: React.CSSProperties;
 }
 
+// Tolerance for scroll position check on Android WebView
+// Android WebView may report small scroll offsets even at the top
+const SCROLL_TOP_TOLERANCE = 5;
+
 // Helper function to check if at the top of the scroll container
-// Use a small tolerance (5px) to account for minor scroll offsets on Android
 const checkIfAtTop = (): boolean => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  return scrollTop <= 5;
+  return scrollTop <= SCROLL_TOP_TOLERANCE;
 };
 
 // Minimum distance to pull before activating pull-to-refresh
@@ -159,8 +162,8 @@ export function usePullToRefresh({
       );
 
       // Only prevent default when we're actively pulling for refresh and past activation threshold
-      // This ensures normal touch scrolling still works in other scenarios
-      if (isPullingRef.current && resistedDistance > ACTIVATION_THRESHOLD * resistance) {
+      // Use rawDistance for consistency with the earlier check at line 147
+      if (isPullingRef.current && rawDistance > ACTIVATION_THRESHOLD) {
         e.preventDefault();
       }
 
