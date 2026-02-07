@@ -285,6 +285,83 @@ const BYBIT_SYMBOLS: Record<string, string> = {
 // Priority symbols for faster update throttling
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
+// ===== PRICE VALIDATION CONSTANTS =====
+
+// Strict mode thresholds (applied after grace period)
+const RAPID_DROP_THRESHOLD_PERCENT = 20; // Reject drops > 20%
+const RAPID_SPIKE_THRESHOLD_PERCENT = 50; // Reject spikes > 50%
+
+// Grace period thresholds (applied during first N updates)
+const GRACE_PERIOD_UPDATE_COUNT = 3; // Number of updates before switching to strict mode
+const GRACE_PERIOD_SPIKE_THRESHOLD_PERCENT = 200; // Allow spikes up to 200% during grace period
+const GRACE_PERIOD_DROP_THRESHOLD_PERCENT = 50; // Allow drops up to 50% during grace period
+
+// Extreme change detection (always rejected, regardless of grace period)
+const EXTREME_INCREASE_RATIO = 100; // Reject increases > 100x
+const EXTREME_DECREASE_RATIO = 0.01; // Reject decreases < 0.01x (99% drop)
+
+// 24h high/low validation margin (±10% outside bounds)
+const HIGH_LOW_MARGIN_DECIMAL = 0.1; // Decimal representation: 0.1 = 10% margin
+
+// Price history tracking
+const PRICE_HISTORY_MAX_LENGTH = 10; // Store last 10 valid prices per symbol
+
+// ===== PRICE VALIDATION HELPER FUNCTIONS =====
+
+/**
+ * Detect if price drops more than the rapid drop threshold
+ * @param currentPrice - The current price
+ * @param newPrice - The new price to validate
+ * @returns true if drop exceeds threshold
+ */
+const detectRapidDrop = (currentPrice: number, newPrice: number): boolean => {
+  const changePercent = ((newPrice - currentPrice) / currentPrice) * 100;
+  return changePercent < -RAPID_DROP_THRESHOLD_PERCENT;
+};
+
+/**
+ * Detect if price increases more than the rapid spike threshold
+ * @param currentPrice - The current price
+ * @param newPrice - The new price to validate
+ * @returns true if spike exceeds threshold
+ */
+const detectRapidSpike = (currentPrice: number, newPrice: number): boolean => {
+  const changePercent = ((newPrice - currentPrice) / currentPrice) * 100;
+  return changePercent > RAPID_SPIKE_THRESHOLD_PERCENT;
+};
+
+/**
+ * Detect extreme changes that are likely errors or manipulation
+ * Checks for increases > 100x or decreases < 0.01x
+ * @param currentPrice - The current price
+ * @param newPrice - The new price to validate
+ * @returns true if change is extreme
+ */
+const isExtremeChange = (currentPrice: number, newPrice: number): boolean => {
+  const ratio = newPrice / currentPrice;
+  return ratio > EXTREME_INCREASE_RATIO || ratio < EXTREME_DECREASE_RATIO;
+};
+
+/**
+ * Validate price against 24h high/low bounds with margin for volatility
+ * @param newPrice - The new price to validate
+ * @param high24h - The 24h high price (optional)
+ * @param low24h - The 24h low price (optional)
+ * @returns true if price is valid (within reasonable bounds)
+ */
+const validateAgainstHighLow = (newPrice: number, high24h?: number, low24h?: number): boolean => {
+  // If we don't have high/low data, skip this validation
+  if (!high24h || !low24h || high24h <= 0 || low24h <= 0) {
+    return true;
+  }
+  
+  // Allow margin outside the 24h range for volatility
+  const lowerBound = low24h * (1 - HIGH_LOW_MARGIN_DECIMAL);
+  const upperBound = high24h * (1 + HIGH_LOW_MARGIN_DECIMAL);
+  
+  return newPrice >= lowerBound && newPrice <= upperBound;
+};
+
 export const useCryptoPrices = () => {
   // Initialize with fallback prices for immediate display
   const [prices, setPrices] = useState<CryptoPrice[]>(FALLBACK_CRYPTOS);
@@ -313,6 +390,10 @@ export const useCryptoPrices = () => {
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
+  // Price validation refs
+  const priceHistoryRef = useRef<Map<string, number[]>>(new Map()); // Store last 10 valid prices per symbol
+  const updateCountRef = useRef<Map<string, number>>(new Map()); // Track number of updates per symbol for grace period
+  
   // Throttle interval - increased to 2 seconds for slower, more trackable UI updates
   const UPDATE_THROTTLE_MS = 2000;
   // Faster updates for special altcoins - increased to 1.5 seconds
@@ -338,6 +419,102 @@ export const useCryptoPrices = () => {
     }
     if (updates.market_cap !== undefined && updates.market_cap <= 0) {
       delete updates.market_cap;
+    }
+    
+    // ===== PRICE VALIDATION AND MANIPULATION DETECTION =====
+    // Validate current_price updates to prevent manipulation and extreme changes
+    if (updates.current_price !== undefined) {
+      const currentCoin = pricesRef.current.get(normalizedSymbol);
+      
+      if (currentCoin && currentCoin.current_price > 0) {
+        const currentPrice = currentCoin.current_price;
+        const newPrice = updates.current_price;
+        
+        // Get update count for grace period logic
+        const updateCount = updateCountRef.current.get(normalizedSymbol) || 0;
+        const isGracePeriod = updateCount < GRACE_PERIOD_UPDATE_COUNT;
+        
+        // Calculate change percentage
+        const changePercent = ((newPrice - currentPrice) / currentPrice) * 100;
+        const absChangePercent = Math.abs(changePercent);
+        
+        // Check for extreme changes (always reject)
+        if (isExtremeChange(currentPrice, newPrice)) {
+          console.warn(
+            `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Extreme change - ` +
+            `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+            `Change: ${changePercent.toFixed(2)}%`
+          );
+          delete updates.current_price;
+        }
+        // Check against 24h high/low if available
+        else if (!validateAgainstHighLow(newPrice, currentCoin.high_24h, currentCoin.low_24h)) {
+          console.warn(
+            `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Outside 24h bounds - ` +
+            `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+            `24h Low: $${currentCoin.low_24h?.toFixed(8)}, 24h High: $${currentCoin.high_24h?.toFixed(8)}`
+          );
+          delete updates.current_price;
+        }
+        // Grace period: Allow larger changes for first N updates
+        else if (isGracePeriod) {
+          // Allow up to configured spike/drop thresholds during grace period
+          if (changePercent > GRACE_PERIOD_SPIKE_THRESHOLD_PERCENT) {
+            console.warn(
+              `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Excessive spike (grace period) - ` +
+              `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+              `Change: ${changePercent.toFixed(2)}%`
+            );
+            delete updates.current_price;
+          } else if (changePercent < -GRACE_PERIOD_DROP_THRESHOLD_PERCENT) {
+            console.warn(
+              `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Excessive drop (grace period) - ` +
+              `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+              `Change: ${changePercent.toFixed(2)}%`
+            );
+            delete updates.current_price;
+          }
+        }
+        // Strict validation: Check for rapid spikes and drops
+        else {
+          if (detectRapidSpike(currentPrice, newPrice)) {
+            console.warn(
+              `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Rapid spike detected - ` +
+              `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+              `Change: ${changePercent.toFixed(2)}%`
+            );
+            delete updates.current_price;
+          } else if (detectRapidDrop(currentPrice, newPrice)) {
+            console.warn(
+              `[Price Validation] Rejected ${normalizedSymbol.toUpperCase()}: Rapid drop detected - ` +
+              `Current: $${currentPrice.toFixed(8)}, New: $${newPrice.toFixed(8)}, ` +
+              `Change: ${changePercent.toFixed(2)}%`
+            );
+            delete updates.current_price;
+          }
+        }
+        
+        // If price passed validation, add to price history and increment update count
+        if (updates.current_price !== undefined) {
+          // Get existing price history for this symbol
+          const existingHistory = priceHistoryRef.current.get(normalizedSymbol) || [];
+          
+          // Create new history array with the new price, keeping only last N entries
+          const newHistory = [...existingHistory, newPrice].slice(-PRICE_HISTORY_MAX_LENGTH);
+          
+          // Update price history with immutable array
+          priceHistoryRef.current.set(normalizedSymbol, newHistory);
+          
+          // Increment update count
+          updateCountRef.current.set(normalizedSymbol, updateCount + 1);
+        }
+      } else {
+        // First price update for this symbol - initialize update count
+        updateCountRef.current.set(normalizedSymbol, 1);
+        
+        // Initialize price history with first price
+        priceHistoryRef.current.set(normalizedSymbol, [updates.current_price]);
+      }
     }
     
     // If no valid updates remain, skip entirely
