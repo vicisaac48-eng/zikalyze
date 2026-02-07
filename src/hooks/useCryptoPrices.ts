@@ -313,10 +313,10 @@ export const useCryptoPrices = () => {
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
   
-  // Throttle interval - reduced to 1 second for faster UI updates
-  const UPDATE_THROTTLE_MS = 1000;
-  // Even faster updates for special altcoins
-  const FAST_UPDATE_THROTTLE_MS = 500;
+  // Throttle interval - increased to 2 seconds for slower, more trackable UI updates
+  const UPDATE_THROTTLE_MS = 2000;
+  // Faster updates for special altcoins - increased to 1.5 seconds
+  const FAST_UPDATE_THROTTLE_MS = 1500;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {

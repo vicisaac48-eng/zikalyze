@@ -129,8 +129,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "price-flash-up": "price-flash-up 0.6s ease-out",
-        "price-flash-down": "price-flash-down 0.6s ease-out",
+        "price-flash-up": "price-flash-up 1.2s ease-out",
+        "price-flash-down": "price-flash-down 1.2s ease-out",
         "spin-slow": "spin-slow 2.5s linear infinite",
       },
     },
