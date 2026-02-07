@@ -330,6 +330,28 @@ All colors MUST be HSL.
     -webkit-backface-visibility: hidden;
     will-change: transform;
   }
+
+  /* Android WebView: Ensure scrollable content isn't blocked by overlays */
+  html.android-native .overflow-x-auto {
+    /* Ensure proper stacking context for scrollable tables */
+    position: relative;
+    z-index: 1;
+    /* Enable touch interaction */
+    pointer-events: auto;
+  }
+
+  /* Android WebView: Main content area should be touchable */
+  html.android-native main {
+    /* Ensure main content is always touchable */
+    pointer-events: auto;
+  }
+
+  /* Android WebView: Overlay elements should properly handle pointer events */
+  html.android-native [role="dialog"],
+  html.android-native [data-state="open"] {
+    /* Dialog overlays need proper z-index */
+    z-index: 50;
+  }
 }
 
 @layer utilities {
