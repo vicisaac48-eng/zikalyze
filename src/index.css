@@ -97,6 +97,8 @@ All colors MUST be HSL.
   html.android-native body {
     /* Prevent horizontal overflow on Android body */
     overflow-x: hidden;
+    /* Explicitly enable vertical scrolling for proper scroll restoration after input blur */
+    overflow-y: auto !important;
     /* Ensure vertical-only touch action propagates */
     touch-action: pan-y;
   }
