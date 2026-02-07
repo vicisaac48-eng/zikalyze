@@ -107,7 +107,10 @@ const buildExecutiveSummary = (
   topDownAnalysis: any,
   tradeRecommendation: string,
   qualityScore: number,
-  fearGreed: number
+  fearGreed: number,
+  verificationLevel: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'ESTIMATED',
+  hasRealChartData: boolean,
+  candleCount: number
 ): string => {
   // Determine the primary direction and strength
   const direction = bias === 'LONG' ? 'bullish' : bias === 'SHORT' ? 'bearish' : 'neutral';
@@ -146,9 +149,24 @@ const buildExecutiveSummary = (
     summary += `. The market is in transition, using balanced weighting between systems`;
   }
   
-  // Add final recommendation
+  // ⚠️ CRITICAL: Add data quality warning for insufficient chart data
+  if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
+    summary += `.\n\n⚠️ DATA QUALITY WARNING: This analysis uses estimated data (${candleCount} candles available). Real-time chart data is unavailable or insufficient. Signals may be less accurate. Exercise extreme caution or wait for live data connection`;
+  } else if (candleCount < 50) {
+    summary += `.\n\n⚠️ LIMITED CHART DATA: Only ${candleCount} candles available (optimal: 100+). Confidence reduced by limited historical context`;
+  } else if (verificationLevel === 'PARTIALLY_VERIFIED') {
+    summary += `.\n\n🟡 PARTIAL DATA: Some data sources verified, but not all. Consider this when sizing positions`;
+  }
+  
+  // Add final recommendation with data quality gate
   if (regimeConsensus.skipTrade) {
     summary += `.\n\n⚠️ SKIP TRADE: ${regimeConsensus.skipReason}`;
+  } else if (!hasRealChartData && tradeRecommendation === 'EXECUTE') {
+    // CRITICAL: Block execution signals when using estimated data
+    summary += `.\n\n🚫 RECOMMENDATION: DO NOT EXECUTE - Using estimated data instead of real chart data. Wait for live data connection before trading`;
+  } else if (verificationLevel === 'ESTIMATED' && confidence >= 55) {
+    // Warn on any directional signal with estimated data
+    summary += `.\n\n⚠️ RECOMMENDATION: WAIT FOR REAL DATA - Signal detected but data quality insufficient for safe execution`;
   } else if (tradeRecommendation === 'EXECUTE') {
     summary += `.\n\n✅ RECOMMENDATION: Setup meets quality criteria (${qualityScore}%) - consider execution with proper risk management`;
   } else if (tradeRecommendation === 'WAIT_CONFIRMATION') {
@@ -805,16 +823,32 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${updatedActionWord}`;
   }
 
+  // Get candle count for data quality assessment
+  const candleCount = chartTrendData?.candles?.length || 0;
+
+  // Calculate data quality score (0-100%)
+  let dataQualityScore = 0;
+  if (hasRealChartData) dataQualityScore += 40; // Real chart data is critical
+  if (candleCount >= 100) dataQualityScore += 20; // Optimal candle count
+  else if (candleCount >= 50) dataQualityScore += 10; // Acceptable candle count
+  else if (candleCount >= 10) dataQualityScore += 5; // Minimum candle count
+  if (hasRealMultiTfData) dataQualityScore += 15; // Multi-timeframe data
+  if (hasRealOnChain) dataQualityScore += 10; // On-chain data
+  if (isLiveData) dataQualityScore += 15; // Live price data
+  
+  const dataQualityEmoji = dataQualityScore >= 80 ? '✅' : dataQualityScore >= 60 ? '🟡' : '⚠️';
+  const dataQualityLabel = dataQualityScore >= 80 ? 'EXCELLENT' : dataQualityScore >= 60 ? 'GOOD' : dataQualityScore >= 40 ? 'ACCEPTABLE' : 'POOR';
+
   // Build executive summary that synthesizes all signals
   const executiveSummary = buildExecutiveSummary(
     bias, confidence, hybridResult, regimeConsensus, topDownAnalysis,
-    tradeRecommendation, qualityScore, fearGreed
+    tradeRecommendation, qualityScore, fearGreed, verificationLevel, hasRealChartData, candleCount
   );
 
   const analysis = `${simplifiedSummary}
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
-   ${verificationEmoji} ${verificationLabel}
+   ${verificationEmoji} ${verificationLabel} │ Data Quality: ${dataQualityEmoji} ${dataQualityScore}% (${dataQualityLabel})
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 ━━━ 📋 EXECUTIVE SUMMARY ━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -831,6 +865,8 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
 ${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
 ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
+📊 Chart Data: ${hasRealChartData ? `✅ ${candleCount} live candles` : `⚠️ ${candleCount} candles (estimated data)`} ${candleCount < 50 ? '- Limited historical context' : candleCount >= 100 ? '- Optimal data' : ''}
+
 ━━━ 🎯 ANALYSIS & RECOMMENDATION ━━━━━━━━━━━━━━━━━
 
 ┌─────────────────────────────────────────────────┐
