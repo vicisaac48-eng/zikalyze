@@ -140,11 +140,13 @@ All colors MUST be HSL.
     color-scheme: light;
   }
 
-  /* Android native app: Simple scroll fix for body scrolling
+  /* Android native app: Smooth scroll fix for body scrolling like GitHub native app
      The .android-native class is added in main.tsx when running on Capacitor Android */
   html.android-native {
     /* Remove smooth scroll - it can interfere with touch scrolling on Android */
     scroll-behavior: auto !important;
+    /* Allow vertical scrolling with touch - critical for Android WebView */
+    touch-action: pan-y;
   }
 
   html.android-native body {
@@ -152,6 +154,24 @@ All colors MUST be HSL.
     overflow-y: auto !important;
     /* Enable momentum scrolling */
     -webkit-overflow-scrolling: touch;
+    /* Allow vertical scrolling with touch - critical for main content scrolling */
+    touch-action: pan-y;
+  }
+
+  /* Android: Main content areas must allow touch scrolling to pass through */
+  /* Using specific class selectors to enable vertical scrolling like GitHub native app */
+  html.android-native main,
+  html.android-native .main-content,
+  html.android-native .rounded-2xl,
+  html.android-native .rounded-xl,
+  html.android-native .bg-card {
+    /* Allow touch events to scroll the page, not just individual elements */
+    touch-action: pan-y;
+  }
+
+  /* Android: Exception - horizontal scrollable areas need pan-x pan-y */
+  html.android-native .overflow-x-auto {
+    touch-action: pan-x pan-y;
   }
 
   body {
@@ -186,6 +206,8 @@ All colors MUST be HSL.
     /* Use will-change for hardware acceleration instead of transform */
     /* This doesn't create a new containing block like transform does */
     will-change: scroll-position;
+    /* Allow touch scrolling to work on Android - like GitHub native app */
+    touch-action: pan-y;
   }
 
   /* Stable header for web - uses sticky positioning (default behavior) */
@@ -262,6 +284,8 @@ All colors MUST be HSL.
   .main-container {
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /* Makes scrolling smooth on mobile */
+    /* Allow touch scrolling on Android - like GitHub native app */
+    touch-action: pan-y;
   }
 
   /* Glow effects - Clean and professional */
