@@ -143,14 +143,16 @@ All colors MUST be HSL.
   /* Android native app: Prevent horizontal body movement for native app feel
      Only allow vertical scrolling (pan-y) - like WhatsApp, Instagram, etc.
      The .android-native class is added in main.tsx when running on Capacitor Android
-     
+
      CRITICAL: Only ONE element should be the scroll container (body).
      Nested overflow-y: auto creates competing scroll containers that break Android WebView scrolling. */
   html.android-native {
+    /* CRITICAL: Remove scroll-behavior smooth - it breaks touch scrolling on Android WebView */
+    scroll-behavior: auto !important;
     /* Prevent any horizontal overflow on the main page */
     overflow-x: hidden;
     /* Let body be the scroll container - html should not scroll independently */
-    overflow-y: visible;
+    overflow-y: visible !important;
     /* Prevent html from creating its own scroll context */
     height: 100%;
   }
