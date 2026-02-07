@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LocalNotifications, ScheduleOptions, LocalNotificationSchema } from '@capacitor/local-notifications';
 import { 
   isNativePlatform, 
@@ -14,17 +14,10 @@ interface NotificationPayload {
   sound?: string;
   smallIcon?: string;
   largeIcon?: string;
-  /** Expanded text shown when notification is expanded */
-  largeBody?: string;
-  /** Make notification persistent (won't auto-dismiss) */
-  ongoing?: boolean;
 }
 
 // Android notification icon
 const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
-
-// Android notification channel (required for Android 8.0+)
-const ANDROID_CHANNEL_ID = 'price-alerts';
 
 /**
  * Hook for showing local notifications on native Android/iOS platforms.
@@ -34,40 +27,17 @@ const ANDROID_CHANNEL_ID = 'price-alerts';
 export function useLocalNotifications() {
   const [hasPermission, setHasPermission] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const channelCreated = useRef(false);
 
-  // Initialize, create notification channel, and check permissions
+  // Initialize and check permissions
   useEffect(() => {
     const init = async () => {
       if (isNativePlatform()) {
         try {
-          // Create notification channel for Android 8.0+ (must be done before scheduling notifications)
-          // This ensures notifications display with proper prominence
-          if (!channelCreated.current) {
-            try {
-              await LocalNotifications.createChannel({
-                id: ANDROID_CHANNEL_ID,
-                name: 'Price Alerts',
-                description: 'Cryptocurrency price alerts and market notifications',
-                importance: 5, // IMPORTANCE_HIGH - makes sound and shows as heads-up notification
-                visibility: 1, // VISIBILITY_PUBLIC - show on lock screen
-                sound: 'default',
-                vibration: true,
-                lights: true,
-                lightColor: '#5EEAD4' // Zikalyze cyan color
-              });
-              channelCreated.current = true;
-              console.log('[LocalNotifications] Notification channel created');
-            } catch (channelErr) {
-              console.error('[LocalNotifications] Channel creation error:', channelErr);
-            }
-          }
-          
           // Check current permission status
           const { display } = await LocalNotifications.checkPermissions();
           setHasPermission(display === 'granted');
           
-          // Set up notification action listeners for when user taps notification
+          // Set up notification action listeners
           await LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
             console.log('[LocalNotifications] Action performed:', notification);
             // Navigate to relevant page based on notification data
@@ -75,11 +45,6 @@ export function useLocalNotifications() {
             if (data?.url) {
               window.location.hash = data.url as string;
             }
-          });
-          
-          // Listen for notification received events (app in foreground)
-          await LocalNotifications.addListener('localNotificationReceived', (notification) => {
-            console.log('[LocalNotifications] Notification received:', notification.title);
           });
 
           setIsReady(true);
@@ -152,16 +117,9 @@ export function useLocalNotifications() {
           smallIcon: payload.smallIcon || ANDROID_NOTIFICATION_ICON,
           largeIcon: payload.largeIcon,
           extra: payload.data,
-          // Use the notification channel for Android 8.0+ (required for notifications to display)
-          channelId: ANDROID_CHANNEL_ID,
-          // Expanded notification text for more details
-          largeBody: payload.largeBody || payload.body,
-          // Show immediately with small delay required by Capacitor
+          // Show immediately
           schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
-          // Auto-cancel when tapped (unless ongoing)
-          autoCancel: !payload.ongoing,
-          // Make notification ongoing (persistent) if requested
-          ongoing: payload.ongoing || false,
+          autoCancel: true,
         };
 
         const options: ScheduleOptions = {

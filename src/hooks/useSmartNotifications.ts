@@ -134,8 +134,6 @@ export function useSmartNotifications() {
           id,
           title: notification.title,
           body: notification.body,
-          // Expanded text shown when user pulls down on notification
-          largeBody: notification.body,
           sound: 'default',
           smallIcon: ANDROID_NOTIFICATION_ICON,
           // Use the notification channel we created (required for Android 8.0+)
@@ -148,7 +146,6 @@ export function useSmartNotifications() {
           },
           // Schedule immediately
           schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },
-          // Auto-cancel when tapped for good UX
           autoCancel: true,
         }]
       });

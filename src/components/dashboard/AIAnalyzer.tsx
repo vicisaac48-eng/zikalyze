@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Brain, Zap, Play, RefreshCw, Activity, Copy, Check, History, ChevronDown, Clock, Trash2, X, ThumbsUp, ThumbsDown, TrendingUp, Award, WifiOff, Database, Cpu, BarChart3, Layers, Sparkles, LineChart, Lock } from "lucide-react";
@@ -1362,4 +1360,3 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
 };
 
 export default AIAnalyzer;
->>>>>>> 7a1705c51250a6e70b31f4252360b297eb8c13cd

@@ -7,7 +7,7 @@ All colors MUST be HSL.
 */
 
 @layer base {
-  /* Dark mode is the default theme for Zikalyze */
+  /* Dark mode is the default and only theme for Zikalyze */
   :root,
   .dark {
     --background: 222 47% 6%;
@@ -61,53 +61,6 @@ All colors MUST be HSL.
     --header-height-desktop: 3rem;
   }
 
-  /* Light mode theme for Zikalyze */
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 98%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 168 76% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-
-    --accent: 267 84% 60%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 168 76% 42%;
-    
-    --cyan: 168 76% 42%;
-    --cyan-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-    --chart-cyan: 168 76% 42%;
-    --chart-purple: 267 84% 60%;
-    
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 168 76% 42%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 168 76% 42%;
-  }
-
 }
 
 @layer base {
@@ -121,72 +74,48 @@ All colors MUST be HSL.
   }
 
   html {
-    /* Color scheme follows the theme class for proper system UI integration */
+    /* Prevent color scheme override on mobile browsers */
     color-scheme: dark;
-    /* Smooth scrolling - required for Android scroll to work properly */
+    /* Smooth scrolling */
     scroll-behavior: smooth;
-    /* Ensure the html element can scroll */
-    overflow-y: auto !important;
-    /* Height settings for proper scroll behavior */
-    height: auto;
-    min-height: 100%;
+    /* Consistent height across all devices */
+    height: 100%;
+    height: -webkit-fill-available;
     /* Disable pinch-to-zoom on Android native app (set via Capacitor detection in main.tsx) */
     /* This CSS is a fallback - the viewport meta tag is the primary control */
     touch-action: pan-x pan-y;
   }
 
-  /* Light mode color scheme */
-  html.light {
-    color-scheme: light;
-  }
-
-  /* Android native app: Smooth scroll fix for body scrolling like GitHub native app
-     The .android-native class is added in main.tsx when running on Capacitor Android */
-  html.android-native {
-    /* Remove smooth scroll - it can interfere with touch scrolling on Android */
-    scroll-behavior: auto !important;
-    /* Allow vertical scrolling with touch - critical for Android WebView */
-    touch-action: pan-y;
-  }
-
-  html.android-native body {
-    /* Enable body scrolling on Android */
-    overflow-y: auto !important;
-    /* Enable momentum scrolling */
-    -webkit-overflow-scrolling: touch;
-    /* Allow vertical scrolling with touch - critical for main content scrolling */
-    touch-action: pan-y;
-  }
-
-  /* Android: Main content areas must allow touch scrolling to pass through */
-  /* Using specific class selectors to enable vertical scrolling like GitHub native app */
-  html.android-native main,
-  html.android-native .main-content,
-  html.android-native .rounded-2xl,
-  html.android-native .rounded-xl,
-  html.android-native .bg-card {
-    /* Allow touch events to scroll the page, not just individual elements */
-    touch-action: pan-y;
-  }
-
-  /* Android: Exception - horizontal scrollable areas need pan-x pan-y */
-  html.android-native .overflow-x-auto {
-    touch-action: pan-x pan-y;
-  }
-
   body {
     @apply bg-background text-foreground;
-    /* Ensure the body itself can scroll */
-    overflow-y: auto !important;
-    /* Height settings for proper scroll behavior */
-    height: auto;
-    min-height: 100%;
+    /* Ensure consistent rendering across all devices */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+    min-height: -webkit-fill-available; /* Safari fallback */
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
     /* Enable smooth momentum scrolling */
     -webkit-overflow-scrolling: touch;
     /* Safe area padding for Android status bar / iOS notch */
     padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Status bar overlay - masks content that scrolls into the status bar area on Android */
+  /* This is how native apps like WhatsApp prevent content from being visible in the status bar area */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Height matches the safe area inset (status bar height) */
+    height: env(safe-area-inset-top, 0px);
+    /* Same background color as the app */
+    background-color: hsl(var(--background));
+    /* Above everything including the header (z-index: 1000) */
+    z-index: 9999;
+    /* Prevent any interaction with this overlay */
+    pointer-events: none;
   }
 
   /* Ensure root element fills viewport */
@@ -206,8 +135,6 @@ All colors MUST be HSL.
     /* Use will-change for hardware acceleration instead of transform */
     /* This doesn't create a new containing block like transform does */
     will-change: scroll-position;
-    /* Allow touch scrolling to work on Android - like GitHub native app */
-    touch-action: pan-y;
   }
 
   /* Stable header for web - uses sticky positioning (default behavior) */
@@ -279,14 +206,6 @@ All colors MUST be HSL.
      CROSS-BROWSER & CROSS-DEVICE UTILITIES
      Consistent styling across all platforms
      ======================================== */
-
-  /* Main container wrapper for scrolling */
-  .main-container {
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch; /* Makes scrolling smooth on mobile */
-    /* Allow touch scrolling on Android - like GitHub native app */
-    touch-action: pan-y;
-  }
 
   /* Glow effects - Clean and professional */
   .glow-cyan {
@@ -634,21 +553,22 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for fixed header on Android/native apps */
-  /* On web, header is sticky so content flows naturally below it */
-  /* On Android native, header is fixed so we need padding */
+  /* Must use !important to override Tailwind padding utilities like p-3 */
   .main-content {
-    /* Minimal padding for safe area (status bar) */
-    padding-top: env(safe-area-inset-top, 0px) !important;
-  }
-
-  /* Android-only: Add extra padding for fixed header */
-  html.android-native .main-content {
-    /* Account for fixed header height on Android */
+    /* On Android, add safe-area-inset-top (status bar height) + header height */
+    /* calc() with env() fallback to 0 for web browsers */
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+    /* Create stacking context below the fixed header without affecting positioning */
+    /* isolation: isolate creates a new stacking context with implicit z-index: 0 */
+    /* which keeps content below the fixed header (z-index: 1000) */
+    isolation: isolate;
+    /* Ensure content stays below the fixed header by setting position relative with z-index 0 */
+    position: relative;
+    z-index: 0;
   }
 
   @media (min-width: 640px) {
-    html.android-native .main-content {
+    .main-content {
       padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
