@@ -437,7 +437,8 @@ export function calculateRegimeWeightedConsensus(
   
   if (adxResult.regime === 'TRENDING' && neuralConfidence < NEURAL_CONFIDENCE_THRESHOLD_TRENDING) {
     skipTrade = true;
-    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < ${(NEURAL_CONFIDENCE_THRESHOLD_TRENDING * 100).toFixed(0)}% threshold`;
+    // Use 1 decimal place for precision when values are close to avoid confusing displays like "51% < 51%"
+    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(1)}% < ${(NEURAL_CONFIDENCE_THRESHOLD_TRENDING * 100).toFixed(0)}% threshold`;
   }
 
   // Calculate weighted score
