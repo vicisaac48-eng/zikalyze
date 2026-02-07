@@ -251,7 +251,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           </div>
         )}
         
-        <div className={isNativeApp ? "-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0" : "overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar"}>
+        <div className={`-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 ${!isNativeApp ? 'overflow-x-auto custom-scrollbar' : ''}`}>
           <table className="w-full min-w-[320px] table-fixed">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
