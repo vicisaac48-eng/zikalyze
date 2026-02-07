@@ -117,7 +117,7 @@ const OnChainMetrics = ({ crypto, price, change, volume, marketCap, coinGeckoId 
         <div 
           key={`tx-${pulseKey}`}
           className={cn(
-            "absolute top-12 right-4 px-2 py-1 rounded-lg text-xs font-medium animate-in slide-in-from-right fade-in duration-300",
+            "absolute top-14 right-4 px-2 py-1 rounded-lg text-xs font-medium animate-in slide-in-from-right fade-in duration-300 z-10",
             metrics.whaleActivity.recentLargeTx.type === 'OUT' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
           )}
         >

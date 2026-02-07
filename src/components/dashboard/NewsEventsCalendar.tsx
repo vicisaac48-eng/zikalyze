@@ -65,23 +65,25 @@ const getScheduledEvents = (): CalendarEvent[] => {
   const events: CalendarEvent[] = [];
 
   // FOMC Meeting Dates 2025-2026 (Federal Reserve decisions)
+  // Official schedule from federalreserve.gov - announcement day (2nd day of meeting)
+  // Meetings with Summary of Economic Projections are marked with (SEP)
   const fomcDates = [
-    { date: new Date(2025, 0, 29), time: "14:00 EST" },
-    { date: new Date(2025, 2, 19), time: "14:00 EST" },
-    { date: new Date(2025, 4, 7), time: "14:00 EST" },
-    { date: new Date(2025, 5, 18), time: "14:00 EST" },
-    { date: new Date(2025, 6, 30), time: "14:00 EST" },
-    { date: new Date(2025, 8, 17), time: "14:00 EST" },
-    { date: new Date(2025, 10, 5), time: "14:00 EST" },
-    { date: new Date(2025, 11, 17), time: "14:00 EST" },
-    { date: new Date(2026, 0, 28), time: "14:00 EST" },
-    { date: new Date(2026, 2, 18), time: "14:00 EST" },
-    { date: new Date(2026, 4, 6), time: "14:00 EST" },
-    { date: new Date(2026, 5, 17), time: "14:00 EST" },
-    { date: new Date(2026, 6, 29), time: "14:00 EST" },
-    { date: new Date(2026, 8, 16), time: "14:00 EST" },
-    { date: new Date(2026, 10, 4), time: "14:00 EST" },
-    { date: new Date(2026, 11, 16), time: "14:00 EST" },
+    { date: new Date(2025, 0, 29), time: "14:00 EST" },   // Jan 28-29
+    { date: new Date(2025, 2, 19), time: "14:00 EST" },   // Mar 18-19 (SEP)
+    { date: new Date(2025, 4, 7), time: "14:00 EST" },    // May 6-7
+    { date: new Date(2025, 5, 18), time: "14:00 EST" },   // Jun 17-18 (SEP)
+    { date: new Date(2025, 6, 30), time: "14:00 EST" },   // Jul 29-30
+    { date: new Date(2025, 8, 17), time: "14:00 EST" },   // Sep 16-17 (SEP)
+    { date: new Date(2025, 9, 29), time: "14:00 EST" },   // Oct 28-29 (UPDATED)
+    { date: new Date(2025, 11, 10), time: "14:00 EST" },  // Dec 9-10 (SEP) (UPDATED)
+    { date: new Date(2026, 0, 28), time: "14:00 EST" },   // Jan 27-28
+    { date: new Date(2026, 2, 18), time: "14:00 EST" },   // Mar 17-18 (SEP)
+    { date: new Date(2026, 3, 29), time: "14:00 EST" },   // Apr 28-29 (UPDATED)
+    { date: new Date(2026, 5, 17), time: "14:00 EST" },   // Jun 16-17 (SEP)
+    { date: new Date(2026, 6, 29), time: "14:00 EST" },   // Jul 28-29
+    { date: new Date(2026, 8, 16), time: "14:00 EST" },   // Sep 15-16 (SEP)
+    { date: new Date(2026, 9, 28), time: "14:00 EST" },   // Oct 27-28 (UPDATED)
+    { date: new Date(2026, 11, 9), time: "14:00 EST" },   // Dec 8-9 (SEP) (UPDATED)
   ];
 
   fomcDates.forEach((fomc, i) => {
@@ -99,32 +101,34 @@ const getScheduledEvents = (): CalendarEvent[] => {
     }
   });
 
-  // CPI Release Dates 2025-2026
+  // CPI Release Dates 2025-2026 (Official BLS schedule)
+  // CPI data released at 8:30 AM ET, covers previous month's data
   const cpiDates = [
-    { date: new Date(2025, 0, 15), time: "08:30 EST" },
-    { date: new Date(2025, 1, 12), time: "08:30 EST" },
-    { date: new Date(2025, 2, 12), time: "08:30 EST" },
-    { date: new Date(2025, 3, 10), time: "08:30 EST" },
-    { date: new Date(2025, 4, 13), time: "08:30 EST" },
-    { date: new Date(2025, 5, 11), time: "08:30 EST" },
-    { date: new Date(2025, 6, 11), time: "08:30 EST" },
-    { date: new Date(2025, 7, 12), time: "08:30 EST" },
-    { date: new Date(2025, 8, 10), time: "08:30 EST" },
-    { date: new Date(2025, 9, 14), time: "08:30 EST" },
-    { date: new Date(2025, 10, 13), time: "08:30 EST" },
-    { date: new Date(2025, 11, 10), time: "08:30 EST" },
-    { date: new Date(2026, 0, 14), time: "08:30 EST" },
-    { date: new Date(2026, 1, 11), time: "08:30 EST" },
-    { date: new Date(2026, 2, 11), time: "08:30 EST" },
-    { date: new Date(2026, 3, 14), time: "08:30 EST" },
-    { date: new Date(2026, 4, 12), time: "08:30 EST" },
-    { date: new Date(2026, 5, 10), time: "08:30 EST" },
-    { date: new Date(2026, 6, 14), time: "08:30 EST" },
-    { date: new Date(2026, 7, 12), time: "08:30 EST" },
-    { date: new Date(2026, 8, 16), time: "08:30 EST" },
-    { date: new Date(2026, 9, 13), time: "08:30 EST" },
-    { date: new Date(2026, 10, 12), time: "08:30 EST" },
-    { date: new Date(2026, 11, 9), time: "08:30 EST" },
+    // 2025 CPI releases
+    { date: new Date(2025, 1, 12), time: "08:30 EST" },   // Feb 12 - Jan data
+    { date: new Date(2025, 2, 12), time: "08:30 EST" },   // Mar 12 - Feb data
+    { date: new Date(2025, 3, 10), time: "08:30 EST" },   // Apr 10 - Mar data
+    { date: new Date(2025, 4, 13), time: "08:30 EST" },   // May 13 - Apr data
+    { date: new Date(2025, 5, 11), time: "08:30 EST" },   // Jun 11 - May data
+    { date: new Date(2025, 6, 15), time: "08:30 EST" },   // Jul 15 - Jun data (UPDATED)
+    { date: new Date(2025, 7, 12), time: "08:30 EST" },   // Aug 12 - Jul data
+    { date: new Date(2025, 8, 11), time: "08:30 EST" },   // Sep 11 - Aug data (UPDATED)
+    { date: new Date(2025, 9, 24), time: "08:30 EST" },   // Oct 24 - Sep data (UPDATED)
+    { date: new Date(2025, 10, 13), time: "08:30 EST" },  // Nov 13 - Oct data
+    { date: new Date(2025, 11, 10), time: "08:30 EST" },  // Dec 10 - Nov data
+    // 2026 CPI releases
+    { date: new Date(2026, 0, 13), time: "08:30 EST" },   // Jan 13 - Dec 2025 data
+    { date: new Date(2026, 1, 11), time: "08:30 EST" },   // Feb 11 - Jan data
+    { date: new Date(2026, 2, 11), time: "08:30 EST" },   // Mar 11 - Feb data
+    { date: new Date(2026, 3, 10), time: "08:30 EST" },   // Apr 10 - Mar data (UPDATED)
+    { date: new Date(2026, 4, 12), time: "08:30 EST" },   // May 12 - Apr data
+    { date: new Date(2026, 5, 10), time: "08:30 EST" },   // Jun 10 - May data
+    { date: new Date(2026, 6, 14), time: "08:30 EST" },   // Jul 14 - Jun data
+    { date: new Date(2026, 7, 12), time: "08:30 EST" },   // Aug 12 - Jul data
+    { date: new Date(2026, 8, 11), time: "08:30 EST" },   // Sep 11 - Aug data (UPDATED)
+    { date: new Date(2026, 9, 14), time: "08:30 EST" },   // Oct 14 - Sep data (UPDATED)
+    { date: new Date(2026, 10, 10), time: "08:30 EST" },  // Nov 10 - Oct data (UPDATED)
+    { date: new Date(2026, 11, 10), time: "08:30 EST" },  // Dec 10 - Nov data (UPDATED)
   ];
 
   cpiDates.forEach((cpi, i) => {

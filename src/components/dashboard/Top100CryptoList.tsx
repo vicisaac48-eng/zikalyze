@@ -166,8 +166,8 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   return (
     <>
       <div className="rounded-xl border border-border bg-card p-3 mb-4 sm:rounded-2xl sm:p-4 md:p-6 md:mb-0">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h3 className="text-base font-bold text-foreground sm:text-lg">Top 100 Cryptocurrencies</h3>
+        <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
+          <h3 className="text-base font-bold text-foreground sm:text-lg md:text-xl">Top 100 Cryptocurrencies</h3>
           <div className="flex items-center gap-2">
             {alerts.length > 0 && (
               <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full flex items-center gap-1 sm:px-2 sm:py-1">
@@ -175,7 +175,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                 {alerts.length}
               </span>
             )}
-            <span className="text-xs text-muted-foreground hidden sm:inline">By Market Cap</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline md:text-sm">By Market Cap</span>
           </div>
         </div>
 
@@ -250,19 +250,19 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         )}
         
         <div className="overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar">
-          <table className="w-full min-w-[320px]">
+          <table className="w-full min-w-[320px] table-fixed">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-2 font-medium sm:pb-3">#</th>
-                <th className="pb-2 font-medium sm:pb-3">Name</th>
-                <th className="pb-2 font-medium text-right sm:pb-3">Price</th>
-                <th className="pb-2 font-medium text-right sm:pb-3">24h %</th>
-                <th className="pb-2 font-medium text-right hidden sm:table-cell sm:pb-3">Market Cap</th>
-                <th className="pb-2 font-medium text-right hidden md:table-cell sm:pb-3">Circulating Supply</th>
-                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3">24h High</th>
-                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3">24h Low</th>
-                <th className="pb-2 font-medium text-right hidden xl:table-cell sm:pb-3">Volume</th>
-                <th className="pb-2 font-medium text-center sm:pb-3">Alert</th>
+                <th className="pb-2 font-medium sm:pb-3 w-8 sm:w-10">#</th>
+                <th className="pb-2 font-medium sm:pb-3 w-[120px] sm:w-[160px] lg:w-[180px]">Name</th>
+                <th className="pb-2 font-medium text-right sm:pb-3 w-[80px] sm:w-[100px]">Price</th>
+                <th className="pb-2 font-medium text-right sm:pb-3 w-[70px] sm:w-[80px]">24h %</th>
+                <th className="pb-2 font-medium text-right hidden sm:table-cell sm:pb-3 w-[90px] lg:w-[100px]">Market Cap</th>
+                <th className="pb-2 font-medium text-right hidden md:table-cell sm:pb-3 w-[120px] lg:w-[140px]">Circulating Supply</th>
+                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3 w-[90px]">24h High</th>
+                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3 w-[90px]">24h Low</th>
+                <th className="pb-2 font-medium text-right hidden xl:table-cell sm:pb-3 w-[80px]">Volume</th>
+                <th className="pb-2 font-medium text-center sm:pb-3 w-10 sm:w-12">Alert</th>
               </tr>
             </thead>
             <tbody>
@@ -291,9 +291,9 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
-                        <div className="min-w-0">
-                          <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none">{crypto.name}</div>
-                          <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
+                        <div className="min-w-0 overflow-hidden">
+                          <div className="font-medium text-foreground text-xs truncate sm:text-sm">{crypto.name}</div>
+                          <div className="text-xs text-muted-foreground font-semibold truncate">{crypto.symbol.toUpperCase()}</div>
                         </div>
                       </div>
                     </td>

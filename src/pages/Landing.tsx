@@ -140,8 +140,8 @@ const Landing = () => {
       <main className={`relative z-10 flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6 md:py-20 lg:py-28 xl:py-32${
         isNativeApp ? ' main-content' : ''
       }`}>
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 backdrop-blur-sm sm:mb-8 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5">
-          <Sparkles className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
+        <div className="mb-6 inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 backdrop-blur-sm sm:mb-8 sm:px-5 sm:py-2 lg:px-6 lg:py-2.5 w-auto">
+          <Sparkles className="h-3 w-3 text-primary sm:h-4 sm:w-4 flex-shrink-0" />
           <span className="text-xs text-primary sm:text-sm lg:text-base">{t("landing.heroTagline")}</span>
         </div>
 

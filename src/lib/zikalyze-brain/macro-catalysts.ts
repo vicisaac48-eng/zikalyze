@@ -54,14 +54,14 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
   const month = now.getMonth();
   const dayOfWeek = now.getDay();
 
-  // FOMC MEETINGS 2025-2026
+  // FOMC MEETINGS 2025-2026 (Official Fed schedule - announcement on 2nd day)
   const fomcDates = [
     new Date(2025, 0, 29), new Date(2025, 2, 19), new Date(2025, 4, 7),
     new Date(2025, 5, 18), new Date(2025, 6, 30), new Date(2025, 8, 17),
-    new Date(2025, 10, 5), new Date(2025, 11, 17),
-    new Date(2026, 0, 28), new Date(2026, 2, 18), new Date(2026, 4, 6),
+    new Date(2025, 9, 29), new Date(2025, 11, 10),  // Oct 29, Dec 10 (UPDATED)
+    new Date(2026, 0, 28), new Date(2026, 2, 18), new Date(2026, 3, 29),  // Apr 29 (UPDATED)
     new Date(2026, 5, 17), new Date(2026, 6, 29), new Date(2026, 8, 16),
-    new Date(2026, 10, 4), new Date(2026, 11, 16),
+    new Date(2026, 9, 28), new Date(2026, 11, 9),  // Oct 28, Dec 9 (UPDATED)
   ];
 
   const nextFOMC = fomcDates.find(d => getDaysUntil(now, d) >= 0);
@@ -84,16 +84,18 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
     }
   }
 
-  // CPI RELEASE DATES 2025-2026
+  // CPI RELEASE DATES 2025-2026 (Official BLS schedule)
   const cpiDates = [
-    new Date(2025, 0, 15), new Date(2025, 1, 12), new Date(2025, 2, 12),
-    new Date(2025, 3, 10), new Date(2025, 4, 13), new Date(2025, 5, 11),
-    new Date(2025, 6, 11), new Date(2025, 7, 12), new Date(2025, 8, 10),
-    new Date(2025, 9, 14), new Date(2025, 10, 13), new Date(2025, 11, 10),
-    new Date(2026, 0, 14), new Date(2026, 1, 11), new Date(2026, 2, 11),
-    new Date(2026, 3, 14), new Date(2026, 4, 12), new Date(2026, 5, 10),
-    new Date(2026, 6, 14), new Date(2026, 7, 12), new Date(2026, 8, 16),
-    new Date(2026, 9, 13), new Date(2026, 10, 12), new Date(2026, 11, 9),
+    // 2025
+    new Date(2025, 1, 12), new Date(2025, 2, 12), new Date(2025, 3, 10),
+    new Date(2025, 4, 13), new Date(2025, 5, 11), new Date(2025, 6, 15),  // Jul 15 UPDATED
+    new Date(2025, 7, 12), new Date(2025, 8, 11), new Date(2025, 9, 24),  // Oct 24 UPDATED  
+    new Date(2025, 10, 13), new Date(2025, 11, 10),
+    // 2026
+    new Date(2026, 0, 13), new Date(2026, 1, 11), new Date(2026, 2, 11),
+    new Date(2026, 3, 10), new Date(2026, 4, 12), new Date(2026, 5, 10),  // Apr 10 UPDATED
+    new Date(2026, 6, 14), new Date(2026, 7, 12), new Date(2026, 8, 11),
+    new Date(2026, 9, 14), new Date(2026, 10, 10), new Date(2026, 11, 10),  // Nov 10, Dec 10 UPDATED
   ];
 
   const nextCPI = cpiDates.find(d => getDaysUntil(now, d) >= 0);
