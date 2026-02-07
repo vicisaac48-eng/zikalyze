@@ -140,76 +140,18 @@ All colors MUST be HSL.
     color-scheme: light;
   }
 
-  /* Android native app: Prevent horizontal body movement for native app feel
-     Only allow vertical scrolling (pan-y) - like WhatsApp, Instagram, etc.
-     The .android-native class is added in main.tsx when running on Capacitor Android
-
-     CRITICAL: Only ONE element should be the scroll container (body).
-     Nested overflow-y: auto creates competing scroll containers that break Android WebView scrolling. */
+  /* Android native app: Simple scroll fix for body scrolling
+     The .android-native class is added in main.tsx when running on Capacitor Android */
   html.android-native {
-    /* CRITICAL: Remove scroll-behavior smooth - it breaks touch scrolling on Android WebView */
+    /* Remove smooth scroll - it can interfere with touch scrolling on Android */
     scroll-behavior: auto !important;
-    /* Prevent any horizontal overflow on the main page */
-    overflow-x: hidden;
-    /* Let body be the scroll container - html should not scroll independently */
-    overflow-y: visible !important;
-    /* Prevent html from creating its own scroll context */
-    height: 100%;
   }
 
   html.android-native body {
-    /* BODY IS THE SINGLE SCROLL CONTAINER ON ANDROID */
-    /* Prevent horizontal scrolling on body */
-    overflow-x: hidden;
-    /* Body is the main scroll container - CRITICAL for Android WebView */
-    overflow-y: scroll !important;
-    /* Ensure body doesn't extend beyond viewport width */
-    max-width: 100vw;
-    /* Full viewport height - content will overflow and scroll */
-    min-height: 100%;
-    height: auto;
-    /* Only allow vertical scrolling - no pinch-zoom for native app feel */
-    /* Combined with viewport meta tag user-scalable=no for complete zoom prevention */
-    touch-action: pan-y;
-    /* Enable momentum scrolling on Android */
+    /* Enable body scrolling on Android */
+    overflow-y: auto !important;
+    /* Enable momentum scrolling */
     -webkit-overflow-scrolling: touch;
-    /* Ensure consistent overscroll behavior - prevent scroll getting stuck */
-    overscroll-behavior-y: contain;
-    /* Force hardware acceleration for smoother scrolling */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  html.android-native #root {
-    /* #root should NOT be a scroll container - just a layout wrapper */
-    overflow: visible;
-    /* Ensure root doesn't extend beyond viewport width */
-    max-width: 100vw;
-    /* Let content determine height - no scroll here */
-    min-height: auto;
-    height: auto;
-    /* Inherit touch-action from body */
-    touch-action: inherit;
-  }
-
-  /* Android page containers - should NOT create separate scroll containers */
-  html.android-native .min-h-screen {
-    /* Let content flow naturally - body handles scrolling */
-    overflow: visible;
-    /* Inherit touch-action from body - CRITICAL for smooth scrolling */
-    touch-action: inherit;
-    /* Ensure touch events work properly on Android WebView */
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Allow horizontal scrolling in specific containers with overflow-x-auto */
-  /* This ensures crypto card ticker and other horizontal scroll areas work on Android */
-  html.android-native .overflow-x-auto,
-  html.android-native [class*="overflow-x-auto"] {
-    /* Re-enable horizontal panning for scrollable containers */
-    touch-action: pan-x pan-y;
-    /* Ensure overflow-x works */
-    overflow-x: auto !important;
   }
 
   body {
@@ -225,24 +167,6 @@ All colors MUST be HSL.
     -webkit-overflow-scrolling: touch;
     /* Safe area padding for Android status bar / iOS notch */
     padding-top: env(safe-area-inset-top, 0px);
-  }
-
-  /* Status bar overlay - masks content that scrolls into the status bar area on Android */
-  /* This is how native apps like WhatsApp prevent content from being visible in the status bar area */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    /* Height matches the safe area inset (status bar height) */
-    height: env(safe-area-inset-top, 0px);
-    /* Same background color as the app */
-    background-color: hsl(var(--background));
-    /* Above everything including the header (z-index: 1000) */
-    z-index: 9999;
-    /* Prevent any interaction with this overlay */
-    pointer-events: none;
   }
 
   /* Ensure root element fills viewport */
@@ -262,17 +186,6 @@ All colors MUST be HSL.
     /* Use will-change for hardware acceleration instead of transform */
     /* This doesn't create a new containing block like transform does */
     will-change: scroll-position;
-  }
-
-  /* Android-specific main content - should NOT be a scroll container */
-  html.android-native main {
-    /* Inherit touch-action from body - body is the single scroll controller */
-    touch-action: inherit;
-    /* Main element should NOT create its own scroll container - 
-       content scrolls via the body/window scroll */
-    overflow: visible;
-    /* Momentum scrolling for smooth Android experience */
-    -webkit-overflow-scrolling: touch;
   }
 
   /* Stable header for web - uses sticky positioning (default behavior) */
@@ -336,28 +249,6 @@ All colors MUST be HSL.
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     will-change: transform;
-  }
-
-  /* Android WebView: Ensure scrollable content isn't blocked by overlays */
-  html.android-native .overflow-x-auto {
-    /* Ensure proper stacking context for scrollable tables */
-    position: relative;
-    z-index: 1;
-    /* Enable touch interaction */
-    pointer-events: auto;
-  }
-
-  /* Android WebView: Main content area should be touchable */
-  html.android-native main {
-    /* Ensure main content is always touchable */
-    pointer-events: auto;
-  }
-
-  /* Android WebView: Overlay elements should properly handle pointer events */
-  html.android-native [role="dialog"],
-  html.android-native [data-state="open"] {
-    /* Dialog overlays need proper z-index */
-    z-index: 50;
   }
 }
 
@@ -719,23 +610,8 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for fixed header on Android/native apps */
-  /* Must use !important to override Tailwind padding utilities like p-3 */
   .main-content {
-    /* On Android, add safe-area-inset-top (status bar height) + header height */
-    /* calc() with env() fallback to 0 for web browsers */
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
-    /* Create stacking context below the fixed header without affecting positioning */
-    /* isolation: isolate creates a new stacking context with implicit z-index: 0 */
-    /* which keeps content below the fixed header (z-index: 1000) */
-    isolation: isolate;
-    /* Ensure content stays below the fixed header by setting position relative with z-index 0 */
-    position: relative;
-    z-index: 0;
-  }
-
-  @media (min-width: 640px) {
-    .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
-    }
+    /* Add top padding for status bar on native apps */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
