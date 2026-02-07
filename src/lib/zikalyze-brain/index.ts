@@ -979,9 +979,10 @@ ${getRiskWarning(bias)}
 ${historicalContext}
 ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above avg (${volumeSpike.magnitude}) [Spot via aggregator]\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} baseline (${(volume / avgVolume).toFixed(2)}x)
 😊 Fear & Greed: ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
-🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)} - Net: ${onChainMetrics.whaleActivity.netFlow}
-🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
-${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
+🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)} - Net: ${onChainMetrics.whaleActivity.netFlow}${!hasRealOnChain ? ' ⚡' : ''}
+🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})${!hasRealOnChain ? ' ⚡' : ''}
+${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}${!hasRealOnChain ? ' ⚡' : ''}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
+${!hasRealOnChain ? '⚡ On-chain metrics estimated from price action (not live blockchain data)' : ''}
 ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
 📊 Chart Data: ${getCandleCountStatus(hasRealChartData, candleCount)}
 
