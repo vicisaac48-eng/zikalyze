@@ -9,9 +9,14 @@ import { Capacitor } from "@capacitor/core";
 // Initialize Vercel Web Analytics
 initializeAnalytics();
 
-// Disable zoom on Android native app only (to feel like a native app)
-// Web version keeps zoom enabled for accessibility
+// Android native app optimizations
+// - Disable zoom to feel like a native app (web version keeps zoom for accessibility)
+// - Add android-native class to html for Android-specific CSS rules (vertical-only scrolling)
 if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+  // Add android-native class to html element for CSS targeting
+  document.documentElement.classList.add('android-native');
+  
+  // Disable zoom on Android native app
   const viewport = document.querySelector('meta[name="viewport"]');
   if (viewport) {
     viewport.setAttribute('content', 
