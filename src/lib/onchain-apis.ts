@@ -16,7 +16,7 @@ export interface OnChainAPIConfig {
     mempool?: string;
     price?: string;
   };
-  parser: (data: Record<string, any>) => Partial<OnChainResult>;
+  parser: (data: Record<string, unknown>) => Partial<OnChainResult>;
 }
 
 export interface OnChainResult {
@@ -319,7 +319,7 @@ export async function fetchOnChainData(symbol: string): Promise<Partial<OnChainR
     return fetchBlockchairData(upperSymbol);
   }
 
-  const results: Record<string, any> = {};
+  const results: Record<string, unknown> = {};
   const fetchPromises: Promise<void>[] = [];
 
   // Fetch all endpoints in parallel
@@ -387,10 +387,10 @@ export async function fetchBlockchairData(symbol: string): Promise<Partial<OnCha
 }
 
 // Fast price APIs for specific chains
-export const FAST_PRICE_APIS: Record<string, { url: string; parser: (data: any) => number | null }> = {
+export const FAST_PRICE_APIS: Record<string, { url: string; parser: (data: Record<string, unknown>) => number | null }> = {
   KAS: {
     url: 'https://api.kaspa.org/info/price',
-    parser: (data) => data?.price || null,
+    parser: (data) => (data?.price as number) || null,
   },
 };
 

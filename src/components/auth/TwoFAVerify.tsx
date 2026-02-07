@@ -32,8 +32,9 @@ const TwoFAVerify = ({ onVerify, onBackupVerify, onCancel, isLoading = false }: 
       if (!isValid) {
         setError("Invalid verification code. Please try again.");
       }
-    } catch (err: any) {
-      setError(err.message || "Verification failed");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Verification failed";
+      setError(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -53,8 +54,9 @@ const TwoFAVerify = ({ onVerify, onBackupVerify, onCancel, isLoading = false }: 
       if (!result.valid) {
         setError("Invalid backup code. Please try again.");
       }
-    } catch (err: any) {
-      setError(err.message || "Verification failed");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Verification failed";
+      setError(errorMessage);
     } finally {
       setProcessing(false);
     }

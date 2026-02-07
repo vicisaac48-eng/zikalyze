@@ -26,8 +26,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     onTimeout: handleTimeout,
   });
 
+  // Redirect to login if not authenticated (no demo mode)
   useEffect(() => {
     if (!loading && !user) {
+      toast.info("Please sign in to access the dashboard");
       navigate("/auth");
     }
   }, [user, loading, navigate]);
@@ -50,13 +52,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) return null;
+  // Only allow authenticated users - no demo mode
+  if (!user) {
+    return null;
+  }
 
   return (
     <>
       {children}
       <SessionTimeoutModal
-        open={showWarning}
+        open={showWarning && !!user}
         remainingTime={remainingTime}
         onExtend={extendSession}
       />

@@ -66,7 +66,7 @@ export const PasswordStrengthMeter = ({ password, showFeedback = true }: Passwor
           <RequirementItem met={/[A-Z]/.test(password)} text="Uppercase" />
           <RequirementItem met={/[a-z]/.test(password)} text="Lowercase" />
           <RequirementItem met={/\d/.test(password)} text="Number" />
-          <RequirementItem met={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)} text="Special char" />
+          <RequirementItem met={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)} text="Special char" />
           <RequirementItem met={strength.isValid} text="Not common" />
         </div>
       )}

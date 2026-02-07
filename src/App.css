@@ -8,14 +8,9 @@
 .logo {
   height: 6em;
   padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
 }
 .logo:hover {
-  filter: none;
-}
-.logo.react:hover {
-  filter: none;
+  opacity: 0.9;
 }
 
 @keyframes logo-spin {

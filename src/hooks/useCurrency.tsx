@@ -167,7 +167,7 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
     // Very long delay - 8 seconds to ensure completely out of audit window
     const timeoutId = setTimeout(() => {
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => triggerFetch(), { timeout: 15000 });
+        (window as { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => void }).requestIdleCallback?.(() => triggerFetch(), { timeout: 15000 });
       } else {
         triggerFetch();
       }
@@ -197,6 +197,11 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   }, [currency, rates]);
 
   const formatPrice = useCallback((usdPrice: number, decimals?: number): string => {
+    // Handle loading/invalid price states
+    if (usdPrice === 0 || usdPrice === null || usdPrice === undefined || isNaN(usdPrice)) {
+      return "---";
+    }
+    
     const converted = convertPrice(usdPrice);
     const sym = CURRENCY_SYMBOLS[currency] || "$";
     

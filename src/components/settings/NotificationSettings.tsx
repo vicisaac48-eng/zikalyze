@@ -15,12 +15,11 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useSettings, NotificationAlertSettings } from "@/hooks/useSettings";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const NotificationSettings = () => {
   const { settings, saveSettings } = useSettings();
-  const { toast } = useToast();
   
   // Local state for editing
   const [localSettings, setLocalSettings] = useState<NotificationAlertSettings>(
@@ -55,10 +54,7 @@ const NotificationSettings = () => {
 
   const handleSave = () => {
     saveSettings({ notificationAlerts: localSettings });
-    toast({
-      title: "Notification settings saved",
-      description: "Your alert preferences have been updated.",
-    });
+    toast.success("Notification settings saved");
   };
 
   const handleReset = () => {
@@ -76,10 +72,7 @@ const NotificationSettings = () => {
     };
     setLocalSettings(defaults);
     saveSettings({ notificationAlerts: defaults });
-    toast({
-      title: "Settings reset",
-      description: "Notification settings restored to defaults.",
-    });
+    toast.info("Notification settings restored to defaults");
   };
 
   const alertTypes = [

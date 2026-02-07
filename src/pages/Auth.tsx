@@ -1,310 +1,240 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, Mail, Lock, ArrowRight, Loader2, CheckCircle2, ShieldAlert, Clock } from "lucide-react";
+import { TrendingUp, Key, User, Lock, Loader2, Copy, CheckCircle2, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { useRateLimit } from "@/hooks/useRateLimit";
-import { usePasswordStrength } from "@/hooks/usePasswordStrength";
-import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
-import { supabase } from "@/integrations/supabase/client";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import { formatPrivateKey } from "@/lib/crypto";
 
-import { z } from "zod";
-
+/**
+ * Auth page with Web3-style authentication
+ * 
+ * Features:
+ * - Sign up: Enter username and password to generate a unique private key
+ * - Sign in: Use private key to login
+ * - Key recovery: Recover private key using username and password
+ */
 const Auth = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { t } = useTranslation();
-  const { user, loading: authLoading, signIn, signUp, resetPassword } = useAuth();
-  const { checkRateLimit, recordLoginAttempt, formatRetryAfter } = useRateLimit();
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { signUp, signInWithPrivateKey, signInWithPassword, recoverPrivateKey, isSignedIn, loading: authLoading } = useAuth();
+
+  // Form state
+  const [activeTab, setActiveTab] = useState<"signup" | "login" | "recover">("signup");
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [resetRateLimitError, setResetRateLimitError] = useState<{ message: string; retryAfter: number } | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
   
-  const passwordStrength = usePasswordStrength(password);
+  // Sign up form
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
   
-  const emailSchema = z.string().email(t("validation.invalidEmail"));
-  const passwordSchema = z.string().min(6, t("validation.passwordMinLength"));
-  const strongPasswordSchema = z.string()
-    .min(12, "Password must be at least 12 characters")
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/\d/, "Password must contain a number")
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, "Password must contain a special character");
+  // Generated private key (shown after signup)
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [keyCopied, setKeyCopied] = useState(false);
+  
+  // Login form
+  const [loginPrivateKey, setLoginPrivateKey] = useState("");
+  const [showLoginKey, setShowLoginKey] = useState(false);
+  
+  // Alternative login with password
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
+  
+  // Recovery form
+  const [recoverUsername, setRecoverUsername] = useState("");
+  const [recoverPassword, setRecoverPassword] = useState("");
+  const [recoveredKey, setRecoveredKey] = useState<string | null>(null);
+  const [showRecoverPassword, setShowRecoverPassword] = useState(false);
+  const [recoveredKeyCopied, setRecoveredKeyCopied] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already signed in
   useEffect(() => {
-    if (user && !authLoading) {
+    if (!authLoading && isSignedIn) {
       navigate("/dashboard");
     }
-  }, [user, authLoading, navigate]);
+  }, [isSignedIn, authLoading, navigate]);
 
-  const validateForm = (forSignUp: boolean = false): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
-    }
-    
-    // Use strong password validation for signup
-    if (forSignUp) {
-      if (!passwordStrength.isValid) {
-        newErrors.password = "Password doesn't meet security requirements";
-      }
-    } else {
-      const passwordResult = passwordSchema.safeParse(password);
-      if (!passwordResult.success) {
-        newErrors.password = passwordResult.error.errors[0].message;
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  // Handle sign up
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
     
-    setRateLimitError(null);
-    setIsLoading(true);
-    
-    try {
-      // Check rate limit before attempting sign in
-      const rateLimitResult = await checkRateLimit(email);
-      if (!rateLimitResult.allowed) {
-        setIsLoading(false);
-        setRateLimitError(
-          t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) })
-        );
-        toast({
-          title: t("auth.tooManyAttempts"),
-          description: t("auth.tryAgainIn", { time: formatRetryAfter(rateLimitResult.retry_after) }),
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        // Record failed attempt
-        await recordLoginAttempt(email, false);
-        setIsLoading(false);
-        
-        const errorMessage = error.message || error.toString() || "An error occurred during sign in";
-        if (errorMessage.includes("Invalid login credentials")) {
-          const remainingAttempts = rateLimitResult.max_attempts - rateLimitResult.attempts - 1;
-          toast({
-            title: t("auth.invalidCredentials"),
-            description: remainingAttempts > 0 
-              ? t("auth.checkCredentials", { attempts: remainingAttempts })
-              : t("auth.checkCredentials", { attempts: 0 }),
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: t("auth.signInFailed"),
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // Record successful attempt (clears failed attempts)
-      await recordLoginAttempt(email, true);
-      setIsLoading(false);
-
-      toast({
-        title: t("auth.welcomeBack"),
-        description: t("auth.signInSuccess"),
-      });
-      navigate("/dashboard");
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.signInFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const formatWaitTime = (seconds: number): string => {
-    if (seconds >= 60) {
-      const minutes = Math.ceil(seconds / 60);
-      return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-    }
-    return `${seconds} seconds`;
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetRateLimitError(null);
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      setErrors({ email: emailResult.error.errors[0].message });
+    if (signupPassword !== confirmPassword) {
+      toast.error("Passwords don't match - Please make sure your passwords match");
       return;
     }
     
     setIsLoading(true);
     
-    try {
-      const { error, rateLimited, retryAfter } = await resetPassword(email);
-      setIsLoading(false);
-
-      if (rateLimited && retryAfter) {
-        setResetRateLimitError({
-          message: t("auth.tooManyResetRequests"),
-          retryAfter
-        });
-        return;
-      }
-
-      if (error) {
-        const errorMessage = error.message || error.toString() || "An error occurred";
-        toast({
-          title: t("auth.resetFailed"),
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: t("auth.checkEmailForReset"),
-        description: t("auth.resetLinkSent"),
-      });
-      setShowForgotPassword(false);
-      setResetRateLimitError(null);
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.resetFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
+    const result = await signUp(signupUsername, signupPassword);
+    
+    setIsLoading(false);
+    
+    if (result.error) {
+      toast.error(`Sign up failed: ${result.error.message}`);
+      return;
+    }
+    
+    // Show the generated private key
+    if (result.privateKey) {
+      setGeneratedKey(result.privateKey);
+      toast.success("Account created! Save your private key securely. You'll need it to login.");
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  // Handle login with private key
+  const handleLoginWithKey = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm(true)) return;
     
     setIsLoading(true);
     
-    try {
-      const { error } = await signUp(email, password);
-
-      if (error) {
-        setIsLoading(false);
-        const errorMessage = error.message || error.toString() || "An error occurred during sign up";
-        if (errorMessage.includes("already registered") || errorMessage.includes("User already registered")) {
-          toast({
-            title: t("auth.accountExists"),
-            description: t("auth.accountExistsDesc"),
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: t("auth.signUpFailed"),
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // Send welcome email directly via edge function
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
-          body: { email }
-        });
-        
-        if (emailError) {
-          console.error('Failed to send welcome email:', emailError);
-          // Don't block signup if email fails
-        } else {
-          console.log('Welcome email sent successfully');
-        }
-      } catch (emailErr) {
-        console.error('Error sending welcome email:', emailErr);
-      }
-      
-      setIsLoading(false);
-
-      // Show success toast with email confirmation
-      toast({
-        title: t("auth.accountCreated"),
-        description: t("auth.welcomeEmailSent"),
-      });
-
-      // Show email confirmation screen
-      setShowEmailConfirmation(true);
-    } catch (err) {
-      setIsLoading(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.signUpFailed"),
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleResendVerification = async () => {
-    setIsResending(true);
+    const result = await signInWithPrivateKey(loginPrivateKey);
     
-    try {
-      const { error } = await signUp(email, password);
-      setIsResending(false);
+    setIsLoading(false);
+    
+    if (result.error) {
+      toast.error(`Login failed: ${result.error.message}`);
+      return;
+    }
+    
+    toast.success("Welcome back! You've been successfully signed in.");
+    
+    navigate("/dashboard");
+  };
 
-      if (error) {
-        const errorMessage = error.message || error.toString() || "An error occurred";
-        toast({
-          title: t("auth.failedToResend"),
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
+  // Handle login with password
+  const handleLoginWithPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setIsLoading(true);
+    
+    const result = await signInWithPassword(loginUsername, loginPassword);
+    
+    setIsLoading(false);
+    
+    if (result.error) {
+      toast.error(`Login failed: ${result.error.message}`);
+      return;
+    }
+    
+    toast.success("Welcome back! You've been successfully signed in.");
+    
+    navigate("/dashboard");
+  };
 
-      toast({
-        title: t("auth.emailSent"),
-        description: t("auth.anotherVerificationSent"),
-      });
-    } catch (err) {
-      setIsResending(false);
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      toast({
-        title: t("auth.failedToResend"),
-        description: errorMessage,
-        variant: "destructive",
-      });
+  // Handle key recovery
+  const handleRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setIsLoading(true);
+    
+    const result = await recoverPrivateKey(recoverUsername, recoverPassword);
+    
+    setIsLoading(false);
+    
+    if (result.error) {
+      toast.error(`Recovery failed: ${result.error.message}`);
+      return;
+    }
+    
+    if (result.privateKey) {
+      setRecoveredKey(result.privateKey);
+      toast.success("Key recovered! Your private key has been retrieved.");
     }
   };
 
-  // Redirect immediately if already logged in (no blocking loading state)
-  if (user) {
-    return null;
+  // Copy key to clipboard
+  const copyKey = async (key: string, setCopied: (v: boolean) => void) => {
+    try {
+      await navigator.clipboard.writeText(formatPrivateKey(key));
+      setCopied(true);
+      toast.success("Private key copied to clipboard");
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      toast.error("Copy failed - Please select and copy the key manually, or check your browser permissions.");
+    }
+  };
+
+  // Proceed to login after saving key
+  const proceedToLogin = () => {
+    setLoginPrivateKey(generatedKey || "");
+    setGeneratedKey(null);
+    setActiveTab("login");
+  };
+
+  // Show key display after signup
+  if (generatedKey) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        {/* Background effects */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }} />
+        </div>
+
+        <div className="relative z-10 w-full max-w-md">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
+              <TrendingUp className="h-7 w-7 text-primary-foreground" />
+            </div>
+            <span className="text-3xl font-bold text-foreground">Zikalyze</span>
+          </div>
+
+          {/* Key Display Card */}
+          <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
+            <div className="flex justify-center mb-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+                <CheckCircle2 className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-center mb-2">Account Created!</h2>
+            <p className="text-muted-foreground text-center mb-6">
+              Save your private key securely. You'll need it to login.
+            </p>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Your Private Key</Label>
+                <div className="relative">
+                  <div className="p-4 rounded-lg bg-secondary/50 border border-border font-mono text-sm break-all">
+                    {formatPrivateKey(generatedKey)}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => copyKey(generatedKey, setKeyCopied)}
+                  >
+                    {keyCopied ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-warning">
+                  ⚠️ Store this key securely! You can also recover it using your username and password from the "Recover" tab.
+                </p>
+              </div>
+
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90"
+                onClick={proceedToLogin}
+              >
+                I've Saved My Key - Continue to Login <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -326,149 +256,280 @@ const Auth = () => {
 
         {/* Auth Card */}
         <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "signup" | "login" | "recover")} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
+              <TabsTrigger value="login">{t("auth.signIn")}</TabsTrigger>
+              <TabsTrigger value="recover">Recover</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="signin">
-              {rateLimitError && (
-                <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-2">
-                  <ShieldAlert className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-sm text-destructive">{rateLimitError}</p>
-                </div>
-              )}
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">{t("auth.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                        setRateLimitError(null);
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">{t("auth.password")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder={t("auth.enterPassword")}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {t("auth.forgotPassword")}
-                  </button>
-                </div>
-
-
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      {t("auth.signIn")} <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-
+            {/* Sign Up Tab */}
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">{t("auth.email")}</Label>
+                  <Label htmlFor="signup-username">Username</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                      }}
+                      id="signup-username"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={signupUsername}
+                      onChange={(e) => setSignupUsername(e.target.value)}
                       className="pl-10"
+                      required
+                      minLength={3}
                     />
                   </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t("auth.password")}</Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-password"
-                      type="password"
-                      placeholder={t("auth.createPassword")}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                      }}
-                      className="pl-10"
+                      type={showSignupPassword ? "text" : "password"}
+                      placeholder="Create a password (min 8 characters)"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      required
+                      minLength={8}
                     />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    >
+                      {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <PasswordStrengthMeter password={password} />
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90"
-                  disabled={isLoading}
-                >
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirm-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <>
-                      {t("auth.createAccount")} <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
+                    <>Generate Private Key</>
                   )}
                 </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  A unique private key will be generated from your username. Save it securely!
+                </p>
               </form>
+            </TabsContent>
+
+            {/* Login Tab */}
+            <TabsContent value="login">
+              {!showPasswordLogin ? (
+                <form onSubmit={handleLoginWithKey} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-key">Private Key</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-key"
+                        type={showLoginKey ? "text" : "password"}
+                        placeholder="Enter your private key"
+                        value={loginPrivateKey}
+                        onChange={(e) => setLoginPrivateKey(e.target.value)}
+                        className="pl-10 pr-10 font-mono"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowLoginKey(!showLoginKey)}
+                      >
+                        {showLoginKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>Sign In with Private Key</>
+                    )}
+                  </Button>
+
+                  <button
+                    type="button"
+                    className="w-full text-sm text-muted-foreground hover:text-primary"
+                    onClick={() => setShowPasswordLogin(true)}
+                  >
+                    Or sign in with username & password
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleLoginWithPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-username">Username</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-username"
+                        type="text"
+                        placeholder="Enter your username"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>Sign In</>
+                    )}
+                  </Button>
+
+                  <button
+                    type="button"
+                    className="w-full text-sm text-muted-foreground hover:text-primary"
+                    onClick={() => setShowPasswordLogin(false)}
+                  >
+                    Or sign in with private key
+                  </button>
+                </form>
+              )}
+            </TabsContent>
+
+            {/* Recovery Tab */}
+            <TabsContent value="recover">
+              {!recoveredKey ? (
+                <form onSubmit={handleRecover} className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Forgot your private key? Enter your username and password to recover it.
+                  </p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recover-username">Username</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="recover-username"
+                        type="text"
+                        placeholder="Enter your username"
+                        value={recoverUsername}
+                        onChange={(e) => setRecoverUsername(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recover-password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="recover-password"
+                        type={showRecoverPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={recoverPassword}
+                        onChange={(e) => setRecoverPassword(e.target.value)}
+                        className="pl-10 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowRecoverPassword(!showRecoverPassword)}
+                      >
+                        {showRecoverPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>Recover Private Key</>
+                    )}
+                  </Button>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-center mb-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/20">
+                      <CheckCircle2 className="h-6 w-6 text-success" />
+                    </div>
+                  </div>
+                  
+                  <p className="text-center text-muted-foreground mb-4">
+                    Your private key has been recovered:
+                  </p>
+
+                  <div className="relative">
+                    <div className="p-4 rounded-lg bg-secondary/50 border border-border font-mono text-sm break-all">
+                      {formatPrivateKey(recoveredKey)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => copyKey(recoveredKey, setRecoveredKeyCopied)}
+                    >
+                      {recoveredKeyCopied ? (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      setLoginPrivateKey(recoveredKey);
+                      setRecoveredKey(null);
+                      setActiveTab("login");
+                    }}
+                  >
+                    Use This Key to Login
+                  </Button>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
@@ -476,137 +537,6 @@ const Auth = () => {
             {t("auth.termsAgreement")}
           </p>
         </div>
-
-        {/* Email Confirmation Screen */}
-        {showEmailConfirmation && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl w-full max-w-md mx-4 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                  <CheckCircle2 className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold mb-2">{t("auth.checkEmail")}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t("auth.verificationSent")}
-              </p>
-              <p className="font-medium text-foreground mb-6 break-all">{email}</p>
-              <p className="text-sm text-muted-foreground mb-6">
-                {t("auth.verificationExpiry")}
-              </p>
-              <div className="space-y-3">
-                <Button
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={handleResendVerification}
-                  disabled={isResending}
-                >
-                  {isResending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t("auth.sending")}
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      {t("auth.resendVerification")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setShowEmailConfirmation(false);
-                    setEmail("");
-                    setPassword("");
-                  }}
-                >
-                  {t("auth.backToSignIn")}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  {t("auth.checkSpam")}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Forgot Password Modal */}
-        {showForgotPassword && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl w-full max-w-md mx-4">
-              <h3 className="text-xl font-bold mb-2">{t("auth.resetPassword")}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t("auth.resetPasswordDesc")}
-              </p>
-              
-              {/* Rate Limit Warning */}
-              {resetRateLimitError && (
-                <div className="mb-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-warning">
-                        {resetRateLimitError.message}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {t("auth.tryAgainIn", { time: formatWaitTime(resetRateLimitError.retryAfter) })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reset-email">{t("auth.email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                        setResetRateLimitError(null);
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowForgotPassword(false);
-                      setResetRateLimitError(null);
-                    }}
-                  >
-                    {t("common.cancel")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={isLoading || !!resetRateLimitError}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t("auth.sendResetLink")
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

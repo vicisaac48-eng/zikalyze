@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchWithRetry, safeFetch } from "@/lib/fetchWithRetry";
 
+// Global singleton state to prevent multiple WebSocket connections
+// This ensures only one set of WebSocket connections is established
+// regardless of how many components call useCryptoPrices()
+let globalWebSocketsInitialized = false;
+let globalPricesSubscribers = 0;
+let globalPricesFetched = false;
+
 export interface CryptoPrice {
   id: string;
   symbol: string;
@@ -213,14 +220,21 @@ const COINGECKO_TO_COINCAP: Record<string, string> = {
 // No caching - always fetch fresh data from WebSocket
 // CoinGecko is only used for initial metadata (images, names)
 
-// Fallback prices are placeholders - will be replaced with live CoinGecko data
-// These are only used for initial render before API data loads
+// Fallback prices with realistic values - will be replaced with live data
+// These provide a better UX than showing "---" while WebSocket connects
 const FALLBACK_CRYPTOS: CryptoPrice[] = [
-  { id: "bitcoin", symbol: "btc", name: "Bitcoin", image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 1, circulating_supply: 19600000, lastUpdate: Date.now(), source: "Loading" },
-  { id: "ethereum", symbol: "eth", name: "Ethereum", image: "https://assets.coingecko.com/coins/images/279/large/ethereum.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 2, circulating_supply: 120000000, lastUpdate: Date.now(), source: "Loading" },
-  { id: "binancecoin", symbol: "bnb", name: "BNB", image: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 3, circulating_supply: 145000000, lastUpdate: Date.now(), source: "Loading" },
-  { id: "solana", symbol: "sol", name: "Solana", image: "https://assets.coingecko.com/coins/images/4128/large/solana.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 4, circulating_supply: 470000000, lastUpdate: Date.now(), source: "Loading" },
-  { id: "ripple", symbol: "xrp", name: "XRP", image: "https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png", current_price: 0, price_change_percentage_24h: 0, high_24h: 0, low_24h: 0, total_volume: 0, market_cap: 0, market_cap_rank: 5, circulating_supply: 57000000000, lastUpdate: Date.now(), source: "Loading" },
+  { id: "bitcoin", symbol: "btc", name: "Bitcoin", image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png", current_price: 83000, price_change_percentage_24h: 0.5, high_24h: 84000, low_24h: 82000, total_volume: 25000000000, market_cap: 1650000000000, market_cap_rank: 1, circulating_supply: 19600000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "ethereum", symbol: "eth", name: "Ethereum", image: "https://assets.coingecko.com/coins/images/279/large/ethereum.png", current_price: 2700, price_change_percentage_24h: -1.2, high_24h: 2750, low_24h: 2650, total_volume: 12000000000, market_cap: 325000000000, market_cap_rank: 2, circulating_supply: 120000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "binancecoin", symbol: "bnb", name: "BNB", image: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png", current_price: 580, price_change_percentage_24h: 0.3, high_24h: 590, low_24h: 575, total_volume: 1500000000, market_cap: 84000000000, market_cap_rank: 3, circulating_supply: 145000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "solana", symbol: "sol", name: "Solana", image: "https://assets.coingecko.com/coins/images/4128/large/solana.png", current_price: 117, price_change_percentage_24h: -0.8, high_24h: 120, low_24h: 115, total_volume: 3000000000, market_cap: 55000000000, market_cap_rank: 4, circulating_supply: 470000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "ripple", symbol: "xrp", name: "XRP", image: "https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png", current_price: 1.75, price_change_percentage_24h: -0.5, high_24h: 1.80, low_24h: 1.70, total_volume: 2500000000, market_cap: 100000000000, market_cap_rank: 5, circulating_supply: 57000000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "dogecoin", symbol: "doge", name: "Dogecoin", image: "https://assets.coingecko.com/coins/images/5/large/dogecoin.png", current_price: 0.18, price_change_percentage_24h: 1.2, high_24h: 0.19, low_24h: 0.17, total_volume: 800000000, market_cap: 26000000000, market_cap_rank: 6, circulating_supply: 144000000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "kaspa", symbol: "kas", name: "Kaspa", image: "https://assets.coingecko.com/coins/images/25751/large/kaspa-icon-exchanges.png", current_price: 0.085, price_change_percentage_24h: 2.5, high_24h: 0.088, low_24h: 0.082, total_volume: 100000000, market_cap: 2200000000, market_cap_rank: 30, circulating_supply: 26000000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "cardano", symbol: "ada", name: "Cardano", image: "https://assets.coingecko.com/coins/images/975/large/cardano.png", current_price: 0.65, price_change_percentage_24h: -0.3, high_24h: 0.67, low_24h: 0.63, total_volume: 400000000, market_cap: 23000000000, market_cap_rank: 8, circulating_supply: 35000000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "avalanche-2", symbol: "avax", name: "Avalanche", image: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png", current_price: 25, price_change_percentage_24h: 0.8, high_24h: 26, low_24h: 24, total_volume: 300000000, market_cap: 10000000000, market_cap_rank: 12, circulating_supply: 400000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "chainlink", symbol: "link", name: "Chainlink", image: "https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png", current_price: 15, price_change_percentage_24h: -0.6, high_24h: 15.5, low_24h: 14.5, total_volume: 400000000, market_cap: 9000000000, market_cap_rank: 14, circulating_supply: 600000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "polkadot", symbol: "dot", name: "Polkadot", image: "https://assets.coingecko.com/coins/images/12171/large/polkadot.png", current_price: 5.5, price_change_percentage_24h: 0.2, high_24h: 5.7, low_24h: 5.3, total_volume: 200000000, market_cap: 8000000000, market_cap_rank: 16, circulating_supply: 1450000000, lastUpdate: Date.now(), source: "Fallback" },
+  { id: "sui", symbol: "sui", name: "Sui", image: "https://assets.coingecko.com/coins/images/26375/large/sui_asset.jpeg", current_price: 3.2, price_change_percentage_24h: 1.5, high_24h: 3.3, low_24h: 3.1, total_volume: 500000000, market_cap: 10000000000, market_cap_rank: 11, circulating_supply: 3100000000, lastUpdate: Date.now(), source: "Fallback" },
 ];
 
 // Multi-exchange WebSocket endpoints - prioritize fastest and most reliable
@@ -279,7 +293,8 @@ const BYBIT_SYMBOLS: Record<string, string> = {
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
 export const useCryptoPrices = () => {
-  const [prices, setPrices] = useState<CryptoPrice[]>([]);
+  // Initialize with fallback prices for immediate display
+  const [prices, setPrices] = useState<CryptoPrice[]>(FALLBACK_CRYPTOS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectedExchanges, setConnectedExchanges] = useState<string[]>([]);
@@ -293,8 +308,14 @@ export const useCryptoPrices = () => {
   const coinbaseWsRef = useRef<WebSocket | null>(null);
   
   const reconnectTimeoutsRef = useRef<Record<string, number>>({});
-  const cryptoListRef = useRef<{ symbol: string; name: string; id: string }[]>([]);
-  const pricesRef = useRef<Map<string, CryptoPrice>>(new Map());
+  // Initialize cryptoListRef with fallback crypto symbols
+  const cryptoListRef = useRef<{ symbol: string; name: string; id: string }[]>(
+    FALLBACK_CRYPTOS.map(c => ({ symbol: c.symbol.toUpperCase(), name: c.name, id: c.id }))
+  );
+  // Initialize pricesRef with fallback prices
+  const pricesRef = useRef<Map<string, CryptoPrice>>(
+    new Map(FALLBACK_CRYPTOS.map(c => [c.symbol, c]))
+  );
   const lastUpdateTimeRef = useRef<Map<string, number>>(new Map());
   const exchangesConnectedRef = useRef(false);
   const pricesInitializedRef = useRef(false); // Track if prices have been initialized
@@ -347,7 +368,7 @@ export const useCryptoPrices = () => {
       if (coin.symbol === normalizedSymbol) {
         // Smart volume handling: WebSocket gives single-exchange volume which is always lower
         // than CoinGecko's aggregated multi-exchange volume
-        let finalUpdates = { ...updates };
+        const finalUpdates = { ...updates };
         
         if (updates.total_volume !== undefined && coin.total_volume > 0) {
           const volumeRatio = updates.total_volume / coin.total_volume;
@@ -451,9 +472,10 @@ export const useCryptoPrices = () => {
   }, []);
 
   const fetchPrices = useCallback(async () => {
-    // Prevent re-fetching if already initialized
-    if (pricesInitializedRef.current) return;
+    // Prevent re-fetching if already initialized (use both local ref and global flag)
+    if (pricesInitializedRef.current || globalPricesFetched) return;
     pricesInitializedRef.current = true;
+    globalPricesFetched = true;
     
     // PRIORITY 1: Load persisted live prices first (most recent data)
     // Since we only run once (pricesInitializedRef guards this), prices will be empty here
@@ -554,6 +576,26 @@ export const useCryptoPrices = () => {
         lastUpdate: Date.now(),
         source,
       }));
+      
+      // Merge fallback prices for coins not in the CoinGecko response
+      // This ensures DOGE, KAS, ADA, etc. always have prices
+      const symbolsInResponse = new Set(cryptoPrices.map(p => p.symbol.toLowerCase()));
+      FALLBACK_CRYPTOS.forEach(fallback => {
+        if (!symbolsInResponse.has(fallback.symbol.toLowerCase())) {
+          // Add fallback coin with its preset price
+          cryptoPrices.push({
+            ...fallback,
+            lastUpdate: Date.now(),
+            source: 'Fallback',
+          });
+          // Also add to cryptoListRef so WebSocket can update it
+          cryptoListRef.current.push({
+            symbol: fallback.symbol.toUpperCase(),
+            name: fallback.name,
+            id: fallback.id,
+          });
+        }
+      });
 
       cryptoPrices.forEach((p) => pricesRef.current.set(p.symbol, p));
       setPrices(cryptoPrices);
@@ -633,7 +675,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
     
     if (okxWsRef.current) {
-      try { okxWsRef.current.close(); } catch (e) {}
+      try { okxWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {
@@ -721,7 +763,7 @@ export const useCryptoPrices = () => {
 
     // Close existing connection
     if (binanceWsRef.current) {
-      try { binanceWsRef.current.close(); } catch (e) {}
+      try { binanceWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     const cryptoList = cryptoListRef.current;
@@ -820,7 +862,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
 
     if (bybitWsRef.current) {
-      try { bybitWsRef.current.close(); } catch (e) {}
+      try { bybitWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {
@@ -860,7 +902,7 @@ export const useCryptoPrices = () => {
               }, "Bybit");
             }
           }
-        } catch (e) {}
+        } catch { /* Ignore parse errors */ }
       };
       
       ws.onclose = () => {
@@ -892,7 +934,7 @@ export const useCryptoPrices = () => {
     if (cryptoListRef.current.length === 0) return;
     
     if (krakenWsRef.current) {
-      try { krakenWsRef.current.close(); } catch (e) {}
+      try { krakenWsRef.current.close(); } catch { /* Ignore close errors */ }
     }
 
     try {
@@ -1014,9 +1056,14 @@ export const useCryptoPrices = () => {
   }, [fetchPrices]);
 
   // Connect to multi-exchange WebSockets when crypto list is populated
+  // Uses global flag to prevent multiple hook instances from creating duplicate connections
   useEffect(() => {
+    globalPricesSubscribers++;
+    
     const checkAndConnect = () => {
-      if (cryptoListRef.current.length > 0 && !exchangesConnectedRef.current) {
+      // Use global flag to ensure only one set of WebSocket connections
+      if (cryptoListRef.current.length > 0 && !globalWebSocketsInitialized && !exchangesConnectedRef.current) {
+        globalWebSocketsInitialized = true;
         exchangesConnectedRef.current = true;
         
         // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
@@ -1036,17 +1083,31 @@ export const useCryptoPrices = () => {
     // Retry check after a short delay in case crypto list wasn't ready
     const timeoutId = setTimeout(checkAndConnect, 500);
     
+    // Capture refs for cleanup
+    const reconnectTimeouts = reconnectTimeoutsRef.current;
+    const binanceWs = binanceWsRef.current;
+    const okxWs = okxWsRef.current;
+    const bybitWs = bybitWsRef.current;
+    const krakenWs = krakenWsRef.current;
+    const coinbaseWs = coinbaseWsRef.current;
+    
     return () => {
       clearTimeout(timeoutId);
-      Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
-        clearTimeout(timeout);
-      });
+      globalPricesSubscribers--;
       
-      if (binanceWsRef.current) binanceWsRef.current.close();
-      if (okxWsRef.current) okxWsRef.current.close();
-      if (bybitWsRef.current) bybitWsRef.current.close();
-      if (krakenWsRef.current) krakenWsRef.current.close();
-      if (coinbaseWsRef.current) coinbaseWsRef.current.close();
+      // Only close WebSockets and reset global flag if no more subscribers
+      if (globalPricesSubscribers <= 0) {
+        globalWebSocketsInitialized = false;
+        Object.values(reconnectTimeouts).forEach(timeout => {
+          clearTimeout(timeout);
+        });
+        
+        if (binanceWs) binanceWs.close();
+        if (okxWs) okxWs.close();
+        if (bybitWs) bybitWs.close();
+        if (krakenWs) krakenWs.close();
+        if (coinbaseWs) coinbaseWs.close();
+      }
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
 
@@ -1061,6 +1122,85 @@ export const useCryptoPrices = () => {
       saveLivePrices(prices);
     }
   }, [prices, isLive, saveLivePrices]);
+
+  // CoinCap fallback for coins that still have 0 prices after WebSocket connects
+  // This ensures all coins show prices even if WebSocket fails for some symbols
+  useEffect(() => {
+    const fetchCoinCapFallback = async () => {
+      // Wait 5 seconds for WebSocket to populate prices
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      // Find coins still missing prices
+      const missingPrices = prices.filter(p => p.current_price === 0 || !p.current_price);
+      if (missingPrices.length === 0) return;
+      
+      console.log(`[CoinCap] Fetching fallback prices for ${missingPrices.length} coins...`);
+      
+      try {
+        // CoinCap free API - no key required
+        const coinCapUrl = 'https://api.coincap.io/v2/assets?limit=200';
+        const response = await safeFetch(coinCapUrl, { timeoutMs: 10000, maxRetries: 2 });
+        
+        if (!response?.ok) {
+          console.log('[CoinCap] Fallback fetch failed');
+          return;
+        }
+        
+        const data = await response.json();
+        if (!data?.data) return;
+        
+        interface CoinCapAsset {
+          id: string;
+          symbol: string;
+          name: string;
+          priceUsd: string;
+          changePercent24Hr: string;
+          volumeUsd24Hr: string;
+          marketCapUsd: string;
+          supply: string;
+        }
+        
+        const coinCapData = data.data as CoinCapAsset[];
+        
+        // Update missing prices
+        setPrices(prev => prev.map(coin => {
+          if (coin.current_price > 0) return coin; // Already has price
+          
+          // Try to find matching coin in CoinCap data
+          const match = coinCapData.find((cc: CoinCapAsset) => 
+            cc.symbol.toLowerCase() === coin.symbol.toLowerCase() ||
+            cc.id.toLowerCase() === coin.id.toLowerCase() ||
+            COINGECKO_TO_COINCAP[coin.id]?.toLowerCase() === cc.id.toLowerCase()
+          );
+          
+          if (match && match.priceUsd) {
+            const price = parseFloat(match.priceUsd);
+            if (price > 0) {
+              console.log(`[CoinCap] ✓ Filled ${coin.symbol.toUpperCase()} = $${price.toFixed(4)}`);
+              return {
+                ...coin,
+                current_price: price,
+                price_change_percentage_24h: parseFloat(match.changePercent24Hr || '0'),
+                total_volume: parseFloat(match.volumeUsd24Hr || '0'),
+                market_cap: parseFloat(match.marketCapUsd || '0'),
+                circulating_supply: parseFloat(match.supply || '0'),
+                lastUpdate: Date.now(),
+                source: 'CoinCap',
+              };
+            }
+          }
+          return coin;
+        }));
+        
+      } catch (err) {
+        console.log('[CoinCap] Fallback fetch error:', err);
+      }
+    };
+    
+    if (prices.length > 0 && isLive) {
+      fetchCoinCapFallback();
+    }
+  }, [isLive]); // Only run once when we go live
 
 // All price updates now come from WebSockets - no polling needed
 

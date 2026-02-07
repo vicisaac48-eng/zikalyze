@@ -1,193 +1,91 @@
-import { useState, useEffect, useRef } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { useWeb3Auth, type Web3User, type SessionData } from "./useWeb3Auth";
 
+/**
+ * User type compatible with existing components
+ * Maps Web3 auth to the expected user interface
+ */
+export interface AuthUser {
+  id: string;
+  email?: string;
+  username?: string;
+  privateKey?: string;
+  created_at?: string;
+  primaryEmailAddress?: {
+    emailAddress: string;
+  };
+}
+
+/**
+ * useAuth hook - Web3-style authentication with private key
+ * 
+ * Features:
+ * - Sign up with username/password generates a unique private key
+ * - Login with private key for Web3-style auth
+ * - Login with username/password as alternative
+ * - Encrypted local credential storage
+ * - Session management
+ * 
+ * No external authentication providers required.
+ */
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+  const web3Auth = useWeb3Auth();
 
-  useEffect(() => {
-    // Prevent double initialization in strict mode
-    if (initialized.current) return;
-    initialized.current = true;
-
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        // Update state synchronously
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string) => {
-<<<<<<< HEAD
-    try {
-      // Use hash-based redirect for HashRouter compatibility
-      const redirectUrl = `${window.location.origin}/#/dashboard`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-      
-      // Increment user count on successful signup
-      if (!error) {
-        try {
-          await supabase.rpc('increment_user_count');
-        } catch (e) {
-          console.warn('Failed to increment user count:', e);
-        }
-      }
-      
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign up');
-      return { error };
-=======
-    // Use hash-based redirect for HashRouter compatibility
-    const redirectUrl = `${window.location.origin}/#/dashboard`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
-      }
-    });
-    
-    // Enhanced Error Logging
-    if (error) {
-      console.error("Sign-Up Error:", error);
-      return { error };
-    }
-    
-    // Increment user count on successful signup
-    try {
-      await supabase.rpc('increment_user_count');
-    } catch (rpcError) {
-      console.warn('Failed to increment user count:', rpcError);
->>>>>>> 2d8b144e879efd5a5c1160299222e6f9c412846d
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-<<<<<<< HEAD
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unexpected error occurred during sign in');
-      return { error };
-    }
-=======
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    // Improved Error Handling
-    if (error) {
-      console.error("Sign-In Error:", error);
-    }
-    
-    return { error };
->>>>>>> 2d8b144e879efd5a5c1160299222e6f9c412846d
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
-  };
-
-  // Use Supabase's native password reset (built-in email delivery)
-  const resetPassword = async (email: string): Promise<{ 
-    error: Error | null; 
-    rateLimited?: boolean; 
-    retryAfter?: number 
-  }> => {
-    try {
-      // Use hash-based redirect for HashRouter compatibility
-      const redirectUrl = `${window.location.origin}/#/reset-password`;
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
-      });
-      
-      if (error) {
-        // Check for rate limit errors from Supabase
-        const errorMessage = error.message || error.toString() || '';
-        if (errorMessage.includes('rate limit') || error.status === 429) {
-          return { 
-            error, 
-            rateLimited: true, 
-            retryAfter: 60 // Default 1 minute retry
-          };
-        }
-        return { error };
-      }
-      
-      return { error: null };
-    } catch (err) {
-      return { error: err as Error };
-    }
-  };
-
-  const updatePassword = async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    
-    // Send password changed confirmation email if successful
-    if (!error) {
-      try {
-        await supabase.functions.invoke('send-password-changed', {
-          body: {}
-        });
-      } catch (emailError) {
-        // Don't fail the password update if email fails
-        console.warn('Failed to send password changed email:', emailError);
-      }
-    }
-    
-    return { error };
-  };
-
-  const updateEmail = async (newEmail: string) => {
-    const { error } = await supabase.auth.updateUser({
-      email: newEmail,
-    });
-    return { error };
+  // Map Web3 user to the expected user format
+  const mapUser = (user: Web3User | null): AuthUser | null => {
+    if (!user) return null;
+    return {
+      id: user.id,
+      username: user.username,
+      privateKey: user.privateKey,
+      created_at: user.createdAt,
+      // For compatibility with components expecting email
+      email: `${user.username}@zikalyze.local`,
+      primaryEmailAddress: {
+        emailAddress: `${user.username}@zikalyze.local`,
+      },
+    };
   };
 
   return {
-    user,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    resetPassword,
-    updatePassword,
-    updateEmail,
+    user: mapUser(web3Auth.user),
+    session: web3Auth.session ? { user: mapUser(web3Auth.user) } : null,
+    loading: web3Auth.loading,
+    isSignedIn: web3Auth.isSignedIn,
+    isDemoMode: web3Auth.isDemoMode,
+    
+    // Sign up with username and password
+    signUp: web3Auth.signUp,
+    
+    // Sign in with private key (primary Web3 method)
+    signInWithPrivateKey: web3Auth.signInWithPrivateKey,
+    
+    // Sign in with username/password (alternative method)
+    signInWithPassword: web3Auth.signInWithPassword,
+    
+    // Legacy signIn method - redirects to password-based sign in
+    signIn: web3Auth.signInWithPassword,
+    
+    // Sign out
+    signOut: web3Auth.signOut,
+    
+    // Recover private key using username and password
+    recoverPrivateKey: web3Auth.recoverPrivateKey,
+    
+    // Legacy methods for compatibility (no-op)
+    resetPassword: async (_email: string): Promise<{ error: Error | null; rateLimited?: boolean; retryAfter?: number }> => {
+      console.info("[Auth] Password reset not available - use recoverPrivateKey instead");
+      return { error: new Error("Use recoverPrivateKey with username and password") };
+    },
+    updatePassword: async (_newPassword: string) => {
+      console.info("[Auth] Password update not supported in Web3 mode");
+      return { error: new Error("Password update not supported") };
+    },
+    updateEmail: async (_newEmail: string) => {
+      console.info("[Auth] Email update not supported in Web3 mode");
+      return { error: new Error("Email update not supported") };
+    },
   };
 };
+
+// Export types
+export type { Web3User, SessionData };

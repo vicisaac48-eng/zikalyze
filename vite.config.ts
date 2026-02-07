@@ -12,25 +12,55 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Build optimizations for speed and stability
+  build: {
+    // Increase chunk size limit to reduce warnings
+    chunkSizeWarningLimit: 600,
+    // Optimize chunking for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - split large dependencies
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
+        }
+      }
+    },
+    // Enable source maps for debugging in production
+    sourcemap: false,
+    // Minify for smaller bundle size
+    minify: 'esbuild',
+    // Target modern browsers for smaller bundles
+    target: 'es2020'
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom']
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: false, // Manual registration in main.tsx prevents render-blocking
-      includeAssets: ["favicon.ico", "favicon.png", "offline.html"],
+      includeAssets: ["favicon.ico", "favicon.png", "offline.html", "og-image.png"],
       manifest: {
         name: "Zikalyze - AI Crypto Trading Analysis",
         short_name: "Zikalyze",
-        description: "AI-powered cryptocurrency trading analysis with smart money concepts and real-time market insights",
+        description: "AI-powered cryptocurrency trading analysis with Smart Money Concepts, ICT analysis, and real-time market insights. Get accurate predictions and alerts.",
         theme_color: "#0a0f1a",
         background_color: "#0a0f1a",
         display: "standalone",
-        orientation: "portrait-primary",
+        orientation: "any",
         scope: "./",
-        start_url: "./",
+        start_url: "./#/",
         id: "zikalyze-pwa",
-        categories: ["finance", "cryptocurrency", "trading"],
+        lang: "en",
+        dir: "ltr",
+        categories: ["finance", "cryptocurrency", "trading", "business", "productivity"],
+        prefer_related_applications: false,
         icons: [
           {
             src: "./pwa-192x192.png",
@@ -48,7 +78,7 @@ export default defineConfig(({ mode }) => ({
             src: "./favicon.png",
             sizes: "180x180",
             type: "image/png",
-            purpose: "apple-touch-icon"
+            purpose: "any"
           },
           {
             src: "./pwa-512x512.png",
@@ -56,7 +86,53 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
             purpose: "maskable"
           }
-        ]
+        ],
+        screenshots: [
+          {
+            src: "./og-image.png",
+            sizes: "1200x630",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Zikalyze Dashboard - AI Crypto Analysis"
+          },
+          {
+            src: "./pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Zikalyze App Icon"
+          }
+        ],
+        shortcuts: [
+          {
+            name: "Dashboard",
+            short_name: "Dashboard",
+            description: "View your crypto dashboard",
+            url: "./#/dashboard",
+            icons: [{ src: "./pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "AI Analyzer",
+            short_name: "Analyzer",
+            description: "Analyze crypto with AI",
+            url: "./#/dashboard/analyzer",
+            icons: [{ src: "./pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Alerts",
+            short_name: "Alerts",
+            description: "View price alerts",
+            url: "./#/dashboard/alerts",
+            icons: [{ src: "./pwa-192x192.png", sizes: "192x192" }]
+          }
+        ],
+        launch_handler: {
+          client_mode: "navigate-existing"
+        },
+        handle_links: "preferred",
+        edge_side_panel: {
+          preferred_width: 400
+        }
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],

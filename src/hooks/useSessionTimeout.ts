@@ -17,6 +17,16 @@ export const useSessionTimeout = ({
   const warningRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef(Date.now());
+  const showWarningRef = useRef(showWarning);
+  
+  // Store onTimeout in a ref to avoid recreating callbacks
+  const onTimeoutRef = useRef(onTimeout);
+  onTimeoutRef.current = onTimeout;
+  
+  // Keep showWarningRef in sync
+  useEffect(() => {
+    showWarningRef.current = showWarning;
+  }, [showWarning]);
 
   const clearAllTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -50,9 +60,9 @@ export const useSessionTimeout = ({
     // Set timeout timer
     timeoutRef.current = setTimeout(() => {
       setShowWarning(false);
-      onTimeout();
+      onTimeoutRef.current();
     }, timeoutMs);
-  }, [clearAllTimers, timeoutMs, warningMs, onTimeout, startCountdown]);
+  }, [clearAllTimers, timeoutMs, warningMs, startCountdown]);
 
   const extendSession = useCallback(() => {
     setShowWarning(false);
@@ -60,11 +70,11 @@ export const useSessionTimeout = ({
     resetTimers();
   }, [resetTimers]);
 
-  // Track user activity
+  // Track user activity - setup once on mount
   useEffect(() => {
     const handleActivity = () => {
-      // Only reset if warning is not showing
-      if (!showWarning) {
+      // Only reset if warning is not showing (use ref to avoid stale closure)
+      if (!showWarningRef.current) {
         const now = Date.now();
         // Throttle resets to every 30 seconds
         if (now - lastActivityRef.current > 30000) {
@@ -87,7 +97,8 @@ export const useSessionTimeout = ({
       });
       clearAllTimers();
     };
-  }, [resetTimers, clearAllTimers, showWarning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   return {
     showWarning,

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 export interface AnalysisRecord {
@@ -26,160 +25,228 @@ export interface LearningStats {
   avg_confidence_when_incorrect: number | null;
 }
 
+// LocalStorage key for analysis history
+const HISTORY_STORAGE_KEY = 'zikalyze_analysis_history';
+const MAX_HISTORY_PER_SYMBOL = 50; // Keep last 50 analyses per symbol
+
+/**
+ * Get all history from localStorage
+ */
+function getAllHistory(): AnalysisRecord[] {
+  try {
+    const stored = localStorage.getItem(HISTORY_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save all history to localStorage
+ */
+function saveAllHistory(history: AnalysisRecord[]): void {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (err) {
+    console.error('[AnalysisHistory] Failed to save to localStorage:', err);
+  }
+}
+
+/**
+ * Generate a unique ID for analysis records
+ */
+function generateId(): string {
+  return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export const useAnalysisHistory = (symbol: string) => {
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [learningStats, setLearningStats] = useState<LearningStats | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  const fetchHistory = useCallback(async () => {
+  /**
+   * Calculate learning stats from history
+   */
+  const calculateStats = useCallback((records: AnalysisRecord[]): LearningStats | null => {
+    const withFeedback = records.filter(r => r.was_correct !== null);
+    if (withFeedback.length === 0) return null;
+
+    const correct = withFeedback.filter(r => r.was_correct === true);
+    const incorrect = withFeedback.filter(r => r.was_correct === false);
+
+    const avgConfidenceCorrect = correct.length > 0 
+      ? correct.reduce((sum, r) => sum + (r.confidence || 0), 0) / correct.length 
+      : null;
+    const avgConfidenceIncorrect = incorrect.length > 0 
+      ? incorrect.reduce((sum, r) => sum + (r.confidence || 0), 0) / incorrect.length 
+      : null;
+
+    return {
+      symbol: symbol.toUpperCase(),
+      total_feedback: withFeedback.length,
+      correct_predictions: correct.length,
+      incorrect_predictions: incorrect.length,
+      accuracy_percentage: withFeedback.length > 0 
+        ? Math.round((correct.length / withFeedback.length) * 100) 
+        : null,
+      avg_confidence_when_correct: avgConfidenceCorrect ? Math.round(avgConfidenceCorrect) : null,
+      avg_confidence_when_incorrect: avgConfidenceIncorrect ? Math.round(avgConfidenceIncorrect) : null,
+    };
+  }, [symbol]);
+
+  /**
+   * Fetch history from localStorage for this symbol and user
+   */
+  const fetchHistory = useCallback(() => {
     if (!symbol || !user) {
       setHistory([]);
+      setLearningStats(null);
       return;
     }
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("analysis_history")
-        .select("*")
-        .eq("symbol", symbol.toUpperCase())
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setHistory((data as AnalysisRecord[]) || []);
+      const allHistory = getAllHistory();
+      const userSymbolHistory = allHistory
+        .filter(r => r.symbol === symbol.toUpperCase() && r.user_id === user.id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 10);
+      
+      setHistory(userSymbolHistory);
+      setLearningStats(calculateStats(userSymbolHistory));
+      console.log(`[AnalysisHistory] Loaded ${userSymbolHistory.length} records for ${symbol}`);
     } catch (err) {
-      console.error("Error fetching analysis history:", err);
+      console.error("[AnalysisHistory] Error fetching history:", err);
+      setHistory([]);
     } finally {
       setLoading(false);
     }
-  }, [symbol, user]);
+  }, [symbol, user, calculateStats]);
 
-  const fetchLearningStats = useCallback(async () => {
-    if (!symbol || !user) {
-      setLearningStats(null);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("ai_learning_stats")
-        .select("*")
-        .eq("symbol", symbol.toUpperCase())
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-      setLearningStats(data as LearningStats | null);
-    } catch (err) {
-      console.error("Error fetching learning stats:", err);
-    }
-  }, [symbol, user]);
-
-  const saveAnalysis = useCallback(async (
+  /**
+   * Save a new analysis to localStorage
+   */
+  const saveAnalysis = useCallback((
     analysisText: string,
     price: number,
     change: number,
     confidence?: number,
     bias?: string
-  ): Promise<string | null> => {
+  ): string | null => {
     if (!user) {
-      console.error("User not authenticated");
+      console.error("[AnalysisHistory] User not authenticated");
       return null;
     }
 
     try {
-      const { data, error } = await supabase
-        .from("analysis_history")
-        .insert({
-          symbol: symbol.toUpperCase(),
-          price,
-          change_24h: change,
-          analysis_text: analysisText,
-          confidence: confidence || null,
-          bias: bias || null,
-          user_id: user.id,
-        })
-        .select('id')
-        .single();
+      const newRecord: AnalysisRecord = {
+        id: generateId(),
+        symbol: symbol.toUpperCase(),
+        price,
+        change_24h: change,
+        analysis_text: analysisText,
+        confidence: confidence ?? null,
+        bias: bias ?? null,
+        created_at: new Date().toISOString(),
+        user_id: user.id,
+        was_correct: null,
+        feedback_at: null,
+      };
 
-      if (error) throw error;
+      const allHistory = getAllHistory();
       
-      // Refresh history after saving
+      // Add new record at the beginning
+      allHistory.unshift(newRecord);
+      
+      // Keep only MAX_HISTORY_PER_SYMBOL per symbol per user
+      const filtered = allHistory.filter((r, idx, arr) => {
+        const sameSymbolUser = arr.filter(x => x.symbol === r.symbol && x.user_id === r.user_id);
+        const indexInGroup = sameSymbolUser.findIndex(x => x.id === r.id);
+        return indexInGroup < MAX_HISTORY_PER_SYMBOL;
+      });
+      
+      saveAllHistory(filtered);
       fetchHistory();
       
-      return data?.id || null;
+      console.log(`[AnalysisHistory] Saved analysis for ${symbol}: ${newRecord.id}`);
+      return newRecord.id;
     } catch (err) {
-      console.error("Error saving analysis:", err);
+      console.error("[AnalysisHistory] Error saving analysis:", err);
       return null;
     }
-  }, [symbol, fetchHistory, user]);
+  }, [symbol, user, fetchHistory]);
 
-  const submitFeedback = useCallback(async (id: string, wasCorrect: boolean) => {
+  /**
+   * Submit feedback for an analysis
+   */
+  const submitFeedback = useCallback((id: string, wasCorrect: boolean): boolean => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from("analysis_history")
-        .update({
-          was_correct: wasCorrect,
-          feedback_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      const allHistory = getAllHistory();
+      const index = allHistory.findIndex(r => r.id === id && r.user_id === user.id);
       
-      // Refresh both history and stats
-      await Promise.all([fetchHistory(), fetchLearningStats()]);
+      if (index === -1) return false;
+      
+      allHistory[index] = {
+        ...allHistory[index],
+        was_correct: wasCorrect,
+        feedback_at: new Date().toISOString(),
+      };
+      
+      saveAllHistory(allHistory);
+      fetchHistory();
+      
+      console.log(`[AnalysisHistory] Feedback submitted for ${id}: ${wasCorrect ? 'correct' : 'incorrect'}`);
       return true;
     } catch (err) {
-      console.error("Error submitting feedback:", err);
+      console.error("[AnalysisHistory] Error submitting feedback:", err);
       return false;
     }
-  }, [user, fetchHistory, fetchLearningStats]);
+  }, [user, fetchHistory]);
 
-  const deleteAnalysis = useCallback(async (id: string) => {
+  /**
+   * Delete a specific analysis
+   */
+  const deleteAnalysis = useCallback((id: string): void => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from("analysis_history")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      const allHistory = getAllHistory();
+      const filtered = allHistory.filter(r => !(r.id === id && r.user_id === user.id));
+      saveAllHistory(filtered);
       fetchHistory();
-      fetchLearningStats();
+      
+      console.log(`[AnalysisHistory] Deleted analysis: ${id}`);
     } catch (err) {
-      console.error("Error deleting analysis:", err);
+      console.error("[AnalysisHistory] Error deleting analysis:", err);
     }
-  }, [user, fetchHistory, fetchLearningStats]);
+  }, [user, fetchHistory]);
 
-  const clearAllHistory = useCallback(async () => {
+  /**
+   * Clear all history for this symbol and user
+   */
+  const clearAllHistory = useCallback((): void => {
     if (!user || !symbol) return;
 
     try {
-      const { error } = await supabase
-        .from("analysis_history")
-        .delete()
-        .eq("symbol", symbol.toUpperCase())
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      const allHistory = getAllHistory();
+      const filtered = allHistory.filter(r => !(r.symbol === symbol.toUpperCase() && r.user_id === user.id));
+      saveAllHistory(filtered);
       setHistory([]);
       setLearningStats(null);
+      
+      console.log(`[AnalysisHistory] Cleared all history for ${symbol}`);
     } catch (err) {
-      console.error("Error clearing history:", err);
+      console.error("[AnalysisHistory] Error clearing history:", err);
     }
   }, [user, symbol]);
 
+  // Load history when symbol or user changes
   useEffect(() => {
     fetchHistory();
-    fetchLearningStats();
-  }, [fetchHistory, fetchLearningStats]);
+  }, [fetchHistory]);
 
   return { 
     history, 
@@ -190,6 +257,6 @@ export const useAnalysisHistory = (symbol: string) => {
     deleteAnalysis, 
     clearAllHistory, 
     refreshHistory: fetchHistory,
-    refreshStats: fetchLearningStats
+    refreshStats: fetchHistory // Stats are calculated from history
   };
 };

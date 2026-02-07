@@ -67,8 +67,9 @@ export function SessionManagement() {
       
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       toast.success("Session revoked successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to revoke session");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to revoke session";
+      toast.error(errorMessage);
     } finally {
       setRevoking(null);
     }

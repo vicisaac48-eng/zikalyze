@@ -105,25 +105,25 @@ All colors MUST be HSL.
      Consistent styling across all platforms
      ======================================== */
 
-  /* Glow effects - GPU accelerated */
+  /* Glow effects - Clean and professional */
   .glow-cyan {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
   }
   
   .glow-purple {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(267 84% 81% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(267 84% 81% / 0.15);
   }
 
   .glow-success {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
   }
 
   .glow-warning {
-    box-shadow: none;
-    -webkit-box-shadow: none;
+    box-shadow: 0 0 20px hsl(38 92% 50% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(38 92% 50% / 0.15);
   }
   
   /* Gradient utilities - Cross-browser compatible */
@@ -291,6 +291,22 @@ All colors MUST be HSL.
     50% { opacity: 1; }
   }
 
+  .animate-chart-bar {
+    animation: chart-bar-wave 2s ease-in-out infinite;
+    -webkit-animation: chart-bar-wave 2s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  @-webkit-keyframes chart-bar-wave {
+    0%, 100% { -webkit-transform: scaleY(1); transform: scaleY(1); }
+    50% { -webkit-transform: scaleY(0.7); transform: scaleY(0.7); }
+  }
+
+  @keyframes chart-bar-wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.7); }
+  }
+
   /* Touch and interaction improvements */
   .touch-action-pan {
     -ms-touch-action: pan-x pan-y;
@@ -395,7 +411,8 @@ All colors MUST be HSL.
     .animate-spin-slow,
     .animate-logo-bounce,
     .animate-shimmer,
-    .animate-glow-pulse {
+    .animate-glow-pulse,
+    .animate-chart-bar {
       animation: none;
       -webkit-animation: none;
     }

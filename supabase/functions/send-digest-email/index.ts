@@ -103,11 +103,11 @@ async function fetchMarketSummary(): Promise<MarketSummary | null> {
     const data = await response.json();
     
     // Find BTC and ETH
-    const btc = data.find((c: any) => c.symbol === 'btc');
-    const eth = data.find((c: any) => c.symbol === 'eth');
+    const btc = data.find((c: { symbol: string }) => c.symbol === 'btc');
+    const eth = data.find((c: { symbol: string }) => c.symbol === 'eth');
     
     // Find top gainer and loser
-    const sorted = [...data].sort((a: any, b: any) => 
+    const sorted = [...data].sort((a: { price_change_percentage_24h: number }, b: { price_change_percentage_24h: number }) => 
       b.price_change_percentage_24h - a.price_change_percentage_24h
     );
     const topGainer = sorted[0];
@@ -256,14 +256,22 @@ Deno.serve(async (req) => {
         }
 
         // Filter alerts based on user preferences
-        const filteredAlerts = (alerts || []).filter((alert: any) => {
+        interface AlertRecord {
+          id: string;
+          alert_type: string;
+          symbol: string;
+          title: string;
+          body: string;
+          triggered_at: string;
+        }
+        const filteredAlerts = (alerts || []).filter((alert: AlertRecord) => {
           if (alert.alert_type === 'price_alert' && !pref.include_price_alerts) return false;
           if (alert.alert_type === 'sentiment_shift' && !pref.include_sentiment) return false;
           if (alert.alert_type === 'whale_activity' && !pref.include_whale_activity) return false;
           return true;
         });
 
-        const alertItems: AlertItem[] = filteredAlerts.map((a: any) => ({
+        const alertItems: AlertItem[] = filteredAlerts.map((a: AlertRecord) => ({
           type: a.alert_type,
           symbol: a.symbol,
           title: a.title,
@@ -305,7 +313,7 @@ Deno.serve(async (req) => {
 
         // Mark alerts as included in digest
         if (filteredAlerts.length > 0) {
-          const alertIds = filteredAlerts.map((a: any) => a.id);
+          const alertIds = filteredAlerts.map((a: AlertRecord) => a.id);
           await supabase
             .from('alert_digest_queue')
             .update({ 

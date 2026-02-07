@@ -337,7 +337,7 @@ export function useMultiTimeframeData(symbol: string): MultiTimeframeData {
         return null;
       }
       
-      let candles: CandleData[] = result.Data.Data.map((point: any) => ({
+      let candles: CandleData[] = result.Data.Data.map((point: { time: number; open: number; high: number; low: number; close: number; volumeto: number }) => ({
         timestamp: point.time * 1000,
         open: point.open,
         high: point.high,

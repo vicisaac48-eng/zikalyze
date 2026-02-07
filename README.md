@@ -51,4 +51,13 @@ Navigate to the desired files and use the "Edit" (pencil icon) to make direct co
 
 GitHub Codespaces: 
 Launch a cloud-based development environment directly from the repository.
-​
+
+
+## 🌐 IPFS Deployment
+
+This project supports automatic deployment to IPFS (InterPlanetary File System) via Pinata. For detailed instructions on setting up IPFS deployment, see [IPFS_DEPLOYMENT.md](./IPFS_DEPLOYMENT.md).
+
+### Quick Setup
+1. Get API keys from [Pinata Cloud](https://app.pinata.cloud/keys)
+2. Add `PINATA_API_KEY` and `PINATA_SECRET_KEY` as GitHub repository secrets
+3. Push to `main` branch to trigger automatic deployment

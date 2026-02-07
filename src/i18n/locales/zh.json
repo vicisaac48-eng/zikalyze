@@ -87,7 +87,10 @@
     "passwordResetSuccess": "您的密码已成功重置。",
     "invalidLink": "链接无效或已过期",
     "requestNewLink": "请申请新的密码重置链接。",
-    "enterNewPasswordBelow": "请在下方输入新密码"
+    "enterNewPasswordBelow": "请在下方输入新密码",
+    "accountCreated": "账户创建成功！🎉",
+    "welcomeEmailSent": "欢迎确认邮件已发送到您的收件箱。",
+    "signInEmailSent": "登录通知已发送到您的邮箱。"
   },
   "dashboard": {
     "title": "Zikalyze",

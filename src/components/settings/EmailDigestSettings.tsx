@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type DigestFrequency = 'none' | 'daily' | 'weekly';
@@ -43,7 +43,6 @@ const DEFAULT_PREFERENCES: EmailPreferences = {
 
 const EmailDigestSettings = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preferences, setPreferences] = useState<EmailPreferences>(DEFAULT_PREFERENCES);
@@ -99,11 +98,7 @@ const EmailDigestSettings = () => {
 
   const handleSave = async () => {
     if (!user?.id || !user?.email) {
-      toast({
-        title: "Not authenticated",
-        description: "Please log in to save email preferences.",
-        variant: "destructive",
-      });
+      toast.error("Please log in to save email preferences.");
       return;
     }
 
@@ -123,19 +118,12 @@ const EmailDigestSettings = () => {
       if (error) throw error;
 
       setOriginalPrefs(preferences);
-      toast({
-        title: "Email preferences saved",
-        description: preferences.digest_frequency === 'none' 
-          ? "Email digests have been disabled."
-          : `You'll receive ${preferences.digest_frequency} digests at ${preferences.digest_time}:00 UTC.`,
-      });
+      toast.success(preferences.digest_frequency === 'none' 
+        ? "Email digests have been disabled."
+        : `You'll receive ${preferences.digest_frequency} digests at ${preferences.digest_time}:00 UTC.`);
     } catch (err) {
       console.error('Error saving preferences:', err);
-      toast({
-        title: "Failed to save",
-        description: "Could not save email preferences. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Could not save email preferences. Please try again.");
     } finally {
       setSaving(false);
     }

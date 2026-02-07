@@ -1,4 +1,5 @@
 declare module "https://esm.sh/@supabase/supabase-js@2" {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   export const createClient: (...args: unknown[]) => any
 }
 
