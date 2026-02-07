@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧪 ZIKALYZE AI BRAIN PIPELINE — CLIENT-SIDE TEST
+// 🧪 ZIKALYZE AI BRAIN PIPELINE v3.0 — CLIENT-SIDE TEST
 // ═══════════════════════════════════════════════════════════════════════════════
 // Run in browser console: window.testBrainPipeline()
-// Tests the complete brain pipeline with double verification
+// Tests the complete brain pipeline with enhanced double verification
 // Tests self-learning from live chart and livestream data
+// Tests combined brain with both brain systems merged
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { 
@@ -12,11 +13,17 @@ import {
   ActiveCryptoSource,
   AIAnalyzer,
   AttentionAlgorithm,
+  DoubleVerificationLoop,
+  VerificationStep,
+  EnhancedVerificationResult,
   // Self-learning components
   LiveChartLearner,
   LivestreamLearner,
   SelfLearningBrainPipeline,
-  SelfLearningOutput
+  SelfLearningOutput,
+  // Combined brain
+  CombinedBrain,
+  CombinedBrainOutput
 } from './brain-pipeline';
 import type { AnalysisInput, ChartTrendInput } from './types';
 
@@ -34,7 +41,7 @@ function verifyPipelineResult(result: BrainPipelineOutput, testName: string): bo
     { name: 'Has attention heatmap', pass: Array.isArray(result.attentionHeatmap) },
     { name: 'Has processing time', pass: result.processingTimeMs >= 0 },
     { name: 'Has timestamp', pass: !isNaN(Date.parse(result.timestamp)) },
-    { name: 'Has pipeline version', pass: result.pipelineVersion.length > 0 },
+    { name: 'Has pipeline version v2', pass: result.pipelineVersion.startsWith('2') },
     { name: 'Processing < 1 second', pass: result.processingTimeMs < 1000 },
   ];
   
@@ -161,6 +168,75 @@ function testAttentionAlgorithm(): boolean {
   return passed === checks.length;
 }
 
+/**
+ * Test the enhanced double verification loop
+ * Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release
+ */
+function testEnhancedDoubleVerification(): boolean {
+  console.log('\n🔄 Testing Enhanced Double Verification Loop...');
+  const source = new ActiveCryptoSource();
+  const analyzer = new AIAnalyzer();
+  const attention = new AttentionAlgorithm();
+  const verificationLoop = new DoubleVerificationLoop();
+  
+  const input: AnalysisInput = {
+    crypto: 'BTC',
+    price: 97542.18,
+    change: 4.5,
+    high24h: 98200,
+    low24h: 93100,
+    volume: 28500000000
+  };
+  
+  // Step 1: Read data from source
+  const rawData = source.readData(input);
+  
+  // Step 2: Process through analyzer
+  const analyzed = analyzer.process(rawData);
+  
+  // Step 3: First attention verification
+  const firstCheck = attention.calculate(analyzed);
+  
+  // Step 4: Enhanced double verification (send back to analyzer → attention → compare)
+  const verificationResult = verificationLoop.verify(rawData, firstCheck);
+  
+  const checks = [
+    { name: 'Has verified flag', pass: typeof verificationResult.verified === 'boolean' },
+    { name: 'Has match flag', pass: typeof verificationResult.match === 'boolean' },
+    { name: 'Has accuracy/matchPercentage', pass: verificationResult.matchPercentage >= 0 && verificationResult.matchPercentage <= 1 },
+    { name: 'Has secondCheck', pass: verificationResult.secondCheck !== null },
+    { name: 'Has verification steps', pass: Array.isArray(verificationResult.verificationSteps) },
+    { name: 'Has 5 verification steps', pass: verificationResult.verificationSteps.length === 5 },
+    { name: 'All steps have data', pass: verificationResult.verificationSteps.every(s => 
+        typeof s.step === 'number' && 
+        typeof s.name === 'string' && 
+        typeof s.passed === 'boolean' &&
+        typeof s.confidence === 'number'
+      )
+    },
+    { name: 'Has totalVerificationTimeMs', pass: verificationResult.totalVerificationTimeMs >= 0 },
+    { name: 'Has releaseApproved', pass: typeof verificationResult.releaseApproved === 'boolean' },
+    { name: 'Has releaseReason', pass: verificationResult.releaseReason.length > 0 },
+    { name: 'Verification < 500ms', pass: verificationResult.totalVerificationTimeMs < 500 },
+    { name: 'Release based on accuracy (not 100%)', pass: verificationResult.releaseReason.includes('ACCURATE') || verificationResult.releaseReason.includes('accuracy') || !verificationResult.releaseApproved },
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  const failed = checks.filter(c => !c.pass);
+  
+  console.log(`   Accuracy-Based Verification: ${passed}/${checks.length} passed`);
+  console.log(`   Release: ${verificationResult.releaseApproved ? '✅ ACCURATE' : '❌ NOT ACCURATE'}`);
+  console.log(`   Accuracy: ${(verificationResult.matchPercentage * 100).toFixed(0)}%`);
+  console.log(`   Reason: ${verificationResult.releaseReason}`);
+  console.log(`   Steps: ${verificationResult.verificationSteps.map(s => s.passed ? '✅' : '❌').join(' → ')}`);
+  
+  if (failed.length > 0) {
+    console.log('   ❌ Failed:', failed.map(f => f.name).join(', '));
+  }
+  
+  return passed === checks.length;
+}
+
 // Main test function
 export function testBrainPipeline(): {
   allPassed: boolean;
@@ -169,18 +245,20 @@ export function testBrainPipeline(): {
   storageStats: {goodCount: number; badCount: number; learningCount: number};
 } {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🧠 ZIKALYZE AI BRAIN PIPELINE v1.0 — TEST SUITE');
+  console.log('🧠 ZIKALYZE AI BRAIN PIPELINE v2.0 — TEST SUITE');
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('Testing: Active Source → AI Analyzer → Attention → Double Verify');
+  console.log('Flow: Brain → Analyzer → Attention → Analyzer → Attention → Compare → Release');
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Test individual components
   const sourceOk = testActiveSource();
   const analyzerOk = testAIAnalyzer();
   const attentionOk = testAttentionAlgorithm();
+  const verificationOk = testEnhancedDoubleVerification();
   
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔄 Testing Complete Pipeline with Double Verification');
+  console.log('🔄 Testing Complete Pipeline with Enhanced Double Verification');
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Create pipeline instance
@@ -210,7 +288,7 @@ export function testBrainPipeline(): {
     }
   ];
 
-  let allPassed = sourceOk && analyzerOk && attentionOk;
+  let allPassed = sourceOk && analyzerOk && attentionOk && verificationOk;
   const results: Array<{name: string; bias: string; confidence: number; verified: boolean; ms: number}> = [];
 
   for (const test of tests) {
@@ -247,12 +325,13 @@ export function testBrainPipeline(): {
 
   console.log('\n═══════════════════════════════════════════════════════════════');
   if (allPassed) {
-    console.log('✅ ALL TESTS PASSED — Brain Pipeline is working correctly!');
+    console.log('✅ ALL TESTS PASSED — Brain Pipeline v2.0 working correctly!');
     console.log('   ✓ Active Crypto Source: read, learn, adapt');
     console.log('   ✓ AI Analyzer: human-readable processing');
-    console.log('   ✓ Attention Algorithm: filter, verify, calculate');
-    console.log('   ✓ Hidden Storage: good/bad data separation');
-    console.log('   ✓ Double Verification: compare & release');
+    console.log('   ✓ Attention Algorithm: filter, verify, calculate 🧮');
+    console.log('   ✓ Enhanced Double Verification: Analyzer → Attention → Compare');
+    console.log('   ✓ Hidden Storage: good/bad data separation 🔒');
+    console.log('   ✓ Release only if 100% verified ✅');
     console.log('   ✓ All processing < 1 second ⚡');
   } else {
     console.log('❌ SOME TESTS FAILED — Review the output above');
@@ -475,10 +554,153 @@ export function testSelfLearning(): {
   return { allPassed, chartLearnerPassed, streamLearnerPassed, pipelinePassed };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠🧠 COMBINED BRAIN TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Test the Combined Brain that merges both brain systems
+ */
+function testCombinedBrain(): boolean {
+  console.log('\n🧠🧠 Testing Combined Brain (Both Brains Merged)...');
+  
+  const combinedBrain = new CombinedBrain();
+  
+  // Create test input
+  const input: AnalysisInput = {
+    crypto: 'BTC',
+    price: 97542.18,
+    change: 4.5,
+    high24h: 98200,
+    low24h: 93100,
+    volume: 28500000000
+  };
+  
+  // Create mock chart data
+  const mockChartData: ChartTrendInput = {
+    candles: Array.from({ length: 24 }, (_, i) => ({
+      timestamp: Date.now() - (24 - i) * 3600000,
+      open: 94000 + i * 150,
+      high: 94000 + i * 150 + 300,
+      low: 94000 + i * 150 - 100,
+      close: 94000 + i * 150 + 200,
+      volume: 1200000000
+    })),
+    trend24h: 'BULLISH',
+    trendStrength: 80,
+    higherHighs: true,
+    higherLows: true,
+    lowerHighs: false,
+    lowerLows: false,
+    ema9: 97000,
+    ema21: 96000,
+    rsi: 62,
+    volumeTrend: 'INCREASING',
+    priceVelocity: 0.8,
+    isLive: true,
+    source: 'test'
+  };
+  
+  // Run combined analysis
+  const startTime = performance.now();
+  const result = combinedBrain.analyzeWithBothBrains(input, mockChartData);
+  const elapsedMs = performance.now() - startTime;
+  
+  // Verify result
+  const checks = [
+    { name: 'Has valid combined bias', pass: ['LONG', 'SHORT', 'NEUTRAL'].includes(result.bias) },
+    { name: 'Has valid confidence', pass: result.confidence >= 0 && result.confidence <= 100 },
+    { name: 'Has analysis output', pass: result.analysis.length > 500 },
+    { name: 'Has top-down analysis', pass: result.topDownAnalysis !== null },
+    { name: 'Has technical bias', pass: ['LONG', 'SHORT', 'NEUTRAL'].includes(result.technicalBias) },
+    { name: 'Has pipeline bias', pass: ['LONG', 'SHORT', 'NEUTRAL'].includes(result.pipelineBias) },
+    { name: 'Has institutional bias', pass: ['BULLISH', 'BEARISH', 'NEUTRAL'].includes(result.institutionalBias) },
+    { name: 'Has retail bias', pass: ['BULLISH', 'BEARISH', 'NEUTRAL'].includes(result.retailBias) },
+    { name: 'Has precision entry', pass: result.precisionEntry.zone.length > 0 },
+    { name: 'Has scenarios', pass: Array.isArray(result.scenarios) },
+    { name: 'Has key insights', pass: result.keyInsights.length > 0 },
+    { name: 'Has verification status', pass: typeof result.isVerified === 'boolean' },
+    { name: 'Has accuracy score', pass: result.accuracyScore >= 0 && result.accuracyScore <= 100 },
+    { name: 'Has volume signal', pass: typeof result.volumeSpike === 'boolean' },
+    { name: 'Has sentiment', pass: result.fearGreed >= 0 && result.fearGreed <= 100 },
+    { name: 'Has learning status', pass: typeof result.learnedFromChart === 'boolean' },
+    { name: 'Has brain version', pass: result.brainVersion.startsWith('3') },
+    { name: 'Processing < 2 seconds', pass: elapsedMs < 2000 },
+  ];
+  
+  const passed = checks.filter(c => c.pass).length;
+  const failed = checks.filter(c => !c.pass);
+  
+  console.log(`   Combined Brain: ${passed}/${checks.length} checks passed`);
+  console.log(`   Combined Bias: ${result.bias} (${result.confidence.toFixed(0)}%)`);
+  console.log(`   Technical Brain: ${result.technicalBias} (${result.technicalConfidence.toFixed(0)}%)`);
+  console.log(`   Pipeline Brain: ${result.pipelineBias} (${result.pipelineConfidence.toFixed(0)}%)`);
+  console.log(`   Institutional: ${result.institutionalBias} | Retail: ${result.retailBias}`);
+  console.log(`   ICT Setup: ${result.hasICTSetup ? '✓' : '✗'} | Verified: ${result.isVerified ? '✓' : '✗'}`);
+  console.log(`   Processing Time: ${elapsedMs.toFixed(0)}ms`);
+  
+  if (failed.length > 0) {
+    console.log('   ❌ Failed:', failed.map(f => f.name).join(', '));
+  }
+  
+  return passed === checks.length;
+}
+
+/**
+ * Main test function for combined brain
+ */
+export function testCombinedBrainFull(): {
+  allPassed: boolean;
+  combinedBrainPassed: boolean;
+  sampleOutput: CombinedBrainOutput;
+} {
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('🧠🧠 ZIKALYZE COMBINED BRAIN v3.0 — TEST SUITE');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('Testing: Original Brain + Pipeline Brain = Combined Analysis');
+  console.log('═══════════════════════════════════════════════════════════════');
+  
+  const combinedBrainPassed = testCombinedBrain();
+  
+  console.log('\n═══════════════════════════════════════════════════════════════');
+  if (combinedBrainPassed) {
+    console.log('✅ ALL COMBINED BRAIN TESTS PASSED!');
+    console.log('   ✓ Both brains successfully merged');
+    console.log('   ✓ Top-down multi-TF analysis from Original Brain');
+    console.log('   ✓ Attention + Verification from Pipeline Brain');
+    console.log('   ✓ ICT/SMC analysis integrated');
+    console.log('   ✓ Institutional vs Retail analysis');
+    console.log('   ✓ Precision entries and scenarios');
+    console.log('   ✓ Combined confidence calculation');
+  } else {
+    console.log('❌ SOME TESTS FAILED — Review the output above');
+  }
+  console.log('═══════════════════════════════════════════════════════════════\n');
+  
+  // Get sample output
+  const combinedBrain = new CombinedBrain();
+  const sampleInput: AnalysisInput = {
+    crypto: 'ETH',
+    price: 3500,
+    change: 2.5,
+    high24h: 3600,
+    low24h: 3400,
+    volume: 15000000000
+  };
+  const sampleOutput = combinedBrain.analyzeWithBothBrains(sampleInput);
+  
+  console.log('📝 SAMPLE COMBINED BRAIN OUTPUT:\n');
+  console.log(sampleOutput.analysis);
+  
+  return { allPassed: combinedBrainPassed, combinedBrainPassed, sampleOutput };
+}
+
 // Auto-register for browser console
 if (typeof window !== 'undefined') {
   (window as { testBrainPipeline?: typeof testBrainPipeline }).testBrainPipeline = testBrainPipeline;
   (window as { testSelfLearning?: typeof testSelfLearning }).testSelfLearning = testSelfLearning;
+  (window as { testCombinedBrain?: typeof testCombinedBrainFull }).testCombinedBrain = testCombinedBrainFull;
   console.log('💡 Run window.testBrainPipeline() to test Brain Pipeline');
   console.log('💡 Run window.testSelfLearning() to test Self-Learning features');
+  console.log('💡 Run window.testCombinedBrain() to test Combined Brain (BOTH brains merged)');
 }

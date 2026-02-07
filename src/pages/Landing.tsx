@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TrendingUp, Sparkles, ArrowRight, BarChart3, Brain, Shield, Activity, Zap, LineChart, PlayCircle, UserPlus, ChartCandlestick, Bell, Rocket, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { toast } from "sonner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ const Landing = () => {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
   const [isNavigating, setIsNavigating] = useState(false);
   const [userCount, setUserCount] = useState<number | null>(null);
 
@@ -75,7 +77,7 @@ const Landing = () => {
       });
       window.history.replaceState(null, '', location.pathname);
     }
-  }, [location, toast, t]);
+  }, [location, t]);
 
   // Redirect to dashboard if already logged in (non-blocking)
   useEffect(() => {
@@ -106,7 +108,7 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-y-auto overflow-x-hidden">
       {/* Cookie Consent Dialog */}
       <CookieConsent />
       {/* Animated Background */}
@@ -117,7 +119,9 @@ const Landing = () => {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12 lg:px-16 xl:px-24">
+      <header className={`fixed-header relative z-10 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12 lg:px-16 xl:px-24 bg-background${
+        isNativeApp ? ' android-fixed' : ''
+      }`}>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary sm:h-12 sm:w-12 sm:rounded-xl lg:h-14 lg:w-14">
             <TrendingUp className="h-4 w-4 text-primary-foreground sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
@@ -133,7 +137,9 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6 md:py-20 lg:py-28 xl:py-32">
+      <main className={`relative z-10 flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6 md:py-20 lg:py-28 xl:py-32${
+        isNativeApp ? ' main-content' : ''
+      }`}>
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 backdrop-blur-sm sm:mb-8 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5">
           <Sparkles className="h-3 w-3 text-primary sm:h-4 sm:w-4" />
           <span className="text-xs text-primary sm:text-sm lg:text-base">{t("landing.heroTagline")}</span>
@@ -319,16 +325,16 @@ const Landing = () => {
               onKeyDown={(e) => e.key === "Enter" && handleNavigate("/auth")}
             >
               {/* Browser Chrome Header */}
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-t-xl border-b border-border sm:px-4 sm:py-2.5">
-                <div className="flex gap-1.5 sm:gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-destructive/70 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-warning/70 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-success/70 sm:h-3 sm:w-3" />
+              <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-sm px-2 py-1.5 rounded-t-xl border-b border-border sm:gap-2 sm:px-4 sm:py-2.5">
+                <div className="flex gap-1 shrink-0 sm:gap-2">
+                  <div className="h-2 w-2 rounded-full bg-destructive/70 sm:h-3 sm:w-3" />
+                  <div className="h-2 w-2 rounded-full bg-warning/70 sm:h-3 sm:w-3" />
+                  <div className="h-2 w-2 rounded-full bg-success/70 sm:h-3 sm:w-3" />
                 </div>
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="flex items-center gap-2 bg-background/50 rounded-lg px-3 py-1 text-xs text-muted-foreground sm:px-4 sm:py-1.5 sm:text-sm">
-                    <Shield className="h-3 w-3 text-success sm:h-3.5 sm:w-3.5" />
-                    <span>zikalyze.com</span>
+                <div className="flex-1 flex items-center justify-center min-w-0">
+                  <div className="flex items-center gap-1.5 bg-background/50 rounded-lg px-2 py-0.5 text-xs text-muted-foreground max-w-full sm:gap-2 sm:px-4 sm:py-1.5 sm:text-sm">
+                    <Shield className="h-3 w-3 text-success shrink-0 sm:h-3.5 sm:w-3.5" />
+                    <span className="truncate">zikalyze.com</span>
                   </div>
                 </div>
               </div>
@@ -610,7 +616,7 @@ const Landing = () => {
         {/* Stats */}
         <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-4xl sm:mt-20 sm:gap-8 md:grid-cols-4 lg:mt-28 lg:gap-12 xl:max-w-5xl">
           {[
-            { label: t("landing.accuracyRate"), value: "80%", icon: Activity },
+            { label: t("landing.accuracyRate"), value: "60%", icon: Activity },
             { label: t("landing.activeUsers"), value: userCount !== null ? `${Math.floor(userCount / 1000)}K+` : "25K+", icon: TrendingUp },
             { label: t("landing.predictionsPerDay"), value: "50K+", icon: Brain },
             { label: t("landing.marketsTracked"), value: "200+", icon: BarChart3 },

@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, Volume2, VolumeX, BellOff, Music } from "lucide-react";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { Search, User, Bell, BellRing, Trash2, Clock, CheckCircle, AlertCircle, BellOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +21,11 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useSettings, SoundType } from "@/hooks/useSettings";
+
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { alertSound } from "@/lib/alertSound";
+
 import { toast } from "sonner";
 
 interface TriggeredAlert {
@@ -37,11 +39,11 @@ interface TriggeredAlert {
 }
 
 const Alerts = () => {
-  const { alerts, loading, removeAlert } = usePriceAlerts();
-  const { prices, getPriceBySymbol } = useCryptoPrices();
+  const { alerts, loading, removeAlert, refetch, checkAlerts } = usePriceAlerts();
+  const { prices, getPriceBySymbol, refetch: refetchPrices } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
-  const { settings, saveSettings } = useSettings();
+  const isNativeApp = useIsNativeApp();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -49,18 +51,27 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
+  
+  // Track last alert check time to throttle checks
+  const lastAlertCheckRef = useRef<number>(0);
+  
+  // Check alerts whenever prices update (same pattern as Top100CryptoList)
+  // This ensures push notifications work even when user is on the Alerts page
+  useEffect(() => {
+    if (prices.length > 0 && alerts.length > 0) {
+      // Throttle alert checks to every 2 seconds to prevent spam
+      const now = Date.now();
+      if (now - lastAlertCheckRef.current > 2000) {
+        lastAlertCheckRef.current = now;
+        checkAlerts(prices);
+      }
+    }
+  }, [prices, alerts, checkAlerts]);
 
-  const handleVolumeChange = (value: number[]) => {
-    saveSettings({ soundVolume: value[0], soundEnabled: value[0] > 0 });
-  };
-
-  const handleSoundTypeChange = (value: SoundType) => {
-    saveSettings({ soundType: value });
-  };
-
-  const handleToggleMute = () => {
-    saveSettings({ soundEnabled: !settings.soundEnabled });
-  };
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetch(), refetchPrices()]);
+  }, [refetch, refetchPrices]);
 
   // Fetch triggered alerts history
   useEffect(() => {
@@ -139,15 +150,6 @@ const Alerts = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  const handleTestSound = () => {
-    if (!settings.soundEnabled) {
-      toast.warning(t("alerts.soundMuted") || "Sound is muted");
-      return;
-    }
-    alertSound.playTestSound(settings.soundType);
-    toast.info(t("alerts.testSound") + "...");
-  };
-
   const handleTogglePush = async () => {
     if (isSubscribed) {
       await unsubscribe();
@@ -157,17 +159,19 @@ const Alerts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-3">
-            <BellRing className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">{t("alerts.title")}</h1>
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+          <div className="flex items-center gap-2">
+            <BellRing className="h-5 w-5 text-primary" />
+            <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("alerts.title")}</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -176,33 +180,75 @@ const Alerts = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className={cn(
+          "main-content space-y-3 sm:space-y-4 md:space-y-6",
+          isNativeApp ? "p-2 pb-4" : "p-3 sm:p-4 md:p-6"
+        )}>
           {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <Bell className="h-5 w-5 text-primary" />
+          <div className={cn(
+            "grid gap-3",
+            isNativeApp ? "grid-cols-3" : "gap-4 md:grid-cols-3"
+          )}>
+            <div className={cn(
+              "border border-border bg-card",
+              isNativeApp ? "rounded-lg p-3" : "rounded-2xl p-6"
+            )}>
+              <div className={cn(
+                "flex items-center mb-2",
+                isNativeApp ? "gap-1.5 flex-col text-center" : "gap-3 mb-3"
+              )}>
+                <div className={cn(
+                  "rounded-lg bg-primary/20",
+                  isNativeApp ? "p-1.5" : "p-2"
+                )}>
+                  <Bell className={cn(
+                    "text-primary",
+                    isNativeApp ? "h-4 w-4" : "h-5 w-5"
+                  )} />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("alerts.activeAlerts")}</span>
+                <span className={cn(
+                  "text-muted-foreground",
+                  isNativeApp ? "text-[10px] leading-tight" : "text-sm"
+                )}>{t("alerts.activeAlerts")}</span>
               </div>
-              <div className="text-3xl font-bold text-foreground">{alerts.length}</div>
+              <div className={cn(
+                "font-bold text-foreground text-center",
+                isNativeApp ? "text-xl" : "text-3xl"
+              )}>{alerts.length}</div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-success/20">
-                  <CheckCircle className="h-5 w-5 text-success" />
+            <div className={cn(
+              "border border-border bg-card",
+              isNativeApp ? "rounded-lg p-3" : "rounded-2xl p-6"
+            )}>
+              <div className={cn(
+                "flex items-center mb-2",
+                isNativeApp ? "gap-1.5 flex-col text-center" : "gap-3 mb-3"
+              )}>
+                <div className={cn(
+                  "rounded-lg bg-success/20",
+                  isNativeApp ? "p-1.5" : "p-2"
+                )}>
+                  <CheckCircle className={cn(
+                    "text-success",
+                    isNativeApp ? "h-4 w-4" : "h-5 w-5"
+                  )} />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("alerts.triggeredToday")}</span>
+                <span className={cn(
+                  "text-muted-foreground",
+                  isNativeApp ? "text-[10px] leading-tight" : "text-sm"
+                )}>{t("alerts.triggeredToday")}</span>
               </div>
-              <div className="text-3xl font-bold text-foreground">
+              <div className={cn(
+                "font-bold text-foreground text-center",
+                isNativeApp ? "text-xl" : "text-3xl"
+              )}>
                 {triggeredAlerts.filter(a => {
                   const today = new Date();
                   const triggerDate = new Date(a.triggered_at);
@@ -211,33 +257,63 @@ const Alerts = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-chart-cyan/20">
-                  <Clock className="h-5 w-5 text-chart-cyan" />
+            <div className={cn(
+              "border border-border bg-card",
+              isNativeApp ? "rounded-lg p-3" : "rounded-2xl p-6"
+            )}>
+              <div className={cn(
+                "flex items-center mb-2",
+                isNativeApp ? "gap-1.5 flex-col text-center" : "gap-3 mb-3"
+              )}>
+                <div className={cn(
+                  "rounded-lg bg-chart-cyan/20",
+                  isNativeApp ? "p-1.5" : "p-2"
+                )}>
+                  <Clock className={cn(
+                    "text-chart-cyan",
+                    isNativeApp ? "h-4 w-4" : "h-5 w-5"
+                  )} />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("alerts.totalTriggered")}</span>
+                <span className={cn(
+                  "text-muted-foreground",
+                  isNativeApp ? "text-[10px] leading-tight" : "text-sm"
+                )}>{t("alerts.totalTriggered")}</span>
               </div>
-              <div className="text-3xl font-bold text-foreground">{triggeredAlerts.length}</div>
+              <div className={cn(
+                "font-bold text-foreground text-center",
+                isNativeApp ? "text-xl" : "text-3xl"
+              )}>{triggeredAlerts.length}</div>
             </div>
           </div>
 
-          {/* Tabs and Test Sound */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
+          {/* Tabs and Push Notifications */}
+          <div className={cn(
+            "flex items-center",
+            isNativeApp ? "justify-center gap-1.5" : "justify-between"
+          )}>
+            <div className={cn(
+              "flex",
+              isNativeApp ? "gap-1.5 w-full" : "gap-2"
+            )}>
               <button
                 onClick={() => setActiveTab("active")}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                  "font-medium transition-all flex items-center justify-center gap-1.5",
+                  isNativeApp 
+                    ? "flex-1 rounded-md px-3 py-1.5 text-xs" 
+                    : "rounded-lg px-4 py-2 text-sm gap-2",
                   activeTab === "active"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Bell className="h-4 w-4" />
-                {t("alerts.activeAlerts")}
+                <Bell className={cn(isNativeApp ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                {isNativeApp ? "Active" : t("alerts.activeAlerts")}
                 {alerts.length > 0 && (
-                  <span className="bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded text-xs">
+                  <span className={cn(
+                    "bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded",
+                    isNativeApp ? "text-[10px]" : "text-xs"
+                  )}>
                     {alerts.length}
                   </span>
                 )}
@@ -245,108 +321,92 @@ const Alerts = () => {
               <button
                 onClick={() => setActiveTab("history")}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                  "font-medium transition-all flex items-center justify-center gap-1.5",
+                  isNativeApp 
+                    ? "flex-1 rounded-md px-3 py-1.5 text-xs" 
+                    : "rounded-lg px-4 py-2 text-sm gap-2",
                   activeTab === "history"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Clock className="h-4 w-4" />
-                {t("alerts.alertHistory")}
+                <Clock className={cn(isNativeApp ? "h-3.5 w-3.5" : "h-4 w-4")} />
+                {isNativeApp ? "History" : t("alerts.alertHistory")}
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              {/* Sound Type Selector */}
-              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
-                <Music className="h-4 w-4 text-muted-foreground" />
-                <Select value={settings.soundType} onValueChange={handleSoundTypeChange}>
-                  <SelectTrigger className="w-24 h-7 text-xs border-0 bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="chime">Chime</SelectItem>
-                    <SelectItem value="beep">Beep</SelectItem>
-                    <SelectItem value="bell">Bell</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* Volume Slider with Mute Toggle */}
-              <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5">
-                <button
-                  onClick={handleToggleMute}
-                  className="hover:text-foreground transition-colors"
-                  title={settings.soundEnabled ? "Mute" : "Unmute"}
-                >
-                  {settings.soundEnabled ? (
-                    <Volume2 className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <VolumeX className="h-4 w-4 text-destructive" />
-                  )}
-                </button>
-                <Slider
-                  value={[settings.soundEnabled ? settings.soundVolume : 0]}
-                  onValueChange={handleVolumeChange}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  className="w-24"
-                  disabled={!settings.soundEnabled}
-                />
-                <span className={cn(
-                  "text-xs w-8",
-                  settings.soundEnabled ? "text-muted-foreground" : "text-destructive"
-                )}>
-                  {settings.soundEnabled ? `${Math.round(settings.soundVolume * 100)}%` : "Off"}
-                </span>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleTestSound} className="gap-2" disabled={!settings.soundEnabled}>
-                <Volume2 className="h-4 w-4" />
-                {t("alerts.testSound")}
+            {isSupported && !isNativeApp && (
+              <Button 
+                variant={isSubscribed ? "default" : "outline"} 
+                size="sm" 
+                onClick={handleTogglePush}
+                disabled={pushLoading}
+                className="gap-2"
+              >
+                {isSubscribed ? (
+                  <>
+                    <BellRing className="h-4 w-4" />
+                    {t("alerts.pushOn")}
+                  </>
+                ) : (
+                  <>
+                    <BellOff className="h-4 w-4" />
+                    {t("alerts.enablePush")}
+                  </>
+                )}
               </Button>
-              {isSupported && (
-                <Button 
-                  variant={isSubscribed ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={handleTogglePush}
-                  disabled={pushLoading}
-                  className="gap-2"
-                >
-                  {isSubscribed ? (
-                    <>
-                      <BellRing className="h-4 w-4" />
-                      {t("alerts.pushOn")}
-                    </>
-                  ) : (
-                    <>
-                      <BellOff className="h-4 w-4" />
-                      {t("alerts.enablePush")}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Content */}
-          <div className="rounded-2xl border border-border bg-card">
+          <div className={cn(
+            "border border-border bg-card",
+            isNativeApp ? "rounded-lg" : "rounded-2xl"
+          )}>
             {activeTab === "active" ? (
               <>
-                <div className="p-6 border-b border-border flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">{t("alerts.activeAlerts")}</h3>
-                  <span className="text-sm text-muted-foreground">
-                    {t("alerts.monitoring", { count: alerts.length })}
+                <div className={cn(
+                  "border-b border-border flex items-center justify-between",
+                  isNativeApp ? "p-3" : "p-6"
+                )}>
+                  <h3 className={cn(
+                    "font-semibold text-foreground",
+                    isNativeApp ? "text-sm" : "text-lg"
+                  )}>{t("alerts.activeAlerts")}</h3>
+                  <span className={cn(
+                    "text-muted-foreground",
+                    isNativeApp ? "text-xs" : "text-sm"
+                  )}>
+                    {isNativeApp ? alerts.length : t("alerts.monitoring", { count: alerts.length })}
                   </span>
                 </div>
 
                 {loading ? (
-                  <div className="p-12 flex items-center justify-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className={cn(
+                    "flex items-center justify-center",
+                    isNativeApp ? "p-8" : "p-12"
+                  )}>
+                    <div className={cn(
+                      "animate-spin rounded-full border-2 border-primary border-t-transparent",
+                      isNativeApp ? "h-5 w-5" : "h-6 w-6"
+                    )} />
                   </div>
                 ) : alerts.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-foreground mb-2">{t("alerts.noActiveAlerts")}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className={cn(
+                    "text-center",
+                    isNativeApp ? "p-8" : "p-12"
+                  )}>
+                    <AlertCircle className={cn(
+                      "text-muted-foreground mx-auto mb-3",
+                      isNativeApp ? "h-8 w-8" : "h-12 w-12 mb-4"
+                    )} />
+                    <h4 className={cn(
+                      "font-medium text-foreground mb-1.5",
+                      isNativeApp ? "text-sm" : "text-lg mb-2"
+                    )}>{t("alerts.noActiveAlerts")}</h4>
+                    <p className={cn(
+                      "text-muted-foreground",
+                      isNativeApp ? "text-xs" : "text-sm"
+                    )}>
                       {t("alerts.noActiveAlertsDesc")}
                     </p>
                   </div>
@@ -363,58 +423,94 @@ const Alerts = () => {
                         : ((currentPrice - alert.target_price) / currentPrice) * 100;
 
                       return (
-                        <div key={alert.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
-                          <div className="flex items-center gap-4">
+                        <div key={alert.id} className={cn(
+                          "flex items-center justify-between hover:bg-secondary/30 transition-colors",
+                          isNativeApp ? "p-2.5" : "p-4"
+                        )}>
+                          <div className={cn(
+                            "flex items-center",
+                            isNativeApp ? "gap-2" : "gap-4"
+                          )}>
                             {crypto?.image && (
-                              <img src={crypto.image} alt={alert.name} className="w-10 h-10 rounded-full" />
+                              <img src={crypto.image} alt={alert.name} className={cn(
+                                "rounded-full",
+                                isNativeApp ? "w-8 h-8" : "w-10 h-10"
+                              )} />
                             )}
                             <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground">{alert.symbol}</span>
-                                <span className="text-sm text-muted-foreground">{alert.name}</span>
-                              </div>
-                              <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                              <div className={cn(
+                                "flex items-center",
+                                isNativeApp ? "gap-1.5" : "gap-2"
+                              )}>
                                 <span className={cn(
-                                  "px-2 py-0.5 rounded text-xs font-medium",
+                                  "font-semibold text-foreground",
+                                  isNativeApp ? "text-sm" : ""
+                                )}>{alert.symbol}</span>
+                                {!isNativeApp && (
+                                  <span className="text-sm text-muted-foreground">{alert.name}</span>
+                                )}
+                              </div>
+                              <div className={cn(
+                                "text-muted-foreground flex items-center gap-1.5 mt-0.5",
+                                isNativeApp ? "text-xs" : "text-sm gap-2 mt-1"
+                              )}>
+                                <span className={cn(
+                                  "px-1.5 py-0.5 rounded font-medium",
+                                  isNativeApp ? "text-[10px]" : "px-2 text-xs",
                                   alert.condition === "above" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
                                 )}>
                                   {alert.condition === "above" ? `↑ ${t("alerts.above")}` : `↓ ${t("alerts.below")}`}
                                 </span>
-                                <span>{formatPrice(alert.target_price)}</span>
+                                <span className={cn(isNativeApp ? "text-xs" : "")}>{formatPrice(alert.target_price)}</span>
                               </div>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <div className="text-sm text-muted-foreground">{t("alerts.currentPrice")}</div>
-                              <div className="font-semibold text-foreground">{formatPrice(currentPrice)}</div>
-                            </div>
-                            <div className="text-right w-20">
-                              <div className="text-sm text-muted-foreground">{t("alerts.distance")}</div>
+                          <div className={cn(
+                            "flex items-center",
+                            isNativeApp ? "gap-2" : "gap-6"
+                          )}>
+                            {!isNativeApp && (
+                              <div className="text-right">
+                                <div className="text-sm text-muted-foreground">{t("alerts.currentPrice")}</div>
+                                <div className="font-semibold text-foreground">{formatPrice(currentPrice)}</div>
+                              </div>
+                            )}
+                            <div className={cn(
+                              "text-right",
+                              isNativeApp ? "" : "w-20"
+                            )}>
+                              {!isNativeApp && <div className="text-sm text-muted-foreground">{t("alerts.distance")}</div>}
                               <div className={cn(
                                 "font-semibold",
+                                "font-semibold",
+                                isNativeApp ? "text-xs" : "",
                                 distancePercent > 0 ? "text-warning" : "text-success"
                               )}>
                                 {distancePercent > 0 ? `${distancePercent.toFixed(1)}%` : t("alerts.ready")}
                               </div>
                             </div>
-                            <div className="w-32 hidden md:block">
-                              <div className="text-xs text-muted-foreground mb-1">{t("alerts.progress")}</div>
-                              <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary transition-all duration-500 rounded-full"
-                                  style={{ width: `${progressPercent}%` }}
-                                />
+                            {!isNativeApp && (
+                              <div className="w-32 hidden md:block">
+                                <div className="text-xs text-muted-foreground mb-1">{t("alerts.progress")}</div>
+                                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-primary transition-all duration-500 rounded-full"
+                                    style={{ width: `${progressPercent}%` }}
+                                  />
+                                </div>
                               </div>
-                            </div>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-muted-foreground hover:text-destructive"
+                              className={cn(
+                                "text-muted-foreground hover:text-destructive",
+                                isNativeApp ? "h-7 w-7" : ""
+                              )}
                               onClick={() => handleRemoveAlert(alert.id, alert.symbol)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className={cn(isNativeApp ? "h-3.5 w-3.5" : "h-4 w-4")} />
                             </Button>
                           </div>
                         </div>
@@ -425,9 +521,15 @@ const Alerts = () => {
               </>
             ) : (
               <>
-                <div className="p-6 border-b border-border flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">{t("alerts.triggeredHistory")}</h3>
-                  {triggeredAlerts.length > 0 && (
+                <div className={cn(
+                  "border-b border-border flex items-center justify-between",
+                  isNativeApp ? "p-3" : "p-6"
+                )}>
+                  <h3 className={cn(
+                    "font-semibold text-foreground",
+                    isNativeApp ? "text-sm" : "text-lg"
+                  )}>{t("alerts.triggeredHistory")}</h3>
+                  {triggeredAlerts.length > 0 && !isNativeApp && (
                     <Button variant="outline" size="sm" onClick={handleOpenClearHistoryDialog}>
                       <Trash2 className="h-4 w-4 mr-2" />
                       {t("alerts.clearHistory")}
@@ -436,50 +538,100 @@ const Alerts = () => {
                 </div>
 
                 {historyLoading ? (
-                  <div className="p-12 flex items-center justify-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className={cn(
+                    "flex items-center justify-center",
+                    isNativeApp ? "p-8" : "p-12"
+                  )}>
+                    <div className={cn(
+                      "animate-spin rounded-full border-2 border-primary border-t-transparent",
+                      isNativeApp ? "h-5 w-5" : "h-6 w-6"
+                    )} />
                   </div>
                 ) : triggeredAlerts.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-foreground mb-2">{t("alerts.noAlertHistory")}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className={cn(
+                    "text-center",
+                    isNativeApp ? "p-8" : "p-12"
+                  )}>
+                    <Clock className={cn(
+                      "text-muted-foreground mx-auto mb-3",
+                      isNativeApp ? "h-8 w-8" : "h-12 w-12 mb-4"
+                    )} />
+                    <h4 className={cn(
+                      "font-medium text-foreground mb-1.5",
+                      isNativeApp ? "text-sm" : "text-lg mb-2"
+                    )}>{t("alerts.noAlertHistory")}</h4>
+                    <p className={cn(
+                      "text-muted-foreground",
+                      isNativeApp ? "text-xs" : "text-sm"
+                    )}>
                       {t("alerts.noAlertHistoryDesc")}
                     </p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
                     {triggeredAlerts.map((alert) => (
-                      <div key={alert.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-full bg-success/20">
-                            <CheckCircle className="h-5 w-5 text-success" />
+                      <div key={alert.id} className={cn(
+                        "flex items-center justify-between hover:bg-secondary/30 transition-colors",
+                        isNativeApp ? "p-2.5" : "p-4"
+                      )}>
+                        <div className={cn(
+                          "flex items-center",
+                          isNativeApp ? "gap-2" : "gap-4"
+                        )}>
+                          <div className={cn(
+                            "rounded-full bg-success/20",
+                            isNativeApp ? "p-1.5" : "p-2"
+                          )}>
+                            <CheckCircle className={cn(
+                              "text-success",
+                              isNativeApp ? "h-4 w-4" : "h-5 w-5"
+                            )} />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-foreground">{alert.symbol}</span>
-                              <span className="text-sm text-muted-foreground">{alert.name}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                            <div className={cn(
+                              "flex items-center",
+                              isNativeApp ? "gap-1.5" : "gap-2"
+                            )}>
                               <span className={cn(
-                                "px-2 py-0.5 rounded text-xs font-medium",
+                                "font-semibold text-foreground",
+                                isNativeApp ? "text-sm" : ""
+                              )}>{alert.symbol}</span>
+                              {!isNativeApp && (
+                                <span className="text-sm text-muted-foreground">{alert.name}</span>
+                              )}
+                            </div>
+                            <div className={cn(
+                              "text-muted-foreground flex items-center gap-1.5 mt-0.5",
+                              isNativeApp ? "text-xs" : "text-sm gap-2 mt-1"
+                            )}>
+                              <span className={cn(
+                                "px-1.5 py-0.5 rounded font-medium",
+                                isNativeApp ? "text-[10px]" : "px-2 text-xs",
                                 alert.condition === "above" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
                               )}>
                                 {alert.condition === "above" ? `↑ ${t("alerts.above")}` : `↓ ${t("alerts.below")}`}
                               </span>
-                              <span>{formatPrice(alert.target_price)}</span>
+                              <span className={cn(isNativeApp ? "text-xs" : "")}>{formatPrice(alert.target_price)}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-6">
+                        <div className={cn(
+                          "flex items-center",
+                          isNativeApp ? "gap-2" : "gap-6"
+                        )}>
+                          {!isNativeApp && (
+                            <div className="text-right">
+                              <div className="text-sm text-muted-foreground">{t("alerts.setAt")}</div>
+                              <div className="text-sm text-foreground">{formatPrice(alert.current_price_at_creation)}</div>
+                            </div>
+                          )}
                           <div className="text-right">
-                            <div className="text-sm text-muted-foreground">{t("alerts.setAt")}</div>
-                            <div className="text-sm text-foreground">{formatPrice(alert.current_price_at_creation)}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">{t("alerts.triggered")}</div>
-                            <div className="text-sm text-foreground">{formatDate(alert.triggered_at)}</div>
+                            {!isNativeApp && <div className="text-sm text-muted-foreground">{t("alerts.triggered")}</div>}
+                            <div className={cn(
+                              "text-foreground",
+                              isNativeApp ? "text-xs" : "text-sm"
+                            )}>{isNativeApp ? new Date(alert.triggered_at).toLocaleDateString() : formatDate(alert.triggered_at)}</div>
                           </div>
                         </div>
                       </div>
@@ -536,6 +688,7 @@ const Alerts = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </PullToRefresh>
   );
 };
 

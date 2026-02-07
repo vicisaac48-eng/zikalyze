@@ -156,11 +156,11 @@ export const analysisRateLimiter = new RateLimiter({
   blockDurationMs: 600000
 });
 
-// Auth attempt limiter (5 attempts per 5 minutes)
+// Auth attempt limiter (5 attempts per 5 minutes, 15-hour block for spam)
 export const authRateLimiter = new RateLimiter({
   maxRequests: 5,
   windowMs: 300000,
-  blockDurationMs: 900000 // 15 min block
+  blockDurationMs: 54000000 // 15 hours block for IP spam protection
 });
 
 // WebSocket connection limiter (10 connections per minute)

@@ -139,6 +139,19 @@ export interface MultiTimeframeInput {
   };
 }
 
+// Real-time Fear & Greed data for AI analysis
+export interface RealTimeFearGreedInput {
+  value: number;
+  label: string;
+  previousValue?: number;
+  previousLabel?: string;
+  trend?: 'RISING' | 'FALLING' | 'STABLE';
+  extremeLevel?: 'EXTREME_FEAR' | 'FEAR' | 'NEUTRAL' | 'GREED' | 'EXTREME_GREED';
+  aiWeight?: number; // 0-1 weight for AI decision making
+  isLive?: boolean;
+  timestamp?: number;
+}
+
 export interface AnalysisInput {
   crypto: string;
   price: number;
@@ -152,16 +165,115 @@ export interface AnalysisInput {
   dataSource?: string;  // e.g., "price+on-chain+sentiment"
   onChainData?: OnChainMetrics;
   sentimentData?: {
-    fearGreed?: { value: number; label: string };
+    fearGreed?: RealTimeFearGreedInput | { value: number; label: string };
     social?: { overall?: { score: number } };
   };
   chartTrendData?: ChartTrendInput; // Real-time 24h chart data for accurate trend analysis
   multiTimeframeData?: MultiTimeframeInput; // Multi-timeframe analysis (15m, 1h, 4h, 1d)
+  // Real-time data freshness indicators
+  priceDataAge?: number; // Age in milliseconds
+  chartDataAge?: number; // Age in milliseconds
+  fearGreedDataAge?: number; // Age in milliseconds
+  // Layer Gamma — Human Hybrid Narrative Filter input
+  narrativeContext?: LayerGammaInput;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 TRI-MODULAR ANALYSIS TYPES — Senior Quant Strategist Output
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Layer Alpha — Rule-Based Algorithm Analysis (ICT/SMC)
+ */
+export interface LayerAlphaResult {
+  signal: '🔴 SHORT' | '🟢 LONG' | '⚪ NEUTRAL';
+  orderBlocks: Array<{ type: 'BULLISH' | 'BEARISH'; level: number; strength: number }>;
+  liquidityVoids: Array<{ type: 'BSL' | 'SSL'; level: number }>;
+  fibLevels: Array<{ level: string; price: number; significance: 'HIGH' | 'MEDIUM' | 'LOW' }>;
+  timeframe4H: { trend: string; structure: string };
+  timeframe15M: { trend: string; structure: string };
+  priceActionBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  confidence: number;
+}
+
+/**
+ * Layer Beta — Neural Network Pattern Recognition
+ */
+export interface LayerBetaResult {
+  signal: '🔴 SHORT' | '🟢 LONG' | '⚪ NEUTRAL';
+  rsiAnalysis: { value: number; condition: 'OVERBOUGHT' | 'OVERSOLD' | 'NEUTRAL' };
+  macdAnalysis: { histogram: number; signal: string; momentum: 'BULLISH' | 'BEARISH' | 'NEUTRAL' };
+  hiddenCorrelations: string[];
+  fearGreedComparison: { current: number; historicalExtremeFear: number; similarity: number };
+  marketPhase: 'DISTRIBUTION' | 'ACCUMULATION' | 'CAPITULATION' | 'EUPHORIA' | 'NEUTRAL';
+  reversalProbability: number;
+  confidence: number;
+}
+
+/**
+ * Layer Gamma — Human Hybrid Narrative Filter
+ */
+export interface LayerGammaInput {
+  userContext?: string;           // User-provided news/context
+  macroEvents?: string[];         // Upcoming macro events
+  sentiment?: string;             // Overall market sentiment from news
+  psychologicalLevels?: number[]; // Price levels with psychological significance
+}
+
+export interface LayerGammaResult {
+  action: 'OVERRIDE' | 'VALIDATE' | 'NEUTRAL';
+  narrativeAnalysis: string;
+  psychologicalLevels: Array<{ price: number; type: 'SUPPORT' | 'RESISTANCE'; reason: string }>;
+  macroImpact: 'BULLISH' | 'BEARISH' | 'VOLATILE' | 'NEUTRAL';
+  positionSizeAdjustment: 'REDUCE' | 'INCREASE' | 'MAINTAIN' | 'EXIT';
+  confidence: number;
+}
+
+/**
+ * Tri-Modular Analysis — Complete Output
+ */
+export interface TriModularAnalysis {
+  // The three layers
+  layerAlpha: LayerAlphaResult;
+  layerBeta: LayerBetaResult;
+  layerGamma: LayerGammaResult;
+  
+  // Final Output Requirements
+  weightedConfidenceScore: {
+    direction: 'LONG' | 'SHORT' | 'NEUTRAL';
+    percentage: number;
+    breakdown: {
+      alphaContribution: number;
+      betaContribution: number;
+      gammaContribution: number;
+    };
+  };
+  
+  conflictReport: {
+    hasConflict: boolean;
+    description: string;
+    reversalSignalFromNN: boolean;
+    algorithmMissing: string | null;
+  };
+  
+  humanInTheLoopVerdict: {
+    positionSizeRecommendation: 'FULL' | '75%' | '50%' | '25%' | 'AVOID';
+    reasoning: string;
+    upcomingMacroRisk: string | null;
+    waitTime: string | null;  // e.g., "Wait 2 hours for Jobless Claims"
+  };
+  
+  killSwitchLevel: {
+    price: number;
+    reason: string;
+    allLayersAgree: boolean;
+  };
 }
 
 export interface AnalysisResult {
   bias: 'LONG' | 'SHORT' | 'NEUTRAL';
   confidence: number;
+  successProbability: number; // Calculated success probability based on confluence, timing, bias, and volume analysis
   analysis: string;
   insights: string[];
   macroCatalysts: MacroCatalyst[];
@@ -171,8 +283,68 @@ export interface AnalysisResult {
   scenarios: IfThenScenario[];
   timestamp: string;
   source: 'client-side-wasm';
+  // Data verification status
+  verificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'ESTIMATED';
+  liveDataSources?: number; // Count of live data sources (0-4)
   // Attention mechanism outputs
   attentionHeatmap?: number[];   // Per-timeframe importance weights [0..1]
   attentionVector?: number[];    // Aggregated context vector after attention + ReLU
   attentionEntropyLoss?: number; // Cross-entropy loss for training signal: L = -Σ y_i log(ŷ_i)
+  // Real-time data integration status
+  realTimeStatus?: {
+    priceIsLive: boolean;
+    chartIsLive: boolean;
+    fearGreedIsLive: boolean;
+    onChainIsLive: boolean;
+    dataFreshness: 'REAL_TIME' | 'RECENT' | 'STALE';
+  };
+  // Fear & Greed impact on analysis
+  fearGreedImpact?: {
+    value: number;
+    trend: 'RISING' | 'FALLING' | 'STABLE';
+    biasModifier: number; // -1 to 1 adjustment to bias
+    contrarian: boolean;
+    description: string;
+  };
+  // Hybrid Confirmation — Algorithm + Neural Network combined output
+  hybridConfirmation?: {
+    algorithmBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+    algorithmConfidence: number;
+    neuralDirection: 'LONG' | 'SHORT' | 'NEUTRAL';
+    neuralConfidence: number;
+    agreement: boolean;
+    confluenceLevel: 'STRONG' | 'MODERATE' | 'WEAK' | 'CONFLICTING';
+    combinedConfidence: number;
+    usedBothSystems: boolean; // Confirms both algorithm and neural network were used
+  };
+  // Trade Quality Assessment — Follow trend, wait for confirmation, avoid bad trades
+  tradeQuality?: {
+    followsTrend: boolean;           // True if trade direction aligns with HTF trend
+    hasConfirmation: boolean;        // True if multiple confirmations present
+    confirmationCount: number;       // Number of confirmations (0-5)
+    confirmations: string[];         // List of confirmations met
+    isBadTrade: boolean;             // True if trade should be avoided
+    badTradeReasons: string[];       // Reasons why this is a bad trade
+    qualityScore: number;            // 0-100 overall trade quality
+    recommendation: 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE';
+  };
+  // Regime-Weighted Consensus — ADX-based Algorithm vs Neural Network weighting
+  regimeConsensus?: {
+    regime: 'TRENDING' | 'RANGING' | 'TRANSITIONAL';  // Market regime based on ADX
+    adxValue: number;                                  // ADX value (0-100)
+    masterControl: 'ALGORITHM' | 'NEURAL_NETWORK';    // Which system has primary control
+    algorithmWeight: number;                          // 0-1 weight for Algorithm
+    neuralWeight: number;                             // 0-1 weight for Neural Network
+    weightedScore: number;                            // Final weighted consensus score
+    skipTrade: boolean;                               // True if trade should be skipped
+    skipReason?: string;                              // Reason for skipping
+    supportZone: number;                              // Key support level
+    resistanceZone: number;                           // Key resistance level
+    stopLoss: number;                                 // Recommended stop loss level
+    candlestickPattern: string;                       // Detected candlestick pattern
+    candlestickConfirmation: string;                  // Entry trigger description
+    candlestickStrength: number;                      // Pattern strength 0-100
+  };
+  // Tri-Modular Analysis — Senior Quant Strategist Output
+  triModularAnalysis?: TriModularAnalysis;
 }

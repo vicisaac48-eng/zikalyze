@@ -1,0 +1,236 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useIsNativeApp } from "./useIsNativeApp";
+
+interface UsePullToRefreshOptions {
+  onRefresh: () => Promise<void> | void;
+  threshold?: number; // Distance to pull before triggering refresh (default: 80px)
+  maxPull?: number; // Maximum pull distance (default: 150px)
+  resistance?: number; // Resistance factor (0-1, default: 0.5)
+  disabled?: boolean; // Disable the hook
+}
+
+interface UsePullToRefreshReturn {
+  pullDistance: number;
+  isRefreshing: boolean;
+  isPulling: boolean;
+  canRefresh: boolean; // True when pulled past threshold
+  containerRef: React.RefObject<HTMLElement>;
+  contentStyle: React.CSSProperties;
+  indicatorStyle: React.CSSProperties;
+}
+
+// Tolerance for scroll position check on Android WebView
+// Android WebView may report small scroll offsets even at the top
+const SCROLL_TOP_TOLERANCE = 5;
+
+// Helper function to check if at the top of the scroll container
+const checkIfAtTop = (): boolean => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  return scrollTop <= SCROLL_TOP_TOLERANCE;
+};
+
+// Minimum distance to pull before activating pull-to-refresh
+// This ensures normal scroll gestures are not blocked
+const ACTIVATION_THRESHOLD = 20;
+
+/**
+ * Hook for implementing native-style pull-to-refresh functionality.
+ * Only active on native Android/PWA apps, does nothing on web.
+ */
+export function usePullToRefresh({
+  onRefresh,
+  threshold = 80,
+  maxPull = 150,
+  resistance = 0.5,
+  disabled = false,
+}: UsePullToRefreshOptions): UsePullToRefreshReturn {
+  const isNativeApp = useIsNativeApp();
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+
+  const containerRef = useRef<HTMLElement>(null);
+  const startYRef = useRef<number>(0);
+  const currentYRef = useRef<number>(0);
+  const isAtTopRef = useRef<boolean>(true);
+  // Use ref to avoid stale closure in event handlers
+  const isPullingRef = useRef<boolean>(false);
+  const isRefreshingRef = useRef<boolean>(false);
+  const pullDistanceRef = useRef<number>(0);
+
+  const canRefresh = pullDistance >= threshold;
+
+  // Sync refs with state
+  useEffect(() => {
+    isPullingRef.current = isPulling;
+  }, [isPulling]);
+
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
+
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
+
+  // Handle the refresh action
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshingRef.current) return;
+
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } catch (error) {
+      console.error("Pull-to-refresh error:", error);
+    } finally {
+      setIsRefreshing(false);
+      setPullDistance(0);
+    }
+  }, [onRefresh]);
+
+  // Touch event handlers
+  useEffect(() => {
+    // Only enable on native app and when not disabled
+    if (!isNativeApp || disabled) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (isRefreshingRef.current) return;
+
+      // Record the starting position but DON'T set isPulling yet
+      // We'll only set isPulling to true once we confirm user is pulling down from top
+      startYRef.current = e.touches[0].clientY;
+      currentYRef.current = startYRef.current;
+      isAtTopRef.current = checkIfAtTop();
+      // Don't set isPulling here - let touchmove decide based on direction
+      isPullingRef.current = false;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isRefreshingRef.current) return;
+
+      currentYRef.current = e.touches[0].clientY;
+      const rawDistance = currentYRef.current - startYRef.current;
+
+      // If scrolling up (negative distance), always allow normal scroll
+      if (rawDistance <= 0) {
+        if (isPullingRef.current) {
+          isPullingRef.current = false;
+          setIsPulling(false);
+          setPullDistance(0);
+        }
+        // Let the browser handle normal upward scrolling
+        return;
+      }
+
+      // Only activate pull-to-refresh if:
+      // 1. We started at the top of the page
+      // 2. User is pulling DOWN (positive rawDistance)
+      // 3. We're still at the top (or very close)
+      // 4. Raw distance exceeds activation threshold (prevents blocking normal scroll)
+      const currentlyAtTop = checkIfAtTop();
+      
+      if (!isAtTopRef.current || !currentlyAtTop) {
+        // Not at top - cancel any pull state and let normal scroll happen
+        if (isPullingRef.current) {
+          isPullingRef.current = false;
+          setIsPulling(false);
+          setPullDistance(0);
+        }
+        return;
+      }
+
+      // Don't activate pull-to-refresh until we've moved past the activation threshold
+      // This prevents blocking normal scroll gestures on Android
+      if (rawDistance < ACTIVATION_THRESHOLD) {
+        // Let the browser handle the touch - don't block normal scroll
+        return;
+      }
+
+      // Now we're confirmed pulling down from the top - activate pull-to-refresh
+      if (!isPullingRef.current) {
+        isPullingRef.current = true;
+        setIsPulling(true);
+      }
+
+      // Apply resistance to make the pull feel natural
+      const resistedDistance = Math.min(
+        rawDistance * resistance,
+        maxPull
+      );
+
+      // NOTE: Removed e.preventDefault() to allow native scroll to work on Android
+      // The pull-to-refresh visual effect still works, but we don't block native scroll
+      // This lets the browser handle touch scrolling naturally
+
+      setPullDistance(resistedDistance);
+    };
+
+    const handleTouchEnd = () => {
+      if (isRefreshingRef.current) return;
+
+      const canTriggerRefresh = pullDistanceRef.current >= threshold;
+      
+      isPullingRef.current = false;
+      setIsPulling(false);
+
+      if (canTriggerRefresh && isAtTopRef.current) {
+        handleRefresh();
+      } else {
+        // Animate back to zero
+        setPullDistance(0);
+      }
+    };
+
+    // Add touch event listeners
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+    container.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+      container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [isNativeApp, disabled, handleRefresh, resistance, maxPull, threshold]);
+
+  // Content transform style
+  const contentStyle: React.CSSProperties = {
+    transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : "none",
+    transition: isPulling ? "none" : "transform 0.3s ease-out",
+  };
+
+  // Indicator style
+  const indicatorStyle: React.CSSProperties = {
+    transform: `translateY(${Math.min(pullDistance - 60, 0)}px) rotate(${pullDistance * 2}deg)`,
+    opacity: pullDistance > 10 ? Math.min(pullDistance / threshold, 1) : 0,
+    transition: isPulling ? "none" : "transform 0.3s ease-out, opacity 0.3s ease-out",
+  };
+
+  // Return no-op values for web
+  if (!isNativeApp || disabled) {
+    return {
+      pullDistance: 0,
+      isRefreshing: false,
+      isPulling: false,
+      canRefresh: false,
+      containerRef: containerRef as React.RefObject<HTMLElement>,
+      contentStyle: {},
+      indicatorStyle: { opacity: 0 },
+    };
+  }
+
+  return {
+    pullDistance,
+    isRefreshing,
+    isPulling,
+    canRefresh,
+    containerRef: containerRef as React.RefObject<HTMLElement>,
+    contentStyle,
+    indicatorStyle,
+  };
+}

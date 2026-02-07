@@ -70,20 +70,15 @@ export function useChartAPI(
 
     try {
       // Fetch main analysis and multi-TF in parallel
-      const promises: Promise<ChartAnalysisResult | ChartAnalysisResult[]>[] = [
-        analyzeChart(symbol, interval, 100)
-      ];
+      const chartPromise = analyzeChart(symbol, interval, 100);
+      const mtfPromise = enableMultiTf ? fetchMultiTimeframeAnalysis(symbol) : null;
       
-      if (enableMultiTf) {
-        promises.push(fetchMultiTimeframeAnalysis(symbol));
-      }
-      
-      const results = await Promise.all(promises);
+      const [chartAnalysis, mtfData] = await Promise.all([
+        chartPromise,
+        mtfPromise
+      ]);
       
       if (!mountedRef.current) return;
-      
-      const chartAnalysis = results[0] as ChartAnalysisResult | null;
-      const mtfData = enableMultiTf ? results[1] as MultiTimeframeInput | null : null;
       
       if (chartAnalysis) {
         setAnalysis(chartAnalysis);
@@ -153,7 +148,7 @@ export function useChartAPI(
 
 export function useRSI(symbol: string, interval: ChartInterval = '1h'): { rsi: number | null; isLoading: boolean } {
   const { indicators, isLoading } = useChartAPI(symbol, interval, false);
-  return { rsi: indicators?.rsi || null, isLoading };
+  return { rsi: indicators?.rsi ?? null, isLoading };
 }
 
 export function useEMAs(symbol: string, interval: ChartInterval = '1h'): { 
@@ -164,9 +159,9 @@ export function useEMAs(symbol: string, interval: ChartInterval = '1h'): {
 } {
   const { indicators, isLoading } = useChartAPI(symbol, interval, false);
   return {
-    ema9: indicators?.ema9 || null,
-    ema21: indicators?.ema21 || null,
-    ema50: indicators?.ema50 || null,
+    ema9: indicators?.ema9 ?? null,
+    ema21: indicators?.ema21 ?? null,
+    ema50: indicators?.ema50 ?? null,
     isLoading
   };
 }
@@ -179,9 +174,9 @@ export function useMACD(symbol: string, interval: ChartInterval = '1h'): {
 } {
   const { indicators, isLoading } = useChartAPI(symbol, interval, false);
   return {
-    macd: indicators?.macd.macd || null,
-    signal: indicators?.macd.signal || null,
-    histogram: indicators?.macd.histogram || null,
+    macd: indicators?.macd.macd ?? null,
+    signal: indicators?.macd.signal ?? null,
+    histogram: indicators?.macd.histogram ?? null,
     isLoading
   };
 }
@@ -194,9 +189,9 @@ export function useBollingerBands(symbol: string, interval: ChartInterval = '1h'
 } {
   const { indicators, isLoading } = useChartAPI(symbol, interval, false);
   return {
-    upper: indicators?.bollingerBands.upper || null,
-    middle: indicators?.bollingerBands.middle || null,
-    lower: indicators?.bollingerBands.lower || null,
+    upper: indicators?.bollingerBands.upper ?? null,
+    middle: indicators?.bollingerBands.middle ?? null,
+    lower: indicators?.bollingerBands.lower ?? null,
     isLoading
   };
 }
@@ -209,9 +204,9 @@ export function useTrendAnalysis(symbol: string): {
 } {
   const { analysis, multiTimeframe, isLoading } = useChartAPI(symbol, '1h', true);
   return {
-    trend: analysis?.trend || null,
-    strength: analysis?.trendStrength || null,
-    confluence: multiTimeframe?.confluence || null,
+    trend: analysis?.trend ?? null,
+    strength: analysis?.trendStrength ?? null,
+    confluence: multiTimeframe?.confluence ?? null,
     isLoading
   };
 }
@@ -223,8 +218,8 @@ export function useSupportResistance(symbol: string, interval: ChartInterval = '
 } {
   const { analysis, isLoading } = useChartAPI(symbol, interval, false);
   return {
-    support: analysis?.support || null,
-    resistance: analysis?.resistance || null,
+    support: analysis?.support ?? null,
+    resistance: analysis?.resistance ?? null,
     isLoading
   };
 }

@@ -16,6 +16,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+
+// App version from package.json
+const APP_VERSION = "1.1.0";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -111,17 +115,56 @@ const Install = () => {
       </header>
 
       <main className="container max-w-2xl mx-auto px-4 py-8">
-        {/* Hero Section */}
+        {/* Hero Section with Native App-Style Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center shadow-lg">
-            <Smartphone className="w-10 h-10 text-white" />
+          {/* Native App Icon Container - iOS/Android style with proper shadow and rounded corners */}
+          <div className="relative inline-block mb-6">
+            {/* Outer glow effect */}
+            <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-primary/30 via-cyan-500/20 to-purple-500/30 blur-xl scale-110 opacity-60" />
+            
+            {/* App Icon - Native style with proper iOS/Android rounding */}
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px] shadow-2xl shadow-primary/20">
+              {/* Inner gradient border */}
+              <div className="absolute inset-0 rounded-[24px] sm:rounded-[28px] bg-gradient-to-br from-primary/40 via-cyan-500/20 to-purple-500/30 opacity-80" />
+              
+              {/* Logo container with background */}
+              <div className="relative w-full h-full rounded-[22px] sm:rounded-[26px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
+                {/* Subtle inner shadow for depth */}
+                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
+                
+                {/* Logo image */}
+                <img 
+                  src={zikalyzeLogo} 
+                  alt="Zikalyze" 
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg relative z-10"
+                />
+              </div>
+            </div>
+            
+            {/* Floating badge for native feel */}
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center shadow-lg border-2 border-background">
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          
+          {/* App Name with native styling */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight">
             {t("install.title", "Install Zikalyze")}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
             {t("install.subtitle", "Get the full app experience with offline access and quick launch")}
           </p>
+          
+          {/* App info badges */}
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              {t("install.freeBadge", "Free")}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium">
+              v{APP_VERSION}
+            </span>
+          </div>
         </div>
 
         {/* Installed State */}
@@ -221,6 +264,37 @@ const Install = () => {
                   </TabsContent>
 
                   <TabsContent value="android" className="space-y-3 mt-0">
+                    {/* Native APK Download Option */}
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Download className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-foreground mb-1">
+                            <Smartphone className="w-4 h-4 inline mr-1" />
+                            {t("install.android.nativeTitle", "Download Native APK (Recommended)")}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {t("install.android.nativeDesc", "Get the full native Android experience with better performance and push notifications.")}
+                          </p>
+                          <a 
+                            href="https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            {t("install.android.downloadLatestApk", "Download Latest APK")}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      {t("install.android.orPwa", "— or install as PWA —")}
+                    </p>
+
                     <InstallStep
                       step={1}
                       icon={Chrome}
@@ -273,47 +347,56 @@ const Install = () => {
           </>
         )}
 
-        {/* Benefits Section */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <div className="text-center p-4">
-            <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-primary" />
+        {/* Benefits Section - Native App Style Cards */}
+        <div className="mt-8 grid gap-3 sm:gap-4 grid-cols-3">
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 p-4 sm:p-5 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/10">
+                <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              </div>
+              <h4 className="font-semibold text-xs sm:text-sm text-foreground">
+                {t("install.benefit1Title", "Quick Access")}
+              </h4>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">
+                {t("install.benefit1Desc", "Launch from home screen")}
+              </p>
             </div>
-            <h4 className="font-medium text-sm text-foreground">
-              {t("install.benefit1Title", "Quick Access")}
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("install.benefit1Desc", "Launch from home screen")}
-            </p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Download className="w-5 h-5 text-primary" />
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 p-4 sm:p-5 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center ring-1 ring-cyan-500/10">
+                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-500" />
+              </div>
+              <h4 className="font-semibold text-xs sm:text-sm text-foreground">
+                {t("install.benefit2Title", "Works Offline")}
+              </h4>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">
+                {t("install.benefit2Desc", "Access cached data anytime")}
+              </p>
             </div>
-            <h4 className="font-medium text-sm text-foreground">
-              {t("install.benefit2Title", "Works Offline")}
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("install.benefit2Desc", "Access cached data anytime")}
-            </p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Monitor className="w-5 h-5 text-primary" />
+          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-card to-card/50 border border-border/50 p-4 sm:p-5 text-center transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center ring-1 ring-purple-500/10">
+                <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+              </div>
+              <h4 className="font-semibold text-xs sm:text-sm text-foreground">
+                {t("install.benefit3Title", "Full Screen")}
+              </h4>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">
+                {t("install.benefit3Desc", "No browser UI distractions")}
+              </p>
             </div>
-            <h4 className="font-medium text-sm text-foreground">
-              {t("install.benefit3Title", "Full Screen")}
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t("install.benefit3Desc", "No browser UI distractions")}
-            </p>
           </div>
         </div>
 
         {/* Back to App Link */}
         <div className="mt-8 text-center">
           <Link to="/">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 rounded-xl">
               <ArrowLeft className="w-4 h-4" />
               {t("install.backToApp", "Back to Zikalyze")}
             </Button>

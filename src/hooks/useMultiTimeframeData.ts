@@ -470,7 +470,11 @@ export function useMultiTimeframeData(symbol: string): MultiTimeframeData {
     });
     
     const netScore = (bullishScore - bearishScore) / totalWeight;
-    const strength = Math.abs(netScore) * 100;
+    
+    // Calculate strength based on dominant direction's weighted score
+    // This ensures high strength when timeframes align strongly in one direction
+    const dominantScore = Math.max(bullishScore, bearishScore);
+    const strength = Math.round((dominantScore / totalWeight) * 100);
     
     const bullish = valid.filter(a => a.trend === 'BULLISH').length;
     const bearish = valid.filter(a => a.trend === 'BEARISH').length;

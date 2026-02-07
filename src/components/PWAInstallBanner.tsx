@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,10 +14,12 @@ export const PWAInstallBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const isMobile = useIsMobile();
+  const isNativeApp = useIsNativeApp();
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    // Don't show install banner on native apps (Android/PWA standalone)
+    // The isNativeApp hook already checks display-mode: standalone
+    if (isNativeApp) {
       setIsInstalled(true);
       return;
     }

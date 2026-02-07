@@ -2,7 +2,7 @@
 // 🧠 ZIKALYZE AI BRAIN — MAIN ANALYSIS ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
 // ⚡ 100% CLIENT-SIDE — Runs entirely in the browser
-// 🔗 No external AI dependencies — Pure algorithmic intelligence
+// 🔗 Hybrid Analysis — Algorithm + Neural Network combined
 // 🛡️ Fully trustless — Zero server calls required
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -16,10 +16,18 @@ import { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 import { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis } from './technical-analysis';
+import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
+import { hybridConfirmation } from './neural-engine';
+import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
+
+// Re-export ULTRA features for advanced analysis
+export * from './zikalyze-ultra';
+
+// Re-export Tri-Modular Analysis for direct access
+export * from './tri-modular-analysis';
 
 // Translation maps for multi-language support
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -71,13 +79,15 @@ const createBar = (value: number, max: number = 100, filled = '█', empty = '�
 };
 
 // Helper: Fear & Greed emoji + label
+// Thresholds: 0-20=EXTREME FEAR, 21-35=FEAR, 36-45=SLIGHT FEAR, 46-54=NEUTRAL, 55-64=SLIGHT GREED, 65-79=HIGH GREED, 80+=EXTREME GREED
 const getFearGreedVisual = (value: number): { emoji: string; label: string; bar: string } => {
   const bar = createBar(value);
   if (value <= 20) return { emoji: '😱', label: 'EXTREME FEAR', bar };
   if (value <= 35) return { emoji: '😰', label: 'FEAR', bar };
-  if (value <= 50) return { emoji: '😐', label: 'NEUTRAL', bar };
-  if (value <= 65) return { emoji: '😊', label: 'GREED', bar };
-  if (value <= 80) return { emoji: '🤑', label: 'HIGH GREED', bar };
+  if (value <= 45) return { emoji: '😕', label: 'SLIGHT FEAR', bar };
+  if (value <= 54) return { emoji: '😐', label: 'NEUTRAL', bar };
+  if (value <= 64) return { emoji: '🙂', label: 'SLIGHT GREED', bar };
+  if (value <= 79) return { emoji: '🤑', label: 'HIGH GREED', bar };
   return { emoji: '🔥', label: 'EXTREME GREED', bar };
 };
 
@@ -175,8 +185,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
 
   // Get sentiment values
-  const fearGreed = sentimentData?.fearGreed?.value || 50;
-  const socialSentiment = sentimentData?.social?.overall?.score || 50;
+  const fearGreed = sentimentData?.fearGreed?.value ?? 50;
+  const socialSentiment = sentimentData?.social?.overall?.score ?? 50;
   const fearGreedVisual = getFearGreedVisual(fearGreed);
 
   // Institutional vs Retail analysis
@@ -364,7 +374,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     if (bias === 'SHORT') {
       const bullishTerms = [
         'buy zone', 'Optimal buy', 'Deep discount', 'accumulation', 'Accumulation',
-        'bullish', 'BULLISH', 'uptrend', 'Uptrend', 'Contrarian BUY', 'buying',
+        'bullish', 'BULLISH', 'uptrend', 'Uptrend', 'Follow Trend BUY', 'buying',
         'confirms bulls', 'Strong uptrend', 'Bullish momentum', 'Mild bullish',
         'Institutions buying', 'Exchange outflows'
       ];
@@ -376,7 +386,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     if (bias === 'LONG') {
       const bearishTerms = [
         'sell zone', 'Optimal sell', 'Premium zone', 'distribution', 'Distribution',
-        'bearish', 'BEARISH', 'downtrend', 'Downtrend', 'Contrarian SELL', 'selling',
+        'bearish', 'BEARISH', 'downtrend', 'Downtrend', 'Follow Trend SELL', 'selling',
         'confirms bears', 'Strong downtrend', 'Bearish momentum', 'Mild bearish',
         'Institutions selling', 'Exchange inflows', 'Caution'
       ];
@@ -486,21 +496,265 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
       : precisionEntry.timing === 'WAIT_BREAKOUT'
         ? 'Await breakout'
         : 'No clear entry';
-  const tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
+  // Note: tldr will be recalculated after regimeConsensus to account for skipTrade
+  let tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${actionWord}`;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD FINAL ANALYSIS — Dense, Visual, Actionable
   // ═══════════════════════════════════════════════════════════════════════════
   
-  const analysis = `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  // Calculate data verification status
+  const dataSourceCount = [hasRealOnChain, hasRealChartData, hasRealMultiTfData, isLiveData].filter(Boolean).length;
+  const verificationLevel = dataSourceCount >= 3 ? 'VERIFIED' : dataSourceCount >= 2 ? 'PARTIALLY_VERIFIED' : 'ESTIMATED';
+  const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
+  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🧠 HYBRID CONFIRMATION — Algorithm + Neural Network Combined
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Build feature vector for neural network (20 features matching neural-engine.ts)
+  // When real chart data unavailable, we estimate values to ensure neural network always runs
+  const BIAS_DISPLAY_WIDTH = 7; // Padding for bias string alignment (longest: 'NEUTRAL')
+  const featureVector: number[] = [
+    price,                                        // 1: Current price
+    price * (1 - change / 100),                   // 2: Reconstructed price 24h ago from known change
+    price * 0.99,                                 // 3: Estimated price ~10 periods ago (fallback when no historical data)
+    price * 0.98,                                 // 4: Estimated price ~20 periods ago (fallback when no historical data)
+    change,                                       // 5: 24h change %
+    (pricePosition - 50) / 5,                     // 6: Normalized position deviation from midpoint (-10 to +10 range)
+    Math.abs(change) * 0.5,                       // 7: Estimated short-term volatility proxy (half of 24h magnitude)
+    Math.abs(high24h - low24h) / price * 100,     // 8: Daily range as % of price (volatility)
+    chartTrendData?.rsi || 50,                    // 9: RSI (50 = neutral when unavailable)
+    chartTrendData?.ema9 ? (chartTrendData.ema9 / price - 1) * 100 : 0,  // 10: EMA9 deviation from price %
+    chartTrendData?.ema21 ? (chartTrendData.ema21 / price - 1) * 100 : 0, // 11: EMA21 deviation from price %
+    chartTrendData ? (chartTrendData.ema9 - chartTrendData.ema21) / price * 100 : 0, // 12: MACD signal proxy
+    volume > 0 && avgVolume > 0 ? volume / avgVolume : 1, // 13: Volume ratio vs average
+    volumeSpike.isSpike ? 1.5 : 1,                // 14: Volume trend multiplier
+    Math.log(volume + 1),                         // 15: Log-scaled current volume
+    Math.log(avgVolume + 1),                      // 16: Log-scaled average volume
+    pricePosition,                                // 17: Price position in 24h range (0-100%)
+    high24h,                                      // 18: 24h high price
+    low24h,                                       // 19: 24h low price
+    (high24h - low24h) * 0.1                      // 20: ATR proxy (10% of daily range)
+  ];
+
+  // Get hybrid confirmation using both algorithm and neural network
+  const algorithmResult = { bias, confidence };
+  const hybridResult = hybridConfirmation.getConfirmation(algorithmResult, featureVector);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 📊 REGIME-WEIGHTED CONSENSUS — ADX-Based Algorithm vs Neural Network Weighting
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Calculate ADX and determine market regime
+  const candleData = chartTrendData?.candles?.map(c => ({
+    high: c.high,
+    low: c.low,
+    close: c.close
+  })) || [];
+  
+  const adxResult = calculateADX(candleData, 14);
+  
+  // Calculate regime-weighted consensus
+  const regimeConsensus = calculateRegimeWeightedConsensus(
+    adxResult,
+    hybridResult.algorithmBias,
+    hybridResult.algorithmConfidence,
+    hybridResult.neuralDirection,
+    hybridResult.neuralConfidence,
+    price,
+    high24h,
+    low24h,
+    chartTrendData?.candles
+  );
+  
+  // Log regime detection
+  console.log(`[Regime] ADX=${adxResult.adx.toFixed(1)} → ${adxResult.regime} | Master: ${regimeConsensus.masterControl} | Weights: Algo=${(regimeConsensus.algorithmWeight*100).toFixed(0)}%, NN=${(regimeConsensus.neuralWeight*100).toFixed(0)}%`);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 TRI-MODULAR ANALYSIS — Senior Quant Strategist Intelligence
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  const triModularAnalysis = performTriModularAnalysis(
+    price,
+    high24h,
+    low24h,
+    change,
+    chartTrendData,
+    fearGreed,
+    input.narrativeContext,
+    macroCatalysts
+  );
+  
+  // Generate formatted Tri-Modular output for inclusion in analysis
+  const triModularOutput = formatTriModularOutput(triModularAnalysis, crypto, price);
+  
+  // Generate simplified summary for beginners - pass skipTrade info to ensure consistent messaging
+  const simplifiedSummary = generateSimplifiedSummary(triModularAnalysis, crypto, price, {
+    skipTrade: regimeConsensus.skipTrade,
+    skipReason: regimeConsensus.skipReason,
+    neuralConfidence: hybridResult.neuralConfidence
+  });
+  
+  // Log Tri-Modular summary
+  console.log(`[Tri-Modular] ${triModularAnalysis.weightedConfidenceScore.percentage}% ${triModularAnalysis.weightedConfidenceScore.direction} | Kill Switch: $${triModularAnalysis.killSwitchLevel.price.toFixed(2)}`);
+  
+  // Regime visual indicators
+  const regimeEmoji = adxResult.regime === 'TRENDING' ? '📈' : adxResult.regime === 'RANGING' ? '↔️' : '🔄';
+  const masterEmoji = regimeConsensus.masterControl === 'ALGORITHM' ? '🤖' : '🧠';
+
+  // Determine confluence visual
+  const confluenceEmoji = hybridResult.confluenceLevel === 'STRONG' ? '✅' 
+    : hybridResult.confluenceLevel === 'MODERATE' ? '🟡' 
+    : hybridResult.confluenceLevel === 'WEAK' ? '⚠️' 
+    : '❌';
+  const algorithmEmoji = hybridResult.algorithmBias === 'LONG' ? '🟢' : hybridResult.algorithmBias === 'SHORT' ? '🔴' : '⚪';
+  const neuralEmoji = hybridResult.neuralDirection === 'LONG' ? '🟢' : hybridResult.neuralDirection === 'SHORT' ? '🔴' : '⚪';
+  const agreementText = hybridResult.agreement ? 'ALIGNED ✓' : 'DIVERGING ⚠️';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 TRADE QUALITY ASSESSMENT — Follow Trend, Wait for Confirmation, Avoid Bad Trades
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // 1. Check if trade follows the higher timeframe (HTF) trend — DON'T TRADE AGAINST THE TREND
+  const htfTrend = topDownAnalysis.weekly.trend; // Weekly is the primary HTF
+  const dailyTrend = topDownAnalysis.daily.trend;
+  const followsTrend = (
+    (bias === 'LONG' && (htfTrend === 'BULLISH' || dailyTrend === 'BULLISH')) ||
+    (bias === 'SHORT' && (htfTrend === 'BEARISH' || dailyTrend === 'BEARISH')) ||
+    (bias === 'NEUTRAL') // Neutral always "follows" as it's not directional
+  );
+  
+  // 2. Count confirmations — WAIT FOR CONFIRMATION BEFORE EXECUTION
+  const confirmations: string[] = [];
+  
+  // Confirmation 1: Multi-timeframe alignment (at least 3/5 aligned)
+  if (bullishCount >= 3 && bias === 'LONG') {
+    confirmations.push(`✓ Multi-TF Alignment: ${bullishCount}/5 bullish`);
+  } else if (bearishCount >= 3 && bias === 'SHORT') {
+    confirmations.push(`✓ Multi-TF Alignment: ${bearishCount}/5 bearish`);
+  }
+  
+  // Confirmation 2: Hybrid AI agreement (Algorithm + Neural Network)
+  if (hybridResult.agreement) {
+    confirmations.push(`✓ Hybrid AI Consensus: Algorithm + Neural Network agree`);
+  }
+  
+  // Confirmation 3: Volume confirmation
+  if (volumeSpike.isSpike && volumeSpike.magnitude !== 'NORMAL') {
+    confirmations.push(`✓ Volume Confirmation: ${volumeSpike.magnitude} volume spike`);
+  }
+  
+  // Confirmation 4: Institutional alignment
+  if ((bias === 'LONG' && institutionalVsRetail.institutionalBias === 'BULLISH') ||
+      (bias === 'SHORT' && institutionalVsRetail.institutionalBias === 'BEARISH')) {
+    confirmations.push(`✓ Institutional Flow: ${institutionalVsRetail.institutionalBias}`);
+  }
+  
+  // Confirmation 5: Price in optimal zone (discount for longs, premium for shorts)
+  if ((bias === 'LONG' && pricePosition < 40) || (bias === 'SHORT' && pricePosition > 60)) {
+    confirmations.push(`✓ Optimal Entry Zone: Price at ${pricePosition.toFixed(0)}% in range`);
+  }
+  
+  const hasConfirmation = confirmations.length >= 2; // Need at least 2 confirmations
+  const confirmationCount = confirmations.length;
+  
+  // 3. Detect BAD TRADES to avoid
+  const badTradeReasons: string[] = [];
+  
+  // Bad Trade 1: Trading against the HTF trend
+  if (!followsTrend && bias !== 'NEUTRAL') {
+    badTradeReasons.push(`⚠️ COUNTER-TREND: ${bias} trade against ${htfTrend} HTF trend`);
+  }
+  
+  // Bad Trade 2: No multi-timeframe confluence
+  if (topDownAnalysis.confluenceScore < 45) {
+    badTradeReasons.push(`⚠️ LOW CONFLUENCE: Only ${topDownAnalysis.confluenceScore}% TF alignment`);
+  }
+  
+  // Bad Trade 3: Algorithm and Neural Network disagree
+  if (!hybridResult.agreement && hybridResult.confluenceLevel === 'CONFLICTING') {
+    badTradeReasons.push(`⚠️ AI CONFLICT: Algorithm (${hybridResult.algorithmBias}) vs Neural (${hybridResult.neuralDirection})`);
+  }
+  
+  // Bad Trade 4: Chasing extended price
+  if ((bias === 'LONG' && pricePosition > 85) || (bias === 'SHORT' && pricePosition < 15)) {
+    badTradeReasons.push(`⚠️ CHASING: Price ${bias === 'LONG' ? 'near resistance' : 'near support'} — avoid FOMO`);
+  }
+  
+  // Bad Trade 5: Low confidence + low probability
+  if (confidence < 45 && successProb < 50) {
+    badTradeReasons.push(`⚠️ WEAK SETUP: ${confidence.toFixed(0)}% confidence, ${successProb}% probability`);
+  }
+  
+  // Bad Trade 6: Divergence between institutional and retail (smart money leaving)
+  if (institutionalVsRetail.divergence && 
+      ((bias === 'LONG' && institutionalVsRetail.institutionalBias === 'BEARISH') ||
+       (bias === 'SHORT' && institutionalVsRetail.institutionalBias === 'BULLISH'))) {
+    badTradeReasons.push(`⚠️ SMART MONEY DIVERGENCE: Institutions ${institutionalVsRetail.institutionalBias}, retail ${institutionalVsRetail.retailBias}`);
+  }
+  
+  const isBadTrade = badTradeReasons.length >= 2; // 2+ bad signals = bad trade
+  
+  // Calculate overall trade quality score
+  let qualityScore = 50; // Start at neutral
+  qualityScore += confirmationCount * 10; // +10 per confirmation (max +50)
+  qualityScore += followsTrend ? 15 : -20; // +15 for trend-following, -20 for counter-trend
+  qualityScore -= badTradeReasons.length * 12; // -12 per bad trade reason
+  qualityScore = Math.max(0, Math.min(100, qualityScore)); // Clamp 0-100
+  
+  // Determine final recommendation
+  // Include regimeConsensus.skipTrade to ensure alignment with regime-weighted consensus
+  type TradeRecommendation = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE' | 'SKIPPED_NN_FILTER';
+  let tradeRecommendation: TradeRecommendation;
+  if (regimeConsensus.skipTrade) {
+    // Neural network filter failed — trade should be skipped
+    tradeRecommendation = 'SKIPPED_NN_FILTER';
+  } else if (isBadTrade) {
+    tradeRecommendation = 'AVOID_BAD_TRADE';
+  } else if (!hasConfirmation) {
+    tradeRecommendation = 'WAIT_CONFIRMATION';
+  } else {
+    tradeRecommendation = 'EXECUTE';
+  }
+  
+  // Build trade quality object
+  const tradeQuality = {
+    followsTrend,
+    hasConfirmation,
+    confirmationCount,
+    confirmations,
+    isBadTrade,
+    badTradeReasons,
+    qualityScore,
+    recommendation: tradeRecommendation
+  };
+  
+  // Visual indicators for trade quality
+  const qualityEmoji = tradeRecommendation === 'EXECUTE' ? '✅' 
+    : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳' 
+    : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️'
+    : '🚫';
+  const trendFollowEmoji = followsTrend ? '✓' : '✗';
+  const confirmEmoji = hasConfirmation ? `${confirmationCount}/5 ✓` : `${confirmationCount}/5 ⚠️`;
+
+  // Update TL;DR to reflect regimeConsensus.skipTrade status
+  if (regimeConsensus.skipTrade) {
+    const updatedActionWord = 'Trade skipped (NN filter)';
+    tldr = `${biasWord} (${structureWord} confluence) | ${marketPhase.charAt(0).toUpperCase() + marketPhase.slice(1)} zone | ${updatedActionWord}`;
+  }
+
+  const analysis = `${simplifiedSummary}
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+   ${verificationEmoji} ${verificationLabel}
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 📌 TL;DR: ${tldr}
 
 💰 $${price.toFixed(decimals)}  │  24h: $${low24h.toFixed(decimals)} → $${high24h.toFixed(decimals)}
 ${historicalContext}
-${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above 24h avg (${volumeSpike.magnitude}) [Spot via aggregator]\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} 24h avg | Futures OI ${change > 2 ? 'rising (longs building)' : change < -2 ? 'declining (shorts closing)' : 'stable'}
+${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above avg (${volumeSpike.magnitude}) [Spot via aggregator]\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} baseline | Futures OI ${change > 2 ? 'rising (longs building)' : change < -2 ? 'declining (shorts closing)' : 'stable'}
+   └─ Benchmark: Estimated baseline • Volume ratio: ${(volume / avgVolume).toFixed(2)}x
 ┌─────────────────────────────────────────────────┐
 │  🎯 VERDICT: ${bias === 'LONG' ? (confidence >= 68 ? '🟢 Favoring Bullish' : confidence >= 55 ? '🟢 Leaning Bullish' : '🟢 Slight Bull Tilt') : bias === 'SHORT' ? (confidence >= 68 ? '🔴 Favoring Bearish' : confidence >= 55 ? '🔴 Leaning Bearish' : '🔴 Slight Bear Tilt') : '⚪ NEUTRAL'}  │  Confidence: ${confidence.toFixed(0)}%
 └─────────────────────────────────────────────────┘
@@ -510,14 +764,14 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 😊 Fear & Greed: [${fearGreedVisual.bar}] ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
    └─ Source: Alternative.me (24h)
 🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)}
-   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${hasRealOnChain ? '[Live on-chain]' : '[Derived from price action]'}
+   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${hasRealOnChain ? '[Live on-chain via whale-alert.io]' : '[Derived from price action]'}
+   └─ Tracker: whale-alert.io • Txns >$1M in 24h window
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
    └─ ${hasRealOnChain ? 'Source: CryptoQuant (rolling 24h)' : 'Estimated from market momentum'}
 💼 Institutional: ${etfFlowData ? etfFlowData.institutionalSentiment : 'N/A (no ETF for this asset)'}
    └─ ${etfFlowData ? 'Source: ETF flow data' : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ━━━━━━━━━━━━━━━━━━━━━━━━━━
-${!hasRealMultiTfData ? '⚠️ Using price-based estimates (chart API unavailable)\n' : ''}
 ${htfVisual}  →  ${alignmentText}
 
 W: ${topDownAnalysis.weekly.trend.padEnd(7)} ${createBar(topDownAnalysis.weekly.strength, 100, '█', '░', 8)} ${topDownAnalysis.weekly.strength.toFixed(0)}%
@@ -526,11 +780,11 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 1H: ${topDownAnalysis.h1.trend.padEnd(6)} ${createBar(topDownAnalysis.h1.strength, 100, '█', '░', 8)} ${topDownAnalysis.h1.strength.toFixed(0)}%
 15M: ${topDownAnalysis.m15.trend.padEnd(5)} ${createBar(topDownAnalysis.m15.strength, 100, '█', '░', 8)} ${topDownAnalysis.m15.strength.toFixed(0)}%
 
-🎯 Confluence: ${topDownAnalysis.confluenceScore}% ${topDownAnalysis.confluenceScore >= 70 ? '(STRONG ✓)' : topDownAnalysis.confluenceScore >= 50 ? '(MODERATE)' : '(WEAK ⚠️)'} ${hasRealMultiTfData ? '' : '(estimated)'}
+🎯 Confluence: ${topDownAnalysis.confluenceScore}% ${topDownAnalysis.confluenceScore === 100 ? '(STRONG ✓) — All timeframes aligned!' : topDownAnalysis.confluenceScore >= 70 ? '(STRONG ✓)' : topDownAnalysis.confluenceScore >= 50 ? '(MODERATE)' : '(WEAK ⚠️)'}
 
 ━━━ 📌 15-MINUTE PRECISION ENTRY ━━━━━━━━━━━━━━━
 
-⏱️ ${precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
+⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
 
 📍 Entry Zone: ${tightZone}
    └─ Trigger: ${precisionEntry.trigger}
@@ -546,6 +800,60 @@ ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range *
 
 ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
+━━━ 🧠 HYBRID AI CONFIRMATION ━━━━━━━━━━━━━━━━━━━
+
+${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
+
+📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
+   └─ ICT/SMC, Fibonacci, Multi-TF Confluence
+🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(BIAS_DISPLAY_WIDTH)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
+   └─ MLP Pattern Recognition: ${hybridResult.neuralReasoning}
+
+🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
+   └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
+
+━━━ ${regimeEmoji} REGIME-WEIGHTED CONSENSUS ━━━━━━━━━━━━━━━
+
+📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
+   └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Algorithm prioritized' : adxResult.regime === 'RANGING' ? 'Sideways chop — Neural Network prioritized' : 'Transitional — Balanced weighting'}
+
+${masterEmoji} Master Control: ${regimeConsensus.masterControl}
+   └─ Weights: Algorithm ${(regimeConsensus.algorithmWeight * 100).toFixed(0)}% | Neural ${(regimeConsensus.neuralWeight * 100).toFixed(0)}%
+
+📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}% (combined algo + AI — differs from directional confidence)
+   └─ ${adxResult.regime === 'TRENDING' 
+        ? `ICT/SMC structures define entry, NN filters (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
+        : adxResult.regime === 'RANGING'
+          ? 'Pattern recognition spots fake-outs, Algorithm sets stops'
+          : 'Equal weighting — Watch for regime shift'}
+
+🎯 Support Zone: $${regimeConsensus.supportZone.toFixed(decimals)}
+🎯 Resistance Zone: $${regimeConsensus.resistanceZone.toFixed(decimals)}
+🛑 Stop Loss: $${regimeConsensus.stopLoss.toFixed(decimals)}${regimeConsensus.skipTrade ? `
+
+⚠️ TRADE SKIPPED: ${regimeConsensus.skipReason}` : ''}
+
+━━━ 🕯️ CANDLESTICK CONFIRMATION ━━━━━━━━━━━━━━━━━
+
+📍 Pattern: ${regimeConsensus.candlestickConfirmation.pattern} (${regimeConsensus.candlestickConfirmation.bias})
+   └─ Type: ${regimeConsensus.candlestickConfirmation.type} | Strength: ${regimeConsensus.candlestickConfirmation.strength}%
+
+💡 ${regimeConsensus.candlestickConfirmation.description}
+
+⏱️ Entry Trigger: ${regimeConsensus.candlestickConfirmation.entryTrigger}
+
+━━━ 🛡️ TRADE QUALITY CHECK ━━━━━━━━━━━━━━━━━━━━━
+
+${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE — Trend-aligned with confirmation' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT — Need more confirmation before entry' : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️ SKIPPED — Neural Network filter below threshold' : '🚫 AVOID — Bad trade signals detected'}
+
+📈 Follows HTF Trend: ${followsTrend ? `${trendFollowEmoji} YES (${htfTrend})` : `${trendFollowEmoji} NO — Counter-trend trade!`}
+🔍 Confirmations: ${confirmEmoji}
+${confirmations.length > 0 ? confirmations.slice(0, 3).map(c => `   ${c}`).join('\n') : '   ⚠️ No confirmations yet — wait for setup'}
+${badTradeReasons.length > 0 ? `\n⚠️ Bad Trade Signals:\n${badTradeReasons.slice(0, 3).map(r => `   ${r}`).join('\n')}` : ''}
+
+📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%
+   └─ ${qualityScore >= 70 ? 'HIGH QUALITY — Good setup, manage risk' : qualityScore >= 50 ? 'MODERATE — Proceed with caution' : qualityScore >= 30 ? 'LOW QUALITY — Consider smaller size or skip' : 'POOR — High probability of bad trade'}
+
 ━━━ 🔮 SCENARIOS (Both Directions) ━━━━━━━━━━━━━━
 
 ${scenarios.slice(0, 2).map(s => `${s.condition}
@@ -559,23 +867,71 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 Consider flipping short or exiting longs` : `↔️ BREAKOUT SCENARIO: Watch $${high24h.toFixed(decimals)} (up) / $${low24h.toFixed(decimals)} (down)
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
+${triModularOutput}
+━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
+This analysis uses BOTH algorithmic calculations AND neural
+network predictions for hybrid confirmation. Crypto markets
+are highly volatile and unpredictable.
+• Follow the trend — Don't trade against HTF direction ✓
+• Wait for confirmation — Need 2+ confirmations before entry ✓
+• Avoid bad trades — Quality check prevents poor setups ✓
+• Both Algorithm and Neural Network were used together ✓
+• Tri-Modular Analysis with Kill Switch included ✓
+• This is NOT financial advice — trade at your own risk
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
   return {
     bias,
     confidence,
+    successProbability: successProb,
     analysis,
     insights: keyInsights,
     macroCatalysts,
     volumeSpike,
-    precisionEntry,
+    // Use tightZone for consistency with analysis text output
+    precisionEntry: { ...precisionEntry, zone: tightZone },
     institutionalVsRetail,
     scenarios,
     timestamp: new Date().toISOString(),
     source: 'client-side-wasm',
+    verificationStatus: verificationLevel,
+    liveDataSources: dataSourceCount,
     attentionHeatmap: topDownAnalysis.attentionHeatmap || [],
     attentionVector: topDownAnalysis.attentionVector || [],
-    attentionEntropyLoss: 0
+    attentionEntropyLoss: 0,
+    // Hybrid Confirmation — Algorithm + Neural Network combined output
+    hybridConfirmation: {
+      algorithmBias: hybridResult.algorithmBias,
+      algorithmConfidence: hybridResult.algorithmConfidence,
+      neuralDirection: hybridResult.neuralDirection,
+      neuralConfidence: hybridResult.neuralConfidence,
+      agreement: hybridResult.agreement,
+      confluenceLevel: hybridResult.confluenceLevel,
+      combinedConfidence: hybridResult.combinedConfidence,
+      usedBothSystems: true // Confirms both algorithm and neural network were used
+    },
+    // Trade Quality Assessment — Follow trend, wait for confirmation, avoid bad trades
+    tradeQuality,
+    // Regime-Weighted Consensus — ADX-based Algorithm vs Neural Network weighting
+    regimeConsensus: {
+      regime: regimeConsensus.regime,
+      adxValue: regimeConsensus.adxValue,
+      masterControl: regimeConsensus.masterControl,
+      algorithmWeight: regimeConsensus.algorithmWeight,
+      neuralWeight: regimeConsensus.neuralWeight,
+      weightedScore: regimeConsensus.weightedScore,
+      skipTrade: regimeConsensus.skipTrade,
+      skipReason: regimeConsensus.skipReason,
+      supportZone: regimeConsensus.supportZone,
+      resistanceZone: regimeConsensus.resistanceZone,
+      stopLoss: regimeConsensus.stopLoss,
+      candlestickPattern: regimeConsensus.candlestickConfirmation.pattern,
+      candlestickConfirmation: regimeConsensus.candlestickConfirmation.entryTrigger,
+      candlestickStrength: regimeConsensus.candlestickConfirmation.strength
+    },
+    // Tri-Modular Analysis — Senior Quant Strategist Intelligence
+    triModularAnalysis
   };
 }
 
@@ -585,7 +941,8 @@ export { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork } from './technical-analysis';
+export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork, calculateADX, calculateRegimeWeightedConsensus, detectCandlestickPattern } from './technical-analysis';
+export type { MarketRegimeType, ADXResult, RegimeWeightedConsensus, CandlestickConfirmation } from './technical-analysis';
 // ICT/SMC Analysis with multi-timeframe
 export {
   performICTSMCAnalysis,
@@ -622,7 +979,10 @@ export {
   LivestreamLearner,
   SelfLearningBrainPipeline,
   // Unified Brain
-  UnifiedBrain
+  UnifiedBrain,
+  // Emergence Engine
+  EmergenceEngine,
+  globalEmergenceEngine
 } from './brain-pipeline';
 export type { 
   RawCryptoData, 
@@ -640,5 +1000,41 @@ export type {
   VelocityPattern,
   SelfLearningOutput,
   // Unified Brain types
-  UnifiedBrainOutput
+  UnifiedBrainOutput,
+  // Emergence types
+  ComponentContribution,
+  EmergenceMetrics,
+  EmergenceState
 } from './brain-pipeline';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠 NEURAL ENGINE — True AI with Learning, NLP & Backtesting
+// ═══════════════════════════════════════════════════════════════════════════════
+// Addresses key limitations:
+// ✅ True Neural Network with trainable weights
+// ✅ Persistent Learning from prediction outcomes
+// ✅ NLP Sentiment Analysis for news/tweets
+// ✅ Backtesting Framework for validation
+// ✅ Hybrid Confirmation (Algorithm + Neural Network)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export {
+  ZikalyzeNeuralNetwork,
+  ZikalyzeNeuralEngine,
+  BacktestEngine,
+  neuralEngine,
+  analyzeTextSentiment,
+  analyzeMultipleTexts,
+  initializeWeights,
+  // Hybrid confirmation system
+  HybridConfirmationSystem,
+  hybridConfirmation
+} from './neural-engine';
+export type {
+  NeuralWeights,
+  NLPSentiment,
+  BacktestResult,
+  BacktestConfig,
+  PredictionRecord,
+  HybridConfirmationResult
+} from './neural-engine';

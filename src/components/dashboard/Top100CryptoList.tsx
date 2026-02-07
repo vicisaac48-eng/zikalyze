@@ -26,7 +26,8 @@ type PriceFlash = "up" | "down" | null;
 
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
   // Use prices from props (required) - removes duplicate WebSocket connections
-  const prices = propPrices ?? [];
+  // Memoize to prevent unnecessary re-renders
+  const prices = useMemo(() => propPrices ?? [], [propPrices]);
   const pricesLoading = propLoading ?? false;
   const { alerts, loading: alertsLoading, createAlert, removeAlert, checkAlerts } = usePriceAlerts();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
@@ -153,10 +154,10 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
 
   if (pricesLoading) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <h3 className="text-lg font-bold text-foreground mb-4">Top 100 Cryptocurrencies</h3>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="rounded-xl border border-border bg-card p-3 sm:rounded-2xl sm:p-4 md:p-6">
+        <h3 className="text-base font-bold text-foreground mb-3 sm:text-lg sm:mb-4">Top 100 Cryptocurrencies</h3>
+        <div className="flex items-center justify-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary sm:h-8 sm:w-8"></div>
         </div>
       </div>
     );
@@ -164,14 +165,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
 
   return (
     <>
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-foreground">Top 100 Cryptocurrencies</h3>
+      <div className="rounded-xl border border-border bg-card p-3 mb-4 sm:rounded-2xl sm:p-4 md:p-6 md:mb-0" style={{ position: 'relative', zIndex: 0 }}>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h3 className="text-base font-bold text-foreground sm:text-lg">Top 100 Cryptocurrencies</h3>
           <div className="flex items-center gap-2">
             {alerts.length > 0 && (
-              <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full flex items-center gap-1">
-                <BellRing className="w-3 h-3" />
-                {alerts.length} Alert{alerts.length > 1 ? "s" : ""}
+              <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full flex items-center gap-1 sm:px-2 sm:py-1">
+                <BellRing className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                {alerts.length}
               </span>
             )}
             <span className="text-xs text-muted-foreground hidden sm:inline">By Market Cap</span>
@@ -179,33 +180,33 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         </div>
 
         {/* Search Bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative mb-3 sm:mb-4">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground sm:left-3 sm:w-4 sm:h-4" />
           <Input
             type="text"
             placeholder="Search by name or symbol (e.g. GoMining, BTC)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-secondary/50"
+            className="pl-8 text-sm bg-secondary/50 h-9 sm:pl-10 sm:h-10"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground sm:right-3"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           )}
         </div>
 
         {/* Active Alerts */}
         {alerts.length > 0 && (
-          <div className="mb-4 p-3 bg-secondary/50 rounded-lg">
-            <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-              <BellRing className="w-3 h-3" />
+          <div className="mb-3 p-2 bg-secondary/50 rounded-lg sm:mb-4 sm:p-3">
+            <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1 sm:mb-2">
+              <BellRing className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               Active Price Alerts
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {alerts.map((alert) => {
                 const crypto = prices.find(p => p.symbol.toUpperCase() === alert.symbol);
                 const currentPrice = crypto?.current_price || 0;
@@ -248,20 +249,20 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           </div>
         )}
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar">
+          <table className="w-full min-w-[320px]">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-3 font-medium">#</th>
-                <th className="pb-3 font-medium">Name</th>
-                <th className="pb-3 font-medium text-right">Price</th>
-                <th className="pb-3 font-medium text-right">24h %</th>
-                <th className="pb-3 font-medium text-right hidden sm:table-cell">Market Cap</th>
-                <th className="pb-3 font-medium text-right hidden md:table-cell">Circulating Supply</th>
-                <th className="pb-3 font-medium text-right hidden lg:table-cell">24h High</th>
-                <th className="pb-3 font-medium text-right hidden lg:table-cell">24h Low</th>
-                <th className="pb-3 font-medium text-right hidden xl:table-cell">Volume</th>
-                <th className="pb-3 font-medium text-center">Alert</th>
+                <th className="pb-2 font-medium sm:pb-3">#</th>
+                <th className="pb-2 font-medium sm:pb-3">Name</th>
+                <th className="pb-2 font-medium text-right sm:pb-3">Price</th>
+                <th className="pb-2 font-medium text-right sm:pb-3">24h %</th>
+                <th className="pb-2 font-medium text-right hidden sm:table-cell sm:pb-3">Market Cap</th>
+                <th className="pb-2 font-medium text-right hidden md:table-cell sm:pb-3">Circulating Supply</th>
+                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3">24h High</th>
+                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3">24h Low</th>
+                <th className="pb-2 font-medium text-right hidden xl:table-cell sm:pb-3">Volume</th>
+                <th className="pb-2 font-medium text-center sm:pb-3">Alert</th>
               </tr>
             </thead>
             <tbody>
@@ -279,26 +280,26 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                       isSelected ? "bg-primary/10" : ""
                     }`}
                   >
-                    <td className="py-3 text-sm text-muted-foreground">{index + 1}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>
+                    <td className="py-2 sm:py-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <img 
                           src={crypto.image} 
                           alt={crypto.name}
-                          className="w-10 h-10 rounded-full shrink-0"
+                          className="w-7 h-7 rounded-full shrink-0 sm:w-10 sm:h-10"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                         <div className="min-w-0">
-                          <div className="font-medium text-foreground text-sm truncate">{crypto.name}</div>
+                          <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none">{crypto.name}</div>
                           <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-2 text-right sm:py-3">
                       <span
-                        className={`font-medium text-sm transition-all duration-150 inline-block px-1.5 py-0.5 rounded ${
+                        className={`font-medium text-xs transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
                           flash === "up"
                             ? "bg-success/20 text-success animate-price-flash-up"
                             : flash === "down"
@@ -309,16 +310,16 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                         {formatPrice(crypto.current_price)}
                       </span>
                     </td>
-                    <td className="py-3 text-right">
-                      <div className={`flex items-center justify-end gap-1 text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
-                        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    <td className="py-2 text-right sm:py-3">
+                      <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
+                        {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                         {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
                       </div>
                     </td>
-                    <td className="py-3 text-right text-sm text-muted-foreground hidden sm:table-cell">
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:text-sm">
                       {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
                     </td>
-                    <td className="py-3 text-right text-sm text-muted-foreground hidden md:table-cell">
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:text-sm">
                       {crypto.circulating_supply 
                         ? (crypto.circulating_supply >= 1e9 
                           ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
@@ -327,13 +328,13 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                             : crypto.circulating_supply.toLocaleString())
                         : "---"} {crypto.symbol.toUpperCase()}
                     </td>
-                    <td className="py-3 text-right text-sm text-muted-foreground hidden lg:table-cell">
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:text-sm">
                       {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
                     </td>
-                    <td className="py-3 text-right text-sm text-muted-foreground hidden lg:table-cell">
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:text-sm">
                       {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
                     </td>
-                    <td className="py-3 text-right text-sm text-muted-foreground hidden xl:table-cell">
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:text-sm">
                       {(() => {
                         const v = crypto.total_volume;
                         if (!v) return "---";
@@ -343,14 +344,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                         return `${currencySymbol}${v.toFixed(0)}`;
                       })()}
                     </td>
-                    <td className="py-3 text-center">
+                    <td className="py-2 text-center sm:py-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`h-8 w-8 ${hasAlert ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                        className={`h-6 w-6 sm:h-8 sm:w-8 ${hasAlert ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
                         onClick={(e) => handleOpenAlertDialog(crypto, e)}
                       >
-                        <Bell className={`w-4 h-4 ${hasAlert ? "fill-current" : ""}`} />
+                        <Bell className={`w-3 h-3 sm:w-4 sm:h-4 ${hasAlert ? "fill-current" : ""}`} />
                       </Button>
                     </td>
                   </tr>
@@ -363,7 +364,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
 
       {/* Alert Dialog */}
       <Dialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BellRing className="w-5 h-5 text-primary" />

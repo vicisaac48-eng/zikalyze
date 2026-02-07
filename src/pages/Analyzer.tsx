@@ -1,18 +1,27 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
-import SentimentAnalysis from "@/components/dashboard/SentimentAnalysis";
+import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
-  const { getPriceBySymbol, loading, isLive } = useCryptoPrices();
+  const { getPriceBySymbol, loading, isLive, refetch } = useCryptoPrices();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const cryptoData: Record<string, { name: string; price: number; change: number }> = {
     BTC: { name: "Bitcoin", price: getPriceBySymbol("BTC")?.current_price || 86512, change: getPriceBySymbol("BTC")?.price_change_percentage_24h || -4.87 },
@@ -30,14 +39,16 @@ const Analyzer = () => {
   const selected = cryptoData[selectedCrypto];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">{t("analyzer.title")}</h1>
-          <div className="flex items-center gap-4">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -46,13 +57,13 @@ const Analyzer = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Crypto Selection */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
@@ -109,7 +120,7 @@ const Analyzer = () => {
             change={selected.change}
           />
 
-          {/* AI Analyzer & Sentiment Analysis Grid */}
+          {/* AI Analyzer & News Events Calendar Grid */}
           <div className="grid lg:grid-cols-2 gap-6">
             <AIAnalyzer 
               crypto={selectedCrypto} 
@@ -121,11 +132,7 @@ const Analyzer = () => {
               marketCap={getPriceBySymbol(selectedCrypto)?.market_cap}
                 isLive={isLive}
             />
-            <SentimentAnalysis
-              crypto={selectedCrypto}
-              price={selected.price}
-              change={selected.change}
-            />
+            <NewsEventsCalendar crypto={selectedCrypto} />
           </div>
 
           {/* Additional Analysis Tips */}
@@ -155,6 +162,7 @@ const Analyzer = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

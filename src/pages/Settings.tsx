@@ -1,47 +1,42 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Key, Copy, CheckCircle2, Trash2, AlertTriangle } from "lucide-react";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Volume1, Play, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { useSettings } from "@/hooks/useSettings";
-import { alertSound } from "@/lib/alertSound";
+import { useSettings, SoundType } from "@/hooks/useSettings";
+import { alertSound, isNativePlatform } from "@/lib/alertSound";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPrivateKey, clearAccountData } from "@/lib/crypto";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 const Settings = () => {
+  const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
+  const isNativeApp = useIsNativeApp();
   
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
-  const [keyCopied, setKeyCopied] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Confirmation text required to delete account
-  const DELETE_CONFIRMATION_TEXT = "DELETE";
+  // Pull-to-refresh handler - Settings page doesn't have much to refresh,
+  // but we provide the consistent pull-to-refresh UI for native app feel
+  const handleRefresh = useCallback(async () => {
+    // Small delay to show the refresh animation
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }, []);
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -59,33 +54,6 @@ const Settings = () => {
     if (checked) {
       // Play test sound when enabling
       alertSound.playTestSound();
-    }
-  };
-
-  const handleEraseData = async () => {
-    if (deleteConfirmText !== DELETE_CONFIRMATION_TEXT) {
-      toast.error(`Please type ${DELETE_CONFIRMATION_TEXT} to confirm`);
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      // Clear all account data
-      clearAccountData();
-      
-      // Sign out the user
-      await signOut();
-      
-      toast.success(t("settings.accountDeleted"));
-      
-      // Redirect to landing page
-      navigate("/");
-    } catch (error) {
-      console.error("Error erasing data:", error);
-      toast.error(t("settings.deletionFailed"));
-    } finally {
-      setIsDeleting(false);
-      setDeleteConfirmText("");
     }
   };
 
@@ -120,18 +88,23 @@ const Settings = () => {
       window.dispatchEvent(new Event("settingsChanged"));
     }, 0);
 
-    toast.success(t("settings.settingsSaved"));
+    toast({
+      title: t("settings.settingsSaved"),
+      description: t("settings.settingsSavedDesc"),
+    });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <div className="flex items-center gap-4">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
+        {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -140,13 +113,13 @@ const Settings = () => {
                 className="w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+              <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
             </Button>
           </div>
         </header>
 
-        <div className="p-6">
+        <div className="main-content p-3 sm:p-4 md:p-6">
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">
             {tabs.map((tab) => (
@@ -180,68 +153,128 @@ const Settings = () => {
                         <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
                           <User className="h-6 w-6 text-primary" />
                         </div>
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {user?.username || "Guest User"}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          {isSignedIn && user ? (
+                            <>
+                              <div className="font-medium text-foreground">
+                                {user.username || "User"}
+                              </div>
+                              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                {user.shortAddress}
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(user.address);
+                                    toast({ title: "Address copied!", description: "Wallet address copied to clipboard" });
+                                  }}
+                                  className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                                <a
+                                  href={`https://etherscan.io/address/${user.address}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="font-medium text-foreground">
+                              Not signed in (Demo Mode)
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Private Key Display */}
-                  {user?.privateKey && (
+                  {/* Private Key Section */}
+                  {isSignedIn && (
                     <div>
                       <h3 className="text-lg font-semibold text-foreground mb-4">Your Private Key</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Use this key to login. Keep it secure and never share it.
+                        Keep this key safe! You need it to sign in on other devices.
                       </p>
-                      <div className="relative p-4 rounded-xl bg-secondary/50 border border-border">
-                        <div className="font-mono text-sm break-all pr-12">
-                          {formatPrivateKey(user.privateKey)}
+                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Key className="h-5 w-5 text-primary" />
+                          <span className="font-medium text-foreground">Private Key</span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-3 right-3"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(formatPrivateKey(user.privateKey || ""));
-                              setKeyCopied(true);
-                              toast.success("Private key copied to clipboard");
-                              setTimeout(() => setKeyCopied(false), 3000);
-                            } catch {
-                              toast.error("Copy failed - Please select and copy the key manually.");
-                            }
-                          }}
-                        >
-                          {keyCopied ? (
-                            <CheckCircle2 className="h-4 w-4 text-success" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="relative">
+                          <Input
+                            value={showPrivateKey ? (getPrivateKey() || "") : "0x" + "•".repeat(64)}
+                            readOnly
+                            className="pr-20 font-mono text-xs"
+                          />
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                            <button
+                              onClick={() => setShowPrivateKey(!showPrivateKey)}
+                              className="text-muted-foreground hover:text-foreground p-1"
+                            >
+                              {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                const key = getPrivateKey();
+                                if (key) {
+                                  navigator.clipboard.writeText(key);
+                                  setCopied(true);
+                                  toast({ title: "Private key copied!", description: "Keep it safe!" });
+                                  setTimeout(() => setCopied(false), 2000);
+                                }
+                              }}
+                              className="text-muted-foreground hover:text-foreground p-1"
+                            >
+                              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-destructive mt-2">
+                          ⚠️ Never share your private key with anyone!
+                        </p>
                       </div>
-                      <p className="text-xs text-warning mt-2">
-                        ⚠️ Never share your private key with anyone!
-                      </p>
                     </div>
                   )}
 
-                  {!user && (
-                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Key className="h-5 w-5 text-primary" />
-                        <span className="font-medium text-foreground">Demo Mode</span>
+                  {/* Sign Out Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Account Actions</h3>
+                    {isSignedIn ? (
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Wallet className="h-5 w-5 text-primary" />
+                            <span className="font-medium text-foreground">Wallet Address</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground font-mono break-all">
+                            {user?.address}
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          onClick={async () => {
+                            await signOut();
+                            toast({ title: "Signed out", description: "You have been signed out" });
+                          }}
+                          className="gap-2"
+                        >
+                          Sign Out
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Sign up to create your account and get your unique private key.
-                      </p>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3 mb-2">
+                          <User className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium text-foreground">Demo Mode</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Sign up or sign in to save your settings across devices.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -308,8 +341,17 @@ const Settings = () => {
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Notification Preferences</h3>
                   
-                  {/* Basic Toggles */}
+                  {/* Native App Indicator */}
+                  {isNativePlatform() && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm">
+                      <Smartphone className="h-4 w-4" />
+                      <span>Native mode active — Haptic feedback enabled</span>
+                    </div>
+                  )}
+                  
+                  {/* Sound Settings Section */}
                   <div className="space-y-4">
+                    {/* Sound Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div className="flex items-center gap-3">
                         {settings.soundEnabled ? (
@@ -319,7 +361,10 @@ const Settings = () => {
                         )}
                         <div>
                           <div className="font-medium text-foreground">Alert Sounds</div>
-                          <div className="text-sm text-muted-foreground">Play sound when alerts trigger</div>
+                          <div className="text-sm text-muted-foreground">
+                            Play sound when alerts trigger
+                            {isNativePlatform() && " (with haptic feedback)"}
+                          </div>
                         </div>
                       </div>
                       <Switch 
@@ -328,6 +373,69 @@ const Settings = () => {
                       />
                     </div>
 
+                    {/* Volume Slider - Only shown when sound is enabled */}
+                    {settings.soundEnabled && (
+                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Volume1 className="h-5 w-5 text-primary" />
+                            <div>
+                              <div className="font-medium text-foreground">Volume</div>
+                              <div className="text-sm text-muted-foreground">Adjust alert volume</div>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium text-primary">
+                            {Math.round(settings.soundVolume * 100)}%
+                          </span>
+                        </div>
+                        <Slider
+                          value={[settings.soundVolume * 100]}
+                          onValueChange={(value) => saveSettings({ soundVolume: value[0] / 100 })}
+                          min={10}
+                          max={100}
+                          step={10}
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
+                    {/* Sound Type Selection - Only shown when sound is enabled */}
+                    {settings.soundEnabled && (
+                      <div className="p-4 rounded-xl bg-secondary/50 space-y-4">
+                        <div className="font-medium text-foreground">Alert Sound Type</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(["chime", "beep", "bell"] as SoundType[]).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => {
+                                saveSettings({ soundType: type });
+                                alertSound.playTestSound(type);
+                              }}
+                              className={cn(
+                                "flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all",
+                                settings.soundType === type
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border bg-background hover:border-primary/50 text-muted-foreground"
+                              )}
+                            >
+                              <Play className="h-4 w-4" />
+                              <span className="text-xs font-medium capitalize">{type}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => alertSound.playTestSound()}
+                          className="w-full gap-2"
+                        >
+                          <Play className="h-4 w-4" />
+                          Test Sound
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Push Notifications Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div>
                         <div className="font-medium text-foreground">Push Notifications</div>
@@ -385,82 +493,30 @@ const Settings = () => {
                   
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Key className="h-5 w-5 text-primary" />
-                        <div className="font-medium text-foreground">Private Key Security</div>
-                      </div>
+                      <div className="font-medium text-foreground mb-2">Account Security</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Your private key is your identity. Keep it secure and never share it with anyone.
+                        Your wallet is generated from your username and password. Keep your private key safe as a backup.
                       </div>
                       <Button variant="outline" onClick={() => setActiveTab("profile")}>
                         View Private Key
                       </Button>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="font-medium text-foreground mb-2">Session Security</div>
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="font-medium text-foreground mb-2">Sign Out</div>
                       <div className="text-sm text-muted-foreground mb-3">
-                        Your session expires after 24 hours of inactivity. You'll be automatically logged out after 15 minutes of inactivity on protected pages.
+                        To sign out, go to your profile settings above. You can always sign back in with your private key or recover using your username and password.
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30">
-                      <div className="flex items-center gap-3 mb-2">
-                        <AlertTriangle className="h-5 w-5 text-destructive" />
-                        <div className="font-medium text-foreground">{t("settings.dangerZone")}</div>
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-4">
-                        {t("settings.dangerZoneDesc")}
-                      </div>
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" className="gap-2">
-                            <Trash2 className="h-4 w-4" />
-                            {t("settings.deleteAccount")}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2">
-                              <AlertTriangle className="h-5 w-5 text-destructive" />
-                              {t("settings.deleteAccountTitle")}
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="space-y-3">
-                              <p>{t("settings.deleteWarning")}</p>
-                              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-                                <li>{t("settings.deleteAlerts")}</li>
-                                <li>{t("settings.deleteHistory")}</li>
-                                <li>{t("settings.deleteCredentials")}</li>
-                              </ul>
-                              <div className="pt-2">
-                                <label htmlFor="delete-confirm-input" className="text-sm font-medium text-foreground">
-                                  {t("settings.typeDelete")}
-                                </label>
-                                <Input
-                                  id="delete-confirm-input"
-                                  placeholder={t("settings.typeDeletePlaceholder")}
-                                  value={deleteConfirmText}
-                                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                  className="mt-2"
-                                />
-                              </div>
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
-                              {t("common.cancel")}
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleEraseData}
-                              disabled={deleteConfirmText !== DELETE_CONFIRMATION_TEXT || isDeleting}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {isDeleting ? "Deleting..." : t("settings.deleteForever")}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="font-medium text-foreground mb-2">Best Practices</div>
+                      <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                        <li>Never share your private key with anyone</li>
+                        <li>Use a strong, unique password for your account</li>
+                        <li>Save your private key in a secure location</li>
+                        <li>Remember your username for easy recovery</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -471,6 +527,7 @@ const Settings = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

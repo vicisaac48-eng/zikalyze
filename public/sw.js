@@ -1,5 +1,5 @@
 // Service Worker for Push Notifications, Offline Caching, and Background AI Learning
-const CACHE_NAME = 'zikalyze-v5';
+const CACHE_NAME = 'zikalyze-v6';
 const STATIC_ASSETS = [
   './',
   './favicon.ico',
@@ -53,166 +53,123 @@ async function backgroundLearn() {
   console.log('[SW Brain] Background learning cycle...');
   
   try {
-    // Fetch live prices
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${TOP_CRYPTOS.join(',')}&vs_currencies=usd&include_24hr_change=true`,
-      { cache: 'no-store' }
-    );
+    // Add timeout to prevent hanging on fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for SW
     
-    if (!response.ok) {
-      console.log('[SW Brain] Price fetch failed, will retry...');
-      return;
-    }
-    
-    const prices = await response.json();
-    const db = await initSWDB();
-    const timestamp = Date.now();
-    
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    
-    for (const [symbol, priceData] of Object.entries(prices)) {
-      // Get existing data
-      const getRequest = store.get(symbol);
+    try {
+      // Fetch live prices with timeout
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${TOP_CRYPTOS.join(',')}&vs_currencies=usd&include_24hr_change=true`,
+        { 
+          cache: 'no-store',
+          signal: controller.signal
+        }
+      );
       
-      getRequest.onsuccess = () => {
-        let learning = getRequest.result || {
-          symbol,
-          samplesCollected: 0,
-          volatility: 0,
-          avgVelocity: 0,
-          lastBias: 'NEUTRAL',
-          biasChanges: 0,
-          priceHistory: [],
-          supportLevels: [],
-          resistanceLevels: [],
-          offlineSamples: 0,
-          lastUpdated: timestamp
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.log('[SW Brain] Price fetch failed, will retry...');
+        return;
+      }
+      
+      const prices = await response.json();
+      const db = await initSWDB();
+      const timestamp = Date.now();
+      
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      for (const [symbol, priceData] of Object.entries(prices)) {
+        // Get existing data
+        const getRequest = store.get(symbol);
+        
+        getRequest.onsuccess = () => {
+          let learning = getRequest.result || {
+            symbol,
+            samplesCollected: 0,
+            volatility: 0,
+            avgVelocity: 0,
+            lastBias: 'NEUTRAL',
+            biasChanges: 0,
+            priceHistory: [],
+            supportLevels: [],
+            resistanceLevels: [],
+            offlineSamples: 0,
+            lastUpdated: timestamp
+          };
+          
+          // Add price point
+          learning.priceHistory.push({
+            price: priceData.usd,
+            change24h: priceData.usd_24h_change || 0,
+            timestamp
+          });
+          
+          // Keep last 720 samples (6 hours at 30s intervals)
+          if (learning.priceHistory.length > 720) {
+            learning.priceHistory = learning.priceHistory.slice(-720);
+          }
+          
+          // Calculate metrics
+          if (learning.priceHistory.length >= 2) {
+            const recentPrices = learning.priceHistory.slice(-10).map(p => p.price);
+            const changes = [];
+            for (let i = 1; i < recentPrices.length; i++) {
+              changes.push(Math.abs((recentPrices[i] - recentPrices[i-1]) / recentPrices[i-1] * 100));
+            }
+            const newVolatility = changes.length > 0 
+              ? changes.reduce((a, b) => a + b, 0) / changes.length 
+              : 0;
+            
+            // Exponential smoothing
+            learning.volatility = learning.volatility * 0.9 + newVolatility * 0.1;
+            
+            // Detect trend
+            const firstPrice = learning.priceHistory[0].price;
+            const lastPrice = learning.priceHistory[learning.priceHistory.length - 1].price;
+            const trendPct = ((lastPrice - firstPrice) / firstPrice) * 100;
+            
+            const newBias = trendPct > 1 ? 'LONG' : trendPct < -1 ? 'SHORT' : 'NEUTRAL';
+            if (learning.lastBias !== newBias) {
+              learning.biasChanges++;
+            }
+            learning.lastBias = newBias;
+          }
+          
+          learning.samplesCollected++;
+          learning.offlineSamples++;
+          learning.lastUpdated = timestamp;
+          
+          store.put(learning);
         };
-        
-        // Add price point
-        learning.priceHistory.push({
-          price: priceData.usd,
-          change24h: priceData.usd_24h_change || 0,
-          timestamp
-        });
-        
-        // Keep last 720 samples (6 hours at 30s intervals)
-        if (learning.priceHistory.length > 720) {
-          learning.priceHistory = learning.priceHistory.slice(-720);
-        }
-        
-        // Calculate metrics
-        if (learning.priceHistory.length >= 2) {
-          const recentPrices = learning.priceHistory.slice(-10).map(p => p.price);
-          const changes = [];
-          for (let i = 1; i < recentPrices.length; i++) {
-            changes.push(Math.abs((recentPrices[i] - recentPrices[i-1]) / recentPrices[i-1] * 100));
-          }
-          const newVolatility = changes.length > 0 
-            ? changes.reduce((a, b) => a + b, 0) / changes.length 
-            : 0;
-          
-          // Exponential smoothing
-          learning.volatility = learning.volatility * 0.9 + newVolatility * 0.1;
-          
-          // Detect trend
-          const firstPrice = learning.priceHistory[0].price;
-          const lastPrice = learning.priceHistory[learning.priceHistory.length - 1].price;
-          const trendPct = ((lastPrice - firstPrice) / firstPrice) * 100;
-          
-          const newBias = trendPct > 1 ? 'LONG' : trendPct < -1 ? 'SHORT' : 'NEUTRAL';
-          if (learning.lastBias !== newBias) {
-            learning.biasChanges++;
-          }
-          learning.lastBias = newBias;
-        }
-        
-        learning.samplesCollected++;
-        learning.offlineSamples++;
-        learning.lastUpdated = timestamp;
-        
-        store.put(learning);
-      };
+      }
+      
+      console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
+      
+      // NOTE: Price alert checking is now handled exclusively by the main app (usePriceAlerts.ts)
+      // to prevent duplicate notifications. The service worker only handles:
+      // 1. Background AI learning for price patterns
+      // 2. Receiving and displaying push notifications from the server
+      // The main app sends push notifications via the edge function when alerts trigger
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        console.log('[SW Brain] Fetch timeout, will retry next cycle');
+      } else {
+        throw e;
+      }
     }
-    
-    console.log(`[SW Brain] Learned from ${Object.keys(prices).length} cryptos. Total cycles: background`);
-    
-    // Check for price alerts
-    await checkPriceAlerts(prices);
     
   } catch (e) {
     console.error('[SW Brain] Learning error:', e);
   }
 }
 
-// Check price alerts and trigger notifications
-async function checkPriceAlerts(currentPrices) {
-  try {
-    const db = await initSWDB();
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
-    
-    request.onsuccess = () => {
-      const allData = request.result || [];
-      const alerts = allData.filter(item => item.type === 'price_alert' && !item.triggered);
-      
-      for (const alert of alerts) {
-        const cryptoId = alert.crypto.toLowerCase();
-        const priceData = currentPrices[cryptoId];
-        
-        if (!priceData) continue;
-        
-        const currentPrice = priceData.usd;
-        let shouldTrigger = false;
-        
-        if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
-          shouldTrigger = true;
-        } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
-          shouldTrigger = true;
-        }
-        
-        if (shouldTrigger) {
-          // Show notification
-          const direction = alert.condition === 'above' ? '📈' : '📉';
-          const title = `${direction} ${alert.crypto.toUpperCase()} Price Alert`;
-          const body = alert.message || `${alert.crypto.toUpperCase()} has ${alert.condition === 'above' ? 'risen above' : 'dropped below'} $${alert.targetPrice.toLocaleString()}. Current: $${currentPrice.toLocaleString()}`;
-          
-          self.registration.showNotification(title, {
-            body,
-            icon: './pwa-192x192.png',
-            badge: './favicon.ico',
-            vibrate: [200, 100, 200, 100, 200],
-            tag: `price-alert-${alert.crypto}-${Date.now()}`,
-            renotify: true,
-            requireInteraction: true,
-            timestamp: Date.now(),
-            data: {
-              url: `/dashboard?crypto=${alert.crypto.toLowerCase()}`,
-              symbol: alert.crypto,
-              type: 'price_alert'
-            },
-            actions: [
-              { action: 'view', title: `📊 Analyze ${alert.crypto}` },
-              { action: 'dismiss', title: 'Dismiss' }
-            ]
-          });
-          
-          // Mark as triggered
-          alert.triggered = true;
-          alert.triggeredAt = Date.now();
-          alert.triggeredPrice = currentPrice;
-          store.put(alert);
-          
-          console.log(`[SW Brain] 🔔 Price alert triggered for ${alert.crypto}: $${currentPrice}`);
-        }
-      }
-    };
-  } catch (e) {
-    console.error('[SW Brain] Error checking price alerts:', e);
-  }
-}
+// NOTE: Price alert checking is handled by the main app (usePriceAlerts.ts → useSmartNotifications.ts)
+// The service worker only displays notifications sent via SHOW_LOCAL_NOTIFICATION message
+// This prevents duplicate notifications between the main app and service worker
 
 // Start background learning
 function startBackgroundLearning() {
@@ -370,31 +327,9 @@ self.addEventListener('message', (event) => {
       }
       break;
       
-    case 'SCHEDULE_PRICE_ALERT':
-      // Store price alert for background checking
-      if (data?.symbol && data?.targetPrice) {
-        initSWDB().then(db => {
-          const transaction = db.transaction([STORE_NAME], 'readwrite');
-          const store = transaction.objectStore(STORE_NAME);
-          const alertKey = `alert_${data.symbol}_${data.condition}`;
-          
-          store.put({
-            symbol: alertKey,
-            type: 'price_alert',
-            crypto: data.symbol,
-            targetPrice: data.targetPrice,
-            condition: data.condition, // 'above' or 'below'
-            message: data.message,
-            createdAt: Date.now(),
-            triggered: false
-          });
-          
-          event.source?.postMessage({ type: 'ALERT_SCHEDULED', success: true, symbol: data.symbol });
-        }).catch(e => {
-          console.error('[SW] Failed to schedule alert:', e);
-        });
-      }
-      break;
+    // NOTE: SCHEDULE_PRICE_ALERT removed - price alerts are handled exclusively by the main app
+    // (usePriceAlerts.ts) which stores alerts in Supabase database and checks them against
+    // live WebSocket prices. This prevents duplicate notifications.
   }
 });
 

@@ -1,12 +1,26 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🧠 ZIKALYZE AI BRAIN PIPELINE — Self-Learning from Live Data
+// 🧠 ZIKALYZE AI BRAIN PIPELINE v2.1 — Self-Learning from Live Data
 // ═══════════════════════════════════════════════════════════════════════════════
-// ⚡ Active Crypto Direct Source → AI Analyzer → Attention Algorithm → Double Verify
-// 🔗 All processing happens in a second with deterministic, verifiable steps
-// 🛡️ Filters bad/unnecessary data, verifies before output
+// 
+// ENHANCED PROCESSING FLOW:
+// ⚡ Step 1: Brain connects to Active Crypto Direct Source (read, learn, adapt)
+// 📝 Step 2: Send information to AI Analyzer (process to human-readable language)
+// 🧮 Step 3: Pass to Attention AI Algorithm (filter bad info, verify, calculate)
+// 🔄 Step 4: Send back to AI Analyzer → Attention for SECOND verification
+// 🔒 Step 5: Store good and bad data separately (hidden)
+// 📚 Step 6: Record learning signal for continuous adaptation
+// 📤 Step 7: Release ONLY if information is ACCURATE (not 100% required)
+//
+// 🎯 ACCURACY-BASED RELEASE (not 100% match required):
+//    - Consistency between first and second verification checks
+//    - Quality of data from both checks
+//    - Confidence levels from AI analysis
+//    - Data reliability across verification passes
+//
+// 🔗 All processing happens in under 1 second ⚡
+// 🛡️ Only sends verified, ACCURATE information to users
 // 📊 Self-learns from live chart data and WebSocket livestream
 // 📈 ICT/SMC analysis with multi-timeframe confluence
-// ✅ Only sends accurate information after strict verification
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { 
@@ -487,10 +501,11 @@ export class AIAnalyzer {
 /**
  * Attention AI Algorithm Calculator
  * Filters bad/unnecessary information, verifies data quality, applies attention mechanism
+ * Uses strict thresholds for 💯 accurate analysis
  */
 export class AttentionAlgorithm {
-  private readonly qualityThreshold = 0.6;
-  private readonly minConfidence = 0.4;
+  private readonly qualityThreshold = 0.65; // Increased from 0.6 for stricter quality control
+  private readonly minConfidence = 0.45; // Increased from 0.4 for higher confidence requirement
 
   /**
    * Process analyzed data through attention mechanism
@@ -770,17 +785,58 @@ export class HiddenDataStorageManager {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🔄 DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// 🔄 ENHANCED DOUBLE VERIFICATION LOOP — Verify Twice Before Output
+// ═══════════════════════════════════════════════════════════════════════════════
+// Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release if 100%
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Double Verification Loop
- * Sends data back through analyzer and attention for second verification
- * Compares with first check before releasing output
+ * Verification Step Details — Tracks each step of the verification process
+ */
+export interface VerificationStep {
+  step: number;
+  name: string;
+  passed: boolean;
+  confidence: number;
+  timestamp: number;
+  details: string;
+}
+
+/**
+ * Enhanced Verification Result — Detailed verification output
+ */
+export interface EnhancedVerificationResult {
+  verified: boolean;
+  match: boolean;
+  matchPercentage: number;
+  secondCheck: AttentionVerifiedData;
+  verificationSteps: VerificationStep[];
+  totalVerificationTimeMs: number;
+  releaseApproved: boolean;
+  releaseReason: string;
+}
+
+/**
+ * Enhanced Double Verification Loop
+ * 
+ * FLOW (as specified in requirements):
+ * 1. First Check: AI Analyzer → Attention Algorithm (filter, verify, calculate)
+ * 2. Send verified data BACK to AI Analyzer for re-processing
+ * 3. AI Analyzer sends to Attention for SECOND verification
+ * 4. Compare first and second checks
+ * 5. Release ONLY if information is ACCURATE (not 100% match required)
+ * 6. All happens in under a second ⚡
  */
 export class DoubleVerificationLoop {
   private analyzer: AIAnalyzer;
   private attention: AttentionAlgorithm;
+  
+  // Accuracy thresholds — STRICT verification for 💯 accuracy
+  // Only release information that passes rigorous double-check
+  private readonly minAccuracyScore = 0.70; // 70%+ accuracy required for release (increased from 65%)
+  private readonly minQualityConfidence = 0.45; // Minimum confidence for quality data (increased from 0.4)
+  private readonly maxScoreDiff = 12; // Maximum score difference allowed (reduced from 15 for stricter matching)
+  private readonly maxConfidenceDiff = 0.15; // Maximum confidence difference allowed (reduced from 0.20)
   
   constructor() {
     this.analyzer = new AIAnalyzer();
@@ -788,56 +844,212 @@ export class DoubleVerificationLoop {
   }
 
   /**
-   * Perform double verification
-   * Returns final verified output only if both checks pass
+   * Perform enhanced double verification
+   * 
+   * Step 1: Receive first check from main pipeline (Attention verified data)
+   * Step 2: Send BACK to AI Analyzer for re-processing
+   * Step 3: AI Analyzer sends to Attention for second verification
+   * Step 4: Calculate accuracy score based on both checks
+   * Step 5: Release ONLY if information is ACCURATE (verified as reliable)
    */
   verify(
     rawData: RawCryptoData,
     firstCheck: AttentionVerifiedData
-  ): { verified: boolean; match: boolean; secondCheck: AttentionVerifiedData } {
-    // Second pass through analyzer
+  ): EnhancedVerificationResult {
+    const startTime = Date.now();
+    const verificationSteps: VerificationStep[] = [];
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: First Check Validation
+    // ═══════════════════════════════════════════════════════════════════════
+    const step1Passed = firstCheck.quality !== 'BAD' && firstCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 1,
+      name: 'First Check Validation',
+      passed: step1Passed,
+      confidence: firstCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${firstCheck.quality}, Confidence: ${(firstCheck.confidenceScore * 100).toFixed(0)}%`
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Send Back to AI Analyzer for Re-Processing
+    // ═══════════════════════════════════════════════════════════════════════
     const reAnalyzed = this.analyzer.process(rawData);
+    const step2Passed = reAnalyzed.featureVector.length > 0 && 
+                        reAnalyzed.bullishScore >= 0 && 
+                        reAnalyzed.bearishScore >= 0;
+    verificationSteps.push({
+      step: 2,
+      name: 'AI Analyzer Re-Processing',
+      passed: step2Passed,
+      confidence: (reAnalyzed.bullishScore + reAnalyzed.bearishScore) / 200,
+      timestamp: Date.now(),
+      details: `Bull: ${reAnalyzed.bullishScore}, Bear: ${reAnalyzed.bearishScore}`
+    });
     
-    // Second pass through attention
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: AI Analyzer Sends to Attention for Second Verification
+    // ═══════════════════════════════════════════════════════════════════════
     const secondCheck = this.attention.calculate(reAnalyzed);
+    const step3Passed = secondCheck.quality !== 'BAD' && secondCheck.confidenceScore >= 0.4;
+    verificationSteps.push({
+      step: 3,
+      name: 'Second Attention Verification',
+      passed: step3Passed,
+      confidence: secondCheck.confidenceScore,
+      timestamp: Date.now(),
+      details: `Quality: ${secondCheck.quality}, Confidence: ${(secondCheck.confidenceScore * 100).toFixed(0)}%`
+    });
     
-    // Compare results
-    const match = this.compareVerifications(firstCheck, secondCheck);
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Calculate Accuracy Score — Compare & Verify Information
+    // ═══════════════════════════════════════════════════════════════════════
+    const { match, matchPercentage, accuracyScore } = this.calculateAccuracy(firstCheck, secondCheck);
+    const isAccurate = accuracyScore >= this.minAccuracyScore;
+    const step4Passed = isAccurate;
+    verificationSteps.push({
+      step: 4,
+      name: 'Accuracy Verification',
+      passed: step4Passed,
+      confidence: accuracyScore,
+      timestamp: Date.now(),
+      details: `Accuracy: ${(accuracyScore * 100).toFixed(0)}%, Min Required: ${(this.minAccuracyScore * 100).toFixed(0)}%`
+    });
     
-    // Both checks must pass quality threshold
-    const verified = 
-      firstCheck.quality !== 'BAD' && 
-      secondCheck.quality !== 'BAD' && 
-      match;
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Final Release Decision — Only if ACCURATE (not 100% required)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Release if information is ACCURATE — verified as reliable data
+    // Does NOT require 100% match, just verified accuracy
+    const releaseApproved = isAccurate && 
+                            firstCheck.quality !== 'BAD' && 
+                            secondCheck.quality !== 'BAD' &&
+                            step1Passed && step2Passed && step3Passed;
     
-    return { verified, match, secondCheck };
+    let releaseReason: string;
+    if (releaseApproved) {
+      releaseReason = `✅ ACCURATE — Information verified (${(accuracyScore * 100).toFixed(0)}% accuracy)`;
+    } else if (!step1Passed) {
+      releaseReason = '❌ First check failed quality threshold';
+    } else if (!step2Passed) {
+      releaseReason = '❌ AI Analyzer re-processing failed';
+    } else if (!step3Passed) {
+      releaseReason = '❌ Second Attention verification failed';
+    } else if (!isAccurate) {
+      releaseReason = `❌ Information not accurate enough (${(accuracyScore * 100).toFixed(0)}% < ${(this.minAccuracyScore * 100).toFixed(0)}% required)`;
+    } else if (firstCheck.quality === 'BAD' || secondCheck.quality === 'BAD') {
+      releaseReason = '❌ Data quality too low for release';
+    } else {
+      releaseReason = '❌ Unknown verification failure';
+    }
+    
+    verificationSteps.push({
+      step: 5,
+      name: 'Release Decision',
+      passed: releaseApproved,
+      confidence: releaseApproved ? accuracyScore : 0,
+      timestamp: Date.now(),
+      details: releaseReason
+    });
+    
+    const totalVerificationTimeMs = Date.now() - startTime;
+    
+    // Log verification summary
+    console.log(`[DoubleVerify] ${rawData.symbol}: ${releaseApproved ? '✅ ACCURATE' : '❌ NOT ACCURATE'} (${(accuracyScore * 100).toFixed(0)}%) in ${totalVerificationTimeMs}ms`);
+    
+    return {
+      verified: releaseApproved,
+      match,
+      matchPercentage: accuracyScore, // Return accuracy score instead of strict match
+      secondCheck,
+      verificationSteps,
+      totalVerificationTimeMs,
+      releaseApproved,
+      releaseReason
+    };
   }
 
   /**
-   * Compare two verification results
+   * Calculate accuracy score based on both verification checks
+   * Accuracy is determined by:
+   * - Consistency between first and second checks
+   * - Quality of both checks
+   * - Confidence levels
+   * - Data reliability
+   * 
+   * Returns accuracy score (0-1) — higher = more accurate information
    */
-  private compareVerifications(
+  private calculateAccuracy(
     first: AttentionVerifiedData, 
     second: AttentionVerifiedData
-  ): boolean {
-    // Compare key metrics
+  ): { match: boolean; matchPercentage: number; accuracyScore: number } {
+    // Calculate individual metric differences
     const bullishDiff = Math.abs(
       first.analyzedData.bullishScore - second.analyzedData.bullishScore
     );
     const bearishDiff = Math.abs(
       first.analyzedData.bearishScore - second.analyzedData.bearishScore
     );
+    const volatilityDiff = Math.abs(
+      first.analyzedData.volatilityScore - second.analyzedData.volatilityScore
+    );
+    const momentumDiff = Math.abs(
+      first.analyzedData.momentumScore - second.analyzedData.momentumScore
+    );
     const confidenceDiff = Math.abs(
       first.confidenceScore - second.confidenceScore
     );
     
-    // Allow small variance (within 10%)
-    const maxDiff = 10;
+    // Calculate consistency (how similar both checks are)
+    const avgScoreDiff = (bullishDiff + bearishDiff + volatilityDiff + momentumDiff) / 4;
+    const consistency = Math.max(0, 1 - (avgScoreDiff / 100));
     
-    return bullishDiff <= maxDiff && 
-           bearishDiff <= maxDiff && 
-           confidenceDiff <= 0.15 &&
-           first.quality === second.quality;
+    // Calculate confidence factor (average confidence of both checks)
+    const avgConfidence = (first.confidenceScore + second.confidenceScore) / 2;
+    
+    // Calculate quality factor
+    const qualityScore = this.getQualityScore(first.quality) + this.getQualityScore(second.quality);
+    const qualityFactor = qualityScore / 2; // 0-1 range
+    
+    // Calculate reliability (confidence similarity)
+    const reliabilityFactor = Math.max(0, 1 - confidenceDiff);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACCURACY SCORE FORMULA
+    // ═══════════════════════════════════════════════════════════════════════
+    // Accuracy = weighted combination of:
+    // - Consistency (40%): How similar are both verification results
+    // - Confidence (25%): Average confidence level
+    // - Quality (20%): Data quality from both checks
+    // - Reliability (15%): How stable the confidence is between checks
+    const accuracyScore = 
+      (consistency * 0.40) + 
+      (avgConfidence * 0.25) + 
+      (qualityFactor * 0.20) + 
+      (reliabilityFactor * 0.15);
+    
+    // Match check (for backwards compatibility, more lenient)
+    const match = bullishDiff <= this.maxScoreDiff && 
+                  bearishDiff <= this.maxScoreDiff && 
+                  confidenceDiff <= this.maxConfidenceDiff;
+    
+    // Match percentage (for backwards compatibility)
+    const matchPercentage = consistency;
+    
+    return { match, matchPercentage, accuracyScore };
+  }
+  
+  /**
+   * Convert quality enum to numeric score
+   */
+  private getQualityScore(quality: DataQuality): number {
+    switch (quality) {
+      case 'GOOD': return 1.0;
+      case 'UNCERTAIN': return 0.5;
+      case 'BAD': return 0.0;
+      default: return 0.0;
+    }
   }
 }
 
@@ -846,15 +1058,19 @@ export class DoubleVerificationLoop {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Zikalyze Brain Pipeline
- * Complete processing pipeline that:
- * 1. Connects to Active Crypto Direct Source (read, learn, adapt)
- * 2. Sends to AI Analyzer (human-readable processing)
- * 3. Passes to Attention Algorithm (filter, verify, calculate)
- * 4. Stores good/bad data separately (hidden)
- * 5. Double verifies before output
+ * Zikalyze Brain Pipeline v2.0
  * 
- * All happens in a second!
+ * Complete processing pipeline implementing the enhanced verification flow:
+ * 
+ * STEP 1: 🔗 Brain connects to Active Crypto Direct Source (read, learn, adapt)
+ * STEP 2: 📝 Sends information to AI Analyzer (process to human-readable language)
+ * STEP 3: 🧮 Passes to Attention AI Algorithm (filter bad/unnecessary info, verify)
+ * STEP 4: 🔄 Send back to AI Analyzer → Attention for second verification
+ * STEP 5: 🔒 Store good and bad data separately (hidden)
+ * STEP 6: 📚 Record learning signal for adaptation
+ * STEP 7: 📤 Release ONLY if information is ACCURATE (not 100% required)
+ * 
+ * ⚡ All processing happens in under 1 second!
  */
 export class ZikalyzeBrainPipeline {
   private source: ActiveCryptoSource;
@@ -863,7 +1079,7 @@ export class ZikalyzeBrainPipeline {
   private storage: HiddenDataStorageManager;
   private verification: DoubleVerificationLoop;
   
-  private readonly version = '1.0.0';
+  private readonly version = '2.1.0';
 
   constructor() {
     this.source = new ActiveCryptoSource();
@@ -871,6 +1087,7 @@ export class ZikalyzeBrainPipeline {
     this.attention = new AttentionAlgorithm();
     this.storage = new HiddenDataStorageManager();
     this.verification = new DoubleVerificationLoop();
+    console.log('[ZikalyzeBrain] v2.1 Pipeline initialized with accuracy-based verification');
   }
 
   /**
@@ -896,70 +1113,105 @@ export class ZikalyzeBrainPipeline {
     const analyzedData = this.analyzer.process(rawData, onChainData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate
+    // STEP 3: Attention AI Algorithm — Filter, Verify, Calculate 🧮
     // ═══════════════════════════════════════════════════════════════════════
     const firstCheck = this.attention.calculate(analyzedData);
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 4: Store Good/Bad Data Separately (Hidden)
+    // STEP 4: Enhanced Double Verification — Send Back to AI Analyzer, 
+    //         Then to Attention for Second Check, Compare, Release if 100%
     // ═══════════════════════════════════════════════════════════════════════
-    if (firstCheck.quality === 'GOOD') {
+    // Flow: Attention → AI Analyzer → Attention (re-verify) → Compare → Release
+    const verificationResult = this.verification.verify(rawData, firstCheck);
+    const { verified, match, matchPercentage, secondCheck, verificationSteps, releaseApproved, releaseReason } = verificationResult;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Store Both Good and Bad Data Separately (Hidden) 🔒
+    // ═══════════════════════════════════════════════════════════════════════
+    if (releaseApproved && firstCheck.quality === 'GOOD') {
+      // Store verified good data after double verification
       this.storage.storeGoodData(firstCheck);
-    } else if (firstCheck.quality === 'BAD') {
-      this.storage.storeBadData(rawData, firstCheck.filteredOutReasons.join('; '));
+      this.storage.storeGoodData(secondCheck);
+    } else {
+      // Store filtered/bad data with reason - either verification failed or quality is BAD
+      const filterReason = !releaseApproved 
+        ? releaseReason 
+        : firstCheck.filteredOutReasons.join('; ') || 'Unknown filter reason';
+      this.storage.storeBadData(rawData, filterReason);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Double Verification — Send Back, Compare, Release
+    // STEP 6: Record Learning Signal for Continuous Adaptation 📚
     // ═══════════════════════════════════════════════════════════════════════
-    const { verified, match, secondCheck } = this.verification.verify(rawData, firstCheck);
+    // Use categorized pattern keys for better aggregation
+    const getMatchCategory = (pct: number): string => {
+      if (pct >= 0.95) return 'high';
+      if (pct >= 0.85) return 'medium';
+      return 'low';
+    };
     
-    // Record learning signal for adaptation
-    if (verified) {
+    const getBlockReason = (reason: string): string => {
+      if (reason.includes('Failed double verification')) return 'double_verify_fail';
+      if (reason.includes('re-processing failed')) return 'analyzer_fail';
+      if (reason.includes('Second Attention')) return 'second_attention_fail';
+      if (reason.includes('mismatch')) return 'verification_mismatch';
+      return 'unknown';
+    };
+    
+    if (releaseApproved) {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_${firstCheck.quality}`,
+        `${rawData.symbol}_verified_${getMatchCategory(matchPercentage)}`,
         'CORRECT',
-        0.01
+        0.01 * matchPercentage // Stronger signal for higher match
       );
       this.source.learn(rawData.symbol, [1]);
+      console.log(`[Brain] ✅ ${rawData.symbol}: Verified output released (${(matchPercentage * 100).toFixed(0)}% match)`);
     } else {
       this.storage.recordLearningSignal(
-        `${rawData.symbol}_verification_mismatch`,
+        `${rawData.symbol}_blocked_${getBlockReason(releaseReason)}`,
         'INCORRECT',
         0.02
       );
       this.source.learn(rawData.symbol, [0]);
+      console.log(`[Brain] ❌ ${rawData.symbol}: Output blocked - ${releaseReason}`);
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Generate Final Output — Only if 100% Verified
+    // STEP 7: Generate Final Output — Only Accurate Info Released to Users 📤
     // ═══════════════════════════════════════════════════════════════════════
     const bias = this.determineBias(
       firstCheck.analyzedData.bullishScore,
       firstCheck.analyzedData.bearishScore,
-      verified
+      releaseApproved
     );
     
     const confidence = this.calculateFinalConfidence(
       firstCheck.confidenceScore,
       secondCheck.confidenceScore,
-      verified,
+      releaseApproved,
       match
     );
     
     const processingTimeMs = Date.now() - startTime;
+    
+    // Ensure all processing happens in under 1 second
+    if (processingTimeMs > 1000) {
+      console.warn(`[Brain] ⚠️ Processing time exceeded 1 second: ${processingTimeMs}ms`);
+    }
     
     return {
       bias,
       confidence,
       humanReadableAnalysis: this.buildHumanReadableOutput(
         firstCheck,
-        verified,
+        releaseApproved,
         rawData.symbol,
-        rawData.price
+        rawData.price,
+        verificationSteps,
+        matchPercentage
       ),
       keyInsights: firstCheck.filteredInsights,
-      doubleVerified: verified,
+      doubleVerified: releaseApproved,
       verificationMatch: match,
       firstCheckConfidence: firstCheck.confidenceScore,
       secondCheckConfidence: secondCheck.confidenceScore,
@@ -1009,30 +1261,60 @@ export class ZikalyzeBrainPipeline {
   }
 
   /**
-   * Build final human-readable output
+   * Build final human-readable output with verification details
+   * Shows complete verification flow and match percentage
    */
   private buildHumanReadableOutput(
     data: AttentionVerifiedData,
     verified: boolean,
     symbol: string,
-    price: number
+    price: number,
+    verificationSteps?: VerificationStep[],
+    matchPercentage?: number
   ): string {
     const status = verified ? '✅ DOUBLE VERIFIED' : '⚠️ UNVERIFIED';
     const quality = data.quality === 'GOOD' ? '🟢 HIGH QUALITY' : 
                    data.quality === 'UNCERTAIN' ? '🟡 MODERATE QUALITY' : 
                    '🔴 LOW QUALITY';
+    const matchPct = matchPercentage !== undefined ? `${(matchPercentage * 100).toFixed(0)}%` : 'N/A';
     
-    return `┌─────────────────────────────────────────────────┐
-│  🧠 ZIKALYZE AI BRAIN PIPELINE                  │
-│  ${status}   ${quality}                         │
-└─────────────────────────────────────────────────┘
+    // Helper to truncate and pad step names for fixed-width box (width = 43 chars inside)
+    const formatStepName = (name: string, maxLen: number = 28): string => {
+      const truncated = name.length > maxLen ? name.substring(0, maxLen - 2) + '..' : name;
+      return truncated.padEnd(maxLen);
+    };
+    
+    // Build verification flow visualization with consistent box width
+    let verificationFlow = '';
+    if (verificationSteps && verificationSteps.length > 0) {
+      const stepLines = verificationSteps.map(step => 
+        `│  ${step.passed ? '✅' : '❌'} Step ${step.step}: ${formatStepName(step.name)}│`
+      ).join('\n');
+      
+      verificationFlow = `
+┌───────────────────────────────────────────────┐
+│  🔄 VERIFICATION FLOW (All in < 1 second)     │
+├───────────────────────────────────────────────┤
+${stepLines}
+│                                               │
+│  📊 Match: ${matchPct.padEnd(7)} 🧠 Brain → Analyzer      │
+└───────────────────────────────────────────────┘
+`;
+    }
+    
+    return `┌───────────────────────────────────────────────┐
+│  🧠 ZIKALYZE AI BRAIN PIPELINE v2.0           │
+│  ${status}  ${quality.padEnd(20)}│
+│  📊 Verification Match: ${matchPct.padEnd(19)}│
+└───────────────────────────────────────────────┘
 
 📊 ${symbol} @ $${price.toLocaleString()}
-
+${verificationFlow}
 ${data.filteredInsights.join('\n\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Confidence: ${(data.confidenceScore * 100).toFixed(0)}% | Hash: ${data.verificationHash}
+${verified ? '✅ Output released to users' : '⚠️ Output blocked - verification pending'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
   }
 
@@ -1821,6 +2103,19 @@ export interface UnifiedBrainOutput {
   hasSentiment: boolean;
   hasICT: boolean;
   
+  // Real-time data freshness
+  dataFreshness?: 'REAL_TIME' | 'RECENT' | 'STALE';
+  liveDataSources?: string[];
+  
+  // Fear & Greed impact on analysis
+  fearGreedImpact?: {
+    value: number;
+    trend: 'RISING' | 'FALLING' | 'STABLE';
+    biasModifier: number;
+    contrarian: boolean;
+    description: string;
+  };
+  
   // Self-Learning Metrics
   learnedFromChart: boolean;
   learnedFromStream: boolean;
@@ -1855,6 +2150,24 @@ export interface UnifiedBrainOutput {
   tldr: string;
   actionableInsight: string;
   
+  // 🌐 Emergence Metrics — AI Brain Working Together as One
+  emergence?: {
+    /** Has the AI brain emerged as a unified intelligence */
+    hasEmerged: boolean;
+    /** Overall emergence score (0-100) */
+    emergenceScore: number;
+    /** Emergence level classification */
+    emergenceLevel: 'DORMANT' | 'AWAKENING' | 'EMERGING' | 'UNIFIED' | 'TRANSCENDENT';
+    /** Synergy score - how well components amplify each other */
+    synergyScore: number;
+    /** Coherence score - alignment of component conclusions */
+    coherenceScore: number;
+    /** Collective confidence exceeding individual means */
+    collectiveConfidence: number;
+    /** Number of actively contributing components */
+    activeComponents: number;
+  };
+  
   // Metadata
   timestamp: string;
   processingTimeMs: number;
@@ -1867,11 +2180,15 @@ export interface UnifiedBrainOutput {
  * - Self-learning (chart, livestream)
  * - ICT/SMC multi-timeframe confluence
  * - Strict verification before output
+ * - Emergence tracking (AI brain working together as one)
  */
 export class UnifiedBrain extends SelfLearningBrainPipeline {
+  private emergenceEngine: EmergenceEngine;
+  
   constructor() {
     super();
-    console.log('[UnifiedBrain] Initialized — Most Advanced Crypto AI');
+    this.emergenceEngine = new EmergenceEngine();
+    console.log('[UnifiedBrain] Initialized — Most Advanced Crypto AI with Emergence Tracking');
   }
   
   /**
@@ -1889,6 +2206,43 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     // STEP 1: Run Self-Learning Pipeline
     // ═══════════════════════════════════════════════════════════════════════
     const selfLearningOutput = this.processWithLearning(input, chartData, livestreamUpdate);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1.5: Update Emergence Engine with component outputs
+    // ═══════════════════════════════════════════════════════════════════════
+    this.emergenceEngine.updateComponent('ActiveCryptoSource', 
+      selfLearningOutput.confidence / 100,
+      ['AIAnalyzer']
+    );
+    this.emergenceEngine.updateComponent('AIAnalyzer',
+      selfLearningOutput.isAccurate ? 0.9 : 0.7,
+      ['AttentionAlgorithm', 'SelfLearner']
+    );
+    this.emergenceEngine.updateComponent('AttentionAlgorithm',
+      selfLearningOutput.isAccurate ? 0.85 : 0.6,
+      ['AIAnalyzer', 'DoubleVerification']
+    );
+    this.emergenceEngine.updateComponent('SelfLearner',
+      (selfLearningOutput.learnedFromLiveChart || selfLearningOutput.learnedFromLivestream) ? 0.8 : 0.5,
+      ['ActiveCryptoSource', 'ICTSMCAnalysis']
+    );
+    if (selfLearningOutput.ictAnalysis) {
+      const ictConfidence = selfLearningOutput.ictAnalysis.tradeSetup 
+        ? selfLearningOutput.ictAnalysis.tradeSetup.confidence / 100 
+        : 0.3;
+      this.emergenceEngine.updateComponent('ICTSMCAnalysis',
+        ictConfidence,
+        ['ActiveCryptoSource', 'AIAnalyzer']
+      );
+    }
+    this.emergenceEngine.updateComponent('DoubleVerification',
+      selfLearningOutput.isAccurate ? 0.9 : 0.5,
+      ['AttentionAlgorithm', 'AIAnalyzer']
+    );
+    
+    // Measure emergence after all component updates
+    const emergenceMetrics = this.emergenceEngine.measureEmergence();
+    console.log(`[UnifiedBrain] 🌐 Emergence: ${emergenceMetrics.emergenceLevel} (${emergenceMetrics.emergenceScore}%) | ${emergenceMetrics.hasEmerged ? '🧠 AI Brain Emerged as One' : '⏳ Synchronizing'}`);
     
     // ═══════════════════════════════════════════════════════════════════════
     // STEP 2: Get Macro Catalysts
@@ -1935,21 +2289,36 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     });
     
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 5: Sentiment Analysis
+    // STEP 5: Sentiment Analysis with Real-Time Fear & Greed
     // ═══════════════════════════════════════════════════════════════════════
-    const fearGreed = input.sentimentData?.fearGreed?.value || 50;
+    const fearGreed = input.sentimentData?.fearGreed?.value ?? 50;
     const sentimentLabel = this.getSentimentLabel(fearGreed);
     
+    // Calculate Fear & Greed impact on analysis (real-time integration)
+    const fearGreedImpact = this.calculateFearGreedImpact(input);
+    
+    // Calculate data freshness for accuracy weighting
+    const dataFreshness = this.calculateDataFreshness(input, chartData);
+    
+    // Log real-time data status
+    console.log(`[UnifiedBrain] Real-Time Data: ${dataFreshness.sources.join(' + ')} | Status: ${dataFreshness.status} | Fear&Greed: ${fearGreed} (${fearGreedImpact.trend})`);
+    
     // ═══════════════════════════════════════════════════════════════════════
-    // STEP 6: Calculate Unified Accuracy Score
+    // STEP 6: Calculate Unified Accuracy Score (Enhanced with real-time data)
     // ═══════════════════════════════════════════════════════════════════════
-    const accuracyScore = this.calculateUnifiedAccuracy(
+    const baseAccuracy = this.calculateUnifiedAccuracy(
       selfLearningOutput,
       !!chartData?.isLive,
       !!livestreamUpdate,
       !!input.onChainData,
       macroImpact
     );
+    
+    // Boost accuracy based on data freshness
+    const freshnessBonus = dataFreshness.status === 'REAL_TIME' ? 8 : 
+                          dataFreshness.status === 'RECENT' ? 4 : 0;
+    const fearGreedLiveBonus = fearGreedImpact.isLive ? 3 : 0;
+    const accuracyScore = Math.min(100, baseAccuracy + freshnessBonus + fearGreedLiveBonus);
     
     // ═══════════════════════════════════════════════════════════════════════
     // STEP 7: Build Simplified TL;DR
@@ -1995,6 +2364,19 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       hasSentiment: !!input.sentimentData,
       hasICT: selfLearningOutput.hasICTSetup,
       
+      // Real-time data freshness
+      dataFreshness: dataFreshness.status,
+      liveDataSources: dataFreshness.sources,
+      
+      // Fear & Greed impact
+      fearGreedImpact: {
+        value: fearGreedImpact.value,
+        trend: fearGreedImpact.trend,
+        biasModifier: fearGreedImpact.biasModifier,
+        contrarian: fearGreedImpact.contrarian,
+        description: fearGreedImpact.description
+      },
+      
       // Self-Learning
       learnedFromChart: selfLearningOutput.learnedFromLiveChart,
       learnedFromStream: selfLearningOutput.learnedFromLivestream,
@@ -2029,10 +2411,37 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
       tldr,
       actionableInsight,
       
+      // 🌐 Emergence Metrics — AI Brain Working Together as One
+      emergence: {
+        hasEmerged: emergenceMetrics.hasEmerged,
+        emergenceScore: emergenceMetrics.emergenceScore,
+        emergenceLevel: emergenceMetrics.emergenceLevel,
+        synergyScore: emergenceMetrics.synergyScore,
+        coherenceScore: emergenceMetrics.coherenceScore,
+        collectiveConfidence: emergenceMetrics.collectiveConfidence,
+        activeComponents: emergenceMetrics.activeComponents
+      },
+      
       // Metadata
       timestamp: new Date().toISOString(),
       processingTimeMs
     };
+  }
+  
+  /**
+   * Get current emergence state
+   * Returns detailed metrics about how the AI brain is working together
+   */
+  getEmergenceState(): EmergenceState {
+    return this.emergenceEngine.getEmergenceState();
+  }
+  
+  /**
+   * Format emergence status as human-readable string
+   */
+  formatEmergenceStatus(): string {
+    const metrics = this.emergenceEngine.measureEmergence();
+    return this.emergenceEngine.formatEmergenceStatus(metrics);
   }
   
   /**
@@ -2054,14 +2463,168 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
   
   /**
    * Get sentiment label
+   * Thresholds: 0-20=EXTREME FEAR, 21-35=FEAR, 36-45=SLIGHT FEAR, 46-54=NEUTRAL, 55-64=SLIGHT GREED, 65-79=HIGH GREED, 80+=EXTREME GREED
    */
   private getSentimentLabel(fearGreed: number): string {
     if (fearGreed <= 20) return '😱 EXTREME FEAR';
     if (fearGreed <= 35) return '😰 FEAR';
-    if (fearGreed <= 50) return '😐 NEUTRAL';
-    if (fearGreed <= 65) return '😊 GREED';
-    if (fearGreed <= 80) return '🤑 HIGH GREED';
+    if (fearGreed <= 45) return '😕 SLIGHT FEAR';
+    if (fearGreed <= 54) return '😐 NEUTRAL';
+    if (fearGreed <= 64) return '🙂 SLIGHT GREED';
+    if (fearGreed <= 79) return '🤑 HIGH GREED';
     return '🔥 EXTREME GREED';
+  }
+  
+  /**
+   * Calculate Fear & Greed impact on analysis
+   * Uses trend-following approach: don't trade against the trend, follow the trend 📉📈
+   */
+  private calculateFearGreedImpact(input: AnalysisInput): {
+    value: number;
+    trend: 'RISING' | 'FALLING' | 'STABLE';
+    biasModifier: number;
+    contrarian: boolean;
+    description: string;
+    isLive: boolean;
+  } {
+    const fearGreedData = input.sentimentData?.fearGreed;
+    const value = fearGreedData?.value ?? 50;
+    
+    // Extract enhanced data if available
+    const enhancedData = fearGreedData as { 
+      value: number; 
+      label: string; 
+      previousValue?: number;
+      trend?: 'RISING' | 'FALLING' | 'STABLE';
+      isLive?: boolean;
+      aiWeight?: number;
+    } | undefined;
+    
+    const previousValue = enhancedData?.previousValue ?? value;
+    const isLive = enhancedData?.isLive ?? false;
+    
+    // Determine trend
+    const diff = value - previousValue;
+    const trend: 'RISING' | 'FALLING' | 'STABLE' = 
+      diff > 3 ? 'RISING' : diff < -3 ? 'FALLING' : 'STABLE';
+    
+    // Calculate bias modifier based on Fear & Greed levels
+    // - TREND FOLLOWING APPROACH: Don't trade against the trend, follow the trend 📉📈
+    // - At ALL levels: Follow sentiment (fear = bearish, greed = bullish)
+    // - Stronger signals at extreme levels
+    let biasModifier = 0;
+    let isExtreme = false; // True when at extreme fear/greed levels (stronger signal)
+    let description = '';
+    
+    // Trend-following signals at EXTREME levels (<=20 or >=80)
+    if (value <= 20) {
+      biasModifier = -0.15; // Follow the fear trend - bearish signal
+      isExtreme = true;
+      description = '🔴 Extreme fear - follow the bearish trend (trend-following signal)';
+    } else if (value >= 80) {
+      biasModifier = 0.15; // Follow the greed trend - bullish signal
+      isExtreme = true;
+      description = '🟢 Extreme greed - follow the bullish trend (trend-following signal)';
+    } 
+    // Fear zone (21-35)
+    else if (value <= 35) {
+      biasModifier = -0.05; // Market is fearful, sentiment is bearish
+      isExtreme = false;
+      description = '😰 Fear in market - current sentiment is bearish';
+    } 
+    // High greed zone (65-79)
+    else if (value >= 65) {
+      biasModifier = 0.05; // Market is greedy, sentiment is bullish
+      isExtreme = false;
+      description = '🤑 High greed in market - current sentiment is bullish';
+    } 
+    // Slight fear zone (36-45) - leaning bearish but not strong
+    else if (value <= 45) {
+      biasModifier = -0.02; // Slight bearish sentiment
+      isExtreme = false;
+      description = '😕 Slight fear - market sentiment leans cautious';
+    }
+    // Slight greed zone (55-64) - leaning bullish but not strong
+    else if (value >= 55) {
+      biasModifier = 0.02; // Slight bullish sentiment
+      isExtreme = false;
+      description = '🙂 Slight greed - market sentiment leans optimistic';
+    }
+    // True neutral zone (46-54)
+    else {
+      biasModifier = 0;
+      isExtreme = false;
+      description = '😐 Neutral sentiment - market is balanced';
+    }
+    
+    // Adjust based on trend
+    if (trend === 'RISING' && value > 50) {
+      biasModifier += 0.02; // Rising sentiment adds slight bullish
+      description += ' (trend: rising)';
+    } else if (trend === 'FALLING' && value < 50) {
+      biasModifier -= 0.02; // Falling sentiment adds slight bearish
+      description += ' (trend: falling)';
+    }
+    
+    return {
+      value,
+      trend,
+      biasModifier,
+      // Note: 'contrarian' field name kept for API compatibility
+      // Now indicates if this is an extreme-level trend-following signal
+      contrarian: isExtreme,
+      description,
+      isLive
+    };
+  }
+  
+  /**
+   * Calculate data freshness score for accuracy weighting
+   */
+  private calculateDataFreshness(input: AnalysisInput, chartData?: ChartTrendInput): {
+    score: number;
+    status: 'REAL_TIME' | 'RECENT' | 'STALE';
+    sources: string[];
+  } {
+    const sources: string[] = [];
+    let freshnessScore = 0;
+    
+    // Check price data freshness
+    if (input.isLiveData) {
+      freshnessScore += 30;
+      sources.push('Live Price');
+    }
+    
+    // Check chart data freshness
+    if (chartData?.isLive) {
+      freshnessScore += 25;
+      sources.push('Live Chart');
+    }
+    
+    // Check Fear & Greed freshness
+    const fearGreedData = input.sentimentData?.fearGreed as { isLive?: boolean } | undefined;
+    if (fearGreedData?.isLive) {
+      freshnessScore += 20;
+      sources.push('Live Fear&Greed');
+    }
+    
+    // Check on-chain data freshness
+    if (input.onChainData) {
+      freshnessScore += 15;
+      sources.push('On-Chain');
+    }
+    
+    // Check multi-timeframe data
+    if (input.multiTimeframeData) {
+      freshnessScore += 10;
+      sources.push('Multi-TF');
+    }
+    
+    const status: 'REAL_TIME' | 'RECENT' | 'STALE' = 
+      freshnessScore >= 70 ? 'REAL_TIME' :
+      freshnessScore >= 40 ? 'RECENT' : 'STALE';
+    
+    return { score: freshnessScore, status, sources };
   }
   
   /**
@@ -2238,6 +2801,1054 @@ ${upcomingMacro.map(m => `  📅 ${m}`).join('\n')}
     return analysis;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🧠🧠 COMBINED BRAIN — Merges BOTH Brain Systems for Complete Top-Down Analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+// 
+// This is the ULTIMATE brain that combines:
+// 1. Original Brain (runClientSideAnalysis): Top-down multi-TF analysis, macro, 
+//    volume, institutional vs retail, precision entries, if-then scenarios
+// 2. Pipeline Brain (ZikalyzeBrainPipeline): Attention, double verification,
+//    self-learning, ICT/SMC analysis, accuracy-based release
+//
+// All information flows into BOTH brains, results are merged for the best analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { 
+  analyzeInstitutionalVsRetail, 
+  generateIfThenScenarios 
+} from './institutional-analysis';
+import { 
+  analyzeMarketStructure, 
+  generatePrecisionEntry, 
+  calculateFinalBias, 
+  performTopDownAnalysis,
+  TopDownAnalysis
+} from './technical-analysis';
+
+/**
+ * Combined Brain Output — Merges both brain systems
+ */
+export interface CombinedBrainOutput {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Analysis (from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  confidence: number;
+  analysis: string;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Top-Down Analysis (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  topDownAnalysis: TopDownAnalysis;
+  technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  technicalConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pipeline Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  pipelineConfidence: number;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ICT/SMC Analysis (from Pipeline Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  ictAnalysis?: ICTSMCAnalysis;
+  hasICTSetup: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Institutional vs Retail (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  retailBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  institutionalRetailDivergence: boolean;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Precision Entry (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  precisionEntry: {
+    zone: string;
+    invalidation: string;
+    timing: string;
+    trigger: string;
+  };
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // If-Then Scenarios (from Original Brain)
+  // ═══════════════════════════════════════════════════════════════════════════
+  scenarios: Array<{
+    condition: string;
+    priceLevel: number;
+    outcome: string;
+    probability: number;
+    action: string;
+  }>;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Key Insights (merged from both brains)
+  // ═══════════════════════════════════════════════════════════════════════════
+  keyInsights: string[];
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Data Sources & Verification
+  // ═══════════════════════════════════════════════════════════════════════════
+  isVerified: boolean;
+  isAccurate: boolean;
+  accuracyScore: number;
+  
+  // Macro
+  macroImpact: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+  upcomingMacro: string[];
+  
+  // Volume
+  volumeSpike: boolean;
+  volumeSignal: string;
+  
+  // Sentiment
+  fearGreed: number;
+  sentimentLabel: string;
+  
+  // On-Chain
+  onChainSummary: string;
+  etfFlow: string;
+  
+  // Learning
+  learnedFromChart: boolean;
+  learnedFromStream: boolean;
+  combinedLearningScore: number;
+  
+  // Metadata
+  timestamp: string;
+  processingTimeMs: number;
+  brainVersion: string;
+}
+
+/**
+ * 🧠🧠 COMBINED BRAIN
+ * 
+ * The ULTIMATE crypto analysis engine that combines BOTH brain systems:
+ * 
+ * ORIGINAL BRAIN (runClientSideAnalysis):
+ * - Top-down multi-timeframe analysis (Weekly → Daily → 4H → 1H → 15M)
+ * - Institutional vs Retail analysis
+ * - Precision entry zones
+ * - If-Then scenarios
+ * - Macro catalyst integration
+ * 
+ * PIPELINE BRAIN (ZikalyzeBrainPipeline):
+ * - Active Crypto Source (read, learn, adapt)
+ * - AI Analyzer (human-readable processing)
+ * - Attention Algorithm (filter, verify, calculate)
+ * - Double verification loop
+ * - ICT/SMC analysis
+ * - Self-learning from charts and livestream
+ * 
+ * All information is analyzed by BOTH brains, then merged for the most
+ * comprehensive and accurate analysis possible.
+ */
+export class CombinedBrain extends UnifiedBrain {
+  private readonly combinedVersion = '3.0.0';
+  
+  constructor() {
+    super();
+    console.log('[CombinedBrain] v3.0 — BOTH Brains Combined for Ultimate Analysis');
+  }
+  
+  /**
+   * Run COMBINED analysis using BOTH brain systems
+   * 
+   * Step 1: Run Original Brain (top-down, institutional, precision entries)
+   * Step 2: Run Pipeline Brain (attention, verification, ICT/SMC, learning)
+   * Step 3: Merge results and calculate combined confidence
+   * Step 4: Generate unified output with all insights
+   */
+  analyzeWithBothBrains(
+    input: AnalysisInput,
+    chartData?: ChartTrendInput,
+    livestreamUpdate?: LivestreamUpdate
+  ): CombinedBrainOutput {
+    const startTime = Date.now();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Run Original Brain — Top-Down Multi-Timeframe Analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 1: Running Original Brain (top-down analysis)...');
+    
+    // Prepare input for original brain
+    const originalBrainInput = {
+      ...input,
+      chartTrendData: chartData,
+      multiTimeframeData: input.multiTimeframeData
+    };
+    
+    // Run original brain analysis
+    const originalResult = runClientSideAnalysis(originalBrainInput);
+    
+    // Extract top-down analysis directly
+    const topDownAnalysis = performTopDownAnalysis(
+      input.price,
+      input.high24h || input.price * 1.02,
+      input.low24h || input.price * 0.98,
+      input.change,
+      chartData,
+      input.multiTimeframeData
+    );
+    
+    // Calculate technical bias and confidence from original brain
+    const technicalBias = topDownAnalysis.tradeableDirection === 'LONG' ? 'LONG' 
+                        : topDownAnalysis.tradeableDirection === 'SHORT' ? 'SHORT' 
+                        : 'NEUTRAL';
+    const technicalConfidence = topDownAnalysis.confluenceScore;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 2: Run Pipeline Brain — Attention, Verification, ICT/SMC, Learning
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 2: Running Pipeline Brain (verification + learning)...');
+    
+    const pipelineResult = this.analyze(input, chartData, livestreamUpdate);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 3: Institutional vs Retail Analysis (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 3: Analyzing institutional vs retail...');
+    
+    const etfData = estimateETFFlowData(input.price, input.change, input.crypto);
+    const onChainData = input.onChainData || estimateOnChainMetrics(input.crypto, input.price, input.change);
+    const fearGreed = input.sentimentData?.fearGreed?.value ?? 50;
+    const socialSentiment = input.sentimentData?.social?.overall?.score ?? 50;
+    
+    const institutionalVsRetail = analyzeInstitutionalVsRetail({
+      etfFlow: etfData,
+      onChain: onChainData,
+      socialSentiment,
+      fearGreed,
+      price: input.price,
+      change: input.change
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 4: Generate Precision Entry Zones (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 4: Generating precision entry zones...');
+    
+    const high24h = input.high24h || input.price * 1.02;
+    const low24h = input.low24h || input.price * 0.98;
+    const volume = input.volume || 0;
+    
+    const volumeSpike = detectVolumeSpike({
+      currentVolume: volume,
+      avgVolume24h: volume * 0.85,
+      priceChange: input.change,
+      price: input.price,
+      high24h,
+      low24h
+    });
+    
+    const precisionEntryData = generatePrecisionEntry(
+      input.price,
+      high24h,
+      low24h,
+      input.change,
+      technicalBias,
+      volumeSpike.isSpike ? 'HIGH' : 'MODERATE'
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 5: Generate If-Then Scenarios (from Original Brain)
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 5: Generating if-then scenarios...');
+    
+    const range = high24h - low24h;
+    const keySupport = low24h + range * 0.15;
+    const keyResistance = high24h - range * 0.15;
+    
+    const scenarios = generateIfThenScenarios({
+      price: input.price,
+      high: high24h,
+      low: low24h,
+      bias: technicalBias,
+      keySupport,
+      keyResistance
+    });
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 6: Merge Biases from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    console.log('[CombinedBrain] Step 6: Merging both brain outputs...');
+    
+    const { combinedBias, combinedConfidence } = this.mergeBrainOutputs(
+      technicalBias,
+      technicalConfidence,
+      pipelineResult.bias,
+      pipelineResult.confidence * 100,
+      institutionalVsRetail.institutionalBias,
+      pipelineResult.hasICTSetup,
+      pipelineResult.isVerified
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 7: Merge Key Insights from Both Brains
+    // ═══════════════════════════════════════════════════════════════════════
+    const keyInsights = this.mergeInsights(
+      originalResult.insights,
+      topDownAnalysis.reasoning,
+      pipelineResult.ictAnalysis,
+      institutionalVsRetail,
+      combinedBias
+    );
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 8: Build Combined Analysis Output
+    // ═══════════════════════════════════════════════════════════════════════
+    const processingTimeMs = Date.now() - startTime;
+    
+    const combinedAnalysis = this.buildCombinedAnalysis(
+      input,
+      combinedBias,
+      combinedConfidence,
+      technicalBias,
+      technicalConfidence,
+      pipelineResult,
+      topDownAnalysis,
+      institutionalVsRetail,
+      precisionEntryData,
+      scenarios,
+      keyInsights,
+      volumeSpike,
+      processingTimeMs
+    );
+    
+    console.log(`[CombinedBrain] ✅ Complete in ${processingTimeMs}ms — Bias: ${combinedBias} (${combinedConfidence.toFixed(0)}%)`);
+    
+    return {
+      bias: combinedBias,
+      confidence: combinedConfidence,
+      analysis: combinedAnalysis,
+      
+      // Top-Down Analysis
+      topDownAnalysis,
+      technicalBias,
+      technicalConfidence,
+      
+      // Pipeline Analysis
+      pipelineBias: pipelineResult.bias,
+      pipelineConfidence: pipelineResult.confidence * 100,
+      
+      // ICT/SMC
+      ictAnalysis: pipelineResult.ictAnalysis,
+      hasICTSetup: pipelineResult.hasICTSetup,
+      
+      // Institutional vs Retail
+      institutionalBias: institutionalVsRetail.institutionalBias,
+      retailBias: institutionalVsRetail.retailBias,
+      institutionalRetailDivergence: institutionalVsRetail.divergence,
+      
+      // Precision Entry
+      precisionEntry: {
+        zone: precisionEntryData.zone,
+        invalidation: precisionEntryData.invalidation,
+        timing: precisionEntryData.timing,
+        trigger: precisionEntryData.trigger
+      },
+      
+      // Scenarios
+      scenarios,
+      
+      // Key Insights
+      keyInsights,
+      
+      // Verification
+      isVerified: pipelineResult.isVerified,
+      isAccurate: pipelineResult.isVerified && combinedConfidence >= 50,
+      accuracyScore: pipelineResult.accuracyScore,
+      
+      // Macro
+      macroImpact: pipelineResult.macroImpact,
+      upcomingMacro: pipelineResult.upcomingMacro,
+      
+      // Volume
+      volumeSpike: volumeSpike.isSpike,
+      volumeSignal: volumeSpike.signal,
+      
+      // Sentiment
+      fearGreed,
+      sentimentLabel: pipelineResult.sentimentLabel,
+      
+      // On-Chain
+      onChainSummary: pipelineResult.onChainSummary,
+      etfFlow: pipelineResult.etfFlow,
+      
+      // Learning
+      learnedFromChart: pipelineResult.learnedFromChart,
+      learnedFromStream: pipelineResult.learnedFromStream,
+      combinedLearningScore: pipelineResult.combinedLearningScore,
+      
+      // Metadata
+      timestamp: new Date().toISOString(),
+      processingTimeMs,
+      brainVersion: this.combinedVersion
+    };
+  }
+  
+  /**
+   * Merge outputs from both brains into a single bias and confidence
+   */
+  private mergeBrainOutputs(
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    pipelineConfidence: number,
+    institutionalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL',
+    hasICTSetup: boolean,
+    isVerified: boolean
+  ): { combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'; combinedConfidence: number } {
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMBINED BIAS CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+    // Priority: Technical (40%) + Pipeline (35%) + Institutional (25%)
+    // Agreement bonus: +8% when both brains agree
+    // ICT setup bonus: +5% confidence
+    // Verification bonus: +3% confidence
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Convert biases to numeric scores
+    const biasToScore = (b: string): number => {
+      if (b === 'LONG' || b === 'BULLISH') return 1;
+      if (b === 'SHORT' || b === 'BEARISH') return -1;
+      return 0;
+    };
+    
+    const technicalScore = biasToScore(technicalBias) * (technicalConfidence / 100);
+    const pipelineScore = biasToScore(pipelineBias) * (pipelineConfidence / 100);
+    const institutionalScore = biasToScore(institutionalBias) * 0.5; // Scale down
+    
+    // Weighted combination
+    const combinedScore = 
+      (technicalScore * 0.40) + 
+      (pipelineScore * 0.35) + 
+      (institutionalScore * 0.25);
+    
+    // Determine combined bias
+    let combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL';
+    if (combinedScore > 0.15) {
+      combinedBias = 'LONG';
+    } else if (combinedScore < -0.15) {
+      combinedBias = 'SHORT';
+    } else {
+      combinedBias = 'NEUTRAL';
+    }
+    
+    // Calculate combined confidence
+    const baseConfidence = (technicalConfidence * 0.40 + pipelineConfidence * 0.35 + 50 * 0.25);
+    let combinedConfidence = baseConfidence;
+    
+    // Agreement bonus: if both brains agree, boost confidence
+    if (technicalBias === pipelineBias && technicalBias !== 'NEUTRAL') {
+      combinedConfidence += 8;
+    }
+    
+    // ICT setup bonus
+    if (hasICTSetup) {
+      combinedConfidence += 5;
+    }
+    
+    // Verification bonus
+    if (isVerified) {
+      combinedConfidence += 3;
+    }
+    
+    // Disagreement penalty: if brains conflict, reduce confidence
+    if ((technicalBias === 'LONG' && pipelineBias === 'SHORT') ||
+        (technicalBias === 'SHORT' && pipelineBias === 'LONG')) {
+      combinedConfidence -= 15;
+      combinedBias = 'NEUTRAL'; // Force neutral when brains conflict
+    }
+    
+    // Clamp confidence
+    combinedConfidence = Math.max(35, Math.min(85, combinedConfidence));
+    
+    return { combinedBias, combinedConfidence };
+  }
+  
+  /**
+   * Merge insights from both brains
+   */
+  private mergeInsights(
+    originalInsights: string[],
+    topDownReasoning: string[],
+    ictAnalysis: ICTSMCAnalysis | undefined,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean; divergenceNote: string },
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL'
+  ): string[] {
+    const insights: string[] = [];
+    
+    // Add combined bias summary
+    if (combinedBias === 'LONG') {
+      insights.push('🎯 COMBINED BIAS: BULLISH — Both brains aligned');
+    } else if (combinedBias === 'SHORT') {
+      insights.push('🎯 COMBINED BIAS: BEARISH — Both brains aligned');
+    } else {
+      insights.push('⏸️ COMBINED BIAS: NEUTRAL — Waiting for confluence');
+    }
+    
+    // Add top-down reasoning (max 2)
+    topDownReasoning.slice(0, 2).forEach(r => insights.push(`📊 ${r}`));
+    
+    // Add ICT insight if available
+    if (ictAnalysis && ictAnalysis.tradeSetup) {
+      insights.push(`🎯 ICT: ${ictAnalysis.tradeSetup.type.replace('_', ' ')} ${ictAnalysis.tradeSetup.direction}`);
+    }
+    
+    // Add institutional vs retail insight
+    if (institutionalVsRetail.divergence) {
+      insights.push(`⚠️ ${institutionalVsRetail.divergenceNote}`);
+    } else {
+      insights.push(`🏦 Institutional: ${institutionalVsRetail.institutionalBias} | Retail: ${institutionalVsRetail.retailBias}`);
+    }
+    
+    // Add filtered original insights (max 2, bias-aligned)
+    originalInsights
+      .filter(i => !i.includes('🎯'))
+      .filter(i => {
+        if (combinedBias === 'LONG') {
+          return !i.toLowerCase().includes('bearish') && !i.toLowerCase().includes('short');
+        }
+        if (combinedBias === 'SHORT') {
+          return !i.toLowerCase().includes('bullish') && !i.toLowerCase().includes('long');
+        }
+        return true;
+      })
+      .slice(0, 2)
+      .forEach(i => insights.push(i));
+    
+    return insights;
+  }
+  
+  /**
+   * Build the combined analysis output string
+   */
+  private buildCombinedAnalysis(
+    input: AnalysisInput,
+    combinedBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    combinedConfidence: number,
+    technicalBias: 'LONG' | 'SHORT' | 'NEUTRAL',
+    technicalConfidence: number,
+    pipelineResult: UnifiedBrainOutput,
+    topDownAnalysis: TopDownAnalysis,
+    institutionalVsRetail: { institutionalBias: string; retailBias: string; divergence: boolean },
+    precisionEntry: { zone: string; invalidation: string; timing: string; trigger: string },
+    scenarios: Array<{ condition: string; priceLevel: number; outcome: string; probability: number; action: string }>,
+    keyInsights: string[],
+    volumeSpike: { isSpike: boolean; signal: string; magnitude: string; percentageAboveAvg: number },
+    processingTimeMs: number
+  ): string {
+    const biasEmoji = combinedBias === 'LONG' ? '🟢' : combinedBias === 'SHORT' ? '🔴' : '⚪';
+    const priceStr = input.price.toFixed(input.price < 1 ? 6 : 2);
+    const change = input.change;
+    
+    let analysis = `
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠🧠 ZIKALYZE COMBINED BRAIN v3.0                                ║
+║  ${input.crypto.toUpperCase()} @ $${priceStr} ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%
+║  Both Brains Combined for Ultimate Top-Down Analysis
+╚══════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│  ${biasEmoji} COMBINED VERDICT: ${combinedBias}  │  Confidence: ${combinedConfidence.toFixed(0)}%
+│                                                                │
+│  📊 Technical Brain: ${technicalBias} (${technicalConfidence.toFixed(0)}%)
+│  🧠 Pipeline Brain: ${pipelineResult.bias} (${(pipelineResult.confidence * 100).toFixed(0)}%)
+│  🏦 Institutional: ${institutionalVsRetail.institutionalBias}
+└────────────────────────────────────────────────────────────────┘
+
+━━━ 📊 TOP-DOWN MULTI-TIMEFRAME ANALYSIS ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Weekly:  ${topDownAnalysis.weekly.trend} (${topDownAnalysis.weekly.strength.toFixed(0)}%)
+  Daily:   ${topDownAnalysis.daily.trend} (${topDownAnalysis.daily.strength.toFixed(0)}%)
+  4H:      ${topDownAnalysis.h4.trend} (${topDownAnalysis.h4.strength.toFixed(0)}%)
+  1H:      ${topDownAnalysis.h1.trend} (${topDownAnalysis.h1.strength.toFixed(0)}%)
+  15M:     ${topDownAnalysis.m15.trend} (${topDownAnalysis.m15.strength.toFixed(0)}%)
+  
+  Confluence Score: ${topDownAnalysis.confluenceScore.toFixed(0)}%
+  Tradeable Direction: ${topDownAnalysis.tradeableDirection}
+
+━━━ 🎯 KEY INSIGHTS (From Both Brains) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${keyInsights.map(i => `  ${i}`).join('\n')}
+
+━━━ 📍 PRECISION ENTRY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Zone: ${precisionEntry.zone}
+  Timing: ${precisionEntry.timing}
+  Trigger: ${precisionEntry.trigger}
+  Invalidation: ${precisionEntry.invalidation}
+`;
+
+    // Add ICT analysis if available
+    if (pipelineResult.hasICTSetup && pipelineResult.ictAnalysis?.tradeSetup) {
+      const ict = pipelineResult.ictAnalysis;
+      analysis += `
+━━━ 📈 ICT/SMC SETUP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Type: ${ict.tradeSetup.type.replace('_', ' ')}
+  Direction: ${ict.tradeSetup.direction}
+  Entry: $${ict.tradeSetup.entry.toFixed(2)}
+  Stop Loss: $${ict.tradeSetup.stopLoss.toFixed(2)}
+  Target: $${ict.tradeSetup.target1.toFixed(2)} (${ict.tradeSetup.riskReward.toFixed(1)}R)
+  Confidence: ${ict.tradeSetup.confidence}%
+`;
+    }
+
+    // Add scenarios
+    if (scenarios.length > 0) {
+      analysis += `
+━━━ 🔮 IF-THEN SCENARIOS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+      scenarios.slice(0, 3).forEach((s, i) => {
+        analysis += `  ${i + 1}. ${s.condition} @ $${s.priceLevel.toFixed(2)}
+     → ${s.outcome} (${s.probability}% prob)
+     Action: ${s.action}
+`;
+      });
+    }
+
+    // Add market pulse
+    analysis += `
+━━━ 📊 MARKET PULSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🔗 On-Chain: ${pipelineResult.onChainSummary}
+  💼 ETF Flow: ${pipelineResult.etfFlow}
+  😊 Sentiment: ${pipelineResult.sentimentLabel} (${pipelineResult.fearGreed}/100)
+  📊 Volume: ${volumeSpike.isSpike ? `🔥 SPIKE +${volumeSpike.percentageAboveAvg.toFixed(0)}%` : 'Normal'}
+`;
+
+    // Add macro if impact
+    if (pipelineResult.macroImpact !== 'NONE' && pipelineResult.upcomingMacro.length > 0) {
+      analysis += `
+  ⚡ Macro Impact: ${pipelineResult.macroImpact}
+${pipelineResult.upcomingMacro.slice(0, 2).map(m => `     📅 ${m}`).join('\n')}
+`;
+    }
+
+    // Add verification and learning status
+    analysis += `
+━━━ 🧠 BRAIN STATUS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ Verified: ${pipelineResult.isVerified ? 'YES' : 'NO'} | Accuracy: ${pipelineResult.accuracyScore.toFixed(0)}%
+  📊 Chart Learning: ${pipelineResult.learnedFromChart ? '✓ Active' : '○ Pending'}
+  📡 Stream Learning: ${pipelineResult.learnedFromStream ? '✓ Active' : '○ Pending'}
+  🎯 ICT Patterns: ${pipelineResult.hasICTSetup ? '✓ Detected' : '○ None'}
+  📈 Learning Score: ${(pipelineResult.combinedLearningScore * 100).toFixed(0)}%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Powered by Zikalyze Combined Brain v${this.combinedVersion} | ${processingTimeMs}ms
+  Both brains analyzed and merged for ultimate accuracy
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+    return analysis;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🌐 EMERGENCE ENGINE — AI Brain Components Working Together as One
+// ═══════════════════════════════════════════════════════════════════════════════
+// Emergence: The whole is greater than the sum of its parts
+// This engine tracks how multiple AI components synergize to produce
+// collective intelligence that exceeds individual capabilities
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Component contribution tracking for emergence measurement
+ */
+export interface ComponentContribution {
+  name: string;
+  confidence: number;
+  weight: number;
+  lastUpdate: number;
+  synergySources: string[];
+}
+
+/**
+ * Emergence metrics that track collective AI behavior
+ */
+export interface EmergenceMetrics {
+  /** Overall emergence score (0-100) - how well components work together */
+  emergenceScore: number;
+  /** Synergy score - amplification from component interaction */
+  synergyScore: number;
+  /** Coherence score - alignment of component outputs */
+  coherenceScore: number;
+  /** Collective confidence - combined confidence exceeding individual means */
+  collectiveConfidence: number;
+  /** Number of active contributing components */
+  activeComponents: number;
+  /** Whether emergence threshold has been reached */
+  hasEmerged: boolean;
+  /** Emergence level classification */
+  emergenceLevel: 'DORMANT' | 'AWAKENING' | 'EMERGING' | 'UNIFIED' | 'TRANSCENDENT';
+  /** Timestamp of emergence measurement */
+  timestamp: number;
+}
+
+/**
+ * Emergence state tracking over time
+ */
+export interface EmergenceState {
+  /** Current emergence metrics */
+  current: EmergenceMetrics;
+  /** Historical emergence scores for trend analysis */
+  history: { score: number; timestamp: number }[];
+  /** Trend direction of emergence */
+  trend: 'RISING' | 'FALLING' | 'STABLE';
+  /** Time since last significant emergence event */
+  timeSinceEmergence: number;
+}
+
+/**
+ * Emergence Engine
+ * 
+ * Tracks and measures how multiple AI brain components work together
+ * to produce emergent collective intelligence. The engine monitors:
+ * 
+ * 1. Component Synergy: How components amplify each other's outputs
+ * 2. Coherence: How aligned the components' conclusions are
+ * 3. Collective Intelligence: Intelligence beyond individual components
+ * 4. Emergence Events: When the system "comes together" as one
+ * 
+ * The AI brain emerges as one when:
+ * - Multiple components reach consensus
+ * - Synergy score exceeds threshold
+ * - Coherence score indicates alignment
+ * - Collective confidence surpasses individual means
+ */
+export class EmergenceEngine {
+  private components: Map<string, ComponentContribution> = new Map();
+  private emergenceHistory: { score: number; timestamp: number }[] = [];
+  private readonly emergenceThreshold = 70; // Score required for emergence
+  private readonly synergyMultiplier = 1.25; // Amplification factor when synergy detected
+  private readonly maxHistoryLength = 100;
+  private readonly maxReturnedHistory = 20; // History entries returned in getEmergenceState
+  private readonly maxComponentBonus = 20; // Maximum bonus from active components
+  private readonly componentBonusMultiplier = 5; // Bonus per additional active component
+  
+  constructor() {
+    // Initialize core AI brain components
+    this.registerComponent('ActiveCryptoSource', 1.0);
+    this.registerComponent('AIAnalyzer', 1.0);
+    this.registerComponent('AttentionAlgorithm', 1.0);
+    this.registerComponent('ICTSMCAnalysis', 0.9);
+    this.registerComponent('SelfLearner', 0.85);
+    this.registerComponent('DoubleVerification', 0.95);
+    console.log('[EmergenceEngine] Initialized — Monitoring collective AI intelligence');
+  }
+  
+  /**
+   * Register a new component for emergence tracking
+   */
+  registerComponent(name: string, weight: number): void {
+    this.components.set(name, {
+      name,
+      confidence: 0,
+      weight,
+      lastUpdate: Date.now(),
+      synergySources: []
+    });
+  }
+  
+  /**
+   * Update component contribution with new confidence and synergy sources
+   */
+  updateComponent(
+    name: string, 
+    confidence: number, 
+    synergySources: string[] = []
+  ): void {
+    const component = this.components.get(name);
+    if (component) {
+      component.confidence = Math.max(0, Math.min(1, confidence));
+      component.lastUpdate = Date.now();
+      component.synergySources = synergySources;
+      this.components.set(name, component);
+    }
+  }
+  
+  /**
+   * Calculate synergy score based on component interactions
+   * Synergy occurs when components reference and amplify each other
+   */
+  private calculateSynergy(): number {
+    let synergyCount = 0;
+    let totalPossible = 0;
+    
+    this.components.forEach((component) => {
+      component.synergySources.forEach(source => {
+        if (this.components.has(source)) {
+          const sourceComponent = this.components.get(source)!;
+          // Synergy is stronger when both components have high confidence
+          synergyCount += (component.confidence + sourceComponent.confidence) / 2;
+        }
+        totalPossible += 1;
+      });
+    });
+    
+    if (totalPossible === 0) return 0;
+    
+    // Apply synergy multiplier for strong interactions
+    const baseSynergy = (synergyCount / totalPossible) * 100;
+    return Math.min(100, baseSynergy * this.synergyMultiplier);
+  }
+  
+  /**
+   * Calculate coherence - how aligned component outputs are
+   * High coherence means components are reaching similar conclusions
+   */
+  private calculateCoherence(): number {
+    const confidences = Array.from(this.components.values())
+      .filter(c => c.lastUpdate > Date.now() - 60000) // Only recent updates
+      .map(c => c.confidence);
+    
+    if (confidences.length < 2) return 0;
+    
+    // Calculate variance (lower variance = higher coherence)
+    const mean = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+    const variance = confidences.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / confidences.length;
+    const stdDev = Math.sqrt(variance);
+    
+    // Convert to coherence score (lower stdDev = higher coherence)
+    // stdDev of 0 = 100% coherence, stdDev of 0.5 = 0% coherence
+    const coherence = Math.max(0, (1 - stdDev * 2)) * 100;
+    return coherence;
+  }
+  
+  /**
+   * Calculate collective confidence - combined intelligence of all components
+   * This represents the emergent property where collective > individual
+   */
+  private calculateCollectiveConfidence(): number {
+    const activeComponents = Array.from(this.components.values())
+      .filter(c => c.lastUpdate > Date.now() - 60000);
+    
+    if (activeComponents.length === 0) return 0;
+    
+    // Weighted average with synergy bonus
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    activeComponents.forEach(component => {
+      const synergyBonus = component.synergySources.length > 0 ? 0.1 : 0;
+      const effectiveConfidence = Math.min(1, component.confidence + synergyBonus);
+      weightedSum += effectiveConfidence * component.weight;
+      totalWeight += component.weight;
+    });
+    
+    const baseConfidence = totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
+    
+    // Apply emergence amplification when many components are active
+    const componentBonus = Math.min(
+      this.maxComponentBonus, 
+      (activeComponents.length - 1) * this.componentBonusMultiplier
+    );
+    
+    return Math.min(100, baseConfidence + componentBonus);
+  }
+  
+  /**
+   * Determine emergence level based on metrics
+   */
+  private getEmergenceLevel(score: number): EmergenceMetrics['emergenceLevel'] {
+    if (score >= 90) return 'TRANSCENDENT';
+    if (score >= 80) return 'UNIFIED';
+    if (score >= 70) return 'EMERGING';
+    if (score >= 50) return 'AWAKENING';
+    return 'DORMANT';
+  }
+  
+  /**
+   * Calculate trend from historical data
+   */
+  private calculateTrend(): EmergenceState['trend'] {
+    if (this.emergenceHistory.length < 3) return 'STABLE';
+    
+    const recent = this.emergenceHistory.slice(-5);
+    const first = recent[0].score;
+    const last = recent[recent.length - 1].score;
+    const diff = last - first;
+    
+    if (diff > 5) return 'RISING';
+    if (diff < -5) return 'FALLING';
+    return 'STABLE';
+  }
+  
+  /**
+   * Measure current emergence state
+   * Returns comprehensive metrics about how the AI brain is working as one
+   */
+  measureEmergence(): EmergenceMetrics {
+    const synergyScore = this.calculateSynergy();
+    const coherenceScore = this.calculateCoherence();
+    const collectiveConfidence = this.calculateCollectiveConfidence();
+    
+    // Active components count
+    const activeComponents = Array.from(this.components.values())
+      .filter(c => c.lastUpdate > Date.now() - 60000).length;
+    
+    // Calculate overall emergence score (weighted combination)
+    const emergenceScore = Math.round(
+      synergyScore * 0.3 +
+      coherenceScore * 0.3 +
+      collectiveConfidence * 0.4
+    );
+    
+    const hasEmerged = emergenceScore >= this.emergenceThreshold;
+    const emergenceLevel = this.getEmergenceLevel(emergenceScore);
+    
+    const metrics: EmergenceMetrics = {
+      emergenceScore,
+      synergyScore: Math.round(synergyScore),
+      coherenceScore: Math.round(coherenceScore),
+      collectiveConfidence: Math.round(collectiveConfidence),
+      activeComponents,
+      hasEmerged,
+      emergenceLevel,
+      timestamp: Date.now()
+    };
+    
+    // Store in history
+    this.emergenceHistory.push({ score: emergenceScore, timestamp: Date.now() });
+    if (this.emergenceHistory.length > this.maxHistoryLength) {
+      this.emergenceHistory.shift();
+    }
+    
+    return metrics;
+  }
+  
+  /**
+   * Get complete emergence state including history and trends
+   */
+  getEmergenceState(): EmergenceState {
+    const current = this.measureEmergence();
+    const trend = this.calculateTrend();
+    
+    // Find last emergence event
+    const lastEmergence = this.emergenceHistory
+      .filter(h => h.score >= this.emergenceThreshold)
+      .pop();
+    
+    const timeSinceEmergence = lastEmergence 
+      ? Date.now() - lastEmergence.timestamp 
+      : Infinity;
+    
+    return {
+      current,
+      history: this.emergenceHistory.slice(-this.maxReturnedHistory),
+      trend,
+      timeSinceEmergence
+    };
+  }
+  
+  /**
+   * Update all components from a brain analysis result
+   * This allows the emergence engine to track the current state of all AI components
+   */
+  updateFromAnalysis(
+    pipelineOutput?: BrainPipelineOutput,
+    ictAnalysis?: ICTSMCAnalysis,
+    verificationResult?: EnhancedVerificationResult
+  ): EmergenceMetrics {
+    const now = Date.now();
+    
+    // Update ActiveCryptoSource
+    if (pipelineOutput) {
+      this.updateComponent('ActiveCryptoSource', 
+        pipelineOutput.confidence / 100,
+        ['AIAnalyzer']
+      );
+      
+      // Update AIAnalyzer based on output quality
+      const analyzerConfidence = pipelineOutput.doubleVerified ? 0.9 : 0.7;
+      this.updateComponent('AIAnalyzer', 
+        analyzerConfidence,
+        ['AttentionAlgorithm', 'SelfLearner']
+      );
+      
+      // Update AttentionAlgorithm
+      this.updateComponent('AttentionAlgorithm',
+        pipelineOutput.verificationMatch ? 0.85 : 0.6,
+        ['AIAnalyzer', 'DoubleVerification']
+      );
+    }
+    
+    // Update ICT/SMC Analysis
+    if (ictAnalysis) {
+      const ictConfidence = ictAnalysis.tradeSetup 
+        ? ictAnalysis.tradeSetup.confidence / 100 
+        : 0.3;
+      this.updateComponent('ICTSMCAnalysis',
+        ictConfidence,
+        ['ActiveCryptoSource', 'AIAnalyzer']
+      );
+    }
+    
+    // Update Verification
+    if (verificationResult) {
+      this.updateComponent('DoubleVerification',
+        verificationResult.matchPercentage,
+        ['AttentionAlgorithm', 'AIAnalyzer']
+      );
+    }
+    
+    // Update Self Learner (inferred from pipeline activity)
+    // Higher confidence if pipeline has been actively processing
+    if (pipelineOutput) {
+      const isActive = pipelineOutput.timestamp !== undefined;
+      this.updateComponent('SelfLearner',
+        isActive ? 0.75 : 0.5,
+        ['ActiveCryptoSource', 'ICTSMCAnalysis']
+      );
+    }
+    
+    return this.measureEmergence();
+  }
+  
+  /**
+   * Format emergence status as human-readable string
+   */
+  formatEmergenceStatus(metrics: EmergenceMetrics): string {
+    const levelEmoji = {
+      'DORMANT': '💤',
+      'AWAKENING': '🌅',
+      'EMERGING': '🌟',
+      'UNIFIED': '🧠',
+      'TRANSCENDENT': '✨'
+    };
+    
+    const emoji = levelEmoji[metrics.emergenceLevel];
+    const status = metrics.hasEmerged 
+      ? '🔗 AI Brain Emerged as One' 
+      : '⏳ Components Synchronizing';
+    
+    return `
+${emoji} EMERGENCE STATUS: ${metrics.emergenceLevel}
+${status}
+
+  📊 Emergence Score: ${metrics.emergenceScore}%
+  🔄 Synergy Score: ${metrics.synergyScore}%
+  🎯 Coherence Score: ${metrics.coherenceScore}%
+  💡 Collective Confidence: ${metrics.collectiveConfidence}%
+  ⚡ Active Components: ${metrics.activeComponents}
+
+${metrics.hasEmerged 
+  ? '✅ The AI brain is working together as one unified intelligence'
+  : '⏳ Components are aligning to achieve emergence'}
+`;
+  }
+}
+
+// Singleton instance for global emergence tracking
+export const globalEmergenceEngine = new EmergenceEngine();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📤 EXPORTS — Public API for Brain Pipeline

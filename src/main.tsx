@@ -4,9 +4,32 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n/config";
 import { initializeAnalytics } from "./lib/analytics";
+import { Capacitor } from "@capacitor/core";
+import { initializeBackgroundFetch } from "./lib/background-price-monitor";
 
 // Initialize Vercel Web Analytics
 initializeAnalytics();
+
+// Disable zoom on Android native app only (to feel like a native app)
+// Web version keeps zoom enabled for accessibility
+if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport) {
+    viewport.setAttribute('content', 
+      'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+    );
+  }
+  
+  // Add Android-specific class to html element for native app styling
+  // This enables vertical-only scrolling like native Android apps (no horizontal body movement)
+  document.documentElement.classList.add('android-native');
+  
+  // Initialize background fetch for price monitoring when app is closed
+  // This allows notifications even when the user is not in the app
+  initializeBackgroundFetch().catch(err => {
+    console.error('[Main] Failed to initialize background fetch:', err);
+  });
+}
 
 // Register service worker for offline caching
 if ('serviceWorker' in navigator) {

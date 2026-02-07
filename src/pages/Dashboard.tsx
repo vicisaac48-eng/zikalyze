@@ -1,9 +1,13 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, User } from "lucide-react";
+import { Search, User, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +21,7 @@ const AIMetrics = lazy(() => import("@/components/dashboard/AIMetrics"));
 const AIAnalyzer = lazy(() => import("@/components/dashboard/AIAnalyzer"));
 const Top100CryptoList = lazy(() => import("@/components/dashboard/Top100CryptoList"));
 const OnChainMetrics = lazy(() => import("@/components/dashboard/OnChainMetrics"));
+const SentimentAnalysis = lazy(() => import("@/components/dashboard/SentimentAnalysis"));
 
 // Skeleton loaders for lazy components
 const ChartSkeleton = () => (
@@ -46,8 +51,14 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
-  const { prices, loading, isLive, getPriceBySymbol } = useCryptoPrices();
+  const { prices, loading, isLive, getPriceBySymbol, refetch } = useCryptoPrices();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   // Save selected crypto to localStorage whenever it changes
   useEffect(() => {
@@ -81,13 +92,15 @@ const Dashboard = () => {
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
-      <Sidebar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar" style={{ pointerEvents: 'auto' }}>
+        <Sidebar />
+        <BottomNav />
 
-      <main className="ml-16 lg:ml-64 safe-area-inset-bottom">
-        {/* Header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0 safe-area-inset-bottom">
+        {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+          <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -97,12 +110,18 @@ const Dashboard = () => {
                 className="w-48 lg:w-64 bg-secondary border-border pl-10"
               />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               {userName && (
                 <span className="text-xs font-medium text-foreground hidden sm:block sm:text-sm">
                   {userName}
                 </span>
               )}
+              {/* Settings link on mobile */}
+              <Link to="/dashboard/settings" className="md:hidden">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </Link>
               <Button variant="ghost" size="icon" className="rounded-full bg-secondary h-8 w-8 sm:h-10 sm:w-10">
                 <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
               </Button>
@@ -110,7 +129,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="p-3 space-y-4 sm:p-4 md:p-6 md:space-y-6">
+        <div className="main-content px-3 pb-6 space-y-2 sm:px-4 sm:pb-8 sm:space-y-3 md:px-6 md:space-y-4">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
@@ -144,21 +163,32 @@ const Dashboard = () => {
             </Suspense>
           </ErrorBoundary>
 
-          {/* AI Analyzer */}
-          <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
-            <Suspense fallback={<ChartSkeleton />}>
-              <AIAnalyzer 
-                crypto={selectedCrypto} 
-                price={selected.price} 
-                change={selected.change}
-                high24h={liveData?.high_24h}
-                low24h={liveData?.low_24h}
-                volume={liveData?.total_volume}
-                marketCap={liveData?.market_cap}
-                isLive={isLive}
-              />
-            </Suspense>
-          </ErrorBoundary>
+          {/* AI Analyzer & Sentiment Analysis Grid */}
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+            <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
+              <Suspense fallback={<ChartSkeleton />}>
+                <AIAnalyzer 
+                  crypto={selectedCrypto} 
+                  price={selected.price} 
+                  change={selected.change}
+                  high24h={liveData?.high_24h}
+                  low24h={liveData?.low_24h}
+                  volume={liveData?.total_volume}
+                  marketCap={liveData?.market_cap}
+                  isLive={isLive}
+                />
+              </Suspense>
+            </ErrorBoundary>
+            <ErrorBoundary componentName="Sentiment Analysis" fallback={<ChartErrorFallback />}>
+              <Suspense fallback={<ChartSkeleton />}>
+                <SentimentAnalysis
+                  crypto={selectedCrypto}
+                  price={selected.price}
+                  change={selected.change}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
 
           {/* Charts Grid */}
           <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
@@ -199,6 +229,7 @@ const Dashboard = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

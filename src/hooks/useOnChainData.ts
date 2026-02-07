@@ -213,13 +213,7 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     return deriveMetricsFromPrice(crypto, currentPrice, currentChange, currentVolume);
   }, [crypto, livePrice.isLive, livePrice.price, livePrice.change24h, livePrice.volume, price, change, cryptoInfo?.volume]);
 
-  // Store derivedMetrics in ref to avoid triggering useEffect on every price update
-  const derivedMetricsRef = useRef(derivedMetrics);
-  derivedMetricsRef.current = derivedMetrics;
-  const lastMetricsUpdateRef = useRef(0);
-  const METRICS_UPDATE_THROTTLE_MS = 2000; // Only update metrics every 2 seconds
-
-  // Update metrics when derived data changes (throttled to prevent excessive re-renders)
+  // Update metrics when derived data changes
   useEffect(() => {
     if (!isMountedRef.current) return;
     
@@ -230,41 +224,32 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       hashRateRef.current = 0;
       difficultyRef.current = 0;
       avgBlockTimeRef.current = 0;
-      lastMetricsUpdateRef.current = 0;
       setMetrics(null);
     }
 
-    // Throttle metrics updates to reduce re-renders
-    const now = Date.now();
-    if (now - lastMetricsUpdateRef.current < METRICS_UPDATE_THROTTLE_MS) {
-      return;
-    }
-    lastMetricsUpdateRef.current = now;
-
-    const currentDerivedMetrics = derivedMetricsRef.current;
     const newMetrics: OnChainMetrics = {
-      exchangeNetFlow: currentDerivedMetrics.exchangeNetFlow!,
-      whaleActivity: currentDerivedMetrics.whaleActivity!,
-      mempoolData: currentDerivedMetrics.mempoolData!,
-      transactionVolume: currentDerivedMetrics.transactionVolume!,
+      exchangeNetFlow: derivedMetrics.exchangeNetFlow!,
+      whaleActivity: derivedMetrics.whaleActivity!,
+      mempoolData: derivedMetrics.mempoolData!,
+      transactionVolume: derivedMetrics.transactionVolume!,
       hashRate: hashRateRef.current,
-      activeAddresses: currentDerivedMetrics.activeAddresses!,
+      activeAddresses: derivedMetrics.activeAddresses!,
       blockHeight: blockHeightRef.current,
       difficulty: difficultyRef.current,
       avgBlockTime: avgBlockTimeRef.current,
-      source: currentDerivedMetrics.source!,
+      source: derivedMetrics.source!,
       lastUpdated: new Date(),
       period: '24h',
       isLive: livePrice.isLive,
       streamStatus: livePrice.isLive ? 'connected' : 'connecting',
-      etfFlow: currentDerivedMetrics.etfFlow,
-      validatorQueue: currentDerivedMetrics.validatorQueue,
+      etfFlow: derivedMetrics.etfFlow,
+      validatorQueue: derivedMetrics.validatorQueue,
     };
 
     setMetrics(newMetrics);
     setStreamStatus(livePrice.isLive ? 'connected' : 'connecting');
     setLoading(false);
-  }, [crypto, livePrice.isLive]);
+  }, [crypto, derivedMetrics, livePrice.isLive]);
 
   // WebSocket for block data (BTC/ETH only) - lightweight connection
   const connectBlockWebSocket = useCallback(() => {
@@ -336,18 +321,22 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
     if (cryptoUpper === 'BTC' || cryptoUpper === 'ETH') {
       connectBlockWebSocket();
     }
-
-    // Capture ref for cleanup
-    const wsState = wsStateRef.current;
     
     return () => {
       isMountedRef.current = false;
-      if (wsState.socket) {
-        wsState.socket.close();
-        wsState.socket = null;
+      // Close current WebSocket connection on cleanup
+      // Note: Intentionally using .current to close the actual current connection,
+      // not a snapshot - WebSocket may have reconnected since effect setup
+      /* eslint-disable react-hooks/exhaustive-deps */
+      const currentSocket = wsStateRef.current.socket;
+      const currentTimeout = wsStateRef.current.reconnectTimeout;
+      /* eslint-enable react-hooks/exhaustive-deps */
+      
+      if (currentSocket) {
+        currentSocket.close();
       }
-      if (wsState.reconnectTimeout) {
-        clearTimeout(wsState.reconnectTimeout);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
   }, [crypto, connectBlockWebSocket]);

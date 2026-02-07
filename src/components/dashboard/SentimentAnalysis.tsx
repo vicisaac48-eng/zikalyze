@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, TrendingDown, MessageCircle, Users, 
   Newspaper, RefreshCw, Twitter, AlertCircle, Flame, ExternalLink, Search,
-  Calendar, Radio, Zap, Clock
+  Calendar, Radio, Zap, Clock, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getUpcomingMacroCatalysts } from "@/lib/zikalyze-brain/macro-catalysts";
 
 interface MacroEvent {
   event: string;
@@ -55,7 +56,7 @@ interface SentimentData {
   meta?: {
     newsSource: string;
     newsLastUpdated: string;
-    isLive: boolean;
+    isSimulated?: boolean;
   };
 }
 
@@ -122,16 +123,55 @@ async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response
 /**
  * Fetch real Fear & Greed Index from Alternative.me with retry
  */
+/**
+ * Generate fallback Fear & Greed data based on price change when API is unavailable
+ */
+function generateFallbackFearGreed(priceChange: number): {
+  value: number;
+  label: string;
+  previousValue: number;
+  previousLabel: string;
+  isSimulated: boolean;
+} {
+  // Calculate a reasonable fear/greed value based on 24h price change
+  // Price change of +10% → ~75 (Greed), -10% → ~25 (Fear), 0% → ~50 (Neutral)
+  const baseValue = 50 + (priceChange * 2.5);
+  const value = Math.round(Math.min(100, Math.max(0, baseValue)));
+  
+  const getLabel = (v: number): string => {
+    if (v >= 75) return 'Extreme Greed';
+    if (v >= 55) return 'Greed';
+    if (v >= 45) return 'Neutral';
+    if (v >= 25) return 'Fear';
+    return 'Extreme Fear';
+  };
+  
+  // Use deterministic previous value: slightly lower than current (markets typically recover)
+  const previousOffset = priceChange >= 0 ? -3 : 3;
+  const previousValue = Math.round(Math.min(100, Math.max(0, value + previousOffset)));
+  
+  console.log(`[Sentiment] Fear & Greed SIMULATED: ${value} (${getLabel(value)}) based on ${priceChange.toFixed(2)}% price change`);
+  
+  return {
+    value,
+    label: getLabel(value),
+    previousValue,
+    previousLabel: getLabel(previousValue),
+    isSimulated: true
+  };
+}
+
 async function fetchFearGreedIndex(retryCount = 0): Promise<{
   value: number;
   label: string;
   previousValue: number;
   previousLabel: string;
+  isSimulated?: boolean;
 } | null> {
-  const maxRetries = 3;
+  const maxRetries = 2; // Reduced retries to speed up fallback
   
   try {
-    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 8000);
+    const response = await fetchWithTimeout('https://api.alternative.me/fng/?limit=2', 6000);
     if (!response.ok) throw new Error('Fear & Greed API failed');
     
     const data = await response.json();
@@ -142,7 +182,8 @@ async function fetchFearGreedIndex(retryCount = 0): Promise<{
         value: parseInt(data.data[0].value),
         label: data.data[0].value_classification,
         previousValue: parseInt(data.data[1].value),
-        previousLabel: data.data[1].value_classification
+        previousLabel: data.data[1].value_classification,
+        isSimulated: false
       };
     }
     throw new Error('Invalid data format');
@@ -151,11 +192,11 @@ async function fetchFearGreedIndex(retryCount = 0): Promise<{
     
     // Retry with exponential backoff
     if (retryCount < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount)));
       return fetchFearGreedIndex(retryCount + 1);
     }
     
-    // Return null to indicate we couldn't get real data - don't use fake values
+    // Return null to indicate we couldn't get real data - caller will use fallback
     return null;
   }
 }
@@ -284,6 +325,16 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState(60);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Use refs for price and change to avoid re-fetching on every price update (prevents flickering)
+  const priceRef = useRef(price);
+  const changeRef = useRef(change);
+  
+  // Update refs when props change (without triggering re-fetch)
+  useEffect(() => {
+    priceRef.current = price;
+    changeRef.current = change;
+  }, [price, change]);
 
   const fetchSentiment = useCallback(async (isAutoRefresh = false) => {
     // Cancel any ongoing request
@@ -298,6 +349,10 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     try {
       console.log(`[Sentiment] Fetching live data for ${crypto}...`);
       
+      // Use refs to get current price/change values (prevents flickering from frequent updates)
+      const currentChange = changeRef.current;
+      const currentPrice = priceRef.current;
+      
       // Fetch all data in parallel with timeouts to prevent hanging
       const [fearGreedResult, trending, news] = await Promise.all([
         fetchFearGreedIndex(),
@@ -305,38 +360,62 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         fetchLiveNews(crypto)
       ]);
 
-      // If Fear & Greed fetch failed after retries, show error
-      if (!fearGreedResult) {
-        console.error('[Sentiment] Could not fetch Fear & Greed Index - API unavailable');
-        setError('Fear & Greed data unavailable - please try again');
-        setLoading(false);
-        return;
+      // Use fallback Fear & Greed data if API failed, allowing dashboard to still function
+      const fearGreed = fearGreedResult ?? generateFallbackFearGreed(currentChange);
+      const isFearGreedSimulated = fearGreed.isSimulated ?? false;
+      
+      if (isFearGreedSimulated) {
+        console.log('[Sentiment] Using simulated Fear & Greed data - dashboard will still function');
       }
-
-      const fearGreed = fearGreedResult;
-
-      // Calculate sentiment score using REAL Fear & Greed value
-      const sentimentScore = calculateSentimentScore(change, fearGreed.value);
+      
+      // Calculate sentiment score using Fear & Greed value (real or simulated)
+      const sentimentScore = calculateSentimentScore(currentChange, fearGreed.value);
       const overallSentiment = getSentimentLabel(sentimentScore);
 
       // Get real social data for this crypto
       const socialData = realSocialData[crypto] || { twitter: 500000, reddit: 100000, telegram: 50000 };
       
       // Estimate mentions based on volatility
-      const volatilityBoost = Math.abs(change) > 5 ? 1.5 : 1;
+      const volatilityBoost = Math.abs(currentChange) > 5 ? 1.5 : 1;
       const baseMentions = Math.floor(socialData.twitter * 0.02 * volatilityBoost);
 
       // Select random influencers with sentiment based on price change
       const selectedInfluencers = cryptoInfluencers.slice(0, 3).map(inf => ({
         ...inf,
-        sentiment: change > 2 ? 'Bullish' : change < -2 ? 'Cautious' : 'Neutral'
+        sentiment: currentChange > 2 ? 'Bullish' : currentChange < -2 ? 'Cautious' : 'Neutral'
       }));
+
+      // Get upcoming macro events/news
+      const macroCatalysts = getUpcomingMacroCatalysts();
+      const now = new Date();
+      
+      // Format macro events for display
+      const macroEvents: MacroEvent[] = macroCatalysts.map(catalyst => {
+        let countdown = 'Ongoing';
+        if (catalyst.date !== 'Ongoing') {
+          const eventDate = new Date(catalyst.date);
+          const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          countdown = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`;
+        }
+        // Map impact to lowercase with proper validation
+        const impactLower = catalyst.impact.toLowerCase();
+        const impact: 'high' | 'medium' | 'low' = 
+          impactLower === 'high' ? 'high' :
+          impactLower === 'medium' ? 'medium' : 'low';
+        return {
+          event: catalyst.event,
+          date: catalyst.date,
+          impact,
+          countdown,
+          category: catalyst.expectedEffect
+        };
+      });
 
       const sentimentData: SentimentData = {
         crypto,
         timestamp: new Date().toISOString(),
         news: news.length > 0 ? news : [
-          { source: 'Market Update', headline: `${crypto} trading at $${price.toLocaleString()}`, sentiment: 'neutral' as const, time: 'Now', url: '#' }
+          { source: 'Market Update', headline: `${crypto} trading at $${currentPrice.toLocaleString()}`, sentiment: 'neutral' as const, time: 'Now', url: '#' }
         ],
         social: {
           twitter: {
@@ -361,13 +440,14 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
           overall: {
             score: sentimentScore,
             label: overallSentiment,
-            change24h: change * 0.5
+            change24h: currentChange * 0.5
           },
           trendingTopics: trending.topics,
           trendingMeta: { lastUpdated: new Date().toISOString(), source: trending.source },
           influencerMentions: selectedInfluencers
         },
         fearGreed,
+        macroEvents,
         summary: {
           overallSentiment,
           sentimentScore,
@@ -378,14 +458,14 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         meta: {
           newsSource: news.length > 0 ? 'CryptoCompare Live' : 'Derived',
           newsLastUpdated: new Date().toISOString(),
-          isLive: true
+          isSimulated: isFearGreedSimulated
         }
       };
 
       setData(sentimentData);
       setLastUpdate(new Date());
       setCountdown(60);
-      console.log(`[Sentiment] Live data loaded: Fear/Greed=${fearGreed.value}, Score=${sentimentScore}%, News=${news.length}`);
+      console.log(`[Sentiment] Data loaded: Fear/Greed=${fearGreed.value}${isFearGreedSimulated ? ' (simulated)' : ''}, Score=${sentimentScore}%, News=${news.length}`);
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         console.log('[Sentiment] Request aborted');
@@ -396,7 +476,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     } finally {
       setLoading(false);
     }
-  }, [crypto, price, change]);
+  }, [crypto]); // Only re-create when crypto changes, not on price/change updates (prevents flickering)
 
   // Cleanup on unmount
   useEffect(() => {
@@ -454,6 +534,35 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
     return 'from-destructive to-destructive/50';
   };
 
+  // Helper to get event impact styling class
+  const getEventImpactClass = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
+      case 'high':
+        return 'bg-destructive/25 text-destructive border border-destructive/40';
+      case 'medium':
+        return 'bg-warning/25 text-warning border border-warning/40';
+      default:
+        return 'bg-muted/80 text-muted-foreground border border-border';
+    }
+  };
+
+  // Helper to get Zap icon styling class based on impact
+  const getZapIconClass = (impact: 'high' | 'medium' | 'low') => {
+    switch (impact) {
+      case 'high':
+        return 'text-destructive animate-pulse';
+      case 'medium':
+        return 'text-warning';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  // Helper to check if countdown is imminent (Today or Tomorrow)
+  const isImminentCountdown = (countdown: string) => {
+    return countdown === 'Today' || countdown === 'Tomorrow';
+  };
+
   if (loading) {
     return (
       <Card className="border-border bg-card">
@@ -493,15 +602,52 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
 
   return (
     <Card className="border-border bg-card">
+      {/* Macro Events Banner - Positioned at the very top for maximum visibility */}
+      {data.macroEvents && data.macroEvents.length > 0 && (
+        <div className="rounded-t-lg border-b border-warning/50 bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 p-3" role="region" aria-label="Upcoming macro events">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-4 w-4 text-warning animate-pulse" aria-hidden="true" />
+            <span className="text-sm font-semibold text-warning">Upcoming News & Events</span>
+            <Badge variant="outline" className="text-xs border-warning/50 text-warning">
+              {data.macroEvents.length} event{data.macroEvents.length > 1 ? 's' : ''}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {data.macroEvents.map((event, i) => (
+              <div 
+                key={i} 
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium shadow-sm ${getEventImpactClass(event.impact)}`}
+              >
+                <Zap className={`h-3.5 w-3.5 ${getZapIconClass(event.impact)}`} aria-hidden="true" />
+                <span>{event.event}</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
+                  isImminentCountdown(event.countdown)
+                    ? 'bg-destructive/30 text-destructive'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {event.countdown}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
           Sentiment Analysis — {crypto}
-          {/* Live indicator */}
-          {data.meta?.isLive && (
+          {/* Live indicator - show when not simulated */}
+          {!data.meta?.isSimulated && (
             <span className="flex items-center gap-1 text-xs font-normal bg-success/20 text-success px-2 py-0.5 rounded-full animate-pulse">
               <Radio className="h-3 w-3" />
               LIVE
+            </span>
+          )}
+          {/* Simulated indicator */}
+          {data.meta?.isSimulated && (
+            <span className="flex items-center gap-1 text-xs font-normal bg-warning/20 text-warning px-2 py-0.5 rounded-full" title="Data derived from price action - API unavailable">
+              <Activity className="h-3 w-3" />
+              DERIVED
             </span>
           )}
         </CardTitle>
@@ -515,33 +661,6 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Macro Events Banner - if any upcoming */}
-        {data.macroEvents && data.macroEvents.length > 0 && (
-          <div className="rounded-lg border border-warning/50 bg-warning/10 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-warning" />
-              <span className="text-sm font-medium text-warning">Upcoming Macro Events</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {data.macroEvents.map((event, i) => (
-                <div 
-                  key={i} 
-                  className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${
-                    event.impact === 'high' 
-                      ? 'bg-destructive/20 text-destructive border border-destructive/30' 
-                      : event.impact === 'medium'
-                      ? 'bg-warning/20 text-warning border border-warning/30'
-                      : 'bg-muted text-muted-foreground border border-border'
-                  }`}
-                >
-                  <Zap className={`h-3 w-3 ${event.impact === 'high' ? 'text-destructive' : event.impact === 'medium' ? 'text-warning' : 'text-muted-foreground'}`} />
-                  <span className="font-medium">{event.event}</span>
-                  <span className="opacity-70">({event.countdown})</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         {/* Overview Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Overall Sentiment */}
@@ -599,7 +718,14 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
         {/* Fear & Greed Gauge */}
         <div className="rounded-xl border border-border p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Fear & Greed Index</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Fear & Greed Index</span>
+              {data.meta?.isSimulated && (
+                <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded" title="Based on price momentum">
+                  Derived
+                </span>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground">
               Previous: {data.fearGreed.previousValue} ({data.fearGreed.previousLabel})
             </span>
@@ -715,7 +841,7 @@ const SentimentAnalysis = ({ crypto, price, change }: SentimentAnalysisProps) =>
             {data.meta?.newsSource && (
               <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Radio className={`h-3 w-3 ${data.meta.isLive ? 'text-success' : 'text-muted-foreground'}`} />
+                  <Radio className={`h-3 w-3 ${!data.meta.isSimulated ? 'text-success' : 'text-muted-foreground'}`} />
                   Source: {data.meta.newsSource}
                 </span>
                 {data.meta.newsLastUpdated && (

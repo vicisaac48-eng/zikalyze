@@ -29,7 +29,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const { getPrice, isConnected, sources } = useTickerLiveStream();
   
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
       {cryptoMeta.map((crypto) => {
         // Priority: Live stream > CryptoPrice from parent
         const liveStreamPrice = getPrice(crypto.symbol);
@@ -51,20 +51,20 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
             key={crypto.symbol}
             onClick={() => onSelect(crypto.symbol)}
             className={cn(
-              "flex flex-col gap-1 rounded-xl border px-4 py-3 transition-all relative",
+              "flex flex-col gap-1 rounded-xl border px-3 py-2 transition-all relative flex-shrink-0 min-w-[100px] sm:min-w-0 sm:px-4 sm:py-3",
               selected === crypto.symbol
                 ? "border-primary bg-primary/10"
                 : "border-border bg-card hover:border-primary/50"
             )}
           >
-            <div className="flex items-center gap-2">
-              <span className={cn("font-bold", crypto.color)}>{crypto.symbol}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className={cn("font-bold text-sm sm:text-base", crypto.color)}>{crypto.symbol}</span>
               {isLive && (
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title={`Live from ${liveStreamPrice?.source}`} />
               )}
               <span
                 className={cn(
-                  "text-xs",
+                  "text-[10px] sm:text-xs",
                   change >= 0 ? "text-success" : "text-destructive"
                 )}
               >
@@ -72,7 +72,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
               </span>
             </div>
             <span className={cn(
-              "text-lg font-semibold text-foreground transition-colors",
+              "text-sm font-semibold text-foreground transition-colors sm:text-lg",
               isLive ? "text-foreground" : "text-muted-foreground"
             )}>
               {loading && !isConnected ? "..." : (price > 0 ? formatPrice(price) : "---")}

@@ -54,7 +54,7 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-[100dvh] w-16 flex-col items-center border-r border-border bg-card pt-4 pb-20 lg:w-64 lg:pt-6 lg:pb-24 safe-area-inset-top">
+    <aside className="hidden md:flex fixed left-0 top-0 z-40 h-[100dvh] flex-col items-center border-r border-border bg-card pt-4 pb-20 w-16 lg:w-64 lg:pt-6 lg:pb-24 safe-area-inset-top">
       {/* Logo */}
       <Link to="/dashboard" className="mb-6 flex items-center gap-3 lg:mb-8">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary lg:h-10 lg:w-10">
@@ -66,7 +66,7 @@ const Sidebar = () => {
       </Link>
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-1.5 px-2 lg:gap-2 lg:px-3 custom-scrollbar overflow-y-auto">
+      <nav className="flex flex-1 flex-col gap-1.5 px-2 w-full lg:gap-2 lg:px-3 custom-scrollbar overflow-y-auto">
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (

@@ -1,0 +1,35 @@
+# Build outputs
+.gradle
+/build/
+/capacitor-cordova-android-plugins/build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (Uncomment to track if needed)
+google-services.json
+
+# Capacitor auto-generated files
+app/src/main/assets/capacitor.config.json
+app/src/main/assets/capacitor.plugins.json
+app/src/main/assets/public/
+capacitor-cordova-android-plugins/
+

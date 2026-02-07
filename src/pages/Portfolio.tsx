@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, RefreshCw } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import BottomNav from "@/components/dashboard/BottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Holding {
@@ -38,6 +41,12 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
+  const isNativeApp = useIsNativeApp();
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
   
   // Load holdings from localStorage on mount
   const [holdings, setHoldings] = useState<Holding[]>(() => {
@@ -107,27 +116,29 @@ const Portfolio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <BottomNav />
 
-      <main className="ml-16 lg:ml-64">
-        <header className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-foreground">{t("portfolio.title")}</h1>
-            <div className="flex items-center gap-2">
+      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0">
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>
+            <div className="hidden sm:flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${loading ? "bg-warning" : "bg-success"} animate-pulse`} />
               <span className="text-xs text-muted-foreground">{loading ? t("portfolio.updating") : t("portfolio.livePrices")}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={loading}>
+            <Button variant="outline" size="icon" onClick={() => refetch()} disabled={loading} className="h-8 w-8 sm:h-10 sm:w-10">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2 h-8 px-2 text-xs sm:h-10 sm:px-4 sm:text-sm">
                   <Plus className="h-4 w-4" />
-                  {t("portfolio.addHolding")}
+                  <span className="hidden sm:inline">{t("portfolio.addHolding")}</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border">
@@ -184,7 +195,7 @@ const Portfolio = () => {
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="main-content p-6 space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="bg-card border-border">
@@ -321,6 +332,7 @@ const Portfolio = () => {
         </div>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

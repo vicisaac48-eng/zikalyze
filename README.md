@@ -20,6 +20,41 @@ Tailwind CSS: For rapid, responsive utility-first styling.
 Zikalyze ai brain 🧠 
 /src/lib/zikalyze-brain
 
+## 📊 AI Accuracy & Transparency
+
+We believe in honest, transparent communication about our AI capabilities. For a detailed comparison of Zikalyze AI vs. major AI systems (OpenAI GPT-4, xAI Grok, Anthropic Claude, etc.), see our [Honest AI Accuracy Assessment](./docs/AI_ACCURACY_ASSESSMENT.md).
+
+### 🧠 Hybrid AI Brain Architecture (v2.0)
+
+Zikalyze now features a **Hybrid AI Brain** that combines multiple analysis approaches for enhanced accuracy:
+
+| Component | Technology | Role |
+|-----------|-----------|------|
+| **Neural Network** | 3-layer MLP (20→64→32→3) | Pattern recognition & confirmation |
+| **Algorithmic Engine** | Rule-based ICT/SMC | Technical analysis & entry zones |
+| **NLP Sentiment** | 100+ crypto keywords | News & social media analysis |
+| **Backtesting** | Historical validation | Accuracy metrics & performance tracking |
+
+**How It Works:**
+- Algorithm provides **primary signals** (60% weight) using proven trading methodologies
+- Neural network offers **independent confirmation** (40% weight) with trainable weights
+- NLP sentiment analysis enhances confidence with real-time text analysis
+- Both must agree for high-confidence trade signals (confluence scoring)
+
+### ✅ Key Capabilities
+- **True Neural Network** — Multi-layer perceptron with ~6,000+ trainable parameters
+- **Persistent Learning** — Learns from prediction outcomes via gradient descent
+- **NLP Sentiment Analysis** — Crypto-specific lexicon for news and social text
+- **Backtesting Framework** — Full historical validation with accuracy metrics
+- **Real-Time Data** — WebSocket connections to 5 major exchanges (Binance, OKX, Bybit, Kraken, Coinbase)
+
+### 🎯 Honest Assessment
+- Zikalyze is a **specialized hybrid AI system**, not a general-purpose LLM
+- Uses proven trading methodologies (ICT/SMC, multi-timeframe confluence)
+- 100% client-side, deterministic, and privacy-preserving
+- ~70-80% trend detection accuracy when 3+ timeframes align
+- Honest about limitations — no guaranteed profits, no magic predictions
+
 
 💻 Local Development
 Prerequisites
@@ -41,6 +76,47 @@ Start the development server:
 npm run dev
 
 
+## 🧪 Health Checks & Testing
+
+This project includes comprehensive automated health checks to verify the web app works without hanging or crashes.
+
+### Running Health Checks
+
+To run the complete health check suite:
+
+```bash
+npm run test:health
+```
+
+This will:
+- Build the application
+- Start a preview server
+- Run 11+ automated browser tests
+- Verify no crashes, hangs, or critical errors
+- Generate a detailed test report
+
+### What's Tested
+
+The health checks verify:
+- ✅ App loads without hanging
+- ✅ All critical pages render successfully  
+- ✅ Navigation works smoothly between pages
+- ✅ No JavaScript errors or crashes
+- ✅ React components render properly
+- ✅ Error pages (404) are handled gracefully
+- ✅ Page lifecycle completes without memory leaks
+
+### View Test Results
+
+After running tests, view the detailed HTML report:
+
+```bash
+npm run test:health:report
+```
+
+For more details, see [tests/README.md](./tests/README.md)
+
+
 
 How to Edit
 There are several ways to refine and evolve Zikalyze AI:
@@ -52,6 +128,78 @@ Navigate to the desired files and use the "Edit" (pencil icon) to make direct co
 GitHub Codespaces: 
 Launch a cloud-based development environment directly from the repository.
 
+
+## 📱 Android App
+
+Zikalyze is available as a native Android app! Download and install the APK directly.
+
+### 📥 Download APK
+
+> **⬇️ QUICK DOWNLOAD: [Click here to download the Zikalyze Android APK](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk)**
+
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk)
+
+**Download Links:**
+- 📲 [**Direct APK Download (Permanent URL)**](https://github.com/vicisaac48-eng/zikalyze/releases/latest/download/zikalyze-latest.apk) - Permanent download link that always works
+- 🔗 [**View Latest Release**](https://github.com/vicisaac48-eng/zikalyze/releases/latest) - Browse release page for details
+- 📦 [View All Releases](https://github.com/vicisaac48-eng/zikalyze/releases) - Browse all available versions
+
+### 🔄 APK Updates After Merge/Pull Request
+
+The Android APK is **automatically built** whenever code is merged to the main branch. Here's how the process works:
+
+1. **After a PR is Merged**: When a pull request is merged into the `main` branch, a new APK build is automatically triggered via GitHub Actions.
+
+2. **Build Time**: The build typically takes 3-5 minutes to complete. You can monitor the build progress at [GitHub Actions](https://github.com/vicisaac48-eng/zikalyze/actions/workflows/android-build.yml).
+
+3. **Download the New APK**: Once the build completes successfully, the download links above will automatically point to the latest version. Simply click the download button to get the newest APK.
+
+**To download APK from a specific Pull Request (before merge):**
+
+1. Go to the [Pull Requests page](https://github.com/vicisaac48-eng/zikalyze/pulls)
+2. Click on the PR you want to test
+3. Scroll down to the "Checks" section and click on "Android Build"
+4. Once the build completes, click "Summary" in the left sidebar
+5. Download the `zikalyze-debug-apk` artifact from the "Artifacts" section at the bottom
+
+> **Note**: Artifacts from PRs expire after 14 days. For permanent access, use the [Latest Release](https://github.com/vicisaac48-eng/zikalyze/releases/latest) download after the PR is merged.
+
+### ✨ Android Native Features
+
+The native Android app includes optimizations not available in the web version:
+
+- **🔔 Native Push Notifications** - Receive real-time price alerts via Firebase Cloud Messaging (FCM)
+- **📱 Sticky Headers** - Optimized scrolling behavior with fixed headers that don't jitter during scroll
+- **🚫 No Cookie Popups** - Clean native experience without web-specific consent dialogs; sidebar state uses localStorage instead of cookies for reliable persistence
+- **⚡ Hardware Acceleration** - GPU-accelerated scrolling and animations for smooth performance
+- **📳 Haptic Feedback** - Native vibration feedback on alerts and interactions
+- **🔒 Secure Storage** - Local data stored securely on device
+
+### Installation Instructions
+
+1. Download the ZIP file from the link above
+2. Extract to get `app-debug.apk`
+3. On your Android device, enable **"Install from unknown sources"** in Settings → Security
+4. Transfer the APK to your device and install
+
+### Alternative: PWA Installation
+
+You can also install Zikalyze as a Progressive Web App (PWA) directly from your browser:
+1. Visit https://zikalyze.com on your Android device
+2. Tap the menu (⋮) → "Add to Home screen"
+3. The app will work offline with full functionality
+
+### 🏪 Publishing to Google Play Store
+
+Want to publish Zikalyze to the Google Play Store? See our comprehensive guide:
+
+📖 **[Play Store Deployment Guide](./docs/PLAYSTORE_DEPLOYMENT.md)**
+
+The guide covers:
+- Generating AAB (Android App Bundle) files via GitHub Actions
+- Setting up your Play Console listing
+- Signing your app
+- Submitting for review
 
 ## 🌐 IPFS Deployment
 

@@ -1,13 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchWithRetry, safeFetch } from "@/lib/fetchWithRetry";
 
-// Global singleton state to prevent multiple WebSocket connections
-// This ensures only one set of WebSocket connections is established
-// regardless of how many components call useCryptoPrices()
-let globalWebSocketsInitialized = false;
-let globalPricesSubscribers = 0;
-let globalPricesFetched = false;
-
 export interface CryptoPrice {
   id: string;
   symbol: string;
@@ -472,10 +465,9 @@ export const useCryptoPrices = () => {
   }, []);
 
   const fetchPrices = useCallback(async () => {
-    // Prevent re-fetching if already initialized (use both local ref and global flag)
-    if (pricesInitializedRef.current || globalPricesFetched) return;
+    // Prevent re-fetching if already initialized
+    if (pricesInitializedRef.current) return;
     pricesInitializedRef.current = true;
-    globalPricesFetched = true;
     
     // PRIORITY 1: Load persisted live prices first (most recent data)
     // Since we only run once (pricesInitializedRef guards this), prices will be empty here
@@ -668,6 +660,7 @@ export const useCryptoPrices = () => {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run once on mount, use ref to track initialization
 
   // Connect to OKX WebSocket - Excellent altcoin coverage including KAS
@@ -855,6 +848,7 @@ export const useCryptoPrices = () => {
       console.log(`[Binance] Connection failed, trying Bybit fallback...`);
       connectBybit();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatePrice]);
 
   // Connect to Bybit WebSocket - Fast updates, KAS support
@@ -1048,6 +1042,7 @@ export const useCryptoPrices = () => {
       console.log(`[Kraken] Connection failed, retrying...`);
       setTimeout(() => connectKraken(), 4000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updatePrice]);
 
   // Initial fetch
@@ -1056,14 +1051,9 @@ export const useCryptoPrices = () => {
   }, [fetchPrices]);
 
   // Connect to multi-exchange WebSockets when crypto list is populated
-  // Uses global flag to prevent multiple hook instances from creating duplicate connections
   useEffect(() => {
-    globalPricesSubscribers++;
-    
     const checkAndConnect = () => {
-      // Use global flag to ensure only one set of WebSocket connections
-      if (cryptoListRef.current.length > 0 && !globalWebSocketsInitialized && !exchangesConnectedRef.current) {
-        globalWebSocketsInitialized = true;
+      if (cryptoListRef.current.length > 0 && !exchangesConnectedRef.current) {
         exchangesConnectedRef.current = true;
         
         // Priority: Binance first (most reliable), then OKX + Bybit for altcoins, Kraken for backup
@@ -1083,30 +1073,39 @@ export const useCryptoPrices = () => {
     // Retry check after a short delay in case crypto list wasn't ready
     const timeoutId = setTimeout(checkAndConnect, 500);
     
-    // Capture refs for cleanup
-    const reconnectTimeouts = reconnectTimeoutsRef.current;
-    const binanceWs = binanceWsRef.current;
-    const okxWs = okxWsRef.current;
-    const bybitWs = bybitWsRef.current;
-    const krakenWs = krakenWsRef.current;
-    const coinbaseWs = coinbaseWsRef.current;
-    
     return () => {
       clearTimeout(timeoutId);
-      globalPricesSubscribers--;
       
-      // Only close WebSockets and reset global flag if no more subscribers
-      if (globalPricesSubscribers <= 0) {
-        globalWebSocketsInitialized = false;
-        Object.values(reconnectTimeouts).forEach(timeout => {
-          clearTimeout(timeout);
-        });
-        
-        if (binanceWs) binanceWs.close();
-        if (okxWs) okxWs.close();
-        if (bybitWs) bybitWs.close();
-        if (krakenWs) krakenWs.close();
-        if (coinbaseWs) coinbaseWs.close();
+      // Clear reconnect timeouts using current refs
+      // Note: Intentionally using .current to clear all current timeouts,
+      // including any that may have been added after effect setup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      Object.values(reconnectTimeoutsRef.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+      
+      // Close all WebSocket connections and clear refs
+      // Note: Using .current directly is intentional - we want to close
+      // the current active connections at cleanup time, not stale refs
+      if (binanceWsRef.current) {
+        binanceWsRef.current.close();
+        binanceWsRef.current = null;
+      }
+      if (okxWsRef.current) {
+        okxWsRef.current.close();
+        okxWsRef.current = null;
+      }
+      if (bybitWsRef.current) {
+        bybitWsRef.current.close();
+        bybitWsRef.current = null;
+      }
+      if (krakenWsRef.current) {
+        krakenWsRef.current.close();
+        krakenWsRef.current = null;
+      }
+      if (coinbaseWsRef.current) {
+        coinbaseWsRef.current.close();
+        coinbaseWsRef.current = null;
       }
     };
   }, [connectBinance, connectOKX, connectBybit, connectKraken]);
@@ -1200,6 +1199,7 @@ export const useCryptoPrices = () => {
     if (prices.length > 0 && isLive) {
       fetchCoinCapFallback();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLive]); // Only run once when we go live
 
 // All price updates now come from WebSockets - no polling needed
