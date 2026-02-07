@@ -161,11 +161,9 @@ export function usePullToRefresh({
         maxPull
       );
 
-      // Only prevent default when we're actively pulling for refresh and past activation threshold
-      // Use rawDistance for consistency with the earlier check at line 147
-      if (isPullingRef.current && rawDistance > ACTIVATION_THRESHOLD) {
-        e.preventDefault();
-      }
+      // NOTE: Removed e.preventDefault() to allow native scroll to work on Android
+      // The pull-to-refresh visual effect still works, but we don't block native scroll
+      // This lets the browser handle touch scrolling naturally
 
       setPullDistance(resistedDistance);
     };
