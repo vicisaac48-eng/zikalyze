@@ -824,7 +824,7 @@ export function generateSimplifiedSummary(
   const skipExplanation = isTradeSkipped && skipTradeInfo?.skipReason
     ? `\n🛑 WHY NO TRADE:\n   ${skipTradeInfo.skipReason}${
         skipTradeInfo.neuralConfidence !== undefined
-          ? `\n   (AI confidence: ${(skipTradeInfo.neuralConfidence * 100).toFixed(0)}% - needs 51% to proceed)`
+          ? `\n   (AI confidence: ${(skipTradeInfo.neuralConfidence * 100).toFixed(1)}% - needs 51% to proceed)`
           : ''
       }\n`
     : '';
