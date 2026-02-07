@@ -12,6 +12,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { ChartTrendInput } from './types';
+import { calculateRSI } from './shared-indicators';
+import { mean, std, correlation, skewness, kurtosis } from './math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📊 TYPES
@@ -107,94 +109,10 @@ interface LearningMemory {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🧮 MATHEMATICAL UTILITIES
 // ═══════════════════════════════════════════════════════════════════════════════
+// NOTE: Math utilities (mean, std, correlation, skewness, kurtosis) now imported from math-utils.ts
+// NOTE: RSI calculation now imported from shared-indicators.ts
+// This eliminates ~90 lines of duplicate code
 
-/**
- * Calculate mean of an array
- */
-function mean(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  return arr.reduce((sum, val) => sum + val, 0) / arr.length;
-}
-
-/**
- * Calculate standard deviation
- */
-function std(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  const m = mean(arr);
-  const variance = arr.reduce((sum, val) => sum + Math.pow(val - m, 2), 0) / arr.length;
-  return Math.sqrt(variance);
-}
-
-/**
- * Calculate correlation between two arrays
- */
-function correlation(x: number[], y: number[]): number {
-  if (x.length !== y.length || x.length === 0) return 0;
-  
-  const meanX = mean(x);
-  const meanY = mean(y);
-  const stdX = std(x);
-  const stdY = std(y);
-  
-  if (stdX === 0 || stdY === 0) return 0;
-  
-  let sum = 0;
-  for (let i = 0; i < x.length; i++) {
-    sum += (x[i] - meanX) * (y[i] - meanY);
-  }
-  
-  return sum / (x.length * stdX * stdY);
-}
-
-/**
- * Calculate skewness (third moment)
- */
-function skewness(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  const m = mean(arr);
-  const s = std(arr);
-  if (s === 0) return 0;
-  
-  const sum = arr.reduce((acc, val) => acc + Math.pow((val - m) / s, 3), 0);
-  return sum / arr.length;
-}
-
-/**
- * Calculate kurtosis (fourth moment)
- */
-function kurtosis(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  const m = mean(arr);
-  const s = std(arr);
-  if (s === 0) return 0;
-  
-  const sum = arr.reduce((acc, val) => acc + Math.pow((val - m) / s, 4), 0);
-  return (sum / arr.length) - 3; // Excess kurtosis
-}
-
-/**
- * Calculate RSI (Relative Strength Index)
- */
-function calculateRSI(prices: number[], period: number): number {
-  if (prices.length < period + 1) return 50; // Neutral default
-  
-  const changes = [];
-  for (let i = 1; i < prices.length; i++) {
-    changes.push(prices[i] - prices[i - 1]);
-  }
-  
-  const recentChanges = changes.slice(-period);
-  const gains = recentChanges.filter(c => c > 0);
-  const losses = recentChanges.filter(c => c < 0).map(c => Math.abs(c));
-  
-  const avgGain = gains.length > 0 ? mean(gains) : 0;
-  const avgLoss = losses.length > 0 ? mean(losses) : 0;
-  
-  if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
-  return 100 - (100 / (1 + rs));
-}
 
 /**
  * Calculate VWAP (Volume Weighted Average Price)
