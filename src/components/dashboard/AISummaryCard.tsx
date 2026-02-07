@@ -1,5 +1,24 @@
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, Clock, XCircle, Eye } from "lucide-react";
+
+// Trade recommendation type that aligns with full analysis output
+type TradeRecommendationType = 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE' | 'SKIPPED_NN_FILTER';
+
+// Timing configuration type for display consistency
+interface TimingConfig {
+  label: string;
+  icon: typeof Eye;
+  className: string;
+}
+
+// Shared timing configurations to avoid duplication
+const TIMING_CONFIGS = {
+  CONSIDER: { label: 'CONSIDER', icon: Eye, className: 'text-success bg-success/10' } as TimingConfig,
+  WAIT: { label: 'WAIT', icon: Clock, className: 'text-warning bg-warning/10' } as TimingConfig,
+  AVOID: { label: 'AVOID', icon: XCircle, className: 'text-destructive bg-destructive/10' } as TimingConfig,
+  SKIPPED: { label: 'SKIPPED', icon: AlertTriangle, className: 'text-warning bg-warning/10' } as TimingConfig,
+  NO_DATA: { label: 'NO DATA', icon: XCircle, className: 'text-destructive bg-destructive/10' } as TimingConfig,
+};
 
 interface AISummaryCardProps {
   bias: 'LONG' | 'SHORT' | 'NEUTRAL';
@@ -9,6 +28,10 @@ interface AISummaryCardProps {
   successProbability?: number;
   crypto: string;
   isVisible: boolean;
+  // New props to align with full analysis output
+  tradeRecommendation?: TradeRecommendationType;
+  verificationStatus?: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'ESTIMATED';
+  skipTrade?: boolean;
 }
 
 const AISummaryCard = ({ 
@@ -18,7 +41,10 @@ const AISummaryCard = ({
   timing, 
   successProbability = 50,
   crypto,
-  isVisible 
+  isVisible,
+  tradeRecommendation,
+  verificationStatus,
+  skipTrade
 }: AISummaryCardProps) => {
   if (!isVisible) return null;
 
@@ -54,32 +80,47 @@ const AISummaryCard = ({
     }
   };
 
-  const getTimingConfig = () => {
+  // Get timing config that aligns with full analysis output
+  // Priority: verificationStatus > confidence checks > skipTrade > tradeRecommendation > timing
+  const getTimingConfig = (): TimingConfig => {
+    // If data is estimated (not verified), show caution
+    if (verificationStatus === 'ESTIMATED') {
+      return TIMING_CONFIGS.NO_DATA;
+    }
+    
+    // If confidence is below threshold (60%), show WAIT regardless of timing
+    if (confidence < 60) {
+      return TIMING_CONFIGS.WAIT;
+    }
+    
+    // If trade was skipped by NN filter, show SKIPPED
+    if (skipTrade) {
+      return TIMING_CONFIGS.SKIPPED;
+    }
+    
+    // Use tradeRecommendation if provided (aligns with full analysis)
+    if (tradeRecommendation) {
+      switch (tradeRecommendation) {
+        case 'EXECUTE':
+          return TIMING_CONFIGS.CONSIDER;
+        case 'WAIT_CONFIRMATION':
+          return TIMING_CONFIGS.WAIT;
+        case 'AVOID_BAD_TRADE':
+          return TIMING_CONFIGS.AVOID;
+        case 'SKIPPED_NN_FILTER':
+          return TIMING_CONFIGS.SKIPPED;
+      }
+    }
+    
+    // Fallback to timing-based display (for backward compatibility)
     switch (timing) {
       case 'NOW':
-        return {
-          label: 'EXECUTE',
-          icon: CheckCircle,
-          className: 'text-success bg-success/10'
-        };
+        return TIMING_CONFIGS.CONSIDER;
       case 'WAIT_PULLBACK':
-        return {
-          label: 'WAIT',
-          icon: Clock,
-          className: 'text-warning bg-warning/10'
-        };
       case 'WAIT_BREAKOUT':
-        return {
-          label: 'WAIT',
-          icon: Clock,
-          className: 'text-warning bg-warning/10'
-        };
+        return TIMING_CONFIGS.WAIT;
       default:
-        return {
-          label: 'AVOID',
-          icon: AlertTriangle,
-          className: 'text-destructive bg-destructive/10'
-        };
+        return TIMING_CONFIGS.AVOID;
     }
   };
 
