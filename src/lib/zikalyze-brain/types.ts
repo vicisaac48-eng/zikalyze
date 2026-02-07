@@ -33,6 +33,8 @@ export interface MacroCatalyst {
   impact: 'HIGH' | 'MEDIUM' | 'LOW';
   expectedEffect: 'BULLISH' | 'BEARISH' | 'VOLATILE' | 'UNCERTAIN';
   description: string;
+  rescheduled?: boolean; // Flag for events that have been rescheduled (holidays, delays, etc.)
+  dateUnconfirmed?: boolean; // Flag for events without verified dates
 }
 
 export interface VolumeSpikeAlert {

@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📅 MACRO CATALYST ENGINE — Real Calendar-Based Event Tracking
 // ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 ACCURACY & FACT-CHECKING MODE — Precision date verification
+// ═══════════════════════════════════════════════════════════════════════════════
 
 import { MacroCatalyst } from './types';
 
@@ -11,11 +13,31 @@ const getDaysUntil = (now: Date, targetDate: Date): number => {
   return Math.round((targetStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+// 🎯 ACCURACY ENHANCEMENT: Format date as "Weekday, Month Day" (e.g., "Friday, Feb 13")
+const formatDateReadable = (date: Date): string => {
+  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const weekday = weekdays[date.getDay()];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  
+  return `${weekday}, ${month} ${day}`;
+};
+
 // Helper: format days for display
 const formatDays = (days: number): string => {
   if (days === 0) return 'TODAY';
   if (days === 1) return 'Tomorrow';
   return `In ${days} days`;
+};
+
+// 🎯 ACCURACY ENHANCEMENT: Create explicit date calculation display
+// Shows: "Current: Friday, Feb 7 | Event: Tuesday, Feb 18 | Days: 11"
+const formatDateCalculation = (now: Date, eventDate: Date, daysUntil: number): string => {
+  const currentFormatted = formatDateReadable(now);
+  const eventFormatted = formatDateReadable(eventDate);
+  return `Current: ${currentFormatted} | Event: ${eventFormatted} | Days: ${daysUntil}`;
 };
 
 // Get 3rd Friday of a month (options expiry)
@@ -46,14 +68,18 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
   if (nextFOMC) {
     const daysToFOMC = getDaysUntil(now, nextFOMC);
     if (daysToFOMC <= 14) {
+      // 🎯 ACCURACY ENHANCEMENT: Show explicit date calculation
+      const dateCalc = formatDateCalculation(now, nextFOMC, daysToFOMC);
       // Add CME FedWatch context
       const fedWatchNote = 'CME FedWatch: ~90% hold expected. Surprise cut = ultra bullish, hike = crash risk';
+      // 📅 EVENT VERIFICATION: Note that dates should be verified against official Fed calendar
+      const verificationNote = '⚠️ Verify against official Federal Reserve calendar for schedule changes';
       catalysts.push({
         event: 'FOMC Interest Rate Decision',
-        date: nextFOMC.toISOString().split('T')[0],
+        date: formatDateReadable(nextFOMC), // Use readable format
         impact: 'HIGH',
         expectedEffect: 'VOLATILE',
-        description: `${formatDays(daysToFOMC)}. ${fedWatchNote}`
+        description: `${dateCalc}. ${fedWatchNote}. ${verificationNote}`
       });
     }
   }
@@ -74,14 +100,20 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
   if (nextCPI) {
     const daysToCPI = getDaysUntil(now, nextCPI);
     if (daysToCPI <= 10) {
+      // 🎯 ACCURACY ENHANCEMENT: Show explicit date calculation
+      const dateCalc = formatDateCalculation(now, nextCPI, daysToCPI);
       // Add market consensus context
       const consensusNote = 'Consensus: ~2.8% YoY. Below = bullish surprise (rate cut hopes), Above = hawkish reaction';
+      // 📅 EVENT VERIFICATION: CPI releases can be delayed due to holidays/government shutdowns
+      const verificationNote = '⚠️ Check bls.gov for delays (holidays, shutdowns can reschedule release)';
       catalysts.push({
         event: 'US CPI Inflation Data',
-        date: nextCPI.toISOString().split('T')[0],
+        date: formatDateReadable(nextCPI), // Use readable format
         impact: 'HIGH',
         expectedEffect: 'VOLATILE',
-        description: `${formatDays(daysToCPI)}. ${consensusNote}`
+        description: `${dateCalc}. ${consensusNote}. ${verificationNote}`,
+        // Example: Mark as rescheduled if needed (would be set dynamically in production)
+        // rescheduled: false
       });
     }
   }
@@ -91,12 +123,14 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
   if (daysToThursday <= 3) {
     const nextThursday = new Date(now);
     nextThursday.setDate(now.getDate() + daysToThursday);
+    // 🎯 ACCURACY ENHANCEMENT: Show explicit date calculation
+    const dateCalc = formatDateCalculation(now, nextThursday, daysToThursday);
     catalysts.push({
       event: 'Weekly Jobless Claims',
-      date: nextThursday.toISOString().split('T')[0],
+      date: formatDateReadable(nextThursday), // Use readable format
       impact: 'MEDIUM',
       expectedEffect: 'VOLATILE',
-      description: formatDays(daysToThursday) + (daysToThursday === 0 ? ' — Watch for market reaction' : '')
+      description: `${dateCalc}${daysToThursday === 0 ? ' — Watch for market reaction' : ''}`
     });
   }
 
@@ -110,12 +144,14 @@ export function getUpcomingMacroCatalysts(): MacroCatalyst[] {
   if (daysToExpiry <= 7 && daysToExpiry >= 0) {
     const expiryMonth = optionsDate.getMonth();
     const isQuarterly = [2, 5, 8, 11].includes(expiryMonth);
+    // 🎯 ACCURACY ENHANCEMENT: Show explicit date calculation
+    const dateCalc = formatDateCalculation(now, optionsDate, daysToExpiry);
     catalysts.push({
       event: isQuarterly ? 'Quarterly Options Expiry (Major)' : 'Monthly Options Expiry',
-      date: optionsDate.toISOString().split('T')[0],
+      date: formatDateReadable(optionsDate), // Use readable format
       impact: isQuarterly ? 'HIGH' : 'MEDIUM',
       expectedEffect: 'VOLATILE',
-      description: `${formatDays(daysToExpiry)}. ${isQuarterly ? '$B+ in options expire — expect max pain volatility' : 'Large positions rolling'}`
+      description: `${dateCalc}. ${isQuarterly ? '$B+ in options expire — expect max pain volatility' : 'Large positions rolling'}`
     });
   }
 
@@ -139,9 +175,53 @@ export function getQuickMacroFlag(): string {
   const catalysts = getUpcomingMacroCatalysts();
   const now = new Date();
 
+  // 🎯 ACCURACY ENHANCEMENT: Parse readable date format back to Date for calculation
+  const parseReadableDate = (dateStr: string): Date | null => {
+    // Handle "Ongoing" case
+    if (dateStr === 'Ongoing') return null;
+    
+    // Parse format "Weekday, Month Day" back to full date
+    const weekdays: Record<string, number> = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+    const months: Record<string, number> = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+    
+    const parts = dateStr.split(', ');
+    if (parts.length !== 2) return null;
+    
+    const weekdayStr = parts[0];
+    const [monthStr, dayStr] = parts[1].split(' ');
+    const month = months[monthStr];
+    const day = parseInt(dayStr);
+    
+    if (month === undefined || isNaN(day)) return null;
+    
+    // Use current year, or next year if month has passed, or day has passed in current month
+    let year = now.getFullYear();
+    if (month < now.getMonth() || (month === now.getMonth() && day < now.getDate())) {
+      year++;
+    }
+    
+    const parsedDate = new Date(year, month, day);
+    
+    // 🎯 ACCURACY VALIDATION: Verify weekday matches to catch data inconsistencies
+    const expectedWeekday = weekdays[weekdayStr];
+    if (expectedWeekday !== undefined && parsedDate.getDay() !== expectedWeekday) {
+      console.warn(`⚠️ Date validation warning: ${dateStr} - weekday mismatch`);
+    }
+    
+    return parsedDate;
+  };
+
   const getDaysUntilDate = (dateStr: string): number => {
+    const targetDate = parseReadableDate(dateStr);
+    if (!targetDate) return 999; // Return large number for ongoing events
+    
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const targetDate = new Date(dateStr);
     const targetStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
     return Math.round((targetStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
   };
@@ -158,7 +238,10 @@ export function getQuickMacroFlag(): string {
   const days = getDaysUntilDate(primary.date);
   const timing = days === 0 ? 'TODAY' : days === 1 ? 'Tomorrow' : `In ${days} days`;
 
-  let flagText = `⚡ MACRO ALERT: ${primary.event} ${timing}`;
+  // 🎯 ACCURACY ENHANCEMENT: Highlight rescheduled events
+  const rescheduledPrefix = primary.rescheduled ? '**RESCHEDULED** ' : '';
+  
+  let flagText = `⚡ MACRO ALERT: ${rescheduledPrefix}${primary.event} ${timing}`;
   if (imminent.length > 1) {
     flagText += ` + ${imminent.length - 1} more event(s)`;
   }

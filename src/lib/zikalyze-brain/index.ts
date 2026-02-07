@@ -121,26 +121,31 @@ const buildExecutiveSummary = (
   // GUARDRAIL 2: LOGIC SYNC - Validate target vs entry makes sense
   // For LONG (buy): Target must be ABOVE entry (target > entry) - we expect price to go UP
   // For SHORT (sell): Target must be BELOW entry (target < entry) - we expect price to go DOWN
+  // 🎯 ACCURACY ENHANCEMENT: Enhanced validation messaging
   let logicValid = true;
+  let logicError = '';
   if (bias === 'LONG' && targetPrice <= entryPrice) {
     logicValid = false; // Invalid: LONG but target not above entry
+    logicError = '⛔ INVALID SIGNAL DETECTED: LONG signal requires Target > Entry';
   } else if (bias === 'SHORT' && targetPrice >= entryPrice) {
     logicValid = false; // Invalid: SHORT but target not below entry
+    logicError = '⛔ INVALID SIGNAL DETECTED: SHORT signal requires Target < Entry';
   }
   
   // GUARDRAIL 3: Simple status indicator
+  // 🎯 ACCURACY ENHANCEMENT: More explicit status messaging
   let status = '🔴 Red (Do Not Trade)';
   let statusReason = 'Conditions not met for safe trading';
   
   if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
     status = '🔴 Red (Do Not Trade)';
-    statusReason = 'Data Unavailable - Cannot verify real-time price';
+    statusReason = '⛔ Data Unavailable - Cannot verify real-time price action';
   } else if (!logicValid) {
     status = '🔴 Red (Do Not Trade)';
-    statusReason = 'Logic Error - Price targets do not align with signal direction';
+    statusReason = logicError; // Use detailed error message
   } else if (!meetsConfidenceThreshold) {
     status = '🟡 Yellow (Caution)';
-    statusReason = 'Market conditions are unclear. Best to wait';
+    statusReason = `⏸️ WAIT: Confidence too low (${confidence.toFixed(0)}%) - Market conditions unclear`;
   } else if (tradeRecommendation === 'EXECUTE' && qualityScore >= 70) {
     status = '🟢 Green (Safe)';
     statusReason = 'Setup looks favorable with confirmations';
@@ -165,14 +170,15 @@ const buildExecutiveSummary = (
   }
   
   // CONSERVATIVE LANGUAGE - Avoid "EXECUTE", use "CONSIDER" and "POTENTIAL"
+  // 🎯 ACCURACY ENHANCEMENT: Enhanced recommendation messaging with explicit WAIT guidance
   let recommendation = '';
   
   if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
     recommendation = `🚫 DO NOT TRADE: Data Unavailable. Real-time chart data is missing. Wait for live connection before considering any trades`;
   } else if (!logicValid) {
-    recommendation = `🚫 DO NOT TRADE: Signal logic error detected. Recommended to WAIT and re-analyze`;
+    recommendation = `${logicError}\n\nRecommended to WAIT and re-analyze when signal logic is valid`;
   } else if (!meetsConfidenceThreshold) {
-    recommendation = `⏸️ WAIT: Market conditions are unclear (${confidence.toFixed(0)}% confidence). Best to wait for clearer signals`;
+    recommendation = `⏸️ WAIT: Market conditions are unclear (${confidence.toFixed(0)}% confidence < 60% threshold). Best to wait for clearer signals and higher conviction before considering entry`;
   } else if (regimeConsensus.skipTrade) {
     recommendation = `⚠️ SKIP: ${regimeConsensus.skipReason}`;
   } else if (tradeRecommendation === 'EXECUTE' && status === '🟢 Green (Safe)') {
@@ -284,22 +290,24 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const macroFlag = getQuickMacroFlag();
   
   // Build macro section with countdown + confidence impact
+  // 🎯 ACCURACY ENHANCEMENT: Enhanced macro event display with date verification
   const buildMacroSection = (penaltyApplied: boolean = false): string => {
     if (macroCatalysts.length === 0) return '';
     const catalyst = macroCatalysts[0];
     if (catalyst.date === 'Ongoing') return '';
     
-    const now = new Date();
-    const eventDate = new Date(catalyst.date);
-    const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    // 🎯 ACCURACY: Show rescheduled events in BOLD
+    const eventName = catalyst.rescheduled 
+      ? `**${catalyst.event.toUpperCase()}** (RESCHEDULED)` 
+      : catalyst.event.toUpperCase();
     
-    if (daysUntil > 7) return '';
+    // 🎯 ACCURACY: Show unconfirmed date warnings
+    const dateStatus = catalyst.dateUnconfirmed ? ' ⚠️ Date Unconfirmed' : '';
     
-    const urgency = daysUntil <= 2 ? '🚨' : daysUntil <= 5 ? '⚠️' : '📅';
-    const countdown = daysUntil === 0 ? 'TODAY' : daysUntil === 1 ? 'TOMORROW' : `${daysUntil}d`;
     const impactNote = penaltyApplied ? '\n   ⚡ Confidence reduced due to event proximity' : '';
     
-    return `${urgency} ${catalyst.event.toUpperCase()} in ${countdown}
+    // Display full description which now includes date calculations
+    return `📅 ${eventName}${dateStatus}
    ↳ ${catalyst.description}${impactNote}`;
   };
 
