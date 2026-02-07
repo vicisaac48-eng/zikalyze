@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
@@ -39,7 +39,7 @@ interface TriggeredAlert {
 }
 
 const Alerts = () => {
-  const { alerts, loading, removeAlert, refetch, checkAlerts } = usePriceAlerts();
+  const { alerts, loading, removeAlert, refetch } = usePriceAlerts();
   const { prices, getPriceBySymbol, refetch: refetchPrices } = useCryptoPrices();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
@@ -51,22 +51,6 @@ const Alerts = () => {
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; symbol: string } | null>(null);
   const [clearHistoryDialogOpen, setClearHistoryDialogOpen] = useState(false);
   const { t } = useTranslation();
-  
-  // Track last alert check time to throttle checks
-  const lastAlertCheckRef = useRef<number>(0);
-  
-  // Check alerts whenever prices update (same pattern as Top100CryptoList)
-  // This ensures push notifications work even when user is on the Alerts page
-  useEffect(() => {
-    if (prices.length > 0 && alerts.length > 0) {
-      // Throttle alert checks to every 2 seconds to prevent spam
-      const now = Date.now();
-      if (now - lastAlertCheckRef.current > 2000) {
-        lastAlertCheckRef.current = now;
-        checkAlerts(prices);
-      }
-    }
-  }, [prices, alerts, checkAlerts]);
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {

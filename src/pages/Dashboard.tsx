@@ -93,7 +93,7 @@ const Dashboard = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar" style={{ pointerEvents: 'auto' }}>
+      <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
         <Sidebar />
         <BottomNav />
 

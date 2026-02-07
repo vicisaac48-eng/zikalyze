@@ -19,19 +19,11 @@ interface UsePullToRefreshReturn {
   indicatorStyle: React.CSSProperties;
 }
 
-// Tolerance for scroll position check on Android WebView
-// Android WebView may report small scroll offsets even at the top
-const SCROLL_TOP_TOLERANCE = 5;
-
 // Helper function to check if at the top of the scroll container
 const checkIfAtTop = (): boolean => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  return scrollTop <= SCROLL_TOP_TOLERANCE;
+  return scrollTop <= 0;
 };
-
-// Minimum distance to pull before activating pull-to-refresh
-// This ensures normal scroll gestures are not blocked
-const ACTIVATION_THRESHOLD = 20;
 
 /**
  * Hook for implementing native-style pull-to-refresh functionality.
@@ -99,60 +91,32 @@ export function usePullToRefresh({
     const handleTouchStart = (e: TouchEvent) => {
       if (isRefreshingRef.current) return;
 
-      // Record the starting position but DON'T set isPulling yet
-      // We'll only set isPulling to true once we confirm user is pulling down from top
+      isAtTopRef.current = checkIfAtTop();
+      if (!isAtTopRef.current) return;
+
       startYRef.current = e.touches[0].clientY;
       currentYRef.current = startYRef.current;
-      isAtTopRef.current = checkIfAtTop();
-      // Don't set isPulling here - let touchmove decide based on direction
-      isPullingRef.current = false;
+      isPullingRef.current = true;
+      setIsPulling(true);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isRefreshingRef.current) return;
+      if (isRefreshingRef.current || !isPullingRef.current) return;
+      if (!isAtTopRef.current) return;
 
       currentYRef.current = e.touches[0].clientY;
       const rawDistance = currentYRef.current - startYRef.current;
 
-      // If scrolling up (negative distance), always allow normal scroll
+      // Only trigger pull-to-refresh on downward swipe
       if (rawDistance <= 0) {
-        if (isPullingRef.current) {
-          isPullingRef.current = false;
-          setIsPulling(false);
-          setPullDistance(0);
-        }
-        // Let the browser handle normal upward scrolling
+        setPullDistance(0);
         return;
       }
 
-      // Only activate pull-to-refresh if:
-      // 1. We started at the top of the page
-      // 2. User is pulling DOWN (positive rawDistance)
-      // 3. We're still at the top (or very close)
-      // 4. Raw distance exceeds activation threshold (prevents blocking normal scroll)
-      const currentlyAtTop = checkIfAtTop();
-      
-      if (!isAtTopRef.current || !currentlyAtTop) {
-        // Not at top - cancel any pull state and let normal scroll happen
-        if (isPullingRef.current) {
-          isPullingRef.current = false;
-          setIsPulling(false);
-          setPullDistance(0);
-        }
+      // If we're not at top anymore, cancel the pull
+      if (!checkIfAtTop() && rawDistance > 0) {
+        setPullDistance(0);
         return;
-      }
-
-      // Don't activate pull-to-refresh until we've moved past the activation threshold
-      // This prevents blocking normal scroll gestures on Android
-      if (rawDistance < ACTIVATION_THRESHOLD) {
-        // Let the browser handle the touch - don't block normal scroll
-        return;
-      }
-
-      // Now we're confirmed pulling down from the top - activate pull-to-refresh
-      if (!isPullingRef.current) {
-        isPullingRef.current = true;
-        setIsPulling(true);
       }
 
       // Apply resistance to make the pull feel natural
@@ -161,9 +125,10 @@ export function usePullToRefresh({
         maxPull
       );
 
-      // NOTE: Removed e.preventDefault() to allow native scroll to work on Android
-      // The pull-to-refresh visual effect still works, but we don't block native scroll
-      // This lets the browser handle touch scrolling naturally
+      // Prevent default scroll when pulling to refresh
+      if (resistedDistance > 10) {
+        e.preventDefault();
+      }
 
       setPullDistance(resistedDistance);
     };
