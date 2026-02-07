@@ -81,9 +81,29 @@ All colors MUST be HSL.
     /* Consistent height across all devices */
     height: 100%;
     height: -webkit-fill-available;
-    /* Disable pinch-to-zoom on Android native app (set via Capacitor detection in main.tsx) */
-    /* This CSS is a fallback - the viewport meta tag is the primary control */
+    /* Default: allow both horizontal and vertical panning for web */
     touch-action: pan-x pan-y;
+  }
+
+  /* Android-specific: Disable horizontal panning to prevent left/right body movement */
+  /* The android-native class is added to html element in main.tsx when running on Android */
+  html.android-native {
+    /* Only allow vertical scrolling on Android - no horizontal panning */
+    touch-action: pan-y;
+    /* Prevent horizontal overflow on Android */
+    overflow-x: hidden;
+  }
+
+  html.android-native body {
+    /* Prevent horizontal overflow on Android body */
+    overflow-x: hidden;
+    /* Ensure vertical-only touch action propagates */
+    touch-action: pan-y;
+  }
+
+  html.android-native #root {
+    /* Prevent horizontal overflow on root container */
+    overflow-x: hidden;
   }
 
   body {

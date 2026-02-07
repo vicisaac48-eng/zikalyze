@@ -945,6 +945,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
             successProbability={analysisResult.successProbability}
             crypto={crypto}
             isVisible={true}
+            tradeRecommendation={analysisResult.tradeQuality?.recommendation}
+            verificationStatus={analysisResult.verificationStatus}
+            skipTrade={analysisResult.regimeConsensus?.skipTrade}
           />
         )}
 

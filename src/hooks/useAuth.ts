@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Wallet, formatEther, JsonRpcProvider, pbkdf2, toUtf8Bytes, hexlify, getBytes, AbiCoder, keccak256 } from "ethers";
+import { WALLET_DATA_KEY } from "@/lib/auth-constants";
 
 // User type for Web3 wallet authentication
 export interface Web3User {
@@ -18,9 +19,6 @@ interface AuthState {
   loading: boolean;
   isProcessing: boolean;
 }
-
-// Storage keys
-const WALLET_DATA_KEY = "zikalyze_wallet_data";
 
 // Shorten wallet address for display
 const shortenAddress = (address: string): string => {
