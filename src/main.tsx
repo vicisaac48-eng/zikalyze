@@ -26,6 +26,25 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
     );
   }
   
+  // Android: Fix scroll stuck after input blur
+  // When the keyboard dismisses after unfocusing an input, the WebView can get stuck
+  // This nudges the scroll position to force a reflow and restore scrolling
+  const KEYBOARD_DISMISS_DELAY_MS = 100;
+  document.addEventListener('focusout', (e) => {
+    const target = e.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      // Small delay to let keyboard animation complete
+      setTimeout(() => {
+        const scrollY = window.scrollY;
+        // Nudge scroll by 1px and back to force WebView reflow
+        window.scrollTo(0, scrollY + 1);
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+      }, KEYBOARD_DISMISS_DELAY_MS);
+    }
+  }, { passive: true });
+  
   // Android: Auto-redirect to dashboard if user is logged in
   // This prevents showing the landing page when the user returns to the app
   // Only redirect if we're on the root path (landing page)
