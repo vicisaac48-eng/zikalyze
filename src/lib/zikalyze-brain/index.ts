@@ -921,6 +921,27 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     timeZoneName: 'short'
   });
 
+  // Helper: Get trade type description
+  const getTradeTypeDescription = (bias: 'LONG' | 'SHORT' | 'NEUTRAL'): string => {
+    if (bias === 'LONG') return 'Potential Buy (Going Up)';
+    if (bias === 'SHORT') return 'Potential Sell (Going Down)';
+    return 'Wait for Direction';
+  };
+
+  // Helper: Get risk warning
+  const getRiskWarning = (bias: 'LONG' | 'SHORT' | 'NEUTRAL'): string => {
+    if (bias === 'LONG') {
+      return 'This trade could fail if price breaks below support levels or if bearish momentum strengthens';
+    } else if (bias === 'SHORT') {
+      return 'This trade could fail if price breaks above resistance or if bullish momentum strengthens';
+    }
+    return 'Market is unclear - waiting for directional clarity is safer than forcing a trade';
+  };
+
+  // Helper: Get entry detail status
+  const shouldShowEntryDetails = confidence >= 60 && hasRealChartData;
+  const entryDetailsReason = !hasRealChartData ? 'Data unavailable' : 'Confidence below 60%';
+
   const analysis = `${simplifiedSummary}
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
    ${crypto.toUpperCase()} ANALYSIS   ${trendEmoji} ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
@@ -934,13 +955,13 @@ ${executiveSummary}
 
 ━━━ 🎯 POTENTIAL TRADE DETAILS ━━━━━━━━━━━━━━━━━━━
 
-${confidence >= 60 && hasRealChartData ? `• Type: ${bias === 'LONG' ? 'Potential Buy (Going Up)' : bias === 'SHORT' ? 'Potential Sell (Going Down)' : 'Wait for Direction'}
+${shouldShowEntryDetails ? `• Type: ${getTradeTypeDescription(bias)}
 • Entry Zone: ${tightZone}
 • Profit Target: $${targetPrice.toFixed(decimals)}
-• Stop Loss (Safety Net): $${regimeConsensus.stopLoss.toFixed(decimals)}` : `Entry details withheld - ${!hasRealChartData ? 'Data unavailable' : 'Confidence below 60%'}`}
+• Stop Loss (Safety Net): $${regimeConsensus.stopLoss.toFixed(decimals)}` : `Entry details withheld - ${entryDetailsReason}`}
 
 ⚠️ RISK WARNING:
-${bias === 'LONG' ? 'This trade could fail if price breaks below support levels or if bearish momentum strengthens' : bias === 'SHORT' ? 'This trade could fail if price breaks above resistance or if bullish momentum strengthens' : 'Market is unclear - waiting for directional clarity is safer than forcing a trade'}
+${getRiskWarning(bias)}
 
 ━━━ 📊 CURRENT MARKET STATE ━━━━━━━━━━━━━━━━━━━━━
 
