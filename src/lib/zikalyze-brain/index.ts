@@ -825,11 +825,11 @@ ${executiveSummary}
 
 💰 Price: $${price.toFixed(decimals)}  │  24h Range: $${low24h.toFixed(decimals)} → $${high24h.toFixed(decimals)}
 ${historicalContext}
-${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above avg (${volumeSpike.magnitude})\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} baseline (${(volume / avgVolume).toFixed(2)}x)
+${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above avg (${volumeSpike.magnitude}) [Spot via aggregator]\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} baseline (${(volume / avgVolume).toFixed(2)}x)
 😊 Fear & Greed: ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
 🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)} - Net: ${onChainMetrics.whaleActivity.netFlow}
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
-${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : ''}
+${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
 ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
 ━━━ 🎯 ANALYSIS & RECOMMENDATION ━━━━━━━━━━━━━━━━━
 
@@ -877,12 +877,15 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
    └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
 ${triModularOutput}
-━━━ ⚠️ RISK DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ ⚠️ RISK DISCLAIMER & TRADING GUIDELINES ━━━━━━━━
 This analysis combines algorithmic calculations and neural network
 predictions. Crypto markets are highly volatile and unpredictable.
-• NOT financial advice — trade at your own risk
-• Always use proper risk management and position sizing
-• Past performance does not guarantee future results
+
+Best Practices:
+• Follow the trend — Don't trade against HTF direction ✓
+• Wait for confirmation — Need 2+ confirmations before entry ✓
+• Use proper risk management and position sizing ✓
+• This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
