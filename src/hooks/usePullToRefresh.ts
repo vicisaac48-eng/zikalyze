@@ -20,10 +20,15 @@ interface UsePullToRefreshReturn {
 }
 
 // Helper function to check if at the top of the scroll container
+// Use a small tolerance (5px) to account for minor scroll offsets on Android
 const checkIfAtTop = (): boolean => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  return scrollTop <= 0;
+  return scrollTop <= 5;
 };
+
+// Minimum distance to pull before activating pull-to-refresh
+// This ensures normal scroll gestures are not blocked
+const ACTIVATION_THRESHOLD = 20;
 
 /**
  * Hook for implementing native-style pull-to-refresh functionality.
@@ -121,6 +126,7 @@ export function usePullToRefresh({
       // 1. We started at the top of the page
       // 2. User is pulling DOWN (positive rawDistance)
       // 3. We're still at the top (or very close)
+      // 4. Raw distance exceeds activation threshold (prevents blocking normal scroll)
       const currentlyAtTop = checkIfAtTop();
       
       if (!isAtTopRef.current || !currentlyAtTop) {
@@ -130,6 +136,13 @@ export function usePullToRefresh({
           setIsPulling(false);
           setPullDistance(0);
         }
+        return;
+      }
+
+      // Don't activate pull-to-refresh until we've moved past the activation threshold
+      // This prevents blocking normal scroll gestures on Android
+      if (rawDistance < ACTIVATION_THRESHOLD) {
+        // Let the browser handle the touch - don't block normal scroll
         return;
       }
 
@@ -145,9 +158,9 @@ export function usePullToRefresh({
         maxPull
       );
 
-      // Only prevent default when we're actively pulling for refresh (past a small threshold)
+      // Only prevent default when we're actively pulling for refresh and past activation threshold
       // This ensures normal touch scrolling still works in other scenarios
-      if (resistedDistance > 15 && isPullingRef.current) {
+      if (isPullingRef.current && resistedDistance > ACTIVATION_THRESHOLD * resistance) {
         e.preventDefault();
       }
 

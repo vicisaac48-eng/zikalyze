@@ -173,6 +173,11 @@ All colors MUST be HSL.
     touch-action: pan-y;
     /* Enable momentum scrolling on Android */
     -webkit-overflow-scrolling: touch;
+    /* Ensure consistent overscroll behavior - prevent scroll getting stuck */
+    overscroll-behavior-y: contain;
+    /* Force hardware acceleration for smoother scrolling */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   html.android-native #root {
@@ -191,8 +196,10 @@ All colors MUST be HSL.
   html.android-native .min-h-screen {
     /* Let content flow naturally - body handles scrolling */
     overflow: visible;
-    /* Inherit touch-action from body */
+    /* Inherit touch-action from body - CRITICAL for smooth scrolling */
     touch-action: inherit;
+    /* Ensure touch events work properly on Android WebView */
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Allow horizontal scrolling in specific containers with overflow-x-auto */
