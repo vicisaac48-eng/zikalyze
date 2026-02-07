@@ -152,8 +152,8 @@ const buildExecutiveSummary = (
   // ⚠️ CRITICAL: Add data quality warning for insufficient chart data
   if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
     summary += `.\n\n⚠️ DATA QUALITY WARNING: This analysis uses estimated data (${candleCount} candles available). Real-time chart data is unavailable or insufficient. Signals may be less accurate. Exercise extreme caution or wait for live data connection`;
-  } else if (candleCount < 50) {
-    summary += `.\n\n⚠️ LIMITED CHART DATA: Only ${candleCount} candles available (optimal: 100+). Confidence reduced by limited historical context`;
+  } else if (candleCount < DATA_QUALITY_THRESHOLDS.ACCEPTABLE_CANDLE_COUNT) {
+    summary += `.\n\n⚠️ LIMITED CHART DATA: Only ${candleCount} candles available (optimal: ${DATA_QUALITY_THRESHOLDS.OPTIMAL_CANDLE_COUNT}+). Confidence reduced by limited historical context`;
   } else if (verificationLevel === 'PARTIALLY_VERIFIED') {
     summary += `.\n\n🟡 PARTIAL DATA: Some data sources verified, but not all. Consider this when sizing positions`;
   }
@@ -164,7 +164,7 @@ const buildExecutiveSummary = (
   } else if (!hasRealChartData && tradeRecommendation === 'EXECUTE') {
     // CRITICAL: Block execution signals when using estimated data
     summary += `.\n\n🚫 RECOMMENDATION: DO NOT EXECUTE - Using estimated data instead of real chart data. Wait for live data connection before trading`;
-  } else if (verificationLevel === 'ESTIMATED' && confidence >= 55) {
+  } else if (verificationLevel === 'ESTIMATED' && confidence >= MIN_CONFIDENCE_FOR_ESTIMATED_DATA_WARNING) {
     // Warn on any directional signal with estimated data
     summary += `.\n\n⚠️ RECOMMENDATION: WAIT FOR REAL DATA - Signal detected but data quality insufficient for safe execution`;
   } else if (tradeRecommendation === 'EXECUTE') {
@@ -176,6 +176,42 @@ const buildExecutiveSummary = (
   }
   
   return summary;
+};
+
+// Data quality constants
+const DATA_QUALITY_WEIGHTS = {
+  REAL_CHART_DATA: 40,      // Real-time chart data is most critical
+  OPTIMAL_CANDLES: 20,      // 100+ candles provides full context
+  ACCEPTABLE_CANDLES: 10,   // 50-99 candles is acceptable
+  MINIMUM_CANDLES: 5,       // 10-49 candles is minimum viable
+  MULTI_TIMEFRAME: 15,      // Multi-timeframe data adds confidence
+  ON_CHAIN_DATA: 10,        // On-chain metrics provide context
+  LIVE_PRICE: 15,           // Live price data ensures freshness
+};
+
+const DATA_QUALITY_THRESHOLDS = {
+  EXCELLENT: 80,            // Optimal data quality
+  GOOD: 60,                 // Sufficient data quality
+  ACCEPTABLE: 40,           // Minimum acceptable quality
+  OPTIMAL_CANDLE_COUNT: 100, // Optimal historical context
+  ACCEPTABLE_CANDLE_COUNT: 50, // Acceptable historical context
+  MINIMUM_CANDLE_COUNT: 10,  // Minimum viable historical context
+};
+
+const MIN_CONFIDENCE_FOR_ESTIMATED_DATA_WARNING = 55; // Warn on directional signals with estimated data
+
+// Helper: Get candle count status message
+const getCandleCountStatus = (hasRealChartData: boolean, candleCount: number): string => {
+  if (!hasRealChartData) {
+    return `⚠️ ${candleCount} candles (estimated data) - Limited historical context`;
+  }
+  if (candleCount >= DATA_QUALITY_THRESHOLDS.OPTIMAL_CANDLE_COUNT) {
+    return `✅ ${candleCount} live candles - Optimal data`;
+  }
+  if (candleCount >= DATA_QUALITY_THRESHOLDS.ACCEPTABLE_CANDLE_COUNT) {
+    return `✅ ${candleCount} live candles`;
+  }
+  return `✅ ${candleCount} live candles - Limited historical context`;
 };
 
 // Helper: Calculate historical context
@@ -828,16 +864,23 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
 
   // Calculate data quality score (0-100%)
   let dataQualityScore = 0;
-  if (hasRealChartData) dataQualityScore += 40; // Real chart data is critical
-  if (candleCount >= 100) dataQualityScore += 20; // Optimal candle count
-  else if (candleCount >= 50) dataQualityScore += 10; // Acceptable candle count
-  else if (candleCount >= 10) dataQualityScore += 5; // Minimum candle count
-  if (hasRealMultiTfData) dataQualityScore += 15; // Multi-timeframe data
-  if (hasRealOnChain) dataQualityScore += 10; // On-chain data
-  if (isLiveData) dataQualityScore += 15; // Live price data
+  if (hasRealChartData) dataQualityScore += DATA_QUALITY_WEIGHTS.REAL_CHART_DATA;
+  if (candleCount >= DATA_QUALITY_THRESHOLDS.OPTIMAL_CANDLE_COUNT) {
+    dataQualityScore += DATA_QUALITY_WEIGHTS.OPTIMAL_CANDLES;
+  } else if (candleCount >= DATA_QUALITY_THRESHOLDS.ACCEPTABLE_CANDLE_COUNT) {
+    dataQualityScore += DATA_QUALITY_WEIGHTS.ACCEPTABLE_CANDLES;
+  } else if (candleCount >= DATA_QUALITY_THRESHOLDS.MINIMUM_CANDLE_COUNT) {
+    dataQualityScore += DATA_QUALITY_WEIGHTS.MINIMUM_CANDLES;
+  }
+  if (hasRealMultiTfData) dataQualityScore += DATA_QUALITY_WEIGHTS.MULTI_TIMEFRAME;
+  if (hasRealOnChain) dataQualityScore += DATA_QUALITY_WEIGHTS.ON_CHAIN_DATA;
+  if (isLiveData) dataQualityScore += DATA_QUALITY_WEIGHTS.LIVE_PRICE;
   
-  const dataQualityEmoji = dataQualityScore >= 80 ? '✅' : dataQualityScore >= 60 ? '🟡' : '⚠️';
-  const dataQualityLabel = dataQualityScore >= 80 ? 'EXCELLENT' : dataQualityScore >= 60 ? 'GOOD' : dataQualityScore >= 40 ? 'ACCEPTABLE' : 'POOR';
+  const dataQualityEmoji = dataQualityScore >= DATA_QUALITY_THRESHOLDS.EXCELLENT ? '✅' 
+    : dataQualityScore >= DATA_QUALITY_THRESHOLDS.GOOD ? '🟡' : '⚠️';
+  const dataQualityLabel = dataQualityScore >= DATA_QUALITY_THRESHOLDS.EXCELLENT ? 'EXCELLENT' 
+    : dataQualityScore >= DATA_QUALITY_THRESHOLDS.GOOD ? 'GOOD' 
+    : dataQualityScore >= DATA_QUALITY_THRESHOLDS.ACCEPTABLE ? 'ACCEPTABLE' : 'POOR';
 
   // Build executive summary that synthesizes all signals
   const executiveSummary = buildExecutiveSummary(
@@ -865,7 +908,7 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
 ${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
 ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
-📊 Chart Data: ${hasRealChartData ? `✅ ${candleCount} live candles` : `⚠️ ${candleCount} candles (estimated data)`} ${candleCount < 50 ? '- Limited historical context' : candleCount >= 100 ? '- Optimal data' : ''}
+📊 Chart Data: ${getCandleCountStatus(hasRealChartData, candleCount)}
 
 ━━━ 🎯 ANALYSIS & RECOMMENDATION ━━━━━━━━━━━━━━━━━
 
