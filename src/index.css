@@ -159,22 +159,14 @@ All colors MUST be HSL.
   }
 
   /* Android: Main content areas must allow touch scrolling to pass through */
+  /* Using specific class selectors to enable vertical scrolling like GitHub native app */
   html.android-native main,
   html.android-native .main-content,
-  html.android-native [class*="rounded-2xl"],
-  html.android-native [class*="bg-card"] {
+  html.android-native .rounded-2xl,
+  html.android-native .rounded-xl,
+  html.android-native .bg-card {
     /* Allow touch events to scroll the page, not just individual elements */
     touch-action: pan-y;
-  }
-
-  /* Android: Cards and metric components should not capture/block scroll */
-  html.android-native .rounded-2xl,
-  html.android-native .rounded-xl {
-    /* Ensure touch actions allow vertical scrolling to pass through to body */
-    touch-action: pan-y;
-    /* Prevent any accidental touch capture that blocks scrolling */
-    -webkit-user-select: none;
-    user-select: none;
   }
 
   /* Android: Exception - horizontal scrollable areas need pan-x pan-y */
