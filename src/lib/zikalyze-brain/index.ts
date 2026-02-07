@@ -119,11 +119,13 @@ const buildExecutiveSummary = (
   const meetsConfidenceThreshold = confidence >= 60;
   
   // GUARDRAIL 2: LOGIC SYNC - Validate target vs entry makes sense
+  // For LONG (buy): Target must be ABOVE entry (target > entry) - we expect price to go UP
+  // For SHORT (sell): Target must be BELOW entry (target < entry) - we expect price to go DOWN
   let logicValid = true;
   if (bias === 'LONG' && targetPrice <= entryPrice) {
-    logicValid = false; // LONG must have target > entry
+    logicValid = false; // Invalid: LONG but target not above entry
   } else if (bias === 'SHORT' && targetPrice >= entryPrice) {
-    logicValid = false; // SHORT must have target < entry
+    logicValid = false; // Invalid: SHORT but target not below entry
   }
   
   // GUARDRAIL 3: Simple status indicator
