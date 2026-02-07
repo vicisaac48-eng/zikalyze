@@ -12,6 +12,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { ChartTrendInput } from './types';
+import { calculateRSI, calculateEMA, calculateATR } from './shared-indicators';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔧 CONFIGURATION CONSTANTS
@@ -1004,10 +1005,10 @@ export class ZikalyzeNeuralEngine {
     const return20 = ((currentPrice - price20Ago) / price20Ago) * 100;
     const volatility = this.calculateVolatility(prices.slice(-20));
 
-    // Feature 9-12: Technical indicators
-    const rsi = this.calculateRSI(prices, 14);
-    const ema9 = this.calculateEMA(prices, 9);
-    const ema21 = this.calculateEMA(prices, 21);
+    // Feature 9-12: Technical indicators (using shared-indicators.ts)
+    const rsi = calculateRSI(prices, 14);
+    const ema9 = calculateEMA(prices, 9);
+    const ema21 = calculateEMA(prices, 21);
     const macd = ema9 - ema21;
 
     // Feature 13-16: Volume indicators
@@ -1024,7 +1025,7 @@ export class ZikalyzeNeuralEngine {
     const highestHigh = Math.max(...highs);
     const lowestLow = Math.min(...lows);
     const pricePosition = (currentPrice - lowestLow) / (highestHigh - lowestLow || 1);
-    const atr = this.calculateATR(recentCandles);
+    const atr = calculateATR(recentCandles);
 
     return [
       currentPrice, price5Ago, price10Ago, price20Ago,  // 1-4
@@ -1046,44 +1047,8 @@ export class ZikalyzeNeuralEngine {
     return Math.sqrt(variance) * 100;
   }
 
-  private calculateRSI(prices: number[], period: number): number {
-    if (prices.length < period + 1) return 50;
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i-1]);
-    }
-    const recentChanges = changes.slice(-period);
-    const gains = recentChanges.filter(c => c > 0);
-    const losses = recentChanges.filter(c => c < 0).map(c => Math.abs(c));
-    const avgGain = gains.length > 0 ? gains.reduce((a, b) => a + b, 0) / period : 0;
-    const avgLoss = losses.length > 0 ? losses.reduce((a, b) => a + b, 0) / period : 0;
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
-  }
-
-  private calculateEMA(prices: number[], period: number): number {
-    if (prices.length < period) return prices[prices.length - 1] || 0;
-    const k = 2 / (period + 1);
-    let ema = prices[0];
-    for (let i = 1; i < prices.length; i++) {
-      ema = prices[i] * k + ema * (1 - k);
-    }
-    return ema;
-  }
-
-  private calculateATR(candles: Array<{ high: number; low: number; close: number }>, period: number = 14): number {
-    if (candles.length < period) return 0;
-    const trs = [];
-    for (let i = 1; i < candles.length; i++) {
-      const high = candles[i].high;
-      const low = candles[i].low;
-      const prevClose = candles[i-1].close;
-      trs.push(Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose)));
-    }
-    const recentTRs = trs.slice(-period);
-    return recentTRs.reduce((a, b) => a + b, 0) / recentTRs.length;
-  }
+  // NOTE: RSI, EMA, and ATR calculations now use shared-indicators.ts
+  // Removed duplicate private methods to eliminate ~40 lines of code
 
   /**
    * Get comprehensive stats
