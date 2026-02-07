@@ -29,6 +29,7 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
   // Android: Fix scroll stuck after input blur
   // When the keyboard dismisses after unfocusing an input, the WebView can get stuck
   // This nudges the scroll position to force a reflow and restore scrolling
+  const KEYBOARD_DISMISS_DELAY_MS = 100;
   document.addEventListener('focusout', (e) => {
     const target = e.target as HTMLElement;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
@@ -40,7 +41,7 @@ if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
         requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
         });
-      }, 100);
+      }, KEYBOARD_DISMISS_DELAY_MS);
     }
   }, { passive: true });
   
