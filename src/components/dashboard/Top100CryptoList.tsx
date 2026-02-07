@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { TrendingUp, TrendingDown, Bell, X, BellRing, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   const { alerts, loading: alertsLoading, createAlert, removeAlert, checkAlerts } = usePriceAlerts();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [selectedCryptoForAlert, setSelectedCryptoForAlert] = useState<CryptoPrice | null>(null);
   const [targetPrice, setTargetPrice] = useState("");
@@ -249,11 +251,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           </div>
         )}
         
-        <div className="overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar">
+        <div className={isNativeApp ? "-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0" : "overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar"}>
           <table className="w-full min-w-[320px] table-fixed">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-2 font-medium sm:pb-3 w-8 sm:w-10">#</th>
+                {!isNativeApp && <th className="pb-2 font-medium sm:pb-3 w-8 sm:w-10">#</th>}
                 <th className="pb-2 font-medium sm:pb-3 w-[120px] sm:w-[160px] lg:w-[180px]">Name</th>
                 <th className="pb-2 font-medium text-right sm:pb-3 w-[80px] sm:w-[100px]">Price</th>
                 <th className="pb-2 font-medium text-right sm:pb-3 w-[70px] sm:w-[80px]">24h %</th>
@@ -280,7 +282,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                       isSelected ? "bg-primary/10" : ""
                     }`}
                   >
-                    <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>
+                    {!isNativeApp && <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>}
                     <td className="py-2 sm:py-3">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <img 
