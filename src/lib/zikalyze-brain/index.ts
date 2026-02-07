@@ -98,7 +98,7 @@ const getWhaleVisual = (netFlow: string, buying: number, selling: number): strin
   return `Buy ${buyBar} ${buying}% | Sell ${sellBar} ${selling}%`;
 };
 
-// Helper: Build executive summary that synthesizes all signals
+// Helper: Build executive summary that synthesizes all signals with CONSERVATIVE GUARDRAILS
 const buildExecutiveSummary = (
   bias: 'LONG' | 'SHORT' | 'NEUTRAL',
   confidence: number,
@@ -110,72 +110,89 @@ const buildExecutiveSummary = (
   fearGreed: number,
   verificationLevel: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'ESTIMATED',
   hasRealChartData: boolean,
-  candleCount: number
+  candleCount: number,
+  price: number,
+  entryPrice: number,
+  targetPrice: number
 ): string => {
-  // Determine the primary direction and strength
-  const direction = bias === 'LONG' ? 'bullish' : bias === 'SHORT' ? 'bearish' : 'neutral';
-  const strength = confidence >= 68 ? 'strong' : confidence >= 55 ? 'moderate' : 'weak';
+  // GUARDRAIL 1: CONFIDENCE GATE - Block specific entries if confidence <60%
+  const meetsConfidenceThreshold = confidence >= 60;
   
-  // Check agreement between systems
-  const systemsAgree = hybridResult.agreement;
-  const confluenceLevel = topDownAnalysis.confluenceScore;
-  
-  // Build coherent narrative
-  let summary = `The analysis shows ${strength} ${direction} bias (${confidence.toFixed(0)}% confidence)`;
-  
-  // Add context about system agreement
-  if (systemsAgree) {
-    summary += `. Both the technical algorithm and neural network agree on this direction, providing higher conviction`;
-  } else {
-    summary += `. However, the technical algorithm and neural network disagree (Algorithm: ${hybridResult.algorithmBias}, Neural: ${hybridResult.neuralDirection}), suggesting caution and reduced position sizing`;
+  // GUARDRAIL 2: LOGIC SYNC - Validate target vs entry makes sense
+  let logicValid = true;
+  if (bias === 'LONG' && targetPrice <= entryPrice) {
+    logicValid = false; // LONG must have target > entry
+  } else if (bias === 'SHORT' && targetPrice >= entryPrice) {
+    logicValid = false; // SHORT must have target < entry
   }
   
-  // Add multi-timeframe context
-  if (confluenceLevel >= 70) {
-    summary += `. Multiple timeframes are aligned (${confluenceLevel}% confluence), supporting the directional bias`;
-  } else if (confluenceLevel >= 50) {
-    summary += `. Timeframes show mixed signals (${confluenceLevel}% confluence), indicating some uncertainty`;
-  } else {
-    summary += `. Timeframes are poorly aligned (${confluenceLevel}% confluence), suggesting conflicting market dynamics`;
-  }
+  // GUARDRAIL 3: Simple status indicator
+  let status = '🔴 Red (Do Not Trade)';
+  let statusReason = 'Conditions not met for safe trading';
   
-  // Add market regime context
-  const regime = regimeConsensus.masterControl;
-  if (regime.includes('Algorithm')) {
-    summary += `. The market is trending (ADX-based), so we're prioritizing technical structures over pattern recognition`;
-  } else if (regime.includes('Neural')) {
-    summary += `. The market is ranging (ADX-based), so we're prioritizing neural pattern recognition over technical structures`;
-  } else {
-    summary += `. The market is in transition, using balanced weighting between systems`;
-  }
-  
-  // ⚠️ CRITICAL: Add data quality warning for insufficient chart data
   if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
-    summary += `.\n\n⚠️ DATA QUALITY WARNING: This analysis uses estimated data (${candleCount} candles available). Real-time chart data is unavailable or insufficient. Signals may be less accurate. Exercise extreme caution or wait for live data connection`;
-  } else if (candleCount < DATA_QUALITY_THRESHOLDS.ACCEPTABLE_CANDLE_COUNT) {
-    summary += `.\n\n⚠️ LIMITED CHART DATA: Only ${candleCount} candles available (optimal: ${DATA_QUALITY_THRESHOLDS.OPTIMAL_CANDLE_COUNT}+). Confidence reduced by limited historical context`;
-  } else if (verificationLevel === 'PARTIALLY_VERIFIED') {
-    summary += `.\n\n🟡 PARTIAL DATA: Some data sources verified, but not all. Consider this when sizing positions`;
-  }
-  
-  // Add final recommendation with data quality gate
-  if (regimeConsensus.skipTrade) {
-    summary += `.\n\n⚠️ SKIP TRADE: ${regimeConsensus.skipReason}`;
-  } else if (!hasRealChartData && tradeRecommendation === 'EXECUTE') {
-    // CRITICAL: Block execution signals when using estimated data
-    summary += `.\n\n🚫 RECOMMENDATION: DO NOT EXECUTE - Using estimated data instead of real chart data. Wait for live data connection before trading`;
-  } else if (verificationLevel === 'ESTIMATED' && confidence >= MIN_CONFIDENCE_FOR_ESTIMATED_DATA_WARNING) {
-    // Warn on any directional signal with estimated data
-    summary += `.\n\n⚠️ RECOMMENDATION: WAIT FOR REAL DATA - Signal detected but data quality insufficient for safe execution`;
-  } else if (tradeRecommendation === 'EXECUTE') {
-    summary += `.\n\n✅ RECOMMENDATION: Setup meets quality criteria (${qualityScore}%) - consider execution with proper risk management`;
+    status = '🔴 Red (Do Not Trade)';
+    statusReason = 'Data Unavailable - Cannot verify real-time price';
+  } else if (!logicValid) {
+    status = '🔴 Red (Do Not Trade)';
+    statusReason = 'Logic Error - Price targets do not align with signal direction';
+  } else if (!meetsConfidenceThreshold) {
+    status = '🟡 Yellow (Caution)';
+    statusReason = 'Market conditions are unclear. Best to wait';
+  } else if (tradeRecommendation === 'EXECUTE' && qualityScore >= 70) {
+    status = '🟢 Green (Safe)';
+    statusReason = 'Setup looks favorable with confirmations';
   } else if (tradeRecommendation === 'WAIT_CONFIRMATION') {
-    summary += `.\n\n⏳ RECOMMENDATION: Wait for additional confirmations before entering`;
+    status = '🟡 Yellow (Caution)';
+    statusReason = 'Watch for additional confirmation signals';
   } else {
-    summary += `.\n\n🚫 RECOMMENDATION: Avoid this trade - quality signals are lacking`;
+    status = '🟡 Yellow (Caution)';
+    statusReason = 'Multiple conflicting signals - proceed with caution';
   }
   
-  return summary;
+  // Build simple "WHAT IS HAPPENING" explanation
+  const direction = bias === 'LONG' ? 'upward' : bias === 'SHORT' ? 'downward' : 'sideways';
+  const momentum = confidence >= 68 ? 'strong' : confidence >= 55 ? 'moderate' : 'weak';
+  const systemsAgree = hybridResult.agreement;
+  
+  let whatIsHappening = `Price is showing ${momentum} ${direction} momentum`;
+  if (systemsAgree) {
+    whatIsHappening += `. Both technical and AI systems agree on this direction`;
+  } else {
+    whatIsHappening += `. However, technical and AI systems disagree, suggesting uncertainty`;
+  }
+  
+  // CONSERVATIVE LANGUAGE - Avoid "EXECUTE", use "CONSIDER" and "POTENTIAL"
+  let recommendation = '';
+  
+  if (!hasRealChartData || verificationLevel === 'ESTIMATED') {
+    recommendation = `🚫 DO NOT TRADE: Data Unavailable. Real-time chart data is missing. Wait for live connection before considering any trades`;
+  } else if (!logicValid) {
+    recommendation = `🚫 DO NOT TRADE: Signal logic error detected. Recommended to WAIT and re-analyze`;
+  } else if (!meetsConfidenceThreshold) {
+    recommendation = `⏸️ WAIT: Market conditions are unclear (${confidence.toFixed(0)}% confidence). Best to wait for clearer signals`;
+  } else if (regimeConsensus.skipTrade) {
+    recommendation = `⚠️ SKIP: ${regimeConsensus.skipReason}`;
+  } else if (tradeRecommendation === 'EXECUTE' && status === '🟢 Green (Safe)') {
+    recommendation = `✅ POTENTIAL SETUP: This could be a favorable opportunity (${qualityScore}% quality). Consider entry with proper risk management. This is NOT a guarantee`;
+  } else if (tradeRecommendation === 'WAIT_CONFIRMATION') {
+    recommendation = `⏳ WATCH FOR: Additional confirmation signals before considering entry`;
+  } else {
+    recommendation = `🚫 AVOID: Quality signals are lacking. Better opportunities likely ahead`;
+  }
+  
+  // Add data quality warnings
+  if (candleCount < DATA_QUALITY_THRESHOLDS.ACCEPTABLE_CANDLE_COUNT && hasRealChartData) {
+    recommendation += `\n\n⚠️ LIMITED DATA: Only ${candleCount} candles available. Analysis may be less reliable`;
+  }
+  
+  return `🚦 STATUS: ${status}
+${statusReason}
+
+👀 WHAT IS HAPPENING:
+${whatIsHappening}
+
+${recommendation}`;
 };
 
 // Data quality constants
@@ -882,11 +899,27 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     : dataQualityScore >= DATA_QUALITY_THRESHOLDS.GOOD ? 'GOOD' 
     : dataQualityScore >= DATA_QUALITY_THRESHOLDS.ACCEPTABLE ? 'ACCEPTABLE' : 'POOR';
 
-  // Build executive summary that synthesizes all signals
+  // Calculate target and entry prices for logic validation
+  const targetPrice = bias === 'SHORT' ? (low24h - range * 0.1) : bias === 'LONG' ? (high24h + range * 0.1) : price;
+  const entryPrice = entryMid;
+
+  // Build executive summary that synthesizes all signals with guardrails
   const executiveSummary = buildExecutiveSummary(
     bias, confidence, hybridResult, regimeConsensus, topDownAnalysis,
-    tradeRecommendation, qualityScore, fearGreed, verificationLevel, hasRealChartData, candleCount
+    tradeRecommendation, qualityScore, fearGreed, verificationLevel, hasRealChartData, candleCount,
+    price, entryPrice, targetPrice
   );
+
+  // Add timestamp for real-time verification
+  const currentDate = new Date();
+  const timestamp = currentDate.toLocaleString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit',
+    timeZoneName: 'short'
+  });
 
   const analysis = `${simplifiedSummary}
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -894,9 +927,20 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
    ${verificationEmoji} ${verificationLabel} │ Data Quality: ${dataQualityEmoji} ${dataQualityScore}% (${dataQualityLabel})
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-━━━ 📋 EXECUTIVE SUMMARY ━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 ${timestamp}
+💰 Current Price Verified: $${price.toFixed(decimals)}
 
 ${executiveSummary}
+
+━━━ 🎯 POTENTIAL TRADE DETAILS ━━━━━━━━━━━━━━━━━━━
+
+${confidence >= 60 && hasRealChartData ? `• Type: ${bias === 'LONG' ? 'Potential Buy (Going Up)' : bias === 'SHORT' ? 'Potential Sell (Going Down)' : 'Wait for Direction'}
+• Entry Zone: ${tightZone}
+• Profit Target: $${targetPrice.toFixed(decimals)}
+• Stop Loss (Safety Net): $${regimeConsensus.stopLoss.toFixed(decimals)}` : `Entry details withheld - ${!hasRealChartData ? 'Data unavailable' : 'Confidence below 60%'}`}
+
+⚠️ RISK WARNING:
+${bias === 'LONG' ? 'This trade could fail if price breaks below support levels or if bearish momentum strengthens' : bias === 'SHORT' ? 'This trade could fail if price breaks above resistance or if bullish momentum strengthens' : 'Market is unclear - waiting for directional clarity is safer than forcing a trade'}
 
 ━━━ 📊 CURRENT MARKET STATE ━━━━━━━━━━━━━━━━━━━━━
 
@@ -916,14 +960,14 @@ ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
 │  ${bias === 'LONG' ? (confidence >= 68 ? '🟢 Favoring Bullish' : confidence >= 55 ? '🟢 Leaning Bullish' : '🟢 Slight Bull Tilt') : bias === 'SHORT' ? (confidence >= 68 ? '🔴 Favoring Bearish' : confidence >= 55 ? '🔴 Leaning Bearish' : '🔴 Slight Bear Tilt') : '⚪ NEUTRAL'}  │  Confidence: ${confidence.toFixed(0)}%
 └─────────────────────────────────────────────────┘
 
-${qualityEmoji} Quality: ${qualityScore}% | Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECUTE' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT' : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️ SKIPPED' : '🚫 AVOID'}
+${qualityEmoji} Quality: ${qualityScore}% | Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ CONSIDER' : tradeRecommendation === 'WAIT_CONFIRMATION' ? '⏳ WAIT' : tradeRecommendation === 'SKIPPED_NN_FILTER' ? '⚠️ SKIPPED' : '🚫 AVOID'}
 ${confluenceEmoji} Systems: ${agreementText} (Algo ${hybridResult.algorithmConfidence.toFixed(0)}% | NN ${(hybridResult.neuralConfidence * 100).toFixed(0)}%)
 🔭 Timeframes: ${htfVisual}  →  ${alignmentText} (Confluence: ${topDownAnalysis.confluenceScore}%)
 ${regimeEmoji} Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)}) - Master Control: ${regimeConsensus.masterControl}
 
 ━━━ 📌 TRADE SETUP ${regimeConsensus.skipTrade ? '(SKIPPED)' : ''} ━━━━━━━━━━━━━━━━━━━━━━
 
-⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
+⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟡 WATCH FOR ENTRY' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
 📍 Entry: ${tightZone}
 ${bias === 'SHORT' ? `🎯 Target: $${(low24h - range * 0.1).toFixed(decimals)}` : bias === 'LONG' ? `🎯 Target: $${(high24h + range * 0.1).toFixed(decimals)}` : ''}
 🛑 Stop: $${regimeConsensus.stopLoss.toFixed(decimals)}
