@@ -19,15 +19,44 @@ interface UsePullToRefreshReturn {
   indicatorStyle: React.CSSProperties;
 }
 
+// Minimum movement in pixels before determining scroll direction (horizontal vs vertical)
+const DIRECTION_DETECTION_THRESHOLD = 10;
+
 // Helper function to check if at the top of the scroll container
 const checkIfAtTop = (): boolean => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   return scrollTop <= 0;
 };
 
+// Helper function to check if an element or its parent has horizontal scrolling enabled
+// Uses computed styles to detect horizontal scroll capability regardless of CSS framework
+const isInHorizontalScrollArea = (element: EventTarget | null): boolean => {
+  if (!element || !(element instanceof HTMLElement)) return false;
+  
+  let current: HTMLElement | null = element;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    const overflowX = style.overflowX;
+    const hasHorizontalScroll = overflowX === 'auto' || overflowX === 'scroll';
+    const canScrollHorizontally = current.scrollWidth > current.clientWidth;
+    
+    // Check computed style - this works regardless of CSS framework (Tailwind, CSS modules, etc.)
+    if (hasHorizontalScroll && canScrollHorizontally) {
+      return true;
+    }
+    
+    current = current.parentElement;
+  }
+  return false;
+};
+
 /**
  * Hook for implementing native-style pull-to-refresh functionality.
  * Only active on native Android/PWA apps, does nothing on web.
+ * 
+ * IMPORTANT: This hook will NOT trigger pull-to-refresh when:
+ * - User is scrolling horizontally (e.g., crypto cards)
+ * - Touch started on a horizontal scroll container
  */
 export function usePullToRefresh({
   onRefresh,
@@ -43,12 +72,16 @@ export function usePullToRefresh({
 
   const containerRef = useRef<HTMLElement>(null);
   const startYRef = useRef<number>(0);
+  const startXRef = useRef<number>(0); // Track X position for horizontal detection
   const currentYRef = useRef<number>(0);
   const isAtTopRef = useRef<boolean>(true);
   // Use ref to avoid stale closure in event handlers
   const isPullingRef = useRef<boolean>(false);
   const isRefreshingRef = useRef<boolean>(false);
   const pullDistanceRef = useRef<number>(0);
+  // Track if we've determined this is a horizontal scroll gesture
+  const isHorizontalScrollRef = useRef<boolean>(false);
+  const directionDeterminedRef = useRef<boolean>(false);
 
   const canRefresh = pullDistance >= threshold;
 
@@ -91,37 +124,68 @@ export function usePullToRefresh({
     const handleTouchStart = (e: TouchEvent) => {
       if (isRefreshingRef.current) return;
 
+      // Check if touch started in a horizontal scroll area
+      if (isInHorizontalScrollArea(e.target)) {
+        isHorizontalScrollRef.current = true;
+        directionDeterminedRef.current = true;
+        return; // Don't start pull-to-refresh
+      }
+
       isAtTopRef.current = checkIfAtTop();
       if (!isAtTopRef.current) return;
 
       startYRef.current = e.touches[0].clientY;
+      startXRef.current = e.touches[0].clientX;
       currentYRef.current = startYRef.current;
       isPullingRef.current = true;
+      isHorizontalScrollRef.current = false;
+      directionDeterminedRef.current = false;
       setIsPulling(true);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (isRefreshingRef.current || !isPullingRef.current) return;
       if (!isAtTopRef.current) return;
+      
+      // If already determined to be horizontal scroll, skip
+      if (isHorizontalScrollRef.current) return;
 
+      const currentX = e.touches[0].clientX;
       currentYRef.current = e.touches[0].clientY;
-      const rawDistance = currentYRef.current - startYRef.current;
+      
+      const deltaX = Math.abs(currentX - startXRef.current);
+      const deltaY = currentYRef.current - startYRef.current;
+      const absDeltaY = Math.abs(deltaY);
+
+      // Determine scroll direction on first significant movement
+      if (!directionDeterminedRef.current && (deltaX > DIRECTION_DETECTION_THRESHOLD || absDeltaY > DIRECTION_DETECTION_THRESHOLD)) {
+        directionDeterminedRef.current = true;
+        
+        // If horizontal movement is greater than vertical, this is a horizontal scroll
+        if (deltaX > absDeltaY) {
+          isHorizontalScrollRef.current = true;
+          setPullDistance(0);
+          setIsPulling(false);
+          isPullingRef.current = false;
+          return;
+        }
+      }
 
       // Only trigger pull-to-refresh on downward swipe
-      if (rawDistance <= 0) {
+      if (deltaY <= 0) {
         setPullDistance(0);
         return;
       }
 
       // If we're not at top anymore, cancel the pull
-      if (!checkIfAtTop() && rawDistance > 0) {
+      if (!checkIfAtTop() && deltaY > 0) {
         setPullDistance(0);
         return;
       }
 
       // Apply resistance to make the pull feel natural
       const resistedDistance = Math.min(
-        rawDistance * resistance,
+        deltaY * resistance,
         maxPull
       );
 
@@ -135,6 +199,16 @@ export function usePullToRefresh({
 
     const handleTouchEnd = () => {
       if (isRefreshingRef.current) return;
+      
+      // Reset horizontal scroll tracking
+      const wasHorizontalScroll = isHorizontalScrollRef.current;
+      isHorizontalScrollRef.current = false;
+      directionDeterminedRef.current = false;
+
+      // Don't trigger refresh if this was a horizontal scroll
+      if (wasHorizontalScroll) {
+        return;
+      }
 
       const canTriggerRefresh = pullDistanceRef.current >= threshold;
       
