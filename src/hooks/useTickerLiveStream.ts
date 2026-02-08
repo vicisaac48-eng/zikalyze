@@ -2,6 +2,7 @@
 // Real-Time Live Streaming Hook for Crypto Ticker
 // Connects DIRECTLY to exchange WebSockets for instant price updates
 // Multi-exchange fallback ensures real-time data even if primary fails
+// Professional crypto spot-like update behavior with smooth interpolation
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -10,6 +11,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 const CONNECTION_TIMEOUT_MS = 8000;    // Timeout before trying fallback exchanges
 const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
 const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROFESSIONAL CRYPTO SPOT MARKET UPDATE CONFIGURATION
+// Matches standard exchange display behavior - not too fast, not aggressive
+// ═══════════════════════════════════════════════════════════════════════════
+const UPDATE_THROTTLE_MS = 1500;        // Standard crypto spot update interval (1.5s)
+const INTERPOLATION_STEPS = 8;          // Smooth transition steps for price changes
+const INTERPOLATION_INTERVAL_MS = 150;  // Time between interpolation steps (150ms * 8 = 1.2s total)
+const MAX_PRICE_CHANGE_PERCENT = 2;     // Max % change per update cycle (anti-manipulation)
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - minimum change to trigger interpolation
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -57,13 +68,29 @@ const BYBIT_TICKER_SYMBOLS: Record<string, string> = {
 
 export interface TickerPrice {
   symbol: string;
-  price: number;
+  price: number;          // Target/actual price from exchange
+  displayPrice: number;   // Smoothly interpolated display price
   change24h: number;
+  displayChange24h: number; // Smoothly interpolated 24h change
   high24h: number;
   low24h: number;
   volume: number;
   lastUpdate: number;
   source: string;
+}
+
+/**
+ * Internal type for tracking pending updates from WebSocket before throttling/interpolation.
+ * Stores raw exchange data that will be processed and smoothed before display.
+ */
+interface PendingUpdate {
+  price: number;
+  change24h: number;
+  high24h: number;
+  low24h: number;
+  volume: number;
+  source: string;
+  timestamp: number;
 }
 
 export const useTickerLiveStream = () => {
@@ -76,22 +103,167 @@ export const useTickerLiveStream = () => {
   const bybitWsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
-  // Update a single ticker price
-  const updateTicker = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
-    setTickerPrices(prev => ({
-      ...prev,
-      [symbol]: {
-        symbol,
-        price: data.price ?? prev[symbol]?.price ?? 0,
-        change24h: data.change24h ?? prev[symbol]?.change24h ?? 0,
-        high24h: data.high24h ?? prev[symbol]?.high24h ?? 0,
-        low24h: data.low24h ?? prev[symbol]?.low24h ?? 0,
-        volume: data.volume ?? prev[symbol]?.volume ?? 0,
-        lastUpdate: Date.now(),
-        source,
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFESSIONAL SMOOTH UPDATE SYSTEM
+  // Tracks pending updates and interpolation state for each symbol
+  // ═══════════════════════════════════════════════════════════════════════════
+  const pendingUpdatesRef = useRef<Record<string, PendingUpdate>>({});
+  const lastUpdateTimeRef = useRef<Record<string, number>>({});
+  const interpolationRef = useRef<Record<string, {
+    startPrice: number;
+    endPrice: number;
+    startChange: number;
+    endChange: number;
+    step: number;
+    intervalId: NodeJS.Timeout | null;
+  }>>({});
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SMOOTH PRICE INTERPOLATION
+  // Creates gradual, professional transitions between price updates
+  // ═══════════════════════════════════════════════════════════════════════════
+  const startInterpolation = useCallback((symbol: string, fromPrice: number, toPrice: number, fromChange: number, toChange: number) => {
+    // Clear any existing interpolation
+    if (interpolationRef.current[symbol]?.intervalId) {
+      clearInterval(interpolationRef.current[symbol].intervalId);
+    }
+    
+    // Initialize interpolation state
+    interpolationRef.current[symbol] = {
+      startPrice: fromPrice,
+      endPrice: toPrice,
+      startChange: fromChange,
+      endChange: toChange,
+      step: 0,
+      intervalId: null,
+    };
+    
+    // Run interpolation steps
+    const intervalId = setInterval(() => {
+      const interp = interpolationRef.current[symbol];
+      if (!interp || interp.step >= INTERPOLATION_STEPS) {
+        if (interp?.intervalId) {
+          clearInterval(interp.intervalId);
+          interp.intervalId = null; // Clear reference to prevent double-clearing
+        }
+        return;
       }
-    }));
+      
+      interp.step++;
+      const progress = interp.step / INTERPOLATION_STEPS;
+      
+      // Ease-out cubic for natural deceleration (like real market displays)
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      
+      // Calculate interpolated values
+      const interpolatedPrice = interp.startPrice + (interp.endPrice - interp.startPrice) * easedProgress;
+      const interpolatedChange = interp.startChange + (interp.endChange - interp.startChange) * easedProgress;
+      
+      setTickerPrices(prev => {
+        const current = prev[symbol];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [symbol]: {
+            ...current,
+            displayPrice: interpolatedPrice,
+            displayChange24h: interpolatedChange,
+          }
+        };
+      });
+    }, INTERPOLATION_INTERVAL_MS);
+    
+    interpolationRef.current[symbol].intervalId = intervalId;
   }, []);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // THROTTLED UPDATE PROCESSING
+  // Applies professional update rate limits matching standard crypto spots
+  // ═══════════════════════════════════════════════════════════════════════════
+  const processPendingUpdate = useCallback((symbol: string) => {
+    const pending = pendingUpdatesRef.current[symbol];
+    if (!pending) return;
+    
+    const now = Date.now();
+    const lastUpdate = lastUpdateTimeRef.current[symbol] || 0;
+    
+    // Enforce throttle - professional spot-like update timing
+    if (now - lastUpdate < UPDATE_THROTTLE_MS) {
+      return;
+    }
+    
+    lastUpdateTimeRef.current[symbol] = now;
+    
+    setTickerPrices(prev => {
+      const current = prev[symbol];
+      // Use nullish coalescing to properly handle 0 values
+      const currentPrice = current?.displayPrice ?? current?.price ?? pending.price;
+      const currentChange = current?.displayChange24h ?? current?.change24h ?? pending.change24h;
+      
+      // Validate price change isn't too aggressive (anti-manipulation)
+      let targetPrice = pending.price;
+      if (currentPrice > 0) {
+        const changePercent = Math.abs((targetPrice - currentPrice) / currentPrice) * 100;
+        if (changePercent > MAX_PRICE_CHANGE_PERCENT) {
+          // Clamp to max allowed change for smooth, non-aggressive movement
+          const direction = targetPrice > currentPrice ? 1 : -1;
+          targetPrice = currentPrice * (1 + (direction * MAX_PRICE_CHANGE_PERCENT / 100));
+        }
+      }
+      
+      // Start smooth interpolation if price changed meaningfully
+      const priceDiff = Math.abs(targetPrice - currentPrice);
+      const significantChange = currentPrice > 0 ? priceDiff / currentPrice > SIGNIFICANT_CHANGE_THRESHOLD : true;
+      
+      if (significantChange && currentPrice > 0) {
+        startInterpolation(symbol, currentPrice, targetPrice, currentChange, pending.change24h);
+      }
+      
+      return {
+        ...prev,
+        [symbol]: {
+          symbol,
+          price: pending.price,         // Store actual price
+          displayPrice: current?.displayPrice || pending.price,  // Display will interpolate
+          change24h: pending.change24h,  // Store actual change
+          displayChange24h: current?.displayChange24h || pending.change24h, // Display will interpolate
+          high24h: pending.high24h,
+          low24h: pending.low24h,
+          volume: pending.volume,
+          lastUpdate: now,
+          source: pending.source,
+        }
+      };
+    });
+    
+    // Clear processed update
+    delete pendingUpdatesRef.current[symbol];
+  }, [startInterpolation]);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // QUEUE UPDATE FOR PROCESSING
+  // Stores incoming WebSocket data and schedules processing
+  // ═══════════════════════════════════════════════════════════════════════════
+  const queueUpdate = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
+    // Store pending update (latest data wins)
+    pendingUpdatesRef.current[symbol] = {
+      price: data.price || 0,
+      change24h: data.change24h || 0,
+      high24h: data.high24h || 0,
+      low24h: data.low24h || 0,
+      volume: data.volume || 0,
+      source,
+      timestamp: Date.now(),
+    };
+    
+    // Process immediately if throttle period has passed
+    processPendingUpdate(symbol);
+  }, [processPendingUpdate]);
+  
+  // Legacy updateTicker for compatibility - now queues for smooth processing
+  const updateTicker = useCallback((symbol: string, data: Partial<TickerPrice>, source: string) => {
+    queueUpdate(symbol, data, source);
+  }, [queueUpdate]);
 
   // Connect to Binance combined stream for 9 coins
   const connectBinance = useCallback(() => {
@@ -354,10 +526,18 @@ export const useTickerLiveStream = () => {
       const binanceWs = binanceWsRef.current;
       const okxWs = okxWsRef.current;
       const bybitWs = bybitWsRef.current;
+      const interpolations = { ...interpolationRef.current };
       
       // Clear all reconnect timeouts
       Object.values(timeouts).forEach(timeout => {
         clearTimeout(timeout);
+      });
+      
+      // Clear all interpolation intervals
+      Object.values(interpolations).forEach(interp => {
+        if (interp.intervalId) {
+          clearInterval(interp.intervalId);
+        }
       });
       
       // Close all WebSocket connections

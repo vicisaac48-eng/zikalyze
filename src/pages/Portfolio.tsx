@@ -195,40 +195,40 @@ const Portfolio = () => {
           </div>
         </header>
 
-        <div className="main-content p-6 space-y-6">
+        <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="bg-card border-border">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 sm:gap-4">
+            <Card className="bg-card border-border rounded-xl sm:rounded-2xl">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 pt-4 sm:px-6 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
                   {t("portfolio.totalValue")}
                 </CardTitle>
                 <Wallet className="h-4 w-4 text-primary" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
+              <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+                <div className="text-xl font-bold text-foreground sm:text-2xl">
                   {formatPrice(totalValue)}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="bg-card border-border rounded-xl sm:rounded-2xl">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 pt-4 sm:px-6 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
                   {t("portfolio.totalCost")}
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
+              <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+                <div className="text-xl font-bold text-foreground sm:text-2xl">
                   {formatPrice(totalCost)}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="bg-card border-border rounded-xl sm:rounded-2xl">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 pt-4 sm:px-6 sm:pt-6">
+                <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">
                   {t("portfolio.totalPnL")}
                 </CardTitle>
                 {totalPnL >= 0 ? (
@@ -237,10 +237,10 @@ const Portfolio = () => {
                   <TrendingDown className="h-4 w-4 text-destructive" />
                 )}
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
+              <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+                <div className={`text-xl font-bold sm:text-2xl ${totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
                   {totalPnL >= 0 ? "+" : ""}{formatPrice(totalPnL)}
-                  <span className="ml-2 text-sm">
+                  <span className="ml-1.5 text-xs sm:ml-2 sm:text-sm">
                     ({totalPnLPercent >= 0 ? "+" : ""}{totalPnLPercent.toFixed(2)}%)
                   </span>
                 </div>
@@ -249,11 +249,11 @@ const Portfolio = () => {
           </div>
 
           {/* Holdings Table */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">{t("portfolio.yourHoldings")}</CardTitle>
+          <Card className="bg-card border-border rounded-xl sm:rounded-2xl">
+            <CardHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
+              <CardTitle className="text-base text-foreground sm:text-lg">{t("portfolio.yourHoldings")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>

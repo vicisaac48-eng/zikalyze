@@ -38,7 +38,7 @@ const Settings = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
   }, []);
 
-  // Avoid hydration mismatch
+  // Avoid hydration mismatch for theme
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -460,12 +460,15 @@ const Settings = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-4">Appearance</h3>
                   
                   <div className="space-y-4">
+                    {/* Dark Mode Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div className="flex items-center gap-3">
                         {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-warning" />}
                         <div>
                           <div className="font-medium text-foreground">Dark Mode</div>
-                          <div className="text-sm text-muted-foreground">Toggle dark/light theme</div>
+                          <div className="text-sm text-muted-foreground">
+                            {isDarkMode ? "Optimized for trading environments" : "Light theme enabled"}
+                          </div>
                         </div>
                       </div>
                       <Switch 
@@ -474,13 +477,26 @@ const Settings = () => {
                       />
                     </div>
 
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                      <div className="text-sm text-muted-foreground">
+                        {isDarkMode 
+                          ? "Dark theme reduces eye strain during extended trading sessions and matches professional trading terminal aesthetics."
+                          : "Light theme provides better readability in bright environments. Switch to dark mode for extended trading sessions."
+                        }
+                      </div>
+                    </div>
+
                     <div className="p-4 rounded-xl bg-secondary/50">
-                      <div className="font-medium text-foreground mb-3">Theme Colors</div>
+                      <div className="font-medium text-foreground mb-3">Accent Colors</div>
                       <div className="flex gap-3">
-                        <button className="w-10 h-10 rounded-full bg-primary border-2 border-primary-foreground" />
-                        <button className="w-10 h-10 rounded-full bg-chart-cyan border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-success border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-warning border-2 border-transparent hover:border-foreground/50" />
+                        <div className="w-10 h-10 rounded-full bg-primary border-2 border-primary-foreground" aria-label="Primary - Cyan" />
+                        <div className="w-10 h-10 rounded-full bg-chart-cyan border-2 border-transparent" aria-label="Chart - Cyan" />
+                        <div className="w-10 h-10 rounded-full bg-success border-2 border-transparent" aria-label="Success - Green" />
+                        <div className="w-10 h-10 rounded-full bg-warning border-2 border-transparent" aria-label="Warning - Orange" />
+                        <div className="w-10 h-10 rounded-full bg-destructive border-2 border-transparent" aria-label="Alert - Red" />
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-2">
+                        Color palette optimized for chart readability
                       </div>
                     </div>
                   </div>

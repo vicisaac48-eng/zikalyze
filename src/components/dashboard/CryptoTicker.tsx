@@ -25,8 +25,8 @@ interface CryptoTickerProps {
 
 const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoTickerProps) => {
   const { formatPrice } = useCurrency();
-  // Use dedicated live stream for real-time prices
-  const { getPrice, isConnected, sources } = useTickerLiveStream();
+  // Use dedicated live stream for real-time prices with smooth interpolation
+  const { getPrice, isConnected } = useTickerLiveStream();
   
   return (
     <div className="flex gap-2 overflow-x-auto horizontal-scroll-container pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
@@ -35,14 +35,20 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
         const liveStreamPrice = getPrice(crypto.symbol);
         const parentPrice = getPriceBySymbol(crypto.symbol);
         
-        // Use live stream price if available, else parent's price
-        const price = liveStreamPrice?.price && liveStreamPrice.price > 0
-          ? liveStreamPrice.price
-          : parentPrice?.current_price || 0;
+        // Use smoothly interpolated displayPrice for professional spot-like display
+        // Falls back to actual price if displayPrice not yet initialized
+        const price = liveStreamPrice?.displayPrice && liveStreamPrice.displayPrice > 0
+          ? liveStreamPrice.displayPrice
+          : liveStreamPrice?.price && liveStreamPrice.price > 0
+            ? liveStreamPrice.price
+            : parentPrice?.current_price || 0;
         
-        const change = liveStreamPrice?.price && liveStreamPrice.price > 0
-          ? liveStreamPrice.change24h
-          : parentPrice?.price_change_percentage_24h || 0;
+        // Use smoothly interpolated displayChange24h - synced with price for professional display
+        const change = liveStreamPrice?.displayChange24h !== undefined
+          ? liveStreamPrice.displayChange24h
+          : liveStreamPrice?.change24h !== undefined
+            ? liveStreamPrice.change24h
+            : parentPrice?.price_change_percentage_24h || 0;
         
         const isLive = liveStreamPrice?.lastUpdate && (Date.now() - liveStreamPrice.lastUpdate < 5000);
         
@@ -64,7 +70,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
               )}
               <span
                 className={cn(
-                  "text-[10px] sm:text-xs",
+                  "text-[10px] sm:text-xs transition-colors duration-300",
                   change >= 0 ? "text-success" : "text-destructive"
                 )}
               >
@@ -72,7 +78,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
               </span>
             </div>
             <span className={cn(
-              "text-sm font-semibold text-foreground transition-colors sm:text-lg",
+              "text-sm font-semibold transition-colors duration-300 sm:text-lg",
               isLive ? "text-foreground" : "text-muted-foreground"
             )}>
               {loading && !isConnected ? "..." : (price > 0 ? formatPrice(price) : "---")}
