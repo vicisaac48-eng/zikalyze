@@ -64,8 +64,8 @@ export function PullToRefresh({
       </div>
 
       {/* Content wrapper with pull transform */}
-      {/* touch-action: pan-y ensures scrolling works on Android even when transform is applied */}
-      <div style={{ ...contentStyle, touchAction: 'pan-y' }}>
+      {/* Uses pull-to-refresh-content class for Android touch-action styling (more performant than inline) */}
+      <div className="pull-to-refresh-content" style={contentStyle}>
         {children}
       </div>
 

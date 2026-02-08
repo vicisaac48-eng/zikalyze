@@ -137,23 +137,22 @@ All colors MUST be HSL.
     touch-action: pan-y;
   }
 
-  /* Android: Enable vertical scroll on all common content containers */
-  /* This ensures scrolling works when touching any element within the main content area */
+  /* Android: Enable vertical scroll on common layout containers used in dashboard */
+  /* More specific than broad selectors for better performance */
   html.android-native .space-y-3,
   html.android-native .space-y-4,
-  html.android-native .grid,
-  html.android-native .flex,
-  html.android-native p,
-  html.android-native div {
-    /* Inherit touch-action from parent - allows scrolling through nested elements */
-    touch-action: inherit;
+  html.android-native .space-y-5,
+  html.android-native .space-y-6 {
+    /* Allow vertical scrolling when touching spacing containers */
+    touch-action: pan-y;
   }
 
-  /* Android: Explicitly set touch-action on direct content wrapper in PullToRefresh */
-  /* This ensures the content area passes through touch events for scrolling */
-  html.android-native [style*="translateY"],
-  html.android-native [style*="transform"] {
+  /* Android: Enable vertical scroll on PullToRefresh content wrapper */
+  /* Uses specific class instead of expensive [style*="transform"] selector */
+  html.android-native .pull-to-refresh-content {
     touch-action: pan-y;
+    /* Enable momentum scrolling on Android WebView */
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Android: Exception for horizontal scroll areas (crypto ticker, time filters) */
