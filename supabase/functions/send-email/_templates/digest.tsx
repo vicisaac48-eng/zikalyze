@@ -266,7 +266,7 @@ const statValue = {
 };
 
 const statChangeUp = {
-  color: '#22c55e',
+  color: '#6effc0',
   fontSize: '14px',
   fontWeight: '600',
   margin: '0',
@@ -374,7 +374,7 @@ const emptyState = {
 };
 
 const emptyText = {
-  color: '#22c55e',
+  color: '#6effc0',
   fontSize: '16px',
   fontWeight: '600',
   margin: '0 0 8px 0',

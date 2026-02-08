@@ -433,7 +433,7 @@ const getUrgencyBadge = (urgency) => {
     critical: '#ef4444',
     high: '#f97316',
     medium: '#eab308',
-    low: '#22c55e'
+    low: '#6effc0'
   };
   return badges[urgency] || '#6366f1';
 };

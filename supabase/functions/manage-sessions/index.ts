@@ -107,7 +107,7 @@ const NewDeviceEmail = ({ email, device_info, ip_address, login_time }: {
             )
           ),
           React.createElement('p', { style: { color: '#9ca3af', fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px 0' }},
-            React.createElement('strong', { style: { color: '#22c55e' }}, 'Was this you?'),
+            React.createElement('strong', { style: { color: '#6effc0' }}, 'Was this you?'),
             React.createElement('br'),
             'If you just logged in from a new device, you can safely ignore this email.'
           ),

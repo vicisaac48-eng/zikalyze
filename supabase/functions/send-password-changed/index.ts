@@ -20,7 +20,7 @@ const PasswordChangedEmail = ({ email, changed_at, ip_address }: { email: string
     React.createElement('body', { style: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', backgroundColor: '#0a0a0f', margin: 0, padding: '40px 20px' } },
       React.createElement('div', { style: { maxWidth: '600px', margin: '0 auto', backgroundColor: '#12121a', borderRadius: '16px', border: '1px solid #1e1e2e', overflow: 'hidden' } },
         // Header
-        React.createElement('div', { style: { background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', padding: '30px', textAlign: 'center' } },
+        React.createElement('div', { style: { background: 'linear-gradient(135deg, #6effc0 0%, #3de6a0 100%)', padding: '30px', textAlign: 'center' } },
           React.createElement('div', { style: { display: 'inline-block', width: '60px', height: '60px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', lineHeight: '60px', fontSize: '28px' } }, '🔐'),
           React.createElement('h1', { style: { color: '#ffffff', fontSize: '24px', fontWeight: 'bold', margin: '20px 0 0 0' } }, 'Password Changed Successfully')
         ),
@@ -31,7 +31,7 @@ const PasswordChangedEmail = ({ email, changed_at, ip_address }: { email: string
           ),
           // Details Box
           React.createElement('div', { style: { backgroundColor: '#1c1c2e', borderRadius: '12px', padding: '20px', border: '1px solid #2a2a3e', marginBottom: '20px' } },
-            React.createElement('h3', { style: { color: '#22c55e', fontSize: '14px', fontWeight: '600', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '0.5px' } }, 'Change Details'),
+            React.createElement('h3', { style: { color: '#6effc0', fontSize: '14px', fontWeight: '600', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '0.5px' } }, 'Change Details'),
             React.createElement('table', { style: { width: '100%', borderCollapse: 'collapse' } },
               React.createElement('tbody', null,
                 React.createElement('tr', null,

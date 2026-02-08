@@ -90,7 +90,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ email }) => {
                   </tr>
                   <tr>
                     <td style={{ color: '#9ca3af', padding: '8px 0', fontSize: '14px' }}>Status:</td>
-                    <td style={{ color: '#22c55e', padding: '8px 0', fontSize: '14px', textAlign: 'right' as const }}>Active ✓</td>
+                    <td style={{ color: '#6effc0', padding: '8px 0', fontSize: '14px', textAlign: 'right' as const }}>Active ✓</td>
                   </tr>
                 </tbody>
               </table>

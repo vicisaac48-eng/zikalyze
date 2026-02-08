@@ -120,7 +120,7 @@ export const NewDeviceEmail: React.FC<NewDeviceEmailProps> = ({
               lineHeight: '1.6',
               margin: '0 0 20px 0',
             }}>
-              <strong style={{ color: '#22c55e' }}>Was this you?</strong><br />
+              <strong style={{ color: '#6effc0' }}>Was this you?</strong><br />
               If you just logged in from a new device, you can safely ignore this email.
             </p>
 
