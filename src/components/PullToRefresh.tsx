@@ -64,7 +64,8 @@ export function PullToRefresh({
       </div>
 
       {/* Content wrapper with pull transform */}
-      <div style={contentStyle}>
+      {/* Uses pull-to-refresh-content class for Android touch-action styling (more performant than inline) */}
+      <div className="pull-to-refresh-content" style={contentStyle}>
         {children}
       </div>
 
