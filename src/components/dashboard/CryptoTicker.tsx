@@ -34,10 +34,10 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const lastFlashTimeRef = useRef<Record<string, number>>({});
   const [priceFlash, setPriceFlash] = useState<Record<string, "up" | "down" | null>>({});
   
-  // Minimum interval between flashes to prevent visual jitter (5 seconds)
-  const MIN_FLASH_INTERVAL_MS = 5000;
-  // Minimum price change percentage to trigger flash (0.1%)
-  const MIN_PRICE_CHANGE_PERCENT = 0.1;
+  // Minimum interval between flashes for responsive trading feel (2 seconds)
+  const MIN_FLASH_INTERVAL_MS = 2000;
+  // Minimum price change percentage to trigger flash (0.03% - balanced sensitivity)
+  const MIN_PRICE_CHANGE_PERCENT = 0.03;
   
   // Update flash animation when prices change
   useEffect(() => {
