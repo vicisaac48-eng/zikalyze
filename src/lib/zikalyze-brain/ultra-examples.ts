@@ -263,8 +263,8 @@ export class UltraLearningTracker {
  * Helper to get signal color class for styling
  */
 export function getUltraSignalColor(signal: UltraSignal['signal']): string {
-  if (signal === 'STRONG_BUY') return 'text-green-600';
-  if (signal === 'BUY') return 'text-green-500';
+  if (signal === 'STRONG_BUY') return 'text-primary';
+  if (signal === 'BUY') return 'text-primary/80';
   if (signal === 'STRONG_SELL') return 'text-red-600';
   if (signal === 'SELL') return 'text-red-500';
   return 'text-gray-500';
