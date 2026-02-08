@@ -114,7 +114,7 @@ export function NetworkStatusBanner({
             </div>
             <div>
               <p className="font-medium text-sm">
-                {isReconnecting ? 'Reconnecting...' : 'You\'re offline'}
+                {isReconnecting ? 'Reconnecting...' : "You're offline"}
               </p>
               <p className="text-xs opacity-90">
                 {offlineDuration ? (

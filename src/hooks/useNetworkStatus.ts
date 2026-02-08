@@ -263,9 +263,26 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}): Network
   // Track reconnection attempts while offline
   useEffect(() => {
     if (!isOnline && config.enableReconnectionTracking) {
-      // Check periodically if we're back online
-      reconnectCheckIntervalRef.current = setInterval(() => {
-        if (!navigator.onLine) {
+      // Periodically attempt to verify network connectivity
+      reconnectCheckIntervalRef.current = setInterval(async () => {
+        // Only increment attempt counter when we actually try to reconnect
+        // This represents a real reconnection attempt, not just a check
+        try {
+          // Make a lightweight fetch to check connectivity
+          // Using a common endpoint that's likely to be cached or quick
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3000);
+          
+          await fetch('/favicon.ico', {
+            method: 'HEAD',
+            cache: 'no-store',
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeout);
+          // If we get here, we're back online - the online event should fire
+        } catch {
+          // Request failed - increment attempt counter only on actual failure
           setReconnectAttempts(prev => prev + 1);
         }
       }, 5000);
