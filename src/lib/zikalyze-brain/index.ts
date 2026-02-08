@@ -19,6 +19,7 @@ import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimato
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus, TopDownAnalysis, RegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation, HybridConfirmationResult } from './neural-engine';
 import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
+import { validatePriceRange } from './math-utils';
 
 // Re-export chart API for direct access to chart data
 export * from './chart-api';
@@ -258,8 +259,8 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     crypto,
     price,
     change,
-    high24h = price * 1.02,
-    low24h = price * 0.98,
+    high24h: inputHigh24h = price * 1.02,
+    low24h: inputLow24h = price * 0.98,
     volume = 0,
     language = 'en',
     isLiveData = false,
@@ -269,6 +270,13 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
     chartTrendData, // Real-time 24h chart data
     multiTimeframeData // Multi-timeframe analysis (15m, 1h, 4h, 1d)
   } = input;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 DATA ACCURACY VALIDATION — Ensure 24h range is consistent with current price
+  // Uses shared utility to maintain consistency across all analysis functions
+  // ═══════════════════════════════════════════════════════════════════════════
+  const validatedRange = validatePriceRange(price, inputHigh24h, inputLow24h, 'AI Brain');
+  const { high24h, low24h } = validatedRange;
 
   const t = getTranslations(language);
   const trendEmoji = change >= 0 ? '📈' : '📉';

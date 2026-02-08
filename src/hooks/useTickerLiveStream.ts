@@ -7,10 +7,13 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// Connection configuration
-const CONNECTION_TIMEOUT_MS = 8000;    // Timeout before trying fallback exchanges
-const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
-const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
+// Connection configuration - optimized for reliable real-time updates
+const CONNECTION_TIMEOUT_MS = 5000;       // Reduced timeout for faster fallback
+const RECONNECT_BASE_DELAY_MS = 1000;     // Faster initial reconnection
+const RECONNECT_MAX_DELAY_MS = 30000;     // Maximum delay between reconnects
+const RECONNECT_JITTER_MS = 1000;         // Random jitter added to reconnection delay
+const MAX_RECONNECT_ATTEMPTS = 10;        // Reset backoff after this many attempts
+const HEALTH_CHECK_INTERVAL_MS = 30000;   // Check connection health every 30 seconds
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM SMOOTH ANIMATION CONFIGURATION
@@ -102,6 +105,30 @@ export const useTickerLiveStream = () => {
   const okxWsRef = useRef<WebSocket | null>(null);
   const bybitWsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const reconnectAttemptsRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
+  const lastMessageTimeRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
+  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONNECTION HEALTH — Exponential backoff with jitter
+  // ═══════════════════════════════════════════════════════════════════════════
+  const getReconnectDelay = useCallback((exchange: string): number => {
+    const attempts = reconnectAttemptsRef.current[exchange] || 0;
+    // Exponential backoff: 1s, 2s, 4s, 8s... up to max
+    const baseDelay = Math.min(RECONNECT_BASE_DELAY_MS * Math.pow(2, attempts), RECONNECT_MAX_DELAY_MS);
+    const jitter = Math.random() * RECONNECT_JITTER_MS;
+    return baseDelay + jitter;
+  }, []);
+  
+  const resetReconnectAttempts = useCallback((exchange: string) => {
+    reconnectAttemptsRef.current[exchange] = 0;
+  }, []);
+  
+  const incrementReconnectAttempts = useCallback((exchange: string) => {
+    const current = reconnectAttemptsRef.current[exchange] || 0;
+    // Reset after max attempts to allow recovery
+    reconnectAttemptsRef.current[exchange] = current >= MAX_RECONNECT_ATTEMPTS ? 0 : current + 1;
+  }, []);
   
   // ═══════════════════════════════════════════════════════════════════════════
   // STABLE UPDATE SYSTEM
@@ -291,12 +318,15 @@ export const useTickerLiveStream = () => {
       
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
+        resetReconnectAttempts('binance');
+        lastMessageTimeRef.current.binance = Date.now();
         console.log(`[Ticker LiveStream] ✓ Binance connected - LIVE streaming active`);
         setIsConnected(true);
         setSources(prev => prev.includes("Binance") ? prev : [...prev, "Binance"]);
       };
       
       ws.onmessage = (event) => {
+        lastMessageTimeRef.current.binance = Date.now();
         try {
           const message = JSON.parse(event.data);
           if (message.data) {
@@ -343,11 +373,12 @@ export const useTickerLiveStream = () => {
           return newSources;
         });
         
-        // Reconnect after delay with jitter
+        // Reconnect with exponential backoff
         if (reconnectTimeoutsRef.current.binance) {
           clearTimeout(reconnectTimeoutsRef.current.binance);
         }
-        const delay = RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MS;
+        incrementReconnectAttempts('binance');
+        const delay = getReconnectDelay('binance');
         console.log(`[Ticker LiveStream] Binance disconnected (${e.code}), reconnecting in ${Math.round(delay)}ms...`);
         reconnectTimeoutsRef.current.binance = setTimeout(connectBinance, delay);
       };
@@ -367,6 +398,8 @@ export const useTickerLiveStream = () => {
       const ws = new WebSocket("wss://ws.okx.com:8443/ws/v5/public");
       
       ws.onopen = () => {
+        resetReconnectAttempts('okx');
+        lastMessageTimeRef.current.okx = Date.now();
         console.log(`[Ticker LiveStream] ✓ OKX connected - real-time streaming active`);
         setSources(prev => prev.includes("OKX") ? prev : [...prev, "OKX"]);
         setIsConnected(true);
@@ -382,6 +415,7 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onmessage = (event) => {
+        lastMessageTimeRef.current.okx = Date.now();
         try {
           const message = JSON.parse(event.data);
           if (message.arg?.channel === "tickers" && message.data?.[0]) {
@@ -424,18 +458,21 @@ export const useTickerLiveStream = () => {
           setIsConnected(newSources.length > 0);
           return newSources;
         });
-        // Reconnect after delay
+        // Reconnect with exponential backoff
         if (reconnectTimeoutsRef.current.okx) {
           clearTimeout(reconnectTimeoutsRef.current.okx);
         }
-        reconnectTimeoutsRef.current.okx = setTimeout(connectOKX, 3000);
+        incrementReconnectAttempts('okx');
+        const delay = getReconnectDelay('okx');
+        console.log(`[Ticker LiveStream] OKX disconnected, reconnecting in ${Math.round(delay)}ms...`);
+        reconnectTimeoutsRef.current.okx = setTimeout(connectOKX, delay);
       };
       
       okxWsRef.current = ws;
     } catch (err) {
       console.log(`[Ticker LiveStream] OKX connection failed:`, err);
     }
-  }, [updateTicker]);
+  }, [updateTicker, resetReconnectAttempts, incrementReconnectAttempts, getReconnectDelay]);
 
   // Connect to Bybit - Additional fallback exchange
   const connectBybit = useCallback(() => {
@@ -446,6 +483,8 @@ export const useTickerLiveStream = () => {
       const ws = new WebSocket("wss://stream.bybit.com/v5/public/spot");
       
       ws.onopen = () => {
+        resetReconnectAttempts('bybit');
+        lastMessageTimeRef.current.bybit = Date.now();
         console.log(`[Ticker LiveStream] ✓ Bybit connected - real-time streaming active`);
         setSources(prev => prev.includes("Bybit") ? prev : [...prev, "Bybit"]);
         setIsConnected(true);
@@ -456,6 +495,7 @@ export const useTickerLiveStream = () => {
       };
       
       ws.onmessage = (event) => {
+        lastMessageTimeRef.current.bybit = Date.now();
         try {
           const data = JSON.parse(event.data);
           if (data.topic?.startsWith('tickers.') && data.data) {
@@ -497,18 +537,74 @@ export const useTickerLiveStream = () => {
           setIsConnected(newSources.length > 0);
           return newSources;
         });
-        // Reconnect after delay
+        // Reconnect with exponential backoff
         if (reconnectTimeoutsRef.current.bybit) {
           clearTimeout(reconnectTimeoutsRef.current.bybit);
         }
-        reconnectTimeoutsRef.current.bybit = setTimeout(connectBybit, 3000);
+        incrementReconnectAttempts('bybit');
+        const delay = getReconnectDelay('bybit');
+        console.log(`[Ticker LiveStream] Bybit disconnected, reconnecting in ${Math.round(delay)}ms...`);
+        reconnectTimeoutsRef.current.bybit = setTimeout(connectBybit, delay);
       };
       
       bybitWsRef.current = ws;
     } catch (err) {
       console.log(`[Ticker LiveStream] Bybit connection failed:`, err);
     }
-  }, [updateTicker]);
+  }, [updateTicker, resetReconnectAttempts, incrementReconnectAttempts, getReconnectDelay]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONNECTION HEALTH CHECK — Detect stale connections and reconnect proactively
+  // ═══════════════════════════════════════════════════════════════════════════
+  const checkConnectionHealth = useCallback(() => {
+    const now = Date.now();
+    // Connection is stale if no data received for 2x health check interval
+    const staleThreshold = HEALTH_CHECK_INTERVAL_MS * 2;
+    
+    // Check Binance
+    if (binanceWsRef.current?.readyState === WebSocket.OPEN) {
+      const lastMessage = lastMessageTimeRef.current.binance;
+      if (lastMessage && now - lastMessage > staleThreshold) {
+        console.log(`[Ticker LiveStream] Binance connection stale (${Math.round((now - lastMessage) / 1000)}s without data), reconnecting...`);
+        binanceWsRef.current.close();
+      }
+    }
+    
+    // Check OKX
+    if (okxWsRef.current?.readyState === WebSocket.OPEN) {
+      const lastMessage = lastMessageTimeRef.current.okx;
+      if (lastMessage && now - lastMessage > staleThreshold) {
+        console.log(`[Ticker LiveStream] OKX connection stale, reconnecting...`);
+        okxWsRef.current.close();
+      }
+    }
+    
+    // Check Bybit
+    if (bybitWsRef.current?.readyState === WebSocket.OPEN) {
+      const lastMessage = lastMessageTimeRef.current.bybit;
+      if (lastMessage && now - lastMessage > staleThreshold) {
+        console.log(`[Ticker LiveStream] Bybit connection stale, reconnecting...`);
+        bybitWsRef.current.close();
+      }
+    }
+    
+    // If no connections are active, try to reconnect all
+    if (!binanceWsRef.current || binanceWsRef.current.readyState !== WebSocket.OPEN) {
+      if (!reconnectTimeoutsRef.current.binance) {
+        connectBinance();
+      }
+    }
+    if (!okxWsRef.current || okxWsRef.current.readyState !== WebSocket.OPEN) {
+      if (!reconnectTimeoutsRef.current.okx) {
+        connectOKX();
+      }
+    }
+    if (!bybitWsRef.current || bybitWsRef.current.readyState !== WebSocket.OPEN) {
+      if (!reconnectTimeoutsRef.current.bybit) {
+        connectBybit();
+      }
+    }
+  }, [connectBinance, connectOKX, connectBybit]);
 
   // Initialize connections - connect to multiple exchanges for redundancy
   useEffect(() => {
@@ -520,6 +616,9 @@ export const useTickerLiveStream = () => {
     setTimeout(connectOKX, 300);  // Slight delay for OKX
     setTimeout(connectBybit, 600); // Slight delay for Bybit
     
+    // Start health check interval
+    healthCheckIntervalRef.current = setInterval(checkConnectionHealth, HEALTH_CHECK_INTERVAL_MS);
+    
     // Cleanup on unmount
     return () => {
       // Copy ref values to local variables for cleanup
@@ -528,6 +627,12 @@ export const useTickerLiveStream = () => {
       const okxWs = okxWsRef.current;
       const bybitWs = bybitWsRef.current;
       const interpolations = { ...interpolationRef.current };
+      const healthCheck = healthCheckIntervalRef.current;
+      
+      // Clear health check interval
+      if (healthCheck) {
+        clearInterval(healthCheck);
+      }
       
       // Clear all reconnect timeouts
       Object.values(timeouts).forEach(timeout => {
@@ -552,7 +657,7 @@ export const useTickerLiveStream = () => {
         bybitWs.close();
       }
     };
-  }, [connectBinance, connectOKX, connectBybit]);
+  }, [connectBinance, connectOKX, connectBybit, checkConnectionHealth]);
 
   // Helper to get price for a symbol
   const getPrice = useCallback((symbol: string): TickerPrice | undefined => {

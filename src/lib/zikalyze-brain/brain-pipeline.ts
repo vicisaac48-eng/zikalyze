@@ -32,6 +32,7 @@ import {
 import { computeSelfAttention, softmax, relu, crossEntropyLoss } from './technical-analysis';
 import { estimateOnChainMetrics } from './on-chain-estimator';
 import { performICTSMCAnalysis, ICTSMCAnalysis, ICTLearner } from './ict-smc-analysis';
+import { validatePriceRange } from './math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📊 TYPES FOR BRAIN PIPELINE
@@ -3032,8 +3033,15 @@ export class CombinedBrain extends UnifiedBrain {
     // ═══════════════════════════════════════════════════════════════════════
     console.log('[CombinedBrain] Step 4: Generating precision entry zones...');
     
-    const high24h = input.high24h || input.price * 1.02;
-    const low24h = input.low24h || input.price * 0.98;
+    // Validate 24h range using shared utility for consistency
+    const validatedRange = validatePriceRange(
+      input.price, 
+      input.high24h || input.price * 1.02, 
+      input.low24h || input.price * 0.98, 
+      'CombinedBrain'
+    );
+    const { high24h, low24h } = validatedRange;
+    
     const volume = input.volume || 0;
     
     const volumeSpike = detectVolumeSpike({
