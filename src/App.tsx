@@ -37,12 +37,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// Seamless loading fallback with Zikalyze logo - no flash
+// Seamless loading fallback with Zikalyze logo - theme-aware background
 const PageLoader = () => (
-  <div 
-    className="fixed inset-0 flex items-center justify-center"
-    style={{ backgroundColor: '#0a0f1a' }}
-  >
+  <div className="fixed inset-0 flex items-center justify-center bg-background">
     <img 
       src={zikalyzeLogo} 
       alt="Loading"
@@ -53,12 +50,9 @@ const PageLoader = () => (
   </div>
 );
 
-// App-level error fallback
+// App-level error fallback - theme-aware background
 const AppErrorFallback = () => (
-  <div 
-    className="fixed inset-0 flex flex-col items-center justify-center gap-4"
-    style={{ backgroundColor: '#0a0f1a' }}
-  >
+  <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-background">
     <img 
       src={zikalyzeLogo} 
       alt="Zikalyze"
@@ -66,13 +60,13 @@ const AppErrorFallback = () => (
       height={64}
       className="h-16 w-16 opacity-80"
     />
-    <h1 className="text-xl font-bold text-white">Something went wrong</h1>
-    <p className="text-gray-400 text-sm text-center max-w-md px-4">
+    <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
+    <p className="text-muted-foreground text-sm text-center max-w-md px-4">
       The application encountered an unexpected error. Please refresh the page to continue.
     </p>
     <button
       onClick={() => window.location.reload()}
-      className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
+      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
     >
       Refresh Page
     </button>
