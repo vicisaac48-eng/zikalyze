@@ -156,9 +156,15 @@ All colors MUST be HSL.
 
   /* Android: Exception for horizontal scroll areas (crypto ticker, time filters) */
   /* These need both pan-x and pan-y to allow horizontal scrolling */
-  html.android-native .overflow-x-auto {
-    touch-action: pan-x pan-y;
+  /* Must use !important to override the pan-y !important on html.android-native */
+  html.android-native .overflow-x-auto,
+  html.android-native .horizontal-scroll-container {
+    touch-action: pan-x pan-y !important;
     -webkit-overflow-scrolling: touch;
+    /* Ensure the scrollable container has proper overflow behavior */
+    overflow-x: auto !important;
+    /* Prevent vertical scroll interference in horizontal scroll areas */
+    overscroll-behavior-x: contain;
   }
 
   body {

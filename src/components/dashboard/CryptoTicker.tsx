@@ -29,7 +29,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const { getPrice, isConnected, sources } = useTickerLiveStream();
   
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
+    <div className="flex gap-2 overflow-x-auto horizontal-scroll-container pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
       {cryptoMeta.map((crypto) => {
         // Priority: Live stream > CryptoPrice from parent
         const liveStreamPrice = getPrice(crypto.symbol);
