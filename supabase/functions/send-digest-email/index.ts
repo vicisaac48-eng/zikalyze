@@ -76,7 +76,7 @@ const DigestEmail = ({ frequency, alerts, marketSummary, dashboardUrl }: {
                   React.createElement(Text, { style: { color: '#a1a1aa', fontSize: '13px', margin: '8px 0' } }, a.body)
                 )
               )
-            : React.createElement(Text, { style: { color: '#22c55e' } }, '✅ No alerts triggered during this period.')
+            : React.createElement(Text, { style: { color: '#6effc0' } }, '✅ No alerts triggered during this period.')
         ),
         React.createElement(Section, { style: { textAlign: 'center', padding: '20px' } },
           React.createElement(Link, { href: dashboardUrl, style: { backgroundColor: '#a855f7', color: '#fff', padding: '14px 32px', borderRadius: '8px', textDecoration: 'none' } }, 'View Dashboard →')

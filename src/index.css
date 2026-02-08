@@ -8,6 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   /* Light mode theme */
+  :root.light,
   .light {
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
@@ -18,7 +19,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 168 76% 40%;
+    --primary: 154 77% 57%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -35,25 +36,25 @@ All colors MUST be HSL.
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 168 76% 40%;
+    --ring: 154 77% 57%;
 
     --radius: 0.5rem;
     
-    --cyan: 168 76% 40%;
+    --cyan: 154 77% 57%;
     --cyan-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
+    --success: 154 77% 57%;
     --warning: 38 92% 50%;
-    --chart-cyan: 168 76% 40%;
+    --chart-cyan: 154 77% 57%;
     --chart-purple: 267 84% 60%;
     
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 168 76% 40%;
+    --sidebar-primary: 154 77% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 168 76% 40%;
+    --sidebar-ring: 154 77% 57%;
     
     /* Header height - tight fit, content immediately below header */
     --header-height-mobile: 2.25rem;
@@ -62,6 +63,7 @@ All colors MUST be HSL.
 
   /* Dark mode is the default theme for Zikalyze */
   :root,
+  :root.dark,
   .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
@@ -72,7 +74,7 @@ All colors MUST be HSL.
     --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 168 76% 73%;
+    --primary: 154 100% 72%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 222 47% 12%;
@@ -89,25 +91,25 @@ All colors MUST be HSL.
 
     --border: 222 47% 15%;
     --input: 222 47% 15%;
-    --ring: 168 76% 73%;
+    --ring: 154 100% 72%;
 
     --radius: 0.5rem;
     
-    --cyan: 168 76% 73%;
+    --cyan: 154 100% 72%;
     --cyan-foreground: 222 47% 6%;
-    --success: 142 76% 46%;
+    --success: 154 77% 57%;
     --warning: 38 92% 50%;
-    --chart-cyan: 168 76% 73%;
+    --chart-cyan: 154 100% 72%;
     --chart-purple: 267 84% 81%;
     
     --sidebar-background: 222 47% 6%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 168 76% 73%;
+    --sidebar-primary: 154 100% 72%;
     --sidebar-primary-foreground: 222 47% 6%;
     --sidebar-accent: 222 47% 12%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 222 47% 15%;
-    --sidebar-ring: 168 76% 73%;
+    --sidebar-ring: 154 100% 72%;
     
     /* Header height - tight fit, content immediately below header */
     --header-height-mobile: 2.25rem;
@@ -348,8 +350,8 @@ All colors MUST be HSL.
 
   /* Glow effects - Clean and professional */
   .glow-cyan {
-    box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
-    -webkit-box-shadow: 0 0 20px hsl(168 76% 73% / 0.15);
+    box-shadow: 0 0 20px hsl(154 100% 72% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(154 100% 72% / 0.15);
   }
   
   .glow-purple {
@@ -358,8 +360,8 @@ All colors MUST be HSL.
   }
 
   .glow-success {
-    box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
-    -webkit-box-shadow: 0 0 20px hsl(142 76% 46% / 0.15);
+    box-shadow: 0 0 20px hsl(154 77% 57% / 0.15);
+    -webkit-box-shadow: 0 0 20px hsl(154 77% 57% / 0.15);
   }
 
   .glow-warning {
@@ -369,8 +371,8 @@ All colors MUST be HSL.
   
   /* Gradient utilities - Cross-browser compatible */
   .gradient-text {
-    background: -webkit-linear-gradient(left, hsl(168, 76%, 73%), hsl(267, 84%, 81%));
-    background: linear-gradient(to right, hsl(168, 76%, 73%), hsl(267, 84%, 81%));
+    background: -webkit-linear-gradient(left, hsl(154, 100%, 72%), hsl(267, 84%, 81%));
+    background: linear-gradient(to right, hsl(154, 100%, 72%), hsl(267, 84%, 81%));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -378,7 +380,7 @@ All colors MUST be HSL.
   }
   
   .gradient-border {
-    border-image: linear-gradient(135deg, hsl(168 76% 73%), hsl(267 84% 81%)) 1;
+    border-image: linear-gradient(135deg, hsl(154 100% 72%), hsl(267 84% 81%)) 1;
   }
 
   .gradient-bg {
@@ -650,8 +652,8 @@ All colors MUST be HSL.
     }
     
     .gradient-text {
-      -webkit-text-fill-color: hsl(168 76% 73%);
-      color: hsl(168 76% 73%);
+      -webkit-text-fill-color: hsl(154 100% 72%);
+      color: hsl(154 100% 72%);
     }
   }
 

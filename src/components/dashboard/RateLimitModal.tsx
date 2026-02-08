@@ -89,8 +89,8 @@ export function RateLimitModal({
           </h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             <li className="flex items-center gap-2.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10">
-                <Brain className="h-3.5 w-3.5 text-green-500" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                <Brain className="h-3.5 w-3.5 text-primary" />
               </div>
               <span>{t("rateLimit.benefits.unlimited", "Unlimited AI analyses")}</span>
             </li>

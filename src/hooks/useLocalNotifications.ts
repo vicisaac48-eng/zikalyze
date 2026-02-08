@@ -19,6 +19,9 @@ interface NotificationPayload {
 // Android notification icon
 const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
 
+// Android notification channel ID (required for Android 8.0+)
+const ANDROID_CHANNEL_ID = 'zikalyze-alerts';
+
 /**
  * Hook for showing local notifications on native Android/iOS platforms.
  * Uses Capacitor's LocalNotifications plugin which works without Firebase.
@@ -33,6 +36,20 @@ export function useLocalNotifications() {
     const init = async () => {
       if (isNativePlatform()) {
         try {
+          // Create notification channel first (required for Android 8.0+)
+          await LocalNotifications.createChannel({
+            id: ANDROID_CHANNEL_ID,
+            name: 'Zikalyze Alerts',
+            description: 'Price alerts, market movements, and trading notifications',
+            importance: 5, // IMPORTANCE_HIGH - shows as heads-up notification
+            visibility: 1, // VISIBILITY_PUBLIC
+            sound: 'default',
+            vibration: true,
+            lights: true,
+            lightColor: '#6effc0'
+          });
+          console.log('[LocalNotifications] Channel created');
+          
           // Check current permission status
           const { display } = await LocalNotifications.checkPermissions();
           setHasPermission(display === 'granted');
@@ -116,6 +133,8 @@ export function useLocalNotifications() {
           sound: payload.sound || 'default',
           smallIcon: payload.smallIcon || ANDROID_NOTIFICATION_ICON,
           largeIcon: payload.largeIcon,
+          // CRITICAL: channelId is REQUIRED for Android 8.0+ (API 26+)
+          channelId: ANDROID_CHANNEL_ID,
           extra: payload.data,
           // Show immediately
           schedule: { at: new Date(Date.now() + IMMEDIATE_NOTIFICATION_DELAY_MS) },

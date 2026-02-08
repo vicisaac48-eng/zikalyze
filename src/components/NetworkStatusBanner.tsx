@@ -183,7 +183,7 @@ export function NetworkStatusBanner({
     return (
       <div
         className={cn(
-          'fixed left-0 right-0 z-50 p-3 bg-green-500/95 text-white shadow-lg backdrop-blur-sm transition-all duration-300',
+          'fixed left-0 right-0 z-50 p-3 bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm transition-all duration-300',
           position === 'top' ? 'top-0' : 'bottom-0',
           className
         )}
@@ -238,7 +238,7 @@ export function NetworkStatusIndicator({ className }: { className?: string }) {
   // Online with good connection - show subtle indicator
   return (
     <div 
-      className={cn('flex items-center gap-1 text-green-500', className)}
+      className={cn('flex items-center gap-1 text-primary', className)}
       title="Connected"
     >
       <Wifi className="h-4 w-4" />

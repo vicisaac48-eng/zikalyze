@@ -34,7 +34,7 @@ export const PasswordChangedEmail: React.FC<PasswordChangedEmailProps> = ({
         }}>
           {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+            background: 'linear-gradient(135deg, #6effc0 0%, #3de6a0 100%)',
             padding: '30px',
             textAlign: 'center' as const,
           }}>
@@ -79,7 +79,7 @@ export const PasswordChangedEmail: React.FC<PasswordChangedEmailProps> = ({
               marginBottom: '20px',
             }}>
               <h3 style={{
-                color: '#22c55e',
+                color: '#6effc0',
                 fontSize: '14px',
                 fontWeight: '600',
                 margin: '0 0 15px 0',

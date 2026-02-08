@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       subject: '✅ Zikalyze Email Test Successful!',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #10b981;">🎉 Email Test Successful!</h1>
+          <h1 style="color: #3de6a0;">🎉 Email Test Successful!</h1>
           <p style="color: #374151; font-size: 16px;">
             Your Resend API integration is working correctly.
           </p>

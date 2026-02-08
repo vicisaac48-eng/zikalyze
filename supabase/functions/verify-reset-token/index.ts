@@ -41,7 +41,7 @@ function generatePasswordChangedEmailHTML(email: string, changedAt: string, ipAd
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0a0a0f; margin: 0; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #12121a; border-radius: 16px; border: 1px solid #1e1e2e; overflow: hidden;">
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 30px; text-align: center;">
+    <div style="background: linear-gradient(135deg, #6effc0 0%, #3de6a0 100%); padding: 30px; text-align: center;">
       <div style="display: inline-block; width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 12px; line-height: 60px; font-size: 28px;">🔐</div>
       <h1 style="color: #ffffff; font-size: 24px; font-weight: bold; margin: 20px 0 0 0;">Password Changed Successfully</h1>
     </div>
@@ -54,7 +54,7 @@ function generatePasswordChangedEmailHTML(email: string, changedAt: string, ipAd
 
       <!-- Details Box -->
       <div style="background-color: #1c1c2e; border-radius: 12px; padding: 20px; border: 1px solid #2a2a3e; margin-bottom: 20px;">
-        <h3 style="color: #22c55e; font-size: 14px; font-weight: 600; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">Change Details</h3>
+        <h3 style="color: #6effc0; font-size: 14px; font-weight: 600; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">Change Details</h3>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="color: #9ca3af; padding: 8px 0; font-size: 14px;">Account:</td>
