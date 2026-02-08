@@ -53,7 +53,7 @@ export const PWAInstallBanner = () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [isNativeApp]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;

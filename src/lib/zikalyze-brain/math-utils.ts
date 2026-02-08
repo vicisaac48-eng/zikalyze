@@ -99,7 +99,7 @@ export function kurtosis(values: number[]): number {
  * @param name Optional name for error message
  * @returns true if valid, false otherwise
  */
-export function validateArrayLength(arr: any[], minLength: number, name: string = 'array'): boolean {
+export function validateArrayLength(arr: unknown[], minLength: number, name: string = 'array'): boolean {
   if (!arr || arr.length < minLength) {
     console.warn(`[Math Utils] ${name} length ${arr?.length || 0} is below minimum ${minLength}`);
     return false;
