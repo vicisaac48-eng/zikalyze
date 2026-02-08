@@ -78,6 +78,88 @@ export interface ChartAnalysisResult {
 // NOTE: Core indicators (EMA, RSI, SMA, etc.) now imported from shared-indicators.ts
 // This section contains chart-specific helper functions only
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🛡️ OHLC VALIDATION — Ensures candle data integrity
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Validation thresholds
+// 50% gap is considered anomalous because normal candles rarely gap more than 10-20%
+// even during volatile periods. 50%+ suggests data corruption or extreme black swan events.
+const EXTREME_GAP_THRESHOLD_PERCENT = 50;
+
+/**
+ * Validate a single OHLC candle for data integrity
+ * Returns true if valid, false if invalid
+ */
+function isValidCandle(candle: CandleData): boolean {
+  const { open, high, low, close, volume } = candle;
+  
+  // Check for NaN/undefined/null values
+  if (!isFinite(open) || !isFinite(high) || !isFinite(low) || !isFinite(close)) {
+    return false;
+  }
+  
+  // Check for negative prices
+  if (open <= 0 || high <= 0 || low <= 0 || close <= 0) {
+    return false;
+  }
+  
+  // OHLC relationship validation:
+  // High must be >= all other prices
+  // Low must be <= all other prices
+  if (high < open || high < close || high < low) {
+    return false;
+  }
+  if (low > open || low > close || low > high) {
+    return false;
+  }
+  
+  // Volume should be non-negative (can be 0 for low activity periods)
+  if (!isFinite(volume) || volume < 0) {
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Validate and filter candles, removing invalid ones
+ * Also detects anomalous price movements
+ */
+function validateAndFilterCandles(candles: CandleData[], symbol: string): CandleData[] {
+  const validCandles: CandleData[] = [];
+  let invalidCount = 0;
+  
+  for (let i = 0; i < candles.length; i++) {
+    const candle = candles[i];
+    
+    if (!isValidCandle(candle)) {
+      invalidCount++;
+      console.warn(`[ChartAPI] ${symbol}: Invalid candle at index ${i} — high=${candle.high}, low=${candle.low}, open=${candle.open}, close=${candle.close}`);
+      continue;
+    }
+    
+    // Check for extreme price gaps
+    if (validCandles.length > 0) {
+      const prevClose = validCandles[validCandles.length - 1].close;
+      const gapPercent = Math.abs((candle.open - prevClose) / prevClose) * 100;
+      
+      if (gapPercent > EXTREME_GAP_THRESHOLD_PERCENT) {
+        console.warn(`[ChartAPI] ${symbol}: Extreme gap at index ${i} — ${gapPercent.toFixed(1)}% from previous close`);
+        // Still include the candle but log warning for awareness
+      }
+    }
+    
+    validCandles.push(candle);
+  }
+  
+  if (invalidCount > 0) {
+    console.log(`[ChartAPI] ${symbol}: Filtered out ${invalidCount} invalid candles (${validCandles.length} valid)`);
+  }
+  
+  return validCandles;
+}
+
 function detectSwingPoints(candles: CandleData[]): { higherHighs: boolean; higherLows: boolean; lowerHighs: boolean; lowerLows: boolean } {
   if (candles.length < 5) {
     return { higherHighs: false, higherLows: false, lowerHighs: false, lowerLows: false };
@@ -310,6 +392,15 @@ export async function analyzeChart(
   
   if (!candles || candles.length < 10) {
     console.log(`[ChartAPI] No data available for ${symbol} ${interval}`);
+    return null;
+  }
+  
+  // 🛡️ OHLC VALIDATION — Filter out invalid candles to ensure data integrity
+  candles = validateAndFilterCandles(candles, symbol);
+  
+  // Check again after validation
+  if (candles.length < 10) {
+    console.log(`[ChartAPI] ${symbol}: Not enough valid candles after validation (${candles.length} < 10)`);
     return null;
   }
   

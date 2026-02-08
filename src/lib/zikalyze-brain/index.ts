@@ -15,7 +15,7 @@ import {
 import { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts';
 import { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
-import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
+import { estimateOnChainMetrics, estimateETFFlowData, fetchRealOnChainMetrics, fetchRealETFFlowData } from './on-chain-estimator';
 import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
 import { hybridConfirmation } from './neural-engine';
 import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
@@ -252,6 +252,41 @@ const getHistoricalContext = (price: number, high24h: number, low24h: number, ch
   if (position <= 30) return `📉 Lower range (bottom 30% of 24h)`;
   return `↔️ Mid-range consolidation`;
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔗 ASYNC ANALYSIS WITH REAL ON-CHAIN DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+// Attempts to fetch real blockchain data before running analysis
+// Falls back to derived estimation if APIs are unavailable
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Run analysis with real on-chain data fetching (async version)
+ * Tries to get live blockchain data first, falls back to derived estimation
+ */
+export async function runAnalysisWithRealData(input: AnalysisInput): Promise<AnalysisResult> {
+  // If on-chain data is already provided, use the sync version
+  if (input.onChainData) {
+    return runClientSideAnalysis(input);
+  }
+  
+  // Try to fetch real on-chain data
+  try {
+    const [realOnChainData, realEtfData] = await Promise.all([
+      fetchRealOnChainMetrics(input.crypto, input.price, input.change),
+      fetchRealETFFlowData(input.price, input.change, input.crypto)
+    ]);
+    
+    // Run analysis with real data
+    return runClientSideAnalysis({
+      ...input,
+      onChainData: realOnChainData
+    });
+  } catch (error) {
+    console.log('[AI Brain] Failed to fetch real on-chain data, using derived estimation');
+    return runClientSideAnalysis(input);
+  }
+}
 
 export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const {
@@ -979,9 +1014,10 @@ ${getRiskWarning(bias)}
 ${historicalContext}
 ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.toFixed(0)}% above avg (${volumeSpike.magnitude}) [Spot via aggregator]\n` : ''}📈 Volume: ${volume > avgVolume ? `+${((volume / avgVolume - 1) * 100).toFixed(0)}% above` : volume < avgVolume * 0.8 ? `${((1 - volume / avgVolume) * 100).toFixed(0)}% below` : 'near'} baseline (${(volume / avgVolume).toFixed(2)}x)
 😊 Fear & Greed: ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
-🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)} - Net: ${onChainMetrics.whaleActivity.netFlow}
-🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
-${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
+🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)} - Net: ${onChainMetrics.whaleActivity.netFlow}${!hasRealOnChain ? ' ⚡' : ''}
+🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})${!hasRealOnChain ? ' ⚡' : ''}
+${etfFlowData ? `💼 Institutional: ${etfFlowData.institutionalSentiment}${!hasRealOnChain ? ' ⚡' : ''}` : '💼 Institutional: N/A (ETFs only available for BTC/ETH)'}
+${!hasRealOnChain ? '⚡ On-chain metrics estimated from price action (not live blockchain data)' : ''}
 ${macroSection ? `\n⚡ MACRO CATALYST:\n${macroSection}\n` : ''}
 📊 Chart Data: ${getCandleCountStatus(hasRealChartData, candleCount)}
 
@@ -1102,7 +1138,7 @@ export * from './types';
 export { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts';
 export { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 export { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
-export { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
+export { estimateOnChainMetrics, estimateETFFlowData, fetchRealOnChainMetrics, fetchRealETFFlowData } from './on-chain-estimator';
 export { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, crossEntropyLoss, computeSelfAttention, computeMultiHeadAttention, relu, softmax, feedForwardNetwork, calculateADX, calculateRegimeWeightedConsensus, detectCandlestickPattern } from './technical-analysis';
 export type { MarketRegimeType, ADXResult, RegimeWeightedConsensus, CandlestickConfirmation } from './technical-analysis';
 // ICT/SMC Analysis with multi-timeframe
