@@ -71,7 +71,8 @@ function isNotificationEnabled(type: NotificationData['type'], alertSettings: No
 const ANDROID_NOTIFICATION_ICON = 'ic_stat_icon_config_sample';
 
 // Notification channel ID for Android 8.0+ (required)
-const ANDROID_CHANNEL_ID = 'price-alerts';
+// Using same channel ID as useLocalNotifications for consistency
+const ANDROID_CHANNEL_ID = 'zikalyze-alerts';
 
 export function useSmartNotifications() {
   const { user } = useAuth();
@@ -90,14 +91,14 @@ export function useSmartNotifications() {
       // Chain the promises to ensure channel exists before requesting permissions
       LocalNotifications.createChannel({
         id: ANDROID_CHANNEL_ID,
-        name: 'Price Alerts',
-        description: 'Notifications for cryptocurrency price alerts and market movements',
+        name: 'Zikalyze Alerts',
+        description: 'Price alerts, market movements, and trading notifications',
         importance: 5, // IMPORTANCE_HIGH - makes sound and shows as heads-up notification
         visibility: 1, // VISIBILITY_PUBLIC
         sound: 'default',
         vibration: true,
         lights: true,
-        lightColor: '#5EEAD4'
+        lightColor: '#6effc0'
       }).then(() => {
         console.log('[SmartNotify] Notification channel created');
         // Request permissions after channel is created
