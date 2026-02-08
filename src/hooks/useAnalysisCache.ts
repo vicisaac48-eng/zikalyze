@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useNetworkStatus } from './useNetworkStatus';
 
 // No caching - always use real-time data
 export interface CachedAnalysis {
@@ -11,21 +12,8 @@ export interface CachedAnalysis {
 }
 
 export function useAnalysisCache(symbol: string) {
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-
-  // Listen for online/offline events
-  useState(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  });
+  // Use the centralized network status hook instead of manual tracking
+  const { isOffline } = useNetworkStatus();
 
   // No-op functions - caching disabled for real-time only mode
   const cacheAnalysis = useCallback((analysis: string, price: number, change: number) => {
