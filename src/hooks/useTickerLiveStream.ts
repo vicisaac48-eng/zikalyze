@@ -14,13 +14,13 @@ const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection de
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM SMOOTH ANIMATION CONFIGURATION
-// Fast real-time updates with smooth interpolation for professional trading feel
+// Stable updates with smooth interpolation - prevents aggressive price fluctuations
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1200;           // Balanced updates for readable yet responsive feel (1.2s)
-const INTERPOLATION_STEPS = 12;            // Smooth steps for fluid movement
-const INTERPOLATION_INTERVAL_MS = 40;      // Fast frames (12 steps * 40ms = 480ms total animation)
-const MAX_PRICE_CHANGE_PERCENT = 2.0;      // Allow 2% change per update for responsive feel
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.0003; // 0.03% - balanced threshold for meaningful changes
+const UPDATE_THROTTLE_MS = 1500;           // Stable updates (1.5s between updates)
+const INTERPOLATION_STEPS = 15;            // More steps for smoother transitions
+const INTERPOLATION_INTERVAL_MS = 50;      // Relaxed frames (15 steps * 50ms = 750ms total animation)
+const MAX_PRICE_CHANGE_PERCENT = 1.0;      // Limit to 1% change per update to prevent aggressive fluctuations
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0005; // 0.0005 = 0.05% - threshold to reduce visual noise
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];

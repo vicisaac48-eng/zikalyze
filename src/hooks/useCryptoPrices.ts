@@ -292,19 +292,20 @@ const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm"
 const TICKER_LIVESTREAM_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
 
 // ===== PRICE VALIDATION CONSTANTS =====
+// Prevents aggressive price fluctuations by rejecting unrealistic changes
 
 // Strict mode thresholds (applied after grace period)
-const RAPID_DROP_THRESHOLD_PERCENT = 20; // Reject drops > 20%
-const RAPID_SPIKE_THRESHOLD_PERCENT = 50; // Reject spikes > 50%
+const RAPID_DROP_THRESHOLD_PERCENT = 10; // Reject drops > 10% (more conservative)
+const RAPID_SPIKE_THRESHOLD_PERCENT = 10; // Reject spikes > 10% (more conservative)
 
 // Grace period thresholds (applied during first N updates)
-const GRACE_PERIOD_UPDATE_COUNT = 3; // Number of updates before switching to strict mode
-const GRACE_PERIOD_SPIKE_THRESHOLD_PERCENT = 200; // Allow spikes up to 200% during grace period
-const GRACE_PERIOD_DROP_THRESHOLD_PERCENT = 50; // Allow drops up to 50% during grace period
+const GRACE_PERIOD_UPDATE_COUNT = 5; // Extended grace period for initial price discovery
+const GRACE_PERIOD_SPIKE_THRESHOLD_PERCENT = 50; // Reduced from 200% - allow spikes up to 50% during grace period
+const GRACE_PERIOD_DROP_THRESHOLD_PERCENT = 30; // Reduced from 50% - allow drops up to 30% during grace period
 
 // Extreme change detection (always rejected, regardless of grace period)
-const EXTREME_INCREASE_RATIO = 100; // Reject increases > 100x
-const EXTREME_DECREASE_RATIO = 0.01; // Reject decreases < 0.01x (99% drop)
+const EXTREME_INCREASE_RATIO = 10; // Reject increases > 10x (e.g., $100 -> $1000+)
+const EXTREME_DECREASE_RATIO = 0.1; // Reject decreases > 90% (e.g., $100 -> $10-)
 
 // 24h high/low validation margin (±10% outside bounds)
 const HIGH_LOW_MARGIN_DECIMAL = 0.1; // Decimal representation: 0.1 = 10% margin
@@ -400,10 +401,10 @@ export const useCryptoPrices = () => {
   const priceHistoryRef = useRef<Map<string, number[]>>(new Map()); // Store last 10 valid prices per symbol
   const updateCountRef = useRef<Map<string, number>>(new Map()); // Track number of updates per symbol for grace period
   
-  // Throttle interval - balanced for readable yet responsive real-time updates
-  const UPDATE_THROTTLE_MS = 1200;
-  // Faster updates for priority altcoins
-  const FAST_UPDATE_THROTTLE_MS = 800;
+  // Throttle interval - stable updates to prevent aggressive price fluctuations
+  const UPDATE_THROTTLE_MS = 1500;
+  // Slightly faster updates for priority altcoins (but still conservative)
+  const FAST_UPDATE_THROTTLE_MS = 1200;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
