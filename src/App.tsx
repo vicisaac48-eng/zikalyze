@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/hooks/useCurrency";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 import { ZikalyzeWatermark } from "./components/ZikalyzeWatermark";
+import { NetworkStatusBanner } from "./components/NetworkStatusBanner";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -87,6 +88,7 @@ const App = () => (
             <Sonner />
             <PWAInstallBanner />
             <ZikalyzeWatermark />
+            <NetworkStatusBanner position="bottom" />
             <HashRouter>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
