@@ -137,6 +137,25 @@ All colors MUST be HSL.
     touch-action: pan-y;
   }
 
+  /* Android: Enable vertical scroll on all common content containers */
+  /* This ensures scrolling works when touching any element within the main content area */
+  html.android-native .space-y-3,
+  html.android-native .space-y-4,
+  html.android-native .grid,
+  html.android-native .flex,
+  html.android-native p,
+  html.android-native div {
+    /* Inherit touch-action from parent - allows scrolling through nested elements */
+    touch-action: inherit;
+  }
+
+  /* Android: Explicitly set touch-action on direct content wrapper in PullToRefresh */
+  /* This ensures the content area passes through touch events for scrolling */
+  html.android-native [style*="translateY"],
+  html.android-native [style*="transform"] {
+    touch-action: pan-y;
+  }
+
   /* Android: Exception for horizontal scroll areas (crypto ticker, time filters) */
   /* These need both pan-x and pan-y to allow horizontal scrolling */
   html.android-native .overflow-x-auto {

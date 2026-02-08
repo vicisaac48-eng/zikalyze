@@ -22,10 +22,19 @@ interface UsePullToRefreshReturn {
 // Minimum movement in pixels before determining scroll direction (horizontal vs vertical)
 const DIRECTION_DETECTION_THRESHOLD = 10;
 
+// Minimum pull distance before blocking native scroll with preventDefault
+// This prevents accidental blocking of normal scrolling on main content
+// Must be higher than DIRECTION_DETECTION_THRESHOLD to allow scroll detection first
+const ACTIVATION_THRESHOLD = 20;
+
+// Tolerance for scroll position check - WebView may report small non-zero values
+const SCROLL_TOP_TOLERANCE = 5;
+
 // Helper function to check if at the top of the scroll container
 const checkIfAtTop = (): boolean => {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  return scrollTop <= 0;
+  // Use tolerance for WebView quirks where scrollTop might be slightly > 0
+  return scrollTop <= SCROLL_TOP_TOLERANCE;
 };
 
 // Helper function to check if an element or its parent has horizontal scrolling enabled
@@ -171,9 +180,13 @@ export function usePullToRefresh({
         }
       }
 
-      // Only trigger pull-to-refresh on downward swipe
+      // Only trigger pull-to-refresh on downward swipe (positive deltaY = pulling down)
+      // If user is scrolling up (negative deltaY), cancel pull-to-refresh and allow native scroll
       if (deltaY <= 0) {
+        // User is scrolling content down (finger moving up), cancel pull state
         setPullDistance(0);
+        setIsPulling(false);
+        isPullingRef.current = false;
         return;
       }
 
@@ -189,8 +202,10 @@ export function usePullToRefresh({
         maxPull
       );
 
-      // Prevent default scroll when pulling to refresh
-      if (resistedDistance > 10) {
+      // Only prevent default scroll after user has pulled past the activation threshold
+      // This allows normal touch scrolling to work on main content without interference
+      // The ACTIVATION_THRESHOLD ensures we don't accidentally block scroll attempts
+      if (resistedDistance > ACTIVATION_THRESHOLD) {
         e.preventDefault();
       }
 
