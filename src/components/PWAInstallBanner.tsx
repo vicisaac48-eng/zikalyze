@@ -16,6 +16,8 @@ export const PWAInstallBanner = () => {
   const isMobile = useIsMobile();
   const isNativeApp = useIsNativeApp();
 
+  // Note: isNativeApp is included in deps because it can change when user installs PWA.
+  // When isNativeApp becomes true, we want to re-run to set isInstalled and hide the banner.
   useEffect(() => {
     // Don't show install banner on native apps (Android/PWA standalone)
     // The isNativeApp hook already checks display-mode: standalone
