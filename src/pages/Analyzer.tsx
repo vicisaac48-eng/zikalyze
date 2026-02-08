@@ -68,15 +68,15 @@ const Analyzer = () => {
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
           {/* Selected Crypto Info */}
-          <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-warning/20 text-warning font-bold text-xl">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning/20 text-warning font-bold text-lg sm:h-12 sm:w-12 sm:text-xl">
                   {selectedCrypto.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">{selected.name}</h2>
-                  <span className="text-sm text-muted-foreground">{selectedCrypto}/USD</span>
+                  <h2 className="text-lg font-bold text-foreground sm:text-xl">{selected.name}</h2>
+                  <span className="text-xs text-muted-foreground sm:text-sm">{selectedCrypto}/USD</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -87,26 +87,26 @@ const Analyzer = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 sm:mt-6 sm:gap-4">
               <div>
-                <div className="text-sm text-muted-foreground">{t("analyzer.currentPrice")}</div>
-                <div className="text-2xl font-bold text-foreground">${selected.price.toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.currentPrice")}</div>
+                <div className="text-xl font-bold text-foreground sm:text-2xl">${selected.price.toLocaleString()}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">{t("analyzer.change24h")}</div>
-                <div className={`text-2xl font-bold ${selected.change >= 0 ? "text-success" : "text-destructive"}`}>
+                <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.change24h")}</div>
+                <div className={`text-xl font-bold sm:text-2xl ${selected.change >= 0 ? "text-success" : "text-destructive"}`}>
                   {selected.change >= 0 ? "+" : ""}{selected.change.toFixed(2)}%
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">{t("analyzer.high24h")}</div>
-                <div className="font-semibold text-foreground">
+                <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.high24h")}</div>
+                <div className="font-semibold text-foreground text-sm sm:text-base">
                   ${getPriceBySymbol(selectedCrypto)?.high_24h?.toLocaleString() || "---"}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">{t("analyzer.low24h")}</div>
-                <div className="font-semibold text-foreground">
+                <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.low24h")}</div>
+                <div className="font-semibold text-foreground text-sm sm:text-base">
                   ${getPriceBySymbol(selectedCrypto)?.low_24h?.toLocaleString() || "---"}
                 </div>
               </div>
@@ -121,7 +121,7 @@ const Analyzer = () => {
           />
 
           {/* AI Analyzer & News Events Calendar Grid */}
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
             <AIAnalyzer 
               crypto={selectedCrypto} 
               price={selected.price} 
@@ -130,30 +130,30 @@ const Analyzer = () => {
               low24h={getPriceBySymbol(selectedCrypto)?.low_24h}
               volume={getPriceBySymbol(selectedCrypto)?.total_volume}
               marketCap={getPriceBySymbol(selectedCrypto)?.market_cap}
-                isLive={isLive}
+              isLive={isLive}
             />
             <NewsEventsCalendar crypto={selectedCrypto} />
           </div>
 
           {/* Additional Analysis Tips */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">{t("analyzer.analysisGuide")}</h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-secondary/50">
-                <h4 className="font-medium text-foreground mb-2">{t("analyzer.ictAnalysis")}</h4>
-                <p className="text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+            <h3 className="text-base font-semibold text-foreground mb-3 sm:text-lg sm:mb-4">{t("analyzer.analysisGuide")}</h3>
+            <div className="grid gap-3 md:grid-cols-3 sm:gap-4">
+              <div className="p-3 rounded-lg bg-secondary/50 sm:p-4 sm:rounded-xl">
+                <h4 className="font-medium text-foreground mb-1.5 sm:mb-2">{t("analyzer.ictAnalysis")}</h4>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {t("analyzer.ictDesc")}
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-secondary/50">
-                <h4 className="font-medium text-foreground mb-2">{t("analyzer.smartMoneyConcepts")}</h4>
-                <p className="text-sm text-muted-foreground">
+              <div className="p-3 rounded-lg bg-secondary/50 sm:p-4 sm:rounded-xl">
+                <h4 className="font-medium text-foreground mb-1.5 sm:mb-2">{t("analyzer.smartMoneyConcepts")}</h4>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {t("analyzer.smartMoneyDesc")}
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-secondary/50">
-                <h4 className="font-medium text-foreground mb-2">{t("analyzer.vwapIndicator")}</h4>
-                <p className="text-sm text-muted-foreground">
+              <div className="p-3 rounded-lg bg-secondary/50 sm:p-4 sm:rounded-xl">
+                <h4 className="font-medium text-foreground mb-1.5 sm:mb-2">{t("analyzer.vwapIndicator")}</h4>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {t("analyzer.vwapDesc")}
                 </p>
               </div>

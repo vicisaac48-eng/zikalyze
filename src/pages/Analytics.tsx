@@ -84,62 +84,62 @@ const Analytics = () => {
           </div>
 
           {/* Market Overview Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <PieChart className="h-5 w-5 text-primary" />
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 sm:gap-4">
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-2 sm:gap-3 sm:mb-3">
+                <div className="p-1.5 rounded-lg bg-primary/20 sm:p-2">
+                  <PieChart className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.totalMarketCap")}</span>
+                <span className="text-xs text-muted-foreground sm:text-sm">{t("analytics.totalMarketCap")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground sm:text-2xl">
                 {currencySymbol}{loading ? "..." : (totalMarketCap / 1e12).toFixed(2)}T
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-chart-cyan/20">
-                  <BarChart3 className="h-5 w-5 text-chart-cyan" />
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-2 sm:gap-3 sm:mb-3">
+                <div className="p-1.5 rounded-lg bg-chart-cyan/20 sm:p-2">
+                  <BarChart3 className="h-4 w-4 text-chart-cyan sm:h-5 sm:w-5" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.volume24h")}</span>
+                <span className="text-xs text-muted-foreground sm:text-sm">{t("analytics.volume24h")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground sm:text-2xl">
                 {currencySymbol}{loading ? "..." : (totalVolume / 1e9).toFixed(2)}B
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className={cn("p-2 rounded-lg", avgChange >= 0 ? "bg-success/20" : "bg-destructive/20")}>
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-2 sm:gap-3 sm:mb-3">
+                <div className={cn("p-1.5 rounded-lg sm:p-2", avgChange >= 0 ? "bg-success/20" : "bg-destructive/20")}>
                   {avgChange >= 0 ? (
-                    <TrendingUp className="h-5 w-5 text-success" />
+                    <TrendingUp className="h-4 w-4 text-success sm:h-5 sm:w-5" />
                   ) : (
-                    <TrendingDown className="h-5 w-5 text-destructive" />
+                    <TrendingDown className="h-4 w-4 text-destructive sm:h-5 sm:w-5" />
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.avgChange24h")}</span>
+                <span className="text-xs text-muted-foreground sm:text-sm">{t("analytics.avgChange24h")}</span>
               </div>
-              <div className={cn("text-2xl font-bold", avgChange >= 0 ? "text-success" : "text-destructive")}>
+              <div className={cn("text-xl font-bold sm:text-2xl", avgChange >= 0 ? "text-success" : "text-destructive")}>
                 {avgChange >= 0 ? "+" : ""}{avgChange.toFixed(2)}%
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-warning/20">
-                  <Activity className="h-5 w-5 text-warning" />
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-2 sm:gap-3 sm:mb-3">
+                <div className="p-1.5 rounded-lg bg-warning/20 sm:p-2">
+                  <Activity className="h-4 w-4 text-warning sm:h-5 sm:w-5" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.trackedAssets")}</span>
+                <span className="text-xs text-muted-foreground sm:text-sm">{t("analytics.trackedAssets")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground sm:text-2xl">
                 {loading ? "..." : prices.length}
               </div>
             </div>
           </div>
 
           {/* Charts Grid */}
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <AnalyticsChart />
             </div>
@@ -148,32 +148,32 @@ const Analytics = () => {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
             <PredictiveChart />
             <VolumeChart crypto="BTC" coinGeckoId="bitcoin" />
           </div>
 
           {/* Top Gainers & Losers */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2">
             {/* Top Gainers */}
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-5 w-5 text-success" />
-                <h3 className="text-lg font-semibold text-foreground">{t("analytics.topGainers")}</h3>
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <TrendingUp className="h-4 w-4 text-success sm:h-5 sm:w-5" />
+                <h3 className="text-base font-semibold text-foreground sm:text-lg">{t("analytics.topGainers")}</h3>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {topGainers.map((coin, index) => (
-                  <div key={coin.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+                  <div key={coin.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/50 sm:p-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-xs font-medium text-muted-foreground sm:text-sm">#{index + 1}</span>
                       <div>
-                        <div className="font-semibold text-foreground">{coin.symbol.toUpperCase()}</div>
-                        <div className="text-xs text-muted-foreground">{coin.name}</div>
+                        <div className="text-sm font-semibold text-foreground sm:text-base">{coin.symbol.toUpperCase()}</div>
+                        <div className="text-[10px] text-muted-foreground sm:text-xs">{coin.name}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-foreground">{formatPrice(coin.current_price || 0)}</div>
-                      <div className="text-sm text-success">+{coin.price_change_percentage_24h?.toFixed(2)}%</div>
+                      <div className="text-sm font-semibold text-foreground sm:text-base">{formatPrice(coin.current_price || 0)}</div>
+                      <div className="text-xs text-success sm:text-sm">+{coin.price_change_percentage_24h?.toFixed(2)}%</div>
                     </div>
                   </div>
                 ))}
@@ -181,24 +181,24 @@ const Analytics = () => {
             </div>
 
             {/* Top Losers */}
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingDown className="h-5 w-5 text-destructive" />
-                <h3 className="text-lg font-semibold text-foreground">{t("analytics.topLosers")}</h3>
+            <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <TrendingDown className="h-4 w-4 text-destructive sm:h-5 sm:w-5" />
+                <h3 className="text-base font-semibold text-foreground sm:text-lg">{t("analytics.topLosers")}</h3>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {topLosers.map((coin, index) => (
-                  <div key={coin.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+                  <div key={coin.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/50 sm:p-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-xs font-medium text-muted-foreground sm:text-sm">#{index + 1}</span>
                       <div>
-                        <div className="font-semibold text-foreground">{coin.symbol.toUpperCase()}</div>
-                        <div className="text-xs text-muted-foreground">{coin.name}</div>
+                        <div className="text-sm font-semibold text-foreground sm:text-base">{coin.symbol.toUpperCase()}</div>
+                        <div className="text-[10px] text-muted-foreground sm:text-xs">{coin.name}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-foreground">{formatPrice(coin.current_price || 0)}</div>
-                      <div className="text-sm text-destructive">{coin.price_change_percentage_24h?.toFixed(2)}%</div>
+                      <div className="text-sm font-semibold text-foreground sm:text-base">{formatPrice(coin.current_price || 0)}</div>
+                      <div className="text-xs text-destructive sm:text-sm">{coin.price_change_percentage_24h?.toFixed(2)}%</div>
                     </div>
                   </div>
                 ))}
