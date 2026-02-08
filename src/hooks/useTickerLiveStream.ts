@@ -13,14 +13,14 @@ const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
 const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
 
 // ═══════════════════════════════════════════════════════════════════════════
-// STABLE CRYPTO CARD UPDATE CONFIGURATION
-// Stable, non-jumping updates with 5-30 second polling for visual stability
+// PREMIUM SMOOTH ANIMATION CONFIGURATION
+// Professional CoinMarketCap-style updates: readable, fluid, and premium feel
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 5000;           // Stable 5-second minimum between updates
-const INTERPOLATION_STEPS = 10;            // More steps for smoother, gradual transitions
-const INTERPOLATION_INTERVAL_MS = 200;     // Slower interpolation (200ms * 10 = 2s total)
-const MAX_PRICE_CHANGE_PERCENT = 1;        // Reduced max % change per update cycle for stability
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.001; // 0.1% - higher threshold to reduce unnecessary updates
+const UPDATE_THROTTLE_MS = 1500;           // Price stays still long enough to read (1.5s)
+const INTERPOLATION_STEPS = 20;            // Many steps for buttery-smooth fluid movement
+const INTERPOLATION_INTERVAL_MS = 30;      // Quick frames (20 steps * 30ms = 600ms total animation)
+const MAX_PRICE_CHANGE_PERCENT = 2;        // Allow 2% change per update for responsive feel
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - low threshold for responsive updates
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -119,8 +119,9 @@ export const useTickerLiveStream = () => {
   }>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // SMOOTH PRICE INTERPOLATION (STABLE DISPLAY)
-  // Creates gradual, non-jumping transitions between price updates
+  // PREMIUM SMOOTH PRICE INTERPOLATION
+  // Ease-out cubic animation: fast start, gentle slowdown at the end
+  // Total animation: 20 steps * 30ms = 600ms of buttery-smooth transition
   // ═══════════════════════════════════════════════════════════════════════════
   const startInterpolation = useCallback((symbol: string, fromPrice: number, toPrice: number, fromChange: number, toChange: number) => {
     // Clear any existing interpolation
