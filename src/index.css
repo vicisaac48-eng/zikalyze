@@ -7,7 +7,60 @@ All colors MUST be HSL.
 */
 
 @layer base {
-  /* Dark mode is the default and only theme for Zikalyze */
+  /* Light mode theme */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 168 76% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 267 84% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 168 76% 40%;
+
+    --radius: 0.5rem;
+    
+    --cyan: 168 76% 40%;
+    --cyan-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --chart-cyan: 168 76% 40%;
+    --chart-purple: 267 84% 60%;
+    
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 168 76% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 168 76% 40%;
+    
+    /* Header height - tight fit, content immediately below header */
+    --header-height-mobile: 2.25rem;
+    --header-height-desktop: 3rem;
+  }
+
+  /* Dark mode is the default theme for Zikalyze */
   :root,
   .dark {
     --background: 222 47% 6%;
@@ -74,7 +127,7 @@ All colors MUST be HSL.
   }
 
   html {
-    /* Prevent color scheme override on mobile browsers */
+    /* Color scheme follows the theme class */
     color-scheme: dark;
     /* Smooth scrolling */
     scroll-behavior: smooth;
@@ -83,6 +136,11 @@ All colors MUST be HSL.
     height: -webkit-fill-available;
     /* Default: allow both horizontal and vertical panning for web */
     touch-action: pan-x pan-y;
+  }
+
+  /* Light mode color scheme */
+  html.light {
+    color-scheme: light;
   }
 
   /* Android-specific: Touch action for vertical scrolling */

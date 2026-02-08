@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { Search, User, Bell, Shield, Palette, Globe, Moon, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Volume1, Play, Smartphone } from "lucide-react";
+import { Search, User, Bell, Shield, Palette, Globe, Moon, Sun, Save, Volume2, VolumeX, Wallet, Copy, ExternalLink, Key, Eye, EyeOff, Check, Volume1, Play, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 import { useSettings, SoundType } from "@/hooks/useSettings";
 import { alertSound, isNativePlatform } from "@/lib/alertSound";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
@@ -20,10 +21,12 @@ import { useAuth } from "@/hooks/useAuth";
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
+  const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
   const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
   const isNativeApp = useIsNativeApp();
   
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -34,6 +37,17 @@ const Settings = () => {
     // Small delay to show the refresh animation
     await new Promise(resolve => setTimeout(resolve, 500));
   }, []);
+
+  // Avoid hydration mismatch for theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDarkMode = mounted ? resolvedTheme === "dark" : true;
+
+  const handleThemeToggle = (checked: boolean) => {
+    setTheme(checked ? "dark" : "light");
+  };
 
   const handleSoundToggle = (checked: boolean) => {
     saveSettings({ soundEnabled: checked });
@@ -446,23 +460,29 @@ const Settings = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-4">Appearance</h3>
                   
                   <div className="space-y-4">
-                    {/* Dark Mode Info - Zikalyze is designed as a dark-mode only app */}
+                    {/* Dark Mode Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50">
                       <div className="flex items-center gap-3">
-                        <Moon className="h-5 w-5 text-primary" />
+                        {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-warning" />}
                         <div>
                           <div className="font-medium text-foreground">Dark Mode</div>
-                          <div className="text-sm text-muted-foreground">Optimized for trading environments</div>
+                          <div className="text-sm text-muted-foreground">
+                            {isDarkMode ? "Optimized for trading environments" : "Light theme enabled"}
+                          </div>
                         </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">
-                        Always On
-                      </span>
+                      <Switch 
+                        checked={isDarkMode}
+                        onCheckedChange={handleThemeToggle}
+                      />
                     </div>
 
                     <div className="p-4 rounded-xl bg-muted/50 border border-border">
                       <div className="text-sm text-muted-foreground">
-                        Zikalyze uses a dark theme by design to reduce eye strain during extended trading sessions and to match professional trading terminal aesthetics.
+                        {isDarkMode 
+                          ? "Dark theme reduces eye strain during extended trading sessions and matches professional trading terminal aesthetics."
+                          : "Light theme provides better readability in bright environments. Switch to dark mode for extended trading sessions."
+                        }
                       </div>
                     </div>
 

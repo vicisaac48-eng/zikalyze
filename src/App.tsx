@@ -80,7 +80,7 @@ const AppErrorFallback = () => (
 
 const App = () => (
   <ErrorBoundary fallback={<AppErrorFallback />}>
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="zikalyze-theme">
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
           <TooltipProvider>
