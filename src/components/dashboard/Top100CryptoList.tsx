@@ -25,6 +25,12 @@ interface Top100CryptoListProps {
 // Track price changes for flash animations
 type PriceFlash = "up" | "down" | null;
 
+// Helper to format compact price for range display (removes trailing .00)
+const formatCompactPrice = (price: number | undefined, formatter: (p: number) => string): string => {
+  if (!price) return "---";
+  return formatter(price).replace(/\.00$/, '');
+};
+
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
   // Use prices from props (required) - removes duplicate WebSocket connections
   // Memoize to prevent unnecessary re-renders
@@ -252,19 +258,18 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         )}
         
         <div className={`-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 ${!isNativeApp ? 'overflow-x-auto custom-scrollbar' : ''}`}>
-          <table className="w-full min-w-[320px] table-fixed">
+          <table className="w-full min-w-[280px] table-fixed">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
                 {!isNativeApp && <th className="pb-2 font-medium sm:pb-3 w-8 sm:w-10">#</th>}
-                <th className="pb-2 font-medium sm:pb-3 w-[120px] sm:w-[160px] lg:w-[180px]">Name</th>
-                <th className="pb-2 font-medium text-right sm:pb-3 w-[80px] sm:w-[100px]">Price</th>
-                <th className="pb-2 font-medium text-right sm:pb-3 w-[70px] sm:w-[80px]">24h %</th>
-                <th className="pb-2 font-medium text-right hidden sm:table-cell sm:pb-3 w-[90px] lg:w-[100px]">Market Cap</th>
-                <th className="pb-2 font-medium text-right hidden md:table-cell sm:pb-3 w-[120px] lg:w-[140px]">Circulating Supply</th>
-                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3 w-[90px]">24h High</th>
-                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3 w-[90px]">24h Low</th>
+                <th className="pb-2 font-medium sm:pb-3 w-[100px] sm:w-[160px] lg:w-[180px]">Name</th>
+                <th className="pb-2 font-medium text-right sm:pb-3 w-[65px] sm:w-[100px]">Price</th>
+                <th className="pb-2 font-medium text-right sm:pb-3 w-[55px] sm:w-[80px]">24h %</th>
+                <th className="pb-2 font-medium text-center hidden sm:table-cell sm:pb-3 w-[100px] lg:w-[120px]">24h Range</th>
+                <th className="pb-2 font-medium text-right hidden md:table-cell sm:pb-3 w-[90px] lg:w-[100px]">Market Cap</th>
+                <th className="pb-2 font-medium text-right hidden lg:table-cell sm:pb-3 w-[120px] lg:w-[140px]">Circulating Supply</th>
                 <th className="pb-2 font-medium text-right hidden xl:table-cell sm:pb-3 w-[80px]">Volume</th>
-                <th className="pb-2 font-medium text-center sm:pb-3 w-10 sm:w-12">Alert</th>
+                <th className="pb-2 font-medium text-center sm:pb-3 w-8 sm:w-12">Alert</th>
               </tr>
             </thead>
             <tbody>
@@ -273,6 +278,12 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                 const isSelected = crypto.symbol.toUpperCase() === selected;
                 const hasAlert = alerts.some(a => a.symbol === crypto.symbol.toUpperCase());
                 const flash = priceFlashes.get(crypto.symbol);
+                
+                // Calculate price position within 24h range (0-100%)
+                const priceRange = crypto.high_24h && crypto.low_24h && crypto.high_24h > crypto.low_24h
+                  ? ((crypto.current_price - crypto.low_24h) / (crypto.high_24h - crypto.low_24h)) * 100
+                  : 50;
+                const clampedRange = Math.min(100, Math.max(0, priceRange));
                 
                 return (
                   <tr
@@ -284,24 +295,24 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                   >
                     {!isNativeApp && <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>}
                     <td className="py-2 sm:py-3">
-                      <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="flex items-center gap-1.5 sm:gap-3">
                         <img 
                           src={crypto.image} 
                           alt={crypto.name}
-                          className="w-7 h-7 rounded-full shrink-0 sm:w-10 sm:h-10"
+                          className="w-6 h-6 rounded-full shrink-0 sm:w-10 sm:h-10"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                         <div className="min-w-0 overflow-hidden">
-                          <div className="font-medium text-foreground text-xs truncate sm:text-sm">{crypto.name}</div>
-                          <div className="text-xs text-muted-foreground font-semibold truncate">{crypto.symbol.toUpperCase()}</div>
+                          <div className="font-medium text-foreground text-[11px] truncate sm:text-sm">{crypto.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-semibold truncate sm:text-xs">{crypto.symbol.toUpperCase()}</div>
                         </div>
                       </div>
                     </td>
                     <td className="py-2 text-right sm:py-3">
                       <span
-                        className={`font-medium text-xs transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
+                        className={`font-medium text-[11px] transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
                           flash === "up"
                             ? "bg-success/20 text-success animate-price-flash-up"
                             : flash === "down"
@@ -313,15 +324,37 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                       </span>
                     </td>
                     <td className="py-2 text-right sm:py-3">
-                      <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
+                      <div className={`flex items-center justify-end gap-0.5 text-[11px] sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
                         {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                         {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
                       </div>
                     </td>
-                    <td className="py-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:text-sm">
-                      {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
+                    {/* 24h Range Indicator - Visual price position within daily range */}
+                    <td className="py-2 text-center hidden sm:table-cell sm:py-3">
+                      <div className="flex flex-col gap-0.5 items-center">
+                        <div className="relative w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
+                              isPositive ? "bg-success" : "bg-destructive"
+                            }`}
+                            style={{ width: `${clampedRange}%` }}
+                          />
+                          {/* Current position marker */}
+                          <div 
+                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-foreground border border-background shadow-sm transition-all duration-500"
+                            style={{ left: `calc(${clampedRange}% - 4px)` }}
+                          />
+                        </div>
+                        <div className="flex justify-between w-full text-[9px] text-muted-foreground">
+                          <span>{formatCompactPrice(crypto.low_24h, formatPrice)}</span>
+                          <span>{formatCompactPrice(crypto.high_24h, formatPrice)}</span>
+                        </div>
+                      </div>
                     </td>
                     <td className="py-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:text-sm">
+                      {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
+                    </td>
+                    <td className="py-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:text-sm">
                       {crypto.circulating_supply 
                         ? (crypto.circulating_supply >= 1e9 
                           ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
@@ -329,12 +362,6 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                             ? (crypto.circulating_supply / 1e6).toFixed(2) + "M"
                             : crypto.circulating_supply.toLocaleString())
                         : "---"} {crypto.symbol.toUpperCase()}
-                    </td>
-                    <td className="py-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:text-sm">
-                      {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
-                    </td>
-                    <td className="py-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:text-sm">
-                      {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
                     </td>
                     <td className="py-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:text-sm">
                       {(() => {
