@@ -282,8 +282,14 @@ const BYBIT_SYMBOLS: Record<string, string> = {
   SEI: 'SEIUSDT', ALGO: 'ALGOUSDT', ICP: 'ICPUSDT', HBAR: 'HBARUSDT', VET: 'VETUSDT',
 };
 
-// Priority symbols for faster update throttling
+// Priority symbols for faster update throttling (applies to non-ticker symbols only)
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
+
+// Ticker symbols handled by useTickerLiveStream - skip WebSocket updates for these
+// to prevent duplicate/inconsistent price data between the two hooks.
+// Note: "kas" appears in both arrays but TICKER_LIVESTREAM_SYMBOLS takes precedence
+// since these symbols are completely skipped in updatePrice() before throttling applies.
+const TICKER_LIVESTREAM_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
 
 // ===== PRICE VALIDATION CONSTANTS =====
 
@@ -403,6 +409,12 @@ export const useCryptoPrices = () => {
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
     const normalizedSymbol = symbol.toLowerCase();
     const now = Date.now();
+    
+    // SKIP TICKER SYMBOLS - These are handled by useTickerLiveStream for consistency
+    // This prevents duplicate/conflicting price updates from multiple WebSocket sources
+    if (TICKER_LIVESTREAM_SYMBOLS.includes(normalizedSymbol)) {
+      return; // useTickerLiveStream handles these symbols exclusively
+    }
     
     // CRITICAL: Never overwrite valid prices with zeros
     if (updates.current_price !== undefined && updates.current_price <= 0) {
