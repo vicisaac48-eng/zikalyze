@@ -13,14 +13,14 @@ const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
 const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
 
 // ═══════════════════════════════════════════════════════════════════════════
-// COINMARKETCAP-STYLE FAST UPDATE CONFIGURATION
-// Fast, smooth price updates matching CoinMarketCap's responsive display
+// STABLE CRYPTO CARD UPDATE CONFIGURATION
+// Stable, non-jumping updates with 5-30 second polling for visual stability
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 500;            // Fast updates like CoinMarketCap (~500ms)
-const INTERPOLATION_STEPS = 5;             // Quick smooth transition steps
-const INTERPOLATION_INTERVAL_MS = 80;      // Fast interpolation (80ms * 5 = 400ms total)
-const MAX_PRICE_CHANGE_PERCENT = 2;        // Max % change per update cycle (anti-manipulation)
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - minimum change to trigger interpolation
+const UPDATE_THROTTLE_MS = 5000;           // Stable 5-second minimum between updates
+const INTERPOLATION_STEPS = 10;            // More steps for smoother, gradual transitions
+const INTERPOLATION_INTERVAL_MS = 200;     // Slower interpolation (200ms * 10 = 2s total)
+const MAX_PRICE_CHANGE_PERCENT = 1;        // Reduced max % change per update cycle for stability
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.001; // 0.1% - higher threshold to reduce unnecessary updates
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -104,7 +104,7 @@ export const useTickerLiveStream = () => {
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // COINMARKETCAP-STYLE FAST UPDATE SYSTEM
+  // STABLE UPDATE SYSTEM
   // Tracks pending updates and interpolation state for each symbol
   // ═══════════════════════════════════════════════════════════════════════════
   const pendingUpdatesRef = useRef<Record<string, PendingUpdate>>({});
@@ -119,8 +119,8 @@ export const useTickerLiveStream = () => {
   }>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // FAST PRICE INTERPOLATION (COINMARKETCAP STYLE)
-  // Creates quick, smooth transitions between price updates
+  // SMOOTH PRICE INTERPOLATION (STABLE DISPLAY)
+  // Creates gradual, non-jumping transitions between price updates
   // ═══════════════════════════════════════════════════════════════════════════
   const startInterpolation = useCallback((symbol: string, fromPrice: number, toPrice: number, fromChange: number, toChange: number) => {
     // Clear any existing interpolation

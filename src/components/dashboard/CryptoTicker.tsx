@@ -31,11 +31,18 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   
   // Track last prices for flash animation
   const lastPricesRef = useRef<Record<string, number>>({});
+  const lastFlashTimeRef = useRef<Record<string, number>>({});
   const [priceFlash, setPriceFlash] = useState<Record<string, "up" | "down" | null>>({});
+  
+  // Minimum interval between flashes to prevent visual jitter (5 seconds)
+  const MIN_FLASH_INTERVAL_MS = 5000;
+  // Minimum price change percentage to trigger flash (0.1%)
+  const MIN_PRICE_CHANGE_PERCENT = 0.1;
   
   // Update flash animation when prices change
   useEffect(() => {
     const flashes: Record<string, "up" | "down" | null> = {};
+    const now = Date.now();
     
     cryptoMeta.forEach((crypto) => {
       const liveStreamPrice = getPrice(crypto.symbol);
@@ -49,10 +56,18 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
       
       if (currentPrice > 0) {
         const lastPrice = lastPricesRef.current[crypto.symbol];
+        const lastFlashTime = lastFlashTimeRef.current[crypto.symbol] || 0;
         
-        // Track price direction for flash animation
+        // Track price direction for flash animation with stability checks
         if (lastPrice !== undefined && lastPrice !== currentPrice) {
-          flashes[crypto.symbol] = currentPrice > lastPrice ? "up" : "down";
+          // Calculate price change percentage
+          const changePercent = Math.abs((currentPrice - lastPrice) / lastPrice) * 100;
+          
+          // Only flash if: price changed significantly AND enough time has passed
+          if (changePercent >= MIN_PRICE_CHANGE_PERCENT && (now - lastFlashTime) >= MIN_FLASH_INTERVAL_MS) {
+            flashes[crypto.symbol] = currentPrice > lastPrice ? "up" : "down";
+            lastFlashTimeRef.current[crypto.symbol] = now;
+          }
         }
         
         lastPricesRef.current[crypto.symbol] = currentPrice;
@@ -68,7 +83,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
           Object.keys(flashes).forEach(k => { updated[k] = null; });
           return updated;
         });
-      }, 400); // Faster flash clear for CoinMarketCap-like speed
+      }, 1500); // Longer flash clear for stable visual updates (1.5s)
     }
   }, [getPrice, getPriceBySymbol]);
   
