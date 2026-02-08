@@ -20,7 +20,9 @@ const config: CapacitorConfig = {
     // Enable edge-to-edge display
     appendUserAgent: 'ZikalyzeApp/1.0',
     // Optimize WebView performance
-    webContentsDebuggingEnabled: false
+    webContentsDebuggingEnabled: false,
+    // Allow content to scroll past the edge with elastic effect (improves scroll feel)
+    overScrollMode: 'always'
   },
   plugins: {
     SplashScreen: {

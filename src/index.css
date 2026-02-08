@@ -147,6 +147,13 @@ All colors MUST be HSL.
     touch-action: pan-y;
   }
 
+  /* Android: Enable vertical scroll on grid containers */
+  /* Grid layouts are common in dashboard and need touch-action for scrolling */
+  html.android-native .grid,
+  html.android-native [class*="grid-cols"] {
+    touch-action: pan-y;
+  }
+
   /* Android: Enable vertical scroll on PullToRefresh content wrapper */
   /* Uses specific class instead of expensive [style*="transform"] selector */
   html.android-native .pull-to-refresh-content {
