@@ -181,12 +181,20 @@ export class ActiveCryptoSource {
   readData(input: AnalysisInput): RawCryptoData {
     const now = Date.now();
     
+    // Validate 24h price range using shared utility
+    const validatedRange = validatePriceRange(
+      input.price,
+      input.high24h || input.price * 1.02,
+      input.low24h || input.price * 0.98,
+      'ActiveCryptoDirectSource.readData'
+    );
+    
     return {
       symbol: input.crypto.toUpperCase(),
       price: input.price,
       change24h: input.change,
-      high24h: input.high24h || input.price * 1.02,
-      low24h: input.low24h || input.price * 0.98,
+      high24h: validatedRange.high24h,
+      low24h: validatedRange.low24h,
       volume24h: input.volume || 0,
       timestamp: now,
       source: input.dataSource || 'direct-source',
@@ -1755,14 +1763,18 @@ export class SelfLearningBrainPipeline extends ZikalyzeBrainPipeline {
     let ictConfidence = 0;
     
     if (chartData && chartData.candles.length >= 10) {
-      const high24h = input.high24h || Math.max(...chartData.candles.map(c => c.high));
-      const low24h = input.low24h || Math.min(...chartData.candles.map(c => c.low));
+      // Get base high/low from chart data if not provided
+      const baseHigh = input.high24h || Math.max(...chartData.candles.map(c => c.high));
+      const baseLow = input.low24h || Math.min(...chartData.candles.map(c => c.low));
+      
+      // Validate 24h range using shared utility
+      const validatedRange = validatePriceRange(input.price, baseHigh, baseLow, 'SelfLearningBrain.ICT');
       
       ictAnalysis = performICTSMCAnalysis(
         chartData.candles,
         input.price,
-        high24h,
-        low24h,
+        validatedRange.high24h,
+        validatedRange.low24h,
         '1h',
         input.multiTimeframeData
       );
@@ -2280,13 +2292,22 @@ export class UnifiedBrain extends SelfLearningBrainPipeline {
     // ═══════════════════════════════════════════════════════════════════════
     const volume = input.volume || 0;
     const avgVolume = volume * 0.85;
+    
+    // Validate 24h range for volume spike detection
+    const volumeRangeValidated = validatePriceRange(
+      input.price,
+      input.high24h || input.price * 1.02,
+      input.low24h || input.price * 0.98,
+      'UnifiedBrain.VolumeAnalysis'
+    );
+    
     const volumeSpike = detectVolumeSpike({
       currentVolume: volume,
       avgVolume24h: avgVolume,
       priceChange: input.change,
       price: input.price,
-      high24h: input.high24h || input.price * 1.02,
-      low24h: input.low24h || input.price * 0.98
+      high24h: volumeRangeValidated.high24h,
+      low24h: volumeRangeValidated.low24h
     });
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -2986,11 +3007,19 @@ export class CombinedBrain extends UnifiedBrain {
     // Run original brain analysis
     const originalResult = runClientSideAnalysis(originalBrainInput);
     
-    // Extract top-down analysis directly
-    const topDownAnalysis = performTopDownAnalysis(
+    // Validate 24h range for top-down analysis
+    const topDownRangeValidated = validatePriceRange(
       input.price,
       input.high24h || input.price * 1.02,
       input.low24h || input.price * 0.98,
+      'CombinedBrain.TopDownAnalysis'
+    );
+    
+    // Extract top-down analysis directly with validated range
+    const topDownAnalysis = performTopDownAnalysis(
+      input.price,
+      topDownRangeValidated.high24h,
+      topDownRangeValidated.low24h,
       input.change,
       chartData,
       input.multiTimeframeData
