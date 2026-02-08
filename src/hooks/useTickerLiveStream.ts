@@ -16,11 +16,11 @@ const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection de
 // PREMIUM SMOOTH ANIMATION CONFIGURATION
 // Professional CoinMarketCap-style updates: readable, fluid, and premium feel
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;           // Price stays still long enough to read (1.5s)
-const INTERPOLATION_STEPS = 20;            // Many steps for buttery-smooth fluid movement
-const INTERPOLATION_INTERVAL_MS = 30;      // Quick frames (20 steps * 30ms = 600ms total animation)
-const MAX_PRICE_CHANGE_PERCENT = 2;        // Allow 2% change per update for responsive feel
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - low threshold for responsive updates
+const UPDATE_THROTTLE_MS = 3000;           // Price stays still long enough to read (3s for stable display)
+const INTERPOLATION_STEPS = 15;            // Smooth steps for fluid movement
+const INTERPOLATION_INTERVAL_MS = 50;      // Relaxed frames (15 steps * 50ms = 750ms total animation)
+const MAX_PRICE_CHANGE_PERCENT = 1.5;      // Allow 1.5% change per update for stable feel
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.001; // 0.1% - only update on meaningful changes
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];

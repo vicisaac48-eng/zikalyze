@@ -8,6 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   /* Light mode theme */
+  :root.light,
   .light {
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
@@ -62,6 +63,7 @@ All colors MUST be HSL.
 
   /* Dark mode is the default theme for Zikalyze */
   :root,
+  :root.dark,
   .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
