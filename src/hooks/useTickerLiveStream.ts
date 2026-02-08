@@ -13,14 +13,14 @@ const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
 const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROFESSIONAL CRYPTO SPOT MARKET UPDATE CONFIGURATION
-// Matches standard exchange display behavior - not too fast, not aggressive
+// PREMIUM SMOOTH ANIMATION CONFIGURATION
+// Professional CoinMarketCap-style updates: readable, fluid, and premium feel
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;        // Standard crypto spot update interval (1.5s)
-const INTERPOLATION_STEPS = 8;          // Smooth transition steps for price changes
-const INTERPOLATION_INTERVAL_MS = 150;  // Time between interpolation steps (150ms * 8 = 1.2s total)
-const MAX_PRICE_CHANGE_PERCENT = 2;     // Max % change per update cycle (anti-manipulation)
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - minimum change to trigger interpolation
+const UPDATE_THROTTLE_MS = 1500;           // Price stays still long enough to read (1.5s)
+const INTERPOLATION_STEPS = 20;            // Many steps for buttery-smooth fluid movement
+const INTERPOLATION_INTERVAL_MS = 30;      // Quick frames (20 steps * 30ms = 600ms total animation)
+const MAX_PRICE_CHANGE_PERCENT = 2;        // Allow 2% change per update for responsive feel
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - low threshold for responsive updates
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -104,7 +104,7 @@ export const useTickerLiveStream = () => {
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROFESSIONAL SMOOTH UPDATE SYSTEM
+  // STABLE UPDATE SYSTEM
   // Tracks pending updates and interpolation state for each symbol
   // ═══════════════════════════════════════════════════════════════════════════
   const pendingUpdatesRef = useRef<Record<string, PendingUpdate>>({});
@@ -119,8 +119,9 @@ export const useTickerLiveStream = () => {
   }>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // SMOOTH PRICE INTERPOLATION
-  // Creates gradual, professional transitions between price updates
+  // PREMIUM SMOOTH PRICE INTERPOLATION
+  // Ease-out cubic animation: fast start, gentle slowdown at the end
+  // Total animation: 20 steps * 30ms = 600ms of buttery-smooth transition
   // ═══════════════════════════════════════════════════════════════════════════
   const startInterpolation = useCallback((symbol: string, fromPrice: number, toPrice: number, fromChange: number, toChange: number) => {
     // Clear any existing interpolation
