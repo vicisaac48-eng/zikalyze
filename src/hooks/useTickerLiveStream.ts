@@ -13,13 +13,13 @@ const RECONNECT_BASE_DELAY_MS = 2000;  // Base delay for reconnection
 const RECONNECT_JITTER_MS = 2000;      // Random jitter added to reconnection delay
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROFESSIONAL CRYPTO SPOT MARKET UPDATE CONFIGURATION
-// Matches standard exchange display behavior - not too fast, not aggressive
+// COINMARKETCAP-STYLE FAST UPDATE CONFIGURATION
+// Fast, smooth price updates matching CoinMarketCap's responsive display
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;        // Standard crypto spot update interval (1.5s)
-const INTERPOLATION_STEPS = 8;          // Smooth transition steps for price changes
-const INTERPOLATION_INTERVAL_MS = 150;  // Time between interpolation steps (150ms * 8 = 1.2s total)
-const MAX_PRICE_CHANGE_PERCENT = 2;     // Max % change per update cycle (anti-manipulation)
+const UPDATE_THROTTLE_MS = 500;            // Fast updates like CoinMarketCap (~500ms)
+const INTERPOLATION_STEPS = 5;             // Quick smooth transition steps
+const INTERPOLATION_INTERVAL_MS = 80;      // Fast interpolation (80ms * 5 = 400ms total)
+const MAX_PRICE_CHANGE_PERCENT = 2;        // Max % change per update cycle (anti-manipulation)
 const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - minimum change to trigger interpolation
 
 // The 10 specific coins to track with live streaming
@@ -104,7 +104,7 @@ export const useTickerLiveStream = () => {
   const reconnectTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROFESSIONAL SMOOTH UPDATE SYSTEM
+  // COINMARKETCAP-STYLE FAST UPDATE SYSTEM
   // Tracks pending updates and interpolation state for each symbol
   // ═══════════════════════════════════════════════════════════════════════════
   const pendingUpdatesRef = useRef<Record<string, PendingUpdate>>({});
@@ -119,8 +119,8 @@ export const useTickerLiveStream = () => {
   }>>({});
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // SMOOTH PRICE INTERPOLATION
-  // Creates gradual, professional transitions between price updates
+  // FAST PRICE INTERPOLATION (COINMARKETCAP STYLE)
+  // Creates quick, smooth transitions between price updates
   // ═══════════════════════════════════════════════════════════════════════════
   const startInterpolation = useCallback((symbol: string, fromPrice: number, toPrice: number, fromChange: number, toChange: number) => {
     // Clear any existing interpolation
