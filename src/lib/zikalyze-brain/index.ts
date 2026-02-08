@@ -16,8 +16,8 @@ import { getUpcomingMacroCatalysts, getQuickMacroFlag } from './macro-catalysts'
 import { detectVolumeSpike, getVolumeSpikeFlag } from './volume-analysis';
 import { analyzeInstitutionalVsRetail, generateIfThenScenarios } from './institutional-analysis';
 import { estimateOnChainMetrics, estimateETFFlowData } from './on-chain-estimator';
-import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus } from './technical-analysis';
-import { hybridConfirmation } from './neural-engine';
+import { analyzeMarketStructure, generatePrecisionEntry, calculateFinalBias, performTopDownAnalysis, calculateADX, calculateRegimeWeightedConsensus, TopDownAnalysis, RegimeWeightedConsensus } from './technical-analysis';
+import { hybridConfirmation, HybridConfirmationResult } from './neural-engine';
 import { performTriModularAnalysis, formatTriModularOutput, generateSimplifiedSummary } from './tri-modular-analysis';
 
 // Re-export chart API for direct access to chart data
@@ -102,9 +102,9 @@ const getWhaleVisual = (netFlow: string, buying: number, selling: number): strin
 const buildExecutiveSummary = (
   bias: 'LONG' | 'SHORT' | 'NEUTRAL',
   confidence: number,
-  hybridResult: any,
-  regimeConsensus: any,
-  topDownAnalysis: any,
+  hybridResult: HybridConfirmationResult,
+  regimeConsensus: RegimeWeightedConsensus,
+  topDownAnalysis: TopDownAnalysis,
   tradeRecommendation: string,
   qualityScore: number,
   fearGreed: number,
