@@ -78,7 +78,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
               </span>
             </div>
             <span className={cn(
-              "text-sm font-semibold transition-all duration-300 sm:text-lg",
+              "text-sm font-semibold transition-colors duration-300 sm:text-lg",
               isLive ? "text-foreground" : "text-muted-foreground"
             )}>
               {loading && !isConnected ? "..." : (price > 0 ? formatPrice(price) : "---")}

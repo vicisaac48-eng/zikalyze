@@ -20,6 +20,7 @@ const UPDATE_THROTTLE_MS = 1500;        // Standard crypto spot update interval 
 const INTERPOLATION_STEPS = 8;          // Smooth transition steps for price changes
 const INTERPOLATION_INTERVAL_MS = 150;  // Time between interpolation steps (150ms * 8 = 1.2s total)
 const MAX_PRICE_CHANGE_PERCENT = 2;     // Max % change per update cycle (anti-manipulation)
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0001; // 0.01% - minimum change to trigger interpolation
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];
@@ -78,7 +79,10 @@ export interface TickerPrice {
   source: string;
 }
 
-// Internal type for tracking pending updates (raw data from exchange)
+/**
+ * Internal type for tracking pending updates from WebSocket before throttling/interpolation.
+ * Stores raw exchange data that will be processed and smoothed before display.
+ */
 interface PendingUpdate {
   price: number;
   change24h: number;
@@ -138,7 +142,10 @@ export const useTickerLiveStream = () => {
     const intervalId = setInterval(() => {
       const interp = interpolationRef.current[symbol];
       if (!interp || interp.step >= INTERPOLATION_STEPS) {
-        if (interp?.intervalId) clearInterval(interp.intervalId);
+        if (interp?.intervalId) {
+          clearInterval(interp.intervalId);
+          interp.intervalId = null; // Clear reference to prevent double-clearing
+        }
         return;
       }
       
@@ -189,8 +196,9 @@ export const useTickerLiveStream = () => {
     
     setTickerPrices(prev => {
       const current = prev[symbol];
-      const currentPrice = current?.displayPrice || current?.price || pending.price;
-      const currentChange = current?.displayChange24h || current?.change24h || pending.change24h;
+      // Use nullish coalescing to properly handle 0 values
+      const currentPrice = current?.displayPrice ?? current?.price ?? pending.price;
+      const currentChange = current?.displayChange24h ?? current?.change24h ?? pending.change24h;
       
       // Validate price change isn't too aggressive (anti-manipulation)
       let targetPrice = pending.price;
@@ -205,7 +213,7 @@ export const useTickerLiveStream = () => {
       
       // Start smooth interpolation if price changed meaningfully
       const priceDiff = Math.abs(targetPrice - currentPrice);
-      const significantChange = currentPrice > 0 ? priceDiff / currentPrice > 0.0001 : true;
+      const significantChange = currentPrice > 0 ? priceDiff / currentPrice > SIGNIFICANT_CHANGE_THRESHOLD : true;
       
       if (significantChange && currentPrice > 0) {
         startInterpolation(symbol, currentPrice, targetPrice, currentChange, pending.change24h);
