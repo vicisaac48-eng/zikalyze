@@ -7,6 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { MarketStructure, PrecisionEntry, ChartTrendInput, MultiTimeframeInput } from './types';
+import { validatePriceRange } from './math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔍 TYPES FOR TOP-DOWN ANALYSIS
@@ -918,12 +919,18 @@ function determineTrendFromRealData(
 
 export function performTopDownAnalysis(
   price: number,
-  high24h: number,
-  low24h: number,
+  inputHigh24h: number,
+  inputLow24h: number,
   change: number,
   chartData?: ChartTrendInput, // Real 24h chart data when available
   multiTfData?: MultiTimeframeInput // Multi-timeframe analysis (15m, 1h, 4h, 1d)
 ): TopDownAnalysis {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 DATA ACCURACY VALIDATION — Uses shared utility for consistency
+  // ═══════════════════════════════════════════════════════════════════════════
+  const validatedRange = validatePriceRange(price, inputHigh24h, inputLow24h, 'TopDownAnalysis');
+  const { high24h, low24h } = validatedRange;
+  
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
 

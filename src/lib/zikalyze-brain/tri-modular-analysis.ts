@@ -23,6 +23,7 @@ import {
   ChartTrendInput,
   MacroCatalyst
 } from './types';
+import { validatePriceRange } from './math-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔧 CONFIGURATION CONSTANTS
@@ -61,11 +62,17 @@ const VOLATILITY_KEYWORDS = ['jobs', 'cpi', 'fomc', 'announcement', 'release', '
  */
 export function analyzeLayerAlpha(
   price: number,
-  high24h: number,
-  low24h: number,
+  inputHigh24h: number,
+  inputLow24h: number,
   change: number,
   chartData?: ChartTrendInput
 ): LayerAlphaResult {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎯 DATA ACCURACY VALIDATION — Uses shared utility for consistency
+  // ═══════════════════════════════════════════════════════════════════════════
+  const validatedRange = validatePriceRange(price, inputHigh24h, inputLow24h, 'Layer Alpha');
+  const { high24h, low24h } = validatedRange;
+  
   const range = high24h - low24h;
   const pricePosition = range > 0 ? ((price - low24h) / range) * 100 : 50;
   

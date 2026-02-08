@@ -106,3 +106,73 @@ export function validateArrayLength(arr: unknown[], minLength: number, name: str
   }
   return true;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎯 DATA ACCURACY VALIDATION — 24h Price Range
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ValidatedPriceRange {
+  high24h: number;
+  low24h: number;
+  wasAdjusted: boolean;
+  adjustments: string[];
+}
+
+/**
+ * Validate and correct 24h price range to ensure current price is within bounds.
+ * The current price MUST be within the 24h range - if not, the data is stale.
+ * 
+ * Validation order (all conditions checked sequentially):
+ * 1. If price > high24h: adjust high24h to price
+ * 2. If price < low24h: adjust low24h to price
+ * 3. If high24h <= low24h (after adjustments): create ±2% range around price
+ * 
+ * @param price Current price
+ * @param high24h 24h high price
+ * @param low24h 24h low price
+ * @param context Optional context string for logging (e.g., function name)
+ * @returns Validated price range with adjustments logged
+ */
+export function validatePriceRange(
+  price: number,
+  high24h: number,
+  low24h: number,
+  context: string = 'validatePriceRange'
+): ValidatedPriceRange {
+  const adjustments: string[] = [];
+  let adjustedHigh = high24h;
+  let adjustedLow = low24h;
+  
+  // Validation 1: Current price cannot be above 24h high
+  if (price > adjustedHigh) {
+    adjustments.push(`price ($${price.toFixed(2)}) > high24h ($${high24h.toFixed(2)}) — adjusted high to price`);
+    adjustedHigh = price;
+  }
+  
+  // Validation 2: Current price cannot be below 24h low
+  if (price < adjustedLow) {
+    adjustments.push(`price ($${price.toFixed(2)}) < low24h ($${low24h.toFixed(2)}) — adjusted low to price`);
+    adjustedLow = price;
+  }
+  
+  // Validation 3: 24h high must be greater than 24h low
+  if (adjustedHigh <= adjustedLow) {
+    adjustments.push(`high24h ($${adjustedHigh.toFixed(2)}) <= low24h ($${adjustedLow.toFixed(2)}) — created ±2% range around price`);
+    adjustedHigh = price * 1.02;
+    adjustedLow = price * 0.98;
+  }
+  
+  // Log adjustments if any were made
+  const wasAdjusted = adjustments.length > 0;
+  if (wasAdjusted) {
+    console.warn(`[${context}] Data correction: ${adjustments.join('; ')}`);
+    console.log(`[${context}] Corrected 24h range: $${adjustedLow.toFixed(2)} → $${adjustedHigh.toFixed(2)} (price: $${price.toFixed(2)})`);
+  }
+  
+  return {
+    high24h: adjustedHigh,
+    low24h: adjustedLow,
+    wasAdjusted,
+    adjustments
+  };
+}
