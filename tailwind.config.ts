@@ -117,6 +117,26 @@ export default {
             transform: "scale(1)",
           },
         },
+        "ticker-flash-up": {
+          "0%": {
+            borderColor: "hsl(var(--success) / 0.8)",
+            boxShadow: "0 0 8px hsl(var(--success) / 0.4)",
+          },
+          "100%": {
+            borderColor: "hsl(var(--border))",
+            boxShadow: "none",
+          },
+        },
+        "ticker-flash-down": {
+          "0%": {
+            borderColor: "hsl(var(--destructive) / 0.8)",
+            boxShadow: "0 0 8px hsl(var(--destructive) / 0.4)",
+          },
+          "100%": {
+            borderColor: "hsl(var(--border))",
+            boxShadow: "none",
+          },
+        },
         "spin-slow": {
           from: {
             transform: "rotate(0deg)",
@@ -131,6 +151,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "price-flash-up": "price-flash-up 1.2s ease-out",
         "price-flash-down": "price-flash-down 1.2s ease-out",
+        "ticker-flash-up": "ticker-flash-up 0.8s ease-out",
+        "ticker-flash-down": "ticker-flash-down 0.8s ease-out",
         "spin-slow": "spin-slow 2.5s linear infinite",
       },
     },
