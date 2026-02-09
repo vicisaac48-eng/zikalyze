@@ -132,7 +132,8 @@ const Analyzer = () => {
           {/* AI Analyzer & News Events Calendar Grid */}
           <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
             <AIAnalyzer 
-              crypto={selectedCrypto} 
+              crypto={selectedCrypto}
+              getPriceBySymbol={getPriceBySymbol}
               price={selected.price} 
               change={selected.change}
               high24h={selected.high24h}
