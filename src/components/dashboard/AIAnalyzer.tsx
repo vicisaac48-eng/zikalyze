@@ -125,6 +125,8 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   
   // Flash animation effect for price changes
   useEffect(() => {
+    let flashTimeoutId: NodeJS.Timeout | null = null;
+    
     if (currentPrice > 0) {
       const now = Date.now();
       const lastPrice = lastPriceRef.current;
@@ -140,7 +142,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
           lastFlashTimeRef.current = now;
           
           // Clear flash after animation completes
-          setTimeout(() => {
+          flashTimeoutId = setTimeout(() => {
             setPriceFlash(null);
           }, 1200); // Match animation duration
         }
@@ -148,6 +150,13 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       
       lastPriceRef.current = currentPrice;
     }
+    
+    // Cleanup timeout on unmount or price change
+    return () => {
+      if (flashTimeoutId) {
+        clearTimeout(flashTimeoutId);
+      }
+    };
   }, [currentPrice]);
   
   // Track data freshness and build real-time source string
