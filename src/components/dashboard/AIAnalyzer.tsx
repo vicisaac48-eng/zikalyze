@@ -954,10 +954,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
 
         {/* Live Price Display - Shows real-time WebSocket data with flash animation */}
         <div className={cn(
-          "mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border transition-all",
-          priceFlash === "up" && "animate-ticker-flash-up",
-          priceFlash === "down" && "animate-ticker-flash-down",
-          !priceFlash && "border-border/50"
+          "mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border transition-all border-border/50"
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -101,9 +101,7 @@ const TickerCard = ({
         "flex flex-col gap-1 rounded-xl border px-2.5 py-2 transition-colors duration-200 relative flex-shrink-0 min-w-[90px] sm:min-w-0 sm:px-4 sm:py-3",
         isSelected
           ? "border-primary bg-primary/10"
-          : "border-border bg-card hover:border-primary/50",
-        flash === "up" && "animate-ticker-flash-up",
-        flash === "down" && "animate-ticker-flash-down"
+          : "border-border bg-card hover:border-primary/50"
       )}
     >
       <div className="flex items-center gap-1.5 sm:gap-2">
