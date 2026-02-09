@@ -129,15 +129,6 @@ const TickerCard = ({
         )}>
           {loading && !isLive ? "..." : (price > 0 ? formatPrice(price) : "---")}
         </span>
-        {/* Movement indicator badge */}
-        {change !== 0 && (
-          <span className={cn(
-            "text-[10px] px-1 py-0.5 rounded-sm hidden sm:inline-block",
-            change >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-          )}>
-            {change >= 0 ? "+" : ""}{change.toFixed(1)}%
-          </span>
-        )}
       </div>
     </button>
   );
