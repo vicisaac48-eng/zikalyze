@@ -28,6 +28,7 @@ type PriceFlash = "up" | "down" | null;
 // Flash animation constants - matching CryptoTicker for consistent behavior
 const MIN_FLASH_INTERVAL_MS = 1500;  // 1.5s minimum between flashes (same as CryptoTicker)
 const MIN_PRICE_CHANGE_PERCENT = 0.02;  // 0.02% minimum change to trigger flash (same as CryptoTicker)
+const FLASH_ANIMATION_DURATION_MS = 1500;  // How long the flash animation stays visible
 
 // Helper to format compact price for range display (removes trailing .00)
 const formatCompactPrice = (price: number | undefined, formatter: (p: number) => string): string => {
@@ -104,14 +105,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         return merged;
       });
 
-      // Clear flashes after animation (use same interval as CryptoTicker for consistency)
+      // Clear flashes after animation duration
       setTimeout(() => {
         setPriceFlashes(prev => {
           const updated = new Map(prev);
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
-      }, MIN_FLASH_INTERVAL_MS);
+      }, FLASH_ANIMATION_DURATION_MS);
     }
   }, [prices]);
 
