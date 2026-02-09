@@ -7,7 +7,6 @@ import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
-import { useSharedLivePrice } from "@/hooks/useSharedLivePrice";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
@@ -20,36 +19,16 @@ const Analyzer = () => {
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
 
-  // Get live data from CryptoPrices first to avoid duplicate lookups
+  // Get live data from CryptoPrices - same pattern as Top100CryptoList
   const liveData = getPriceBySymbol(selectedCrypto);
-
-  // Use shared live price for the selected crypto - unified price source with smooth interpolation
-  const sharedLivePrice = useSharedLivePrice(
-    selectedCrypto, 
-    liveData?.current_price, 
-    liveData?.price_change_percentage_24h
-  );
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
 
-  // Use shared live price for consistent data with smooth interpolation (same as Dashboard)
+  // Use getPriceBySymbol directly for consistent data (same pattern as Top100CryptoList)
   const selected = (() => {
-    // Priority: Shared live price with valid price > CryptoPrice
-    if (sharedLivePrice.price > 0) {
-      return {
-        name: liveData?.name || selectedCrypto,
-        price: sharedLivePrice.price,
-        change: sharedLivePrice.change24h,
-        high24h: sharedLivePrice.high24h || liveData?.high_24h || 0,
-        low24h: sharedLivePrice.low24h || liveData?.low_24h || 0,
-        volume: sharedLivePrice.volume || liveData?.total_volume || 0,
-        marketCap: liveData?.market_cap || 0,
-      };
-    }
-    
     if (liveData) {
       return {
         name: liveData.name,
@@ -92,7 +71,7 @@ const Analyzer = () => {
 
         <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Crypto Selection */}
-          <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
+          <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} isLive={isLive} />
 
           {/* Selected Crypto Info */}
           <div className="rounded-xl border border-border bg-card p-4 sm:rounded-2xl sm:p-6">
@@ -160,8 +139,7 @@ const Analyzer = () => {
               low24h={selected.low24h}
               volume={selected.volume}
               marketCap={selected.marketCap}
-              // Show live if either WebSocket source (useCryptoPrices or useSharedLivePrice/useTickerLiveStream) is connected
-              isLive={isLive || sharedLivePrice.isLive}
+              isLive={isLive}
             />
             <NewsEventsCalendar crypto={selectedCrypto} />
           </div>

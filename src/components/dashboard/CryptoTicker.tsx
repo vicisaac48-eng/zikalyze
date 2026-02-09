@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CryptoPrice, useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useSharedLivePrice } from "@/hooks/useSharedLivePrice";
 
 const cryptoMeta = [
   { symbol: "BTC", name: "Bitcoin", color: "text-warning" },
@@ -22,16 +21,18 @@ interface CryptoTickerProps {
   onSelect: (symbol: string) => void;
   getPriceBySymbol: (symbol: string) => CryptoPrice | undefined;
   loading: boolean;
+  isLive: boolean;
 }
 
-// Individual ticker card component that uses useSharedLivePrice for smooth interpolation
+// Individual ticker card component - uses useCryptoPrices directly like Top100CryptoList
 const TickerCard = ({ 
   crypto, 
   isSelected, 
   onSelect, 
   parentPrice, 
   formatPrice,
-  loading
+  loading,
+  isLive: parentIsLive
 }: { 
   crypto: { symbol: string; name: string; color: string };
   isSelected: boolean;
@@ -39,18 +40,12 @@ const TickerCard = ({
   parentPrice?: CryptoPrice;
   formatPrice: (price: number) => string;
   loading: boolean;
+  isLive: boolean;
 }) => {
-  // Use shared live price for smooth interpolation - this unifies all price sources
-  const livePrice = useSharedLivePrice(
-    crypto.symbol,
-    parentPrice?.current_price,
-    parentPrice?.price_change_percentage_24h
-  );
-  
-  const hasLivePrice = livePrice.price > 0;
-  const price = hasLivePrice ? livePrice.price : (parentPrice?.current_price || 0);
-  const change = hasLivePrice ? livePrice.change24h : (parentPrice?.price_change_percentage_24h || 0);
-  const isLive = livePrice.isLive;
+  // Use parentPrice directly from useCryptoPrices - same pattern as Top100CryptoList
+  const price = parentPrice?.current_price || 0;
+  const change = parentPrice?.price_change_percentage_24h || 0;
+  const isLive = parentIsLive;
   
   // Flash animation state
   const [flash, setFlash] = useState<"up" | "down" | null>(null);
@@ -147,7 +142,7 @@ const TickerCard = ({
   );
 };
 
-const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoTickerProps) => {
+const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading, isLive }: CryptoTickerProps) => {
   const { formatPrice } = useCurrency();
   
   return (
@@ -161,6 +156,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
           parentPrice={getPriceBySymbol(crypto.symbol)}
           formatPrice={formatPrice}
           loading={loading}
+          isLive={isLive}
         />
       ))}
     </div>
