@@ -965,9 +965,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
                 <span className="text-lg font-bold text-foreground">{crypto.toUpperCase()}</span>
               </div>
               <div className={cn(
-                "text-2xl font-bold tabular-nums px-2 py-1 rounded transition-all",
-                priceFlash === "up" ? "bg-success/20 text-success animate-price-flash-up" :
-                priceFlash === "down" ? "bg-destructive/20 text-destructive animate-price-flash-down" :
+                "text-2xl font-bold tabular-nums transition-all",
+                priceFlash === "up" ? "text-success" :
+                priceFlash === "down" ? "text-destructive" :
                 currentChange >= 0 ? "text-success" : "text-destructive"
               )}>
                 ${currentPrice.toLocaleString(undefined, { 
