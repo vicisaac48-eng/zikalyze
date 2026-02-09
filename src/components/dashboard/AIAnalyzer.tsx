@@ -67,6 +67,13 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   
+  // Flash animation state for price changes
+  const [priceFlash, setPriceFlash] = useState<"up" | "down" | null>(null);
+  const lastPriceRef = useRef<number>(0);
+  const lastFlashTimeRef = useRef<number>(0);
+  const MIN_FLASH_INTERVAL_MS = 1500; // Match CryptoTicker
+  const MIN_PRICE_CHANGE_PERCENT = 0.02; // Match CryptoTicker
+  
   // Background streaming state (hidden, always running)
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamUpdateCount, setStreamUpdateCount] = useState(0);
@@ -115,6 +122,33 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   const currentHigh = liveData.priceIsLive && liveData.high24h > 0 ? liveData.high24h : (high24h || price * 1.02);
   const currentLow = liveData.priceIsLive && liveData.low24h > 0 ? liveData.low24h : (low24h || price * 0.98);
   const currentVolume = liveData.priceIsLive && liveData.volume > 0 ? liveData.volume : (volume || 0);
+  
+  // Flash animation effect for price changes
+  useEffect(() => {
+    if (currentPrice > 0) {
+      const now = Date.now();
+      const lastPrice = lastPriceRef.current;
+      const lastFlashTime = lastFlashTimeRef.current;
+      
+      // Only flash if: price changed significantly AND enough time has passed
+      if (lastPrice > 0 && lastPrice !== currentPrice) {
+        const changePercent = Math.abs((currentPrice - lastPrice) / lastPrice) * 100;
+        
+        if (changePercent >= MIN_PRICE_CHANGE_PERCENT && (now - lastFlashTime) >= MIN_FLASH_INTERVAL_MS) {
+          const direction = currentPrice > lastPrice ? "up" : "down";
+          setPriceFlash(direction);
+          lastFlashTimeRef.current = now;
+          
+          // Clear flash after animation completes
+          setTimeout(() => {
+            setPriceFlash(null);
+          }, 1200); // Match animation duration
+        }
+      }
+      
+      lastPriceRef.current = currentPrice;
+    }
+  }, [currentPrice]);
   
   // Track data freshness and build real-time source string
   const dataAgeMs = Date.now() - liveData.lastUpdated;
@@ -909,15 +943,22 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
           </div>
         </div>
 
-        {/* Live Price Display - Shows real-time WebSocket data */}
-        <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border border-border/50">
+        {/* Live Price Display - Shows real-time WebSocket data with flash animation */}
+        <div className={cn(
+          "mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border transition-all",
+          priceFlash === "up" && "animate-ticker-flash-up",
+          priceFlash === "down" && "animate-ticker-flash-down",
+          !priceFlash && "border-border/50"
+        )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-foreground">{crypto.toUpperCase()}</span>
               </div>
               <div className={cn(
-                "text-2xl font-bold tabular-nums",
+                "text-2xl font-bold tabular-nums px-2 py-1 rounded transition-all",
+                priceFlash === "up" ? "bg-success/20 text-success animate-price-flash-up" :
+                priceFlash === "down" ? "bg-destructive/20 text-destructive animate-price-flash-down" :
                 currentChange >= 0 ? "text-success" : "text-destructive"
               )}>
                 ${currentPrice.toLocaleString(undefined, { 
