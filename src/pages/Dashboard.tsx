@@ -177,6 +177,7 @@ const Dashboard = () => {
               <Suspense fallback={<ChartSkeleton />}>
                 <AIAnalyzer 
                   crypto={selectedCrypto} 
+                  getPriceBySymbol={getPriceBySymbol}
                   price={selected.price} 
                   change={selected.change}
                   high24h={selected.high24h}
