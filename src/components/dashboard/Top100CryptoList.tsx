@@ -25,6 +25,10 @@ interface Top100CryptoListProps {
 // Track price changes for flash animations
 type PriceFlash = "up" | "down" | null;
 
+// Flash animation constants - matching CryptoTicker for consistent behavior
+const MIN_FLASH_INTERVAL_MS = 1500;  // 1.5s minimum between flashes (same as CryptoTicker)
+const MIN_PRICE_CHANGE_PERCENT = 0.02;  // 0.02% minimum change to trigger flash (same as CryptoTicker)
+
 // Helper to format compact price for range display (removes trailing .00)
 const formatCompactPrice = (price: number | undefined, formatter: (p: number) => string): string => {
   if (!price) return "---";
@@ -48,6 +52,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   
   // Track previous prices for flash animation
   const prevPricesRef = useRef<Map<string, number>>(new Map());
+  const lastFlashTimeRef = useRef<Map<string, number>>(new Map());  // Track last flash time per symbol
   const [priceFlashes, setPriceFlashes] = useState<Map<string, PriceFlash>>(new Map());
 
   // Filter prices based on search query
@@ -61,19 +66,32 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     );
   }, [prices, searchQuery]);
 
-  // Detect price changes and trigger flash animations
+  // Detect price changes and trigger flash animations - matching CryptoTicker logic
   useEffect(() => {
     if (prices.length === 0) return;
 
+    const now = Date.now();
     const newFlashes = new Map<string, PriceFlash>();
     
     prices.forEach((crypto) => {
       const prevPrice = prevPricesRef.current.get(crypto.symbol);
-      if (prevPrice !== undefined && prevPrice !== crypto.current_price) {
-        if (crypto.current_price > prevPrice) {
-          newFlashes.set(crypto.symbol, "up");
-        } else if (crypto.current_price < prevPrice) {
-          newFlashes.set(crypto.symbol, "down");
+      const lastFlashTime = lastFlashTimeRef.current.get(crypto.symbol) || 0;
+      
+      // Only flash if: 
+      // 1. We have a previous price to compare
+      // 2. Price actually changed
+      // 3. Change is significant (>= MIN_PRICE_CHANGE_PERCENT)
+      // 4. Enough time has passed since last flash (>= MIN_FLASH_INTERVAL_MS)
+      if (prevPrice !== undefined && prevPrice !== crypto.current_price && prevPrice > 0) {
+        const changePercent = Math.abs((crypto.current_price - prevPrice) / prevPrice) * 100;
+        
+        if (changePercent >= MIN_PRICE_CHANGE_PERCENT && (now - lastFlashTime) >= MIN_FLASH_INTERVAL_MS) {
+          if (crypto.current_price > prevPrice) {
+            newFlashes.set(crypto.symbol, "up");
+          } else {
+            newFlashes.set(crypto.symbol, "down");
+          }
+          lastFlashTimeRef.current.set(crypto.symbol, now);
         }
       }
       prevPricesRef.current.set(crypto.symbol, crypto.current_price);
@@ -86,14 +104,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         return merged;
       });
 
-      // Clear flashes after animation
+      // Clear flashes after animation (use same interval as CryptoTicker for consistency)
       setTimeout(() => {
         setPriceFlashes(prev => {
           const updated = new Map(prev);
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
-      }, 1200);
+      }, MIN_FLASH_INTERVAL_MS);
     }
   }, [prices]);
 
