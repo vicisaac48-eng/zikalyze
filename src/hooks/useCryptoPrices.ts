@@ -285,11 +285,10 @@ const BYBIT_SYMBOLS: Record<string, string> = {
 // Priority symbols for faster update throttling (applies to non-ticker symbols only)
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
-// Ticker symbols handled by useTickerLiveStream - skip WebSocket updates for these
-// to prevent duplicate/inconsistent price data between the two hooks.
-// Note: "kas" appears in both arrays but TICKER_LIVESTREAM_SYMBOLS takes precedence
-// since these symbols are completely skipped in updatePrice() before throttling applies.
-const TICKER_LIVESTREAM_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
+// These are high-priority symbols that should get faster updates (same throttle as FAST_UPDATE_CRYPTOS)
+// Previously these were skipped because useTickerLiveStream handled them, but now useCryptoPrices
+// handles ALL symbols consistently.
+const PRIORITY_TICKER_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
 
 // ===== PRICE VALIDATION CONSTANTS =====
 // Prevents aggressive price fluctuations by rejecting unrealistic changes
@@ -401,21 +400,18 @@ export const useCryptoPrices = () => {
   const priceHistoryRef = useRef<Map<string, number[]>>(new Map()); // Store last 10 valid prices per symbol
   const updateCountRef = useRef<Map<string, number>>(new Map()); // Track number of updates per symbol for grace period
   
-  // Throttle interval - stable updates to prevent aggressive price fluctuations
-  const UPDATE_THROTTLE_MS = 1500;
-  // Slightly faster updates for priority altcoins (but still conservative)
-  const FAST_UPDATE_THROTTLE_MS = 1200;
+  // Throttle interval - fast responsive updates for live trading feel
+  const UPDATE_THROTTLE_MS = 800;
+  // Even faster updates for priority altcoins
+  const FAST_UPDATE_THROTTLE_MS = 600;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
     const normalizedSymbol = symbol.toLowerCase();
     const now = Date.now();
     
-    // SKIP TICKER SYMBOLS - These are handled by useTickerLiveStream for consistency
-    // This prevents duplicate/conflicting price updates from multiple WebSocket sources
-    if (TICKER_LIVESTREAM_SYMBOLS.includes(normalizedSymbol)) {
-      return; // useTickerLiveStream handles these symbols exclusively
-    }
+    // Priority symbols (BTC, ETH, etc.) get fast throttle updates like FAST_UPDATE_CRYPTOS
+    // All symbols are now handled by useCryptoPrices consistently
     
     // CRITICAL: Never overwrite valid prices with zeros
     if (updates.current_price !== undefined && updates.current_price <= 0) {
@@ -535,9 +531,10 @@ export const useCryptoPrices = () => {
       return;
     }
     
-    // Use faster throttle for priority altcoins
+    // Use faster throttle for priority symbols (BTC, ETH, etc.) and priority altcoins
+    const isPrioritySymbol = PRIORITY_TICKER_SYMBOLS.includes(normalizedSymbol);
     const isFastUpdateCrypto = FAST_UPDATE_CRYPTOS.includes(normalizedSymbol);
-    const throttleMs = isFastUpdateCrypto ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
+    const throttleMs = (isPrioritySymbol || isFastUpdateCrypto) ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
     
     // Throttle updates - only update if enough time has passed
     const lastUpdate = lastUpdateTimeRef.current.get(normalizedSymbol) || 0;
@@ -594,7 +591,8 @@ export const useCryptoPrices = () => {
   
   // Live prices cache - persists current prices for instant load
   const LIVE_PRICES_CACHE_KEY = "zikalyze_live_prices_v1";
-  const LIVE_PRICES_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h - prices are still useful even if stale
+  // IMPORTANT: Keep TTL short (10min) to avoid showing stale "fake" prices that then "drop" to live prices
+  const LIVE_PRICES_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes - short enough to avoid misleading users
   const lastPriceSaveRef = useRef<number>(0);
   const PRICE_SAVE_THROTTLE_MS = 5000; // Save at most every 5 seconds
 

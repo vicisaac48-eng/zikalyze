@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSharedLivePrice } from "./useSharedLivePrice";
+import { useCryptoPrices } from "./useCryptoPrices";
 import { supabase } from "@/integrations/supabase/client";
 import { useSmartNotifications } from "./useSmartNotifications";
 
@@ -105,8 +105,20 @@ export function useLiveMarketData(
   fallbackLow?: number,
   fallbackVolume?: number
 ) {
-  // Live price from shared multi-exchange WebSocket system (same as Dashboard)
-  const livePrice = useSharedLivePrice(crypto, fallbackPrice, fallbackChange);
+  // Live price from useCryptoPrices - same pattern as Top100CryptoList
+  const { getPriceBySymbol, isLive } = useCryptoPrices();
+  const liveData = getPriceBySymbol(crypto);
+  
+  // Extract live price data
+  const livePrice = {
+    price: liveData?.current_price || 0,
+    change24h: liveData?.price_change_percentage_24h || 0,
+    high24h: liveData?.high_24h || 0,
+    low24h: liveData?.low_24h || 0,
+    volume: liveData?.total_volume || 0,
+    isLive: isLive && liveData !== undefined,
+    lastUpdate: Date.now(),
+  };
   
   // Smart notifications
   const { checkSentimentShift, checkWhaleActivity } = useSmartNotifications();

@@ -3,12 +3,12 @@ import { useCryptoPrices, CryptoPrice } from "./useCryptoPrices";
 import { useTickerLiveStream } from "./useTickerLiveStream";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM SMOOTH ANIMATION CONFIGURATION (matching useTickerLiveStream)
-// Professional CoinMarketCap-style updates: readable, fluid, and premium feel
+// LIVE RESPONSIVE ANIMATION CONFIGURATION (matching useTickerLiveStream)
+// Fast responsive updates: feels like real-time crypto exchange
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;           // Price stays still long enough to read (1.5s)
-const INTERPOLATION_STEPS = 20;            // Many steps for buttery-smooth fluid movement
-const INTERPOLATION_INTERVAL_MS = 30;      // Quick frames (20 steps * 30ms = 600ms total animation)
+const UPDATE_THROTTLE_MS = 800;            // Fast responsive updates (800ms)
+const INTERPOLATION_STEPS = 10;            // Quick smooth transitions
+const INTERPOLATION_INTERVAL_MS = 40;      // Fast frames (10 steps * 40ms = 400ms total animation)
 const PRICE_CHANGE_THRESHOLD = 0.0001;     // 0.01% - minimum price change to trigger interpolation
 
 interface SharedLivePriceData {
@@ -45,9 +45,16 @@ export const useSharedLivePrice = (
   const prevSymbolRef = useRef<string>(symbol);
   const [forceUpdate, setForceUpdate] = useState(0);
   
-  // Smooth interpolation state
-  const [displayPrice, setDisplayPrice] = useState<number>(0);
-  const [displayChange, setDisplayChange] = useState<number>(0);
+  // Track previous fallback to detect prop changes (e.g., after refresh)
+  const prevFallbackPriceRef = useRef<number | undefined>(fallbackPrice);
+  
+  // Track if this is the first live price update after symbol change
+  // Used to skip interpolation and jump directly to real price (avoid "dropping numbers" effect)
+  const isFirstPriceAfterSymbolChangeRef = useRef<boolean>(true);
+  
+  // Smooth interpolation state - initialize from fallback to avoid 0 price on load
+  const [displayPrice, setDisplayPrice] = useState<number>(fallbackPrice || 0);
+  const [displayChange, setDisplayChange] = useState<number>(fallbackChange || 0);
   const interpolationRef = useRef<{
     startPrice: number;
     endPrice: number;
@@ -83,15 +90,38 @@ export const useSharedLivePrice = (
     };
   }, []);
   
-  // Force re-computation when symbol changes
+  // Force re-computation when symbol changes - immediately set fallback price to prevent 0 display
   useEffect(() => {
     if (prevSymbolRef.current !== symbol) {
       prevSymbolRef.current = symbol;
       // Reset interpolation on symbol change
       resetInterpolation();
+      // Mark that next price update should skip interpolation (avoid "dropping numbers" effect)
+      isFirstPriceAfterSymbolChangeRef.current = true;
+      // CRITICAL: Immediately set fallback price to prevent showing $0 during transition
+      if (fallbackPrice && fallbackPrice > 0) {
+        setDisplayPrice(fallbackPrice);
+        setDisplayChange(fallbackChange || 0);
+      }
       setForceUpdate(prev => prev + 1);
     }
-  }, [symbol, resetInterpolation]);
+  }, [symbol, resetInterpolation, fallbackPrice, fallbackChange]);
+  
+  // Handle fallback price changes (e.g., after refresh when WebSocket reconnects)
+  // This ensures price is updated if fallback arrives after initial mount
+  useEffect(() => {
+    const hasFallbackChanged = prevFallbackPriceRef.current !== fallbackPrice;
+    const hasValidFallback = fallbackPrice !== undefined && fallbackPrice > 0;
+    const needsUpdate = displayPrice === 0 || prevFallbackPriceRef.current === undefined;
+    
+    if (hasFallbackChanged && hasValidFallback && needsUpdate) {
+      setDisplayPrice(fallbackPrice);
+      setDisplayChange(fallbackChange || 0);
+    }
+    
+    // Always track the latest fallback price
+    prevFallbackPriceRef.current = fallbackPrice;
+  }, [fallbackPrice, fallbackChange, displayPrice]);
   
   // Cleanup interpolation on unmount
   useEffect(() => {
@@ -239,15 +269,19 @@ export const useSharedLivePrice = (
       return;
     }
     
-    // Initialize display price if not set
-    if (displayPrice === 0 && liveData.price > 0) {
+    // CRITICAL: On first price update after symbol change (or initial load, when displayPrice === 0),
+    // JUMP directly to the live price WITHOUT interpolation.
+    // This prevents the "fake price dropping to real price" visual bug.
+    const needsInstantUpdate = isFirstPriceAfterSymbolChangeRef.current || displayPrice === 0;
+    if (needsInstantUpdate && liveData.price > 0) {
+      isFirstPriceAfterSymbolChangeRef.current = false;
       setDisplayPrice(liveData.price);
       setDisplayChange(liveData.change24h);
       interpolationRef.current.lastUpdateTime = now;
       return;
     }
     
-    // Start smooth interpolation if price changed meaningfully
+    // Start smooth interpolation if price changed meaningfully (for subsequent updates)
     // Use safe division with a reasonable minimum to prevent floating point precision issues
     const safeDisplayPrice = Math.max(displayPrice, 1.0);  // Minimum $1 denominator for safe division
     if (liveData.price > 0 && Math.abs(liveData.price - displayPrice) / safeDisplayPrice > PRICE_CHANGE_THRESHOLD) {
@@ -260,10 +294,19 @@ export const useSharedLivePrice = (
     return liveData;
   }
   
-  // Otherwise, return our own interpolated values
+  // CRITICAL: Always ensure we return a valid price during transitions
+  // Priority: displayPrice > liveData.price > fallbackPrice
+  const finalPrice = displayPrice > 0 
+    ? displayPrice 
+    : (liveData.price > 0 ? liveData.price : (fallbackPrice || 0));
+  const finalChange = displayPrice > 0 
+    ? displayChange 
+    : (liveData.price > 0 ? liveData.change24h : (fallbackChange || 0));
+  
+  // Otherwise, return our own interpolated values with guaranteed valid price
   return {
     ...liveData,
-    price: displayPrice > 0 ? displayPrice : liveData.price,
-    change24h: displayPrice > 0 ? displayChange : liveData.change24h,
+    price: finalPrice,
+    change24h: finalChange,
   };
 };

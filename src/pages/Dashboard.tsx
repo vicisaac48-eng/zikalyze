@@ -7,7 +7,6 @@ import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
-import { useTickerLiveStream } from "@/hooks/useTickerLiveStream";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 import { Input } from "@/components/ui/input";
@@ -53,8 +52,8 @@ const Dashboard = () => {
   });
   const [userName, setUserName] = useState<string | null>(null);
   const { prices, loading, isLive, getPriceBySymbol, refetch } = useCryptoPrices();
-  // Use the same live stream as CryptoTicker for consistent real-time data
-  const { getPrice: getTickerPrice, isConnected: tickerConnected } = useTickerLiveStream();
+  // Use getPriceBySymbol directly for the selected crypto - same pattern as Top100CryptoList
+  const selectedCryptoData = getPriceBySymbol(selectedCrypto);
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
 
@@ -80,25 +79,11 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Get selected crypto from live prices - prioritize ticker live stream (same as CryptoTicker)
-  const liveStreamPrice = getTickerPrice(selectedCrypto);
-  const liveData = getPriceBySymbol(selectedCrypto);
+  // Get selected crypto from live prices - direct from useCryptoPrices (same pattern as Top100CryptoList)
+  const liveData = selectedCryptoData;
   
-  // Use ticker live stream first (for consistent data with CryptoTicker), then fall back to useCryptoPrices
+  // Use getPriceBySymbol directly for consistent data (same pattern as Top100CryptoList)
   const selected = (() => {
-    // Priority: Live stream with displayPrice > Live stream price > CryptoPrice
-    if (liveStreamPrice && (liveStreamPrice.displayPrice > 0 || liveStreamPrice.price > 0)) {
-      return {
-        name: liveData?.name || selectedCrypto,
-        price: liveStreamPrice.displayPrice > 0 ? liveStreamPrice.displayPrice : liveStreamPrice.price,
-        change: liveStreamPrice.displayChange24h ?? liveStreamPrice.change24h ?? liveData?.price_change_percentage_24h ?? 0,
-        high24h: liveStreamPrice.high24h || liveData?.high_24h || 0,
-        low24h: liveStreamPrice.low24h || liveData?.low_24h || 0,
-        volume: liveStreamPrice.volume || liveData?.total_volume || 0,
-        marketCap: liveData?.market_cap || 0,
-      };
-    }
-    
     if (liveData) {
       return {
         name: liveData.name,
@@ -154,7 +139,7 @@ const Dashboard = () => {
 
         <div className="main-content px-3 pb-6 space-y-3 sm:px-4 sm:pb-8 sm:space-y-4 md:px-6 md:space-y-6">
           {/* Crypto Ticker */}
-          <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
+          <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} isLive={isLive} />
 
           {/* Time Filter */}
           <div className="flex gap-1.5 overflow-x-auto horizontal-scroll-container pb-1 sm:gap-2 custom-scrollbar">
@@ -198,7 +183,7 @@ const Dashboard = () => {
                   low24h={selected.low24h}
                   volume={selected.volume}
                   marketCap={selected.marketCap}
-                  isLive={isLive || tickerConnected}
+                  isLive={isLive}
                 />
               </Suspense>
             </ErrorBoundary>
