@@ -37,6 +37,7 @@ import {
 
 interface AIAnalyzerProps {
   crypto: string;
+  getPriceBySymbol: (symbol: string) => { current_price: number; price_change_percentage_24h: number; high_24h: number; low_24h: number; total_volume: number } | undefined;
   price: number;
   change: number;
   high24h?: number;
@@ -53,7 +54,7 @@ const FRAME_INTERVAL = 8; // 120fps smooth
 const STREAMING_INTERVAL = 2000; // Re-process every 2 seconds when streaming
 const SCROLL_COMPLETION_DELAY = 50; // Delay for DOM update before final smooth scroll
 
-const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap, isLive }: AIAnalyzerProps) => {
+const AIAnalyzer = ({ crypto, getPriceBySymbol, price, change, high24h, low24h, volume, marketCap, isLive }: AIAnalyzerProps) => {
   const { t, i18n } = useTranslation();
   const [displayedText, setDisplayedText] = useState("");
   const [fullAnalysis, setFullAnalysis] = useState("");
@@ -89,8 +90,19 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const completionScrollDoneRef = useRef(false);
   
+  // Get fresh live price data directly from useCryptoPrices - same pattern as CryptoTicker
+  const livePriceData = getPriceBySymbol(crypto);
+  
   // Comprehensive live market data (prices, on-chain, sentiment)
-  const liveData = useLiveMarketData(crypto, price, change, high24h, low24h, volume);
+  // Use livePriceData as primary source, fallback to props
+  const liveData = useLiveMarketData(
+    crypto, 
+    livePriceData?.current_price || price, 
+    livePriceData?.price_change_percentage_24h || change, 
+    livePriceData?.high_24h || high24h, 
+    livePriceData?.low_24h || low24h, 
+    livePriceData?.total_volume || volume
+  );
   
   // 📊 Real-time 24h chart data for accurate trend analysis
   const chartTrendData = useChartTrendData(crypto);
