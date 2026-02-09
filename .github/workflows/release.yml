@@ -56,7 +56,21 @@ jobs:
       
       - name: Build Debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          # Build with retry logic for network resilience
+          for i in 1 2 3; do
+            echo "Build attempt $i..."
+            ./gradlew assembleDebug --no-daemon && break
+            if [ $i -lt 3 ]; then
+              echo "Build failed, retrying in 30 seconds..."
+              sleep 30
+              # Clean Gradle cache on retry to force fresh dependency resolution
+              ./gradlew clean --no-daemon || true
+            else
+              echo "All build attempts failed"
+              exit 1
+            fi
+          done
       
       - name: Generate version
         id: version

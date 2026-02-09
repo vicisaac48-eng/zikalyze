@@ -65,18 +65,45 @@ jobs:
       - name: Build Debug APK
         if: github.event.inputs.build_type != 'release'
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          # Build with retry logic for network resilience
+          for i in 1 2 3; do
+            echo "Build attempt $i..."
+            ./gradlew assembleDebug --no-daemon && break
+            if [ $i -lt 3 ]; then
+              echo "Build failed, retrying in 30 seconds..."
+              sleep 30
+              # Clean Gradle cache on retry to force fresh dependency resolution
+              ./gradlew clean --no-daemon || true
+            else
+              echo "All build attempts failed"
+              exit 1
+            fi
+          done
       
       # Release build - unsigned (for beginners without keystore)
       - name: Build Release APK (Unsigned)
         if: github.event.inputs.build_type == 'release'
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: |
+          # Build with retry logic for network resilience
+          for i in 1 2 3; do
+            echo "Build attempt $i..."
+            ./gradlew assembleRelease --no-daemon && break
+            if [ $i -lt 3 ]; then
+              echo "Build failed, retrying in 30 seconds..."
+              sleep 30
+              ./gradlew clean --no-daemon || true
+            else
+              echo "All build attempts failed"
+              exit 1
+            fi
+          done
       
       - name: Build Release AAB (App Bundle)
         if: github.event.inputs.build_type == 'release'
         working-directory: android
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease --no-daemon
       
       # Upload artifacts
       - name: Upload Debug APK
