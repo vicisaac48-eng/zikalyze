@@ -101,9 +101,7 @@ const TickerCard = ({
         "flex flex-col gap-1 rounded-xl border px-2.5 py-2 transition-colors duration-200 relative flex-shrink-0 min-w-[90px] sm:min-w-0 sm:px-4 sm:py-3",
         isSelected
           ? "border-primary bg-primary/10"
-          : "border-border bg-card hover:border-primary/50",
-        flash === "up" && "animate-ticker-flash-up",
-        flash === "down" && "animate-ticker-flash-down"
+          : "border-border bg-card hover:border-primary/50"
       )}
     >
       <div className="flex items-center gap-1.5 sm:gap-2">
@@ -129,15 +127,6 @@ const TickerCard = ({
         )}>
           {loading && !isLive ? "..." : (price > 0 ? formatPrice(price) : "---")}
         </span>
-        {/* Movement indicator badge */}
-        {change !== 0 && (
-          <span className={cn(
-            "text-[10px] px-1 py-0.5 rounded-sm hidden sm:inline-block",
-            change >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-          )}>
-            {change >= 0 ? "+" : ""}{change.toFixed(1)}%
-          </span>
-        )}
       </div>
     </button>
   );

@@ -954,10 +954,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
 
         {/* Live Price Display - Shows real-time WebSocket data with flash animation */}
         <div className={cn(
-          "mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border transition-all",
-          priceFlash === "up" && "animate-ticker-flash-up",
-          priceFlash === "down" && "animate-ticker-flash-down",
-          !priceFlash && "border-border/50"
+          "mb-4 p-3 rounded-xl bg-gradient-to-r from-background to-secondary/30 border transition-all border-border/50"
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -965,9 +962,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
                 <span className="text-lg font-bold text-foreground">{crypto.toUpperCase()}</span>
               </div>
               <div className={cn(
-                "text-2xl font-bold tabular-nums px-2 py-1 rounded transition-all",
-                priceFlash === "up" ? "bg-success/20 text-success animate-price-flash-up" :
-                priceFlash === "down" ? "bg-destructive/20 text-destructive animate-price-flash-down" :
+                "text-2xl font-bold tabular-nums transition-all",
+                priceFlash === "up" ? "text-success" :
+                priceFlash === "down" ? "text-destructive" :
                 currentChange >= 0 ? "text-success" : "text-destructive"
               )}>
                 ${currentPrice.toLocaleString(undefined, { 
@@ -976,8 +973,8 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
                 })}
               </div>
               <div className={cn(
-                "text-sm font-medium px-2 py-0.5 rounded",
-                currentChange >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                "text-sm font-medium",
+                currentChange >= 0 ? "text-success" : "text-destructive"
               )}>
                 {currentChange >= 0 ? "+" : ""}{currentChange.toFixed(2)}%
               </div>

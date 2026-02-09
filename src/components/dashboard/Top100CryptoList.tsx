@@ -25,6 +25,11 @@ interface Top100CryptoListProps {
 // Track price changes for flash animations
 type PriceFlash = "up" | "down" | null;
 
+// Flash animation constants - matching CryptoTicker for consistent behavior
+const MIN_FLASH_INTERVAL_MS = 1500;  // 1.5s minimum between flashes (same as CryptoTicker)
+const MIN_PRICE_CHANGE_PERCENT = 0.02;  // 0.02% minimum change to trigger flash (same as CryptoTicker)
+const FLASH_ANIMATION_DURATION_MS = 1500;  // How long the flash animation stays visible
+
 // Helper to format compact price for range display (removes trailing .00)
 const formatCompactPrice = (price: number | undefined, formatter: (p: number) => string): string => {
   if (!price) return "---";
@@ -48,6 +53,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   
   // Track previous prices for flash animation
   const prevPricesRef = useRef<Map<string, number>>(new Map());
+  const lastFlashTimeRef = useRef<Map<string, number>>(new Map());  // Track last flash time per symbol
   const [priceFlashes, setPriceFlashes] = useState<Map<string, PriceFlash>>(new Map());
 
   // Filter prices based on search query
@@ -61,19 +67,32 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     );
   }, [prices, searchQuery]);
 
-  // Detect price changes and trigger flash animations
+  // Detect price changes and trigger flash animations - matching CryptoTicker logic
   useEffect(() => {
     if (prices.length === 0) return;
 
+    const now = Date.now();
     const newFlashes = new Map<string, PriceFlash>();
     
     prices.forEach((crypto) => {
       const prevPrice = prevPricesRef.current.get(crypto.symbol);
-      if (prevPrice !== undefined && prevPrice !== crypto.current_price) {
-        if (crypto.current_price > prevPrice) {
-          newFlashes.set(crypto.symbol, "up");
-        } else if (crypto.current_price < prevPrice) {
-          newFlashes.set(crypto.symbol, "down");
+      const lastFlashTime = lastFlashTimeRef.current.get(crypto.symbol) || 0;
+      
+      // Only flash if: 
+      // 1. We have a previous price to compare
+      // 2. Price actually changed
+      // 3. Change is significant (>= MIN_PRICE_CHANGE_PERCENT)
+      // 4. Enough time has passed since last flash (>= MIN_FLASH_INTERVAL_MS)
+      if (prevPrice !== undefined && prevPrice !== crypto.current_price && prevPrice > 0) {
+        const changePercent = Math.abs((crypto.current_price - prevPrice) / prevPrice) * 100;
+        
+        if (changePercent >= MIN_PRICE_CHANGE_PERCENT && (now - lastFlashTime) >= MIN_FLASH_INTERVAL_MS) {
+          if (crypto.current_price > prevPrice) {
+            newFlashes.set(crypto.symbol, "up");
+          } else {
+            newFlashes.set(crypto.symbol, "down");
+          }
+          lastFlashTimeRef.current.set(crypto.symbol, now);
         }
       }
       prevPricesRef.current.set(crypto.symbol, crypto.current_price);
@@ -86,14 +105,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         return merged;
       });
 
-      // Clear flashes after animation
+      // Clear flashes after animation duration
       setTimeout(() => {
         setPriceFlashes(prev => {
           const updated = new Map(prev);
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
-      }, 1200);
+      }, FLASH_ANIMATION_DURATION_MS);
     }
   }, [prices]);
 
@@ -312,11 +331,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                     </td>
                     <td className="py-2 text-right sm:py-3">
                       <span
-                        className={`font-medium text-[11px] transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
+                        className={`font-medium text-[11px] transition-all duration-150 inline-block sm:text-sm ${
                           flash === "up"
-                            ? "bg-success/20 text-success animate-price-flash-up"
+                            ? "text-success"
                             : flash === "down"
-                              ? "bg-destructive/20 text-destructive animate-price-flash-down"
+                              ? "text-destructive"
                               : "text-foreground"
                         }`}
                       >
@@ -341,7 +360,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                           />
                           {/* Current position marker */}
                           <div 
-                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-foreground border border-background shadow-sm transition-all duration-500"
+                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-foreground border border-background transition-all duration-500"
                             style={{ left: `calc(${clampedRange}% - 4px)` }}
                           />
                         </div>

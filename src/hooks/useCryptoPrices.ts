@@ -262,24 +262,60 @@ const EXCHANGES = {
 
 // Symbols supported by OKX (includes KAS!)
 const OKX_SYMBOLS: Record<string, string> = {
+  // Top 20
   BTC: 'BTC-USDT', ETH: 'ETH-USDT', SOL: 'SOL-USDT', XRP: 'XRP-USDT', DOGE: 'DOGE-USDT',
   ADA: 'ADA-USDT', AVAX: 'AVAX-USDT', DOT: 'DOT-USDT', LINK: 'LINK-USDT', LTC: 'LTC-USDT',
+  // 21-40
   ATOM: 'ATOM-USDT', NEAR: 'NEAR-USDT', APT: 'APT-USDT', FIL: 'FIL-USDT', ARB: 'ARB-USDT',
   OP: 'OP-USDT', INJ: 'INJ-USDT', SUI: 'SUI-USDT', TIA: 'TIA-USDT', PEPE: 'PEPE-USDT',
   SHIB: 'SHIB-USDT', TRX: 'TRX-USDT', XLM: 'XLM-USDT', HBAR: 'HBAR-USDT', VET: 'VET-USDT',
   FTM: 'FTM-USDT', ETC: 'ETC-USDT', AAVE: 'AAVE-USDT', MKR: 'MKR-USDT', GRT: 'GRT-USDT',
   KAS: 'KAS-USDT', TON: 'TON-USDT', TAO: 'TAO-USDT', WLD: 'WLD-USDT', ORDI: 'ORDI-USDT',
   SEI: 'SEI-USDT', STX: 'STX-USDT', MINA: 'MINA-USDT', ALGO: 'ALGO-USDT', ICP: 'ICP-USDT',
+  // 41-60 - Previously missing symbols
+  UNI: 'UNI-USDT', MATIC: 'MATIC-USDT', XMR: 'XMR-USDT', ZEC: 'ZEC-USDT', BCH: 'BCH-USDT',
+  EOS: 'EOS-USDT', XTZ: 'XTZ-USDT', THETA: 'THETA-USDT', NEO: 'NEO-USDT', IOTA: 'IOTA-USDT',
+  SAND: 'SAND-USDT', MANA: 'MANA-USDT', AXS: 'AXS-USDT', GALA: 'GALA-USDT', ENJ: 'ENJ-USDT',
+  CHZ: 'CHZ-USDT', FLOW: 'FLOW-USDT', CRV: 'CRV-USDT', COMP: 'COMP-USDT', SNX: 'SNX-USDT',
+  // 61-80
+  BAT: 'BAT-USDT', ZRX: 'ZRX-USDT', YFI: 'YFI-USDT', SUSHI: 'SUSHI-USDT', '1INCH': '1INCH-USDT',
+  LRC: 'LRC-USDT', KSM: 'KSM-USDT', KAVA: 'KAVA-USDT', DASH: 'DASH-USDT', QTUM: 'QTUM-USDT',
+  ZIL: 'ZIL-USDT', ONT: 'ONT-USDT', WAVES: 'WAVES-USDT', IOTX: 'IOTX-USDT', ICX: 'ICX-USDT',
+  RVN: 'RVN-USDT', SC: 'SC-USDT', ANKR: 'ANKR-USDT', SKL: 'SKL-USDT', STORJ: 'STORJ-USDT',
+  // 81-100
+  CELO: 'CELO-USDT', AR: 'AR-USDT', ROSE: 'ROSE-USDT', ONE: 'ONE-USDT', FLUX: 'FLUX-USDT',
+  IMX: 'IMX-USDT', GMT: 'GMT-USDT', APE: 'APE-USDT', LDO: 'LDO-USDT', RPL: 'RPL-USDT',
+  MASK: 'MASK-USDT', DYDX: 'DYDX-USDT', BLUR: 'BLUR-USDT', CFX: 'CFX-USDT', AGIX: 'AGIX-USDT',
+  FET: 'FET-USDT', OCEAN: 'OCEAN-USDT', RNDR: 'RNDR-USDT', RUNE: 'RUNE-USDT', ENS: 'ENS-USDT',
 };
 
 // Symbols supported by Bybit
 const BYBIT_SYMBOLS: Record<string, string> = {
+  // Top 20
   BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', XRP: 'XRPUSDT', DOGE: 'DOGEUSDT',
   ADA: 'ADAUSDT', AVAX: 'AVAXUSDT', DOT: 'DOTUSDT', LINK: 'LINKUSDT', LTC: 'LTCUSDT',
+  // 21-40
   ATOM: 'ATOMUSDT', NEAR: 'NEARUSDT', APT: 'APTUSDT', FIL: 'FILUSDT', ARB: 'ARBUSDT',
   OP: 'OPUSDT', INJ: 'INJUSDT', SUI: 'SUIUSDT', TIA: 'TIAUSDT', PEPE: 'PEPEUSDT',
   SHIB: 'SHIBUSDT', TRX: 'TRXUSDT', KAS: 'KASUSDT', TON: 'TONUSDT', WLD: 'WLDUSDT',
   SEI: 'SEIUSDT', ALGO: 'ALGOUSDT', ICP: 'ICPUSDT', HBAR: 'HBARUSDT', VET: 'VETUSDT',
+  // 41-60 - Previously missing symbols
+  UNI: 'UNIUSDT', MATIC: 'MATICUSDT', XMR: 'XMRUSDT', ZEC: 'ZECUSDT', BCH: 'BCHUSDT',
+  EOS: 'EOSUSDT', XTZ: 'XTZUSDT', THETA: 'THETAUSDT', NEO: 'NEOUSDT', IOTA: 'IOTAUSDT',
+  SAND: 'SANDUSDT', MANA: 'MANAUSDT', AXS: 'AXSUSDT', GALA: 'GALAUSDT', ENJ: 'ENJUSDT',
+  CHZ: 'CHZUSDT', FLOW: 'FLOWUSDT', CRV: 'CRVUSDT', COMP: 'COMPUSDT', SNX: 'SNXUSDT',
+  FTM: 'FTMUSDT', ETC: 'ETCUSDT', AAVE: 'AAVEUSDT', MKR: 'MKRUSDT', GRT: 'GRTUSDT',
+  // 61-80
+  BAT: 'BATUSDT', ZRX: 'ZRXUSDT', YFI: 'YFIUSDT', SUSHI: 'SUSHIUSDT', '1INCH': '1INCHUSDT',
+  LRC: 'LRCUSDT', KSM: 'KSMUSDT', KAVA: 'KAVAUSDT', DASH: 'DASHUSDT', QTUM: 'QTUMUSDT',
+  ZIL: 'ZILUSDT', ONT: 'ONTUSDT', WAVES: 'WAVESUSDT', IOTX: 'IOTXUSDT', ICX: 'ICXUSDT',
+  RVN: 'RVNUSDT', ANKR: 'ANKRUSDT', SKL: 'SKLUSDT', STORJ: 'STORJUSDT', XLM: 'XLMUSDT',
+  // 81-100
+  CELO: 'CELOUSDT', AR: 'ARUSDT', ROSE: 'ROSEUSDT', ONE: 'ONEUSDT', FLUX: 'FLUXUSDT',
+  IMX: 'IMXUSDT', GMT: 'GMTUSDT', APE: 'APEUSDT', LDO: 'LDOUSDT', RPL: 'RPLUSDT',
+  MASK: 'MASKUSDT', DYDX: 'DYDXUSDT', BLUR: 'BLURUSDT', CFX: 'CFXUSDT', AGIX: 'AGIXUSDT',
+  FET: 'FETUSDT', OCEAN: 'OCEANUSDT', RNDR: 'RNDRUSDT', RUNE: 'RUNEUSDT', ENS: 'ENSUSDT',
+  STX: 'STXUSDT', MINA: 'MINAUSDT', TAO: 'TAOUSDT', ORDI: 'ORDIUSDT',
 };
 
 // Priority symbols for faster update throttling (applies to non-ticker symbols only)
@@ -880,7 +916,7 @@ export const useCryptoPrices = () => {
         // Subscribe to tickers for symbols with OKX support
         const subscribeArgs = cryptoListRef.current
           .filter(c => OKX_SYMBOLS[c.symbol.toUpperCase()])
-          .slice(0, 50)
+          .slice(0, 100)  // Increased from 50 to cover all Top 100 cryptos
           .map(c => ({ channel: "tickers", instId: OKX_SYMBOLS[c.symbol.toUpperCase()] }));
         
         if (subscribeArgs.length > 0) {
@@ -1060,7 +1096,7 @@ export const useCryptoPrices = () => {
         // Subscribe to tickers
         const symbols = cryptoListRef.current
           .filter(c => BYBIT_SYMBOLS[c.symbol.toUpperCase()])
-          .slice(0, 30)
+          .slice(0, 100)  // Increased from 30 to cover all Top 100 cryptos
           .map(c => `tickers.${BYBIT_SYMBOLS[c.symbol.toUpperCase()]}`);
         
         if (symbols.length > 0) {
@@ -1147,7 +1183,7 @@ export const useCryptoPrices = () => {
         });
         
         // Kraken allows max 50 pairs per subscription
-        const uniquePairs = [...new Set(pairs)].slice(0, 40);
+        const uniquePairs = [...new Set(pairs)].slice(0, 50);
         
         if (uniquePairs.length > 0) {
           console.log(`[Kraken] Subscribing to ${uniquePairs.length} pairs`);

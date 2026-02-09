@@ -92,49 +92,39 @@ export default {
         "price-flash-up": {
           "0%": {
             backgroundColor: "hsl(var(--success) / 0.3)",
-            transform: "scale(1.05)",
           },
           "50%": {
             backgroundColor: "hsl(var(--success) / 0.2)",
-            transform: "scale(1.02)",
           },
           "100%": {
             backgroundColor: "transparent",
-            transform: "scale(1)",
           },
         },
         "price-flash-down": {
           "0%": {
             backgroundColor: "hsl(var(--destructive) / 0.3)",
-            transform: "scale(1.05)",
           },
           "50%": {
             backgroundColor: "hsl(var(--destructive) / 0.2)",
-            transform: "scale(1.02)",
           },
           "100%": {
             backgroundColor: "transparent",
-            transform: "scale(1)",
           },
         },
         "ticker-flash-up": {
           "0%": {
-            borderColor: "hsl(var(--success) / 0.8)",
-            boxShadow: "0 0 8px hsl(var(--success) / 0.4)",
+            backgroundColor: "hsl(var(--success) / 0.15)",
           },
           "100%": {
-            borderColor: "hsl(var(--border))",
-            boxShadow: "none",
+            backgroundColor: "transparent",
           },
         },
         "ticker-flash-down": {
           "0%": {
-            borderColor: "hsl(var(--destructive) / 0.8)",
-            boxShadow: "0 0 8px hsl(var(--destructive) / 0.4)",
+            backgroundColor: "hsl(var(--destructive) / 0.15)",
           },
           "100%": {
-            borderColor: "hsl(var(--border))",
-            boxShadow: "none",
+            backgroundColor: "transparent",
           },
         },
         "spin-slow": {
