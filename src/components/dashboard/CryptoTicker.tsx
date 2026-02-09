@@ -31,8 +31,7 @@ const TickerCard = ({
   onSelect, 
   parentPrice, 
   formatPrice,
-  loading,
-  onPriceUpdate
+  loading
 }: { 
   crypto: { symbol: string; name: string; color: string };
   isSelected: boolean;
@@ -40,7 +39,6 @@ const TickerCard = ({
   parentPrice?: CryptoPrice;
   formatPrice: (price: number) => string;
   loading: boolean;
-  onPriceUpdate: (symbol: string, price: number) => void;
 }) => {
   // Use shared live price for smooth interpolation - this unifies all price sources
   const livePrice = useSharedLivePrice(
@@ -49,14 +47,16 @@ const TickerCard = ({
     parentPrice?.price_change_percentage_24h
   );
   
-  const price = livePrice.price > 0 ? livePrice.price : (parentPrice?.current_price || 0);
-  const change = livePrice.price > 0 ? livePrice.change24h : (parentPrice?.price_change_percentage_24h || 0);
+  const hasLivePrice = livePrice.price > 0;
+  const price = hasLivePrice ? livePrice.price : (parentPrice?.current_price || 0);
+  const change = hasLivePrice ? livePrice.change24h : (parentPrice?.price_change_percentage_24h || 0);
   const isLive = livePrice.isLive;
   
   // Flash animation state
   const [flash, setFlash] = useState<"up" | "down" | null>(null);
   const lastPriceRef = useRef<number>(0);
   const lastFlashTimeRef = useRef<number>(0);
+  const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const MIN_FLASH_INTERVAL_MS = 1500;
   const MIN_PRICE_CHANGE_PERCENT = 0.02;
   
@@ -76,15 +76,27 @@ const TickerCard = ({
           setFlash(direction);
           lastFlashTimeRef.current = now;
           
-          // Clear flash after animation
-          setTimeout(() => setFlash(null), 1500);
+          // Clear any existing timeout before setting new one
+          if (flashTimeoutRef.current) {
+            clearTimeout(flashTimeoutRef.current);
+          }
+          // Clear flash after animation (use same interval for consistency)
+          flashTimeoutRef.current = setTimeout(() => setFlash(null), MIN_FLASH_INTERVAL_MS);
         }
       }
       
       lastPriceRef.current = price;
-      onPriceUpdate(crypto.symbol, price);
     }
-  }, [price, crypto.symbol, onPriceUpdate]);
+  }, [price, crypto.symbol]);
+  
+  // Cleanup timeout on unmount only
+  useEffect(() => {
+    return () => {
+      if (flashTimeoutRef.current) {
+        clearTimeout(flashTimeoutRef.current);
+      }
+    };
+  }, []);
   
   return (
     <button
@@ -137,13 +149,6 @@ const TickerCard = ({
 
 const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoTickerProps) => {
   const { formatPrice } = useCurrency();
-  // Track prices for parent component callbacks (optional)
-  const pricesRef = useRef<Record<string, number>>({});
-  
-  // Callback to track price updates (can be used by parent if needed)
-  const handlePriceUpdate = (symbol: string, price: number) => {
-    pricesRef.current[symbol] = price;
-  };
   
   return (
     <div className="flex gap-2 overflow-x-auto horizontal-scroll-container pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
@@ -156,7 +161,6 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
           parentPrice={getPriceBySymbol(crypto.symbol)}
           formatPrice={formatPrice}
           loading={loading}
-          onPriceUpdate={handlePriceUpdate}
         />
       ))}
     </div>
