@@ -108,7 +108,7 @@ const TickerCard = ({
       <div className="flex items-center gap-1.5 sm:gap-2">
         <span className={cn("font-bold text-sm sm:text-base", crypto.color)}>{crypto.symbol}</span>
         {isLive && (
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title={`Live from ${livePrice.source}`} />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Live WebSocket" />
         )}
         <span
           className={cn(
