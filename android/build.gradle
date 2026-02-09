@@ -5,8 +5,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        // Fallback Maven repositories for network resilience in CI
-        maven { url "https://maven.google.com" }
+        // Fallback Maven repository for network resilience in CI
         maven { url "https://jitpack.io" }
     }
     dependencies {
@@ -24,8 +23,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Fallback Maven repositories for network resilience in CI
-        maven { url "https://maven.google.com" }
+        // Fallback Maven repository for network resilience in CI
         maven { url "https://jitpack.io" }
     }
     

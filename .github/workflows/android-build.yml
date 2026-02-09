@@ -93,6 +93,7 @@ jobs:
             if [ $i -lt 3 ]; then
               echo "Build failed, retrying in 30 seconds..."
               sleep 30
+              # Clean Gradle cache on retry to force fresh dependency resolution
               ./gradlew clean --no-daemon || true
             else
               echo "All build attempts failed"
