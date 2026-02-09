@@ -113,18 +113,18 @@ export default {
         },
         "ticker-flash-up": {
           "0%": {
-            borderColor: "hsl(var(--success) / 0.8)",
+            backgroundColor: "hsl(var(--success) / 0.15)",
           },
           "100%": {
-            borderColor: "hsl(var(--border))",
+            backgroundColor: "transparent",
           },
         },
         "ticker-flash-down": {
           "0%": {
-            borderColor: "hsl(var(--destructive) / 0.8)",
+            backgroundColor: "hsl(var(--destructive) / 0.15)",
           },
           "100%": {
-            borderColor: "hsl(var(--border))",
+            backgroundColor: "transparent",
           },
         },
         "spin-slow": {
