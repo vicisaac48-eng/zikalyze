@@ -35,9 +35,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Type definition for price data from getPriceBySymbol
+type PriceData = {
+  current_price: number;
+  price_change_percentage_24h: number;
+  high_24h: number;
+  low_24h: number;
+  total_volume: number;
+} | undefined;
+
 interface AIAnalyzerProps {
   crypto: string;
-  getPriceBySymbol: (symbol: string) => { current_price: number; price_change_percentage_24h: number; high_24h: number; low_24h: number; total_volume: number } | undefined;
+  getPriceBySymbol: (symbol: string) => PriceData;
   price: number;
   change: number;
   high24h?: number;
@@ -94,14 +103,14 @@ const AIAnalyzer = ({ crypto, getPriceBySymbol, price, change, high24h, low24h, 
   const livePriceData = getPriceBySymbol(crypto);
   
   // Comprehensive live market data (prices, on-chain, sentiment)
-  // Use livePriceData as primary source, fallback to props
+  // Use livePriceData as primary source, fallback to props using nullish coalescing
   const liveData = useLiveMarketData(
     crypto, 
-    livePriceData?.current_price || price, 
-    livePriceData?.price_change_percentage_24h || change, 
-    livePriceData?.high_24h || high24h, 
-    livePriceData?.low_24h || low24h, 
-    livePriceData?.total_volume || volume
+    livePriceData?.current_price ?? price, 
+    livePriceData?.price_change_percentage_24h ?? change, 
+    livePriceData?.high_24h ?? high24h, 
+    livePriceData?.low_24h ?? low24h, 
+    livePriceData?.total_volume ?? volume
   );
   
   // 📊 Real-time 24h chart data for accurate trend analysis
