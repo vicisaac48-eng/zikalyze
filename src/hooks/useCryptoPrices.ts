@@ -594,7 +594,8 @@ export const useCryptoPrices = () => {
   
   // Live prices cache - persists current prices for instant load
   const LIVE_PRICES_CACHE_KEY = "zikalyze_live_prices_v1";
-  const LIVE_PRICES_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h - prices are still useful even if stale
+  // IMPORTANT: Keep TTL short (10min) to avoid showing stale "fake" prices that then "drop" to live prices
+  const LIVE_PRICES_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes - short enough to avoid misleading users
   const lastPriceSaveRef = useRef<number>(0);
   const PRICE_SAVE_THROTTLE_MS = 5000; // Save at most every 5 seconds
 

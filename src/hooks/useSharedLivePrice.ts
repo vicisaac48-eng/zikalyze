@@ -48,6 +48,10 @@ export const useSharedLivePrice = (
   // Track previous fallback to detect prop changes (e.g., after refresh)
   const prevFallbackPriceRef = useRef<number | undefined>(fallbackPrice);
   
+  // Track if this is the first live price update after symbol change
+  // Used to skip interpolation and jump directly to real price (avoid "dropping numbers" effect)
+  const isFirstPriceAfterSymbolChangeRef = useRef<boolean>(true);
+  
   // Smooth interpolation state - initialize from fallback to avoid 0 price on load
   const [displayPrice, setDisplayPrice] = useState<number>(fallbackPrice || 0);
   const [displayChange, setDisplayChange] = useState<number>(fallbackChange || 0);
@@ -92,6 +96,8 @@ export const useSharedLivePrice = (
       prevSymbolRef.current = symbol;
       // Reset interpolation on symbol change
       resetInterpolation();
+      // Mark that next price update should skip interpolation (avoid "dropping numbers" effect)
+      isFirstPriceAfterSymbolChangeRef.current = true;
       // CRITICAL: Immediately set fallback price to prevent showing $0 during transition
       if (fallbackPrice && fallbackPrice > 0) {
         setDisplayPrice(fallbackPrice);
@@ -263,15 +269,19 @@ export const useSharedLivePrice = (
       return;
     }
     
-    // Initialize display price if not set
-    if (displayPrice === 0 && liveData.price > 0) {
+    // CRITICAL: On first price update after symbol change (or initial load, when displayPrice === 0),
+    // JUMP directly to the live price WITHOUT interpolation.
+    // This prevents the "fake price dropping to real price" visual bug.
+    const needsInstantUpdate = isFirstPriceAfterSymbolChangeRef.current || displayPrice === 0;
+    if (needsInstantUpdate && liveData.price > 0) {
+      isFirstPriceAfterSymbolChangeRef.current = false;
       setDisplayPrice(liveData.price);
       setDisplayChange(liveData.change24h);
       interpolationRef.current.lastUpdateTime = now;
       return;
     }
     
-    // Start smooth interpolation if price changed meaningfully
+    // Start smooth interpolation if price changed meaningfully (for subsequent updates)
     // Use safe division with a reasonable minimum to prevent floating point precision issues
     const safeDisplayPrice = Math.max(displayPrice, 1.0);  // Minimum $1 denominator for safe division
     if (liveData.price > 0 && Math.abs(liveData.price - displayPrice) / safeDisplayPrice > PRICE_CHANGE_THRESHOLD) {
