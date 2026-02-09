@@ -45,9 +45,12 @@ export const useSharedLivePrice = (
   const prevSymbolRef = useRef<string>(symbol);
   const [forceUpdate, setForceUpdate] = useState(0);
   
-  // Smooth interpolation state
-  const [displayPrice, setDisplayPrice] = useState<number>(0);
-  const [displayChange, setDisplayChange] = useState<number>(0);
+  // Track previous fallback to detect prop changes (e.g., after refresh)
+  const prevFallbackPriceRef = useRef<number | undefined>(fallbackPrice);
+  
+  // Smooth interpolation state - initialize from fallback to avoid 0 price on load
+  const [displayPrice, setDisplayPrice] = useState<number>(fallbackPrice || 0);
+  const [displayChange, setDisplayChange] = useState<number>(fallbackChange || 0);
   const interpolationRef = useRef<{
     startPrice: number;
     endPrice: number;
@@ -83,15 +86,36 @@ export const useSharedLivePrice = (
     };
   }, []);
   
-  // Force re-computation when symbol changes
+  // Force re-computation when symbol changes - immediately set fallback price to prevent 0 display
   useEffect(() => {
     if (prevSymbolRef.current !== symbol) {
       prevSymbolRef.current = symbol;
       // Reset interpolation on symbol change
       resetInterpolation();
+      // CRITICAL: Immediately set fallback price to prevent showing $0 during transition
+      if (fallbackPrice && fallbackPrice > 0) {
+        setDisplayPrice(fallbackPrice);
+        setDisplayChange(fallbackChange || 0);
+      }
       setForceUpdate(prev => prev + 1);
     }
-  }, [symbol, resetInterpolation]);
+  }, [symbol, resetInterpolation, fallbackPrice, fallbackChange]);
+  
+  // Handle fallback price changes (e.g., after refresh when WebSocket reconnects)
+  // This ensures price is updated if fallback arrives after initial mount
+  useEffect(() => {
+    const hasFallbackChanged = prevFallbackPriceRef.current !== fallbackPrice;
+    const hasValidFallback = fallbackPrice !== undefined && fallbackPrice > 0;
+    const needsUpdate = displayPrice === 0 || prevFallbackPriceRef.current === undefined;
+    
+    if (hasFallbackChanged && hasValidFallback && needsUpdate) {
+      setDisplayPrice(fallbackPrice);
+      setDisplayChange(fallbackChange || 0);
+    }
+    
+    // Always track the latest fallback price
+    prevFallbackPriceRef.current = fallbackPrice;
+  }, [fallbackPrice, fallbackChange, displayPrice]);
   
   // Cleanup interpolation on unmount
   useEffect(() => {
@@ -260,10 +284,19 @@ export const useSharedLivePrice = (
     return liveData;
   }
   
-  // Otherwise, return our own interpolated values
+  // CRITICAL: Always ensure we return a valid price during transitions
+  // Priority: displayPrice > liveData.price > fallbackPrice
+  const finalPrice = displayPrice > 0 
+    ? displayPrice 
+    : (liveData.price > 0 ? liveData.price : (fallbackPrice || 0));
+  const finalChange = displayPrice > 0 
+    ? displayChange 
+    : (liveData.price > 0 ? liveData.change24h : (fallbackChange || 0));
+  
+  // Otherwise, return our own interpolated values with guaranteed valid price
   return {
     ...liveData,
-    price: displayPrice > 0 ? displayPrice : liveData.price,
-    change24h: displayPrice > 0 ? displayChange : liveData.change24h,
+    price: finalPrice,
+    change24h: finalChange,
   };
 };
