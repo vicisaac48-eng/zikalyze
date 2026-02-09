@@ -102,15 +102,22 @@ const AIAnalyzer = ({ crypto, getPriceBySymbol, price, change, high24h, low24h, 
   // Get fresh live price data directly from useCryptoPrices - same pattern as CryptoTicker
   const livePriceData = getPriceBySymbol(crypto);
   
+  // Use direct price from getPriceBySymbol with fallback to props - same pattern as Dashboard/CryptoTicker
+  const currentPrice = livePriceData?.current_price ?? price;
+  const currentChange = livePriceData?.price_change_percentage_24h ?? change;
+  const currentHigh = livePriceData?.high_24h ?? high24h ?? (currentPrice * 1.02);
+  const currentLow = livePriceData?.low_24h ?? low24h ?? (currentPrice * 0.98);
+  const currentVolume = livePriceData?.total_volume ?? volume ?? 0;
+  
   // Comprehensive live market data (prices, on-chain, sentiment)
-  // Use livePriceData as primary source, fallback to props using nullish coalescing
+  // Pass the direct prices we're using
   const liveData = useLiveMarketData(
     crypto, 
-    livePriceData?.current_price ?? price, 
-    livePriceData?.price_change_percentage_24h ?? change, 
-    livePriceData?.high_24h ?? high24h, 
-    livePriceData?.low_24h ?? low24h, 
-    livePriceData?.total_volume ?? volume
+    currentPrice, 
+    currentChange, 
+    currentHigh, 
+    currentLow, 
+    currentVolume
   );
   
   // 📊 Real-time 24h chart data for accurate trend analysis
@@ -125,24 +132,17 @@ const AIAnalyzer = ({ crypto, getPriceBySymbol, price, change, high24h, low24h, 
   // 🔥 Real-time Fear & Greed index for AI brain integration
   const realTimeFearGreed = useRealTimeFearGreed();
   
-  // Real-time on-chain data with whale tracking - use live price for accuracy
+  // Real-time on-chain data with whale tracking - use direct live price
   const { metrics: onChainMetrics, streamStatus } = useOnChainData(
     crypto, 
-    liveData.priceIsLive ? liveData.price : price, 
-    liveData.priceIsLive ? liveData.change24h : change, 
+    currentPrice, 
+    currentChange, 
     {
-      volume: liveData.priceIsLive ? liveData.volume : volume,
+      volume: currentVolume,
       marketCap,
       coinGeckoId: undefined
     }
   );
-  
-  // ALWAYS prioritize WebSocket live data over prop fallbacks
-  const currentPrice = liveData.priceIsLive ? liveData.price : price;
-  const currentChange = liveData.priceIsLive ? liveData.change24h : change;
-  const currentHigh = liveData.priceIsLive && liveData.high24h > 0 ? liveData.high24h : (high24h || price * 1.02);
-  const currentLow = liveData.priceIsLive && liveData.low24h > 0 ? liveData.low24h : (low24h || price * 0.98);
-  const currentVolume = liveData.priceIsLive && liveData.volume > 0 ? liveData.volume : (volume || 0);
   
   // Flash animation effect for price changes
   useEffect(() => {
