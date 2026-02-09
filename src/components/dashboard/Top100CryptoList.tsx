@@ -360,7 +360,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                           />
                           {/* Current position marker */}
                           <div 
-                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-foreground border border-background shadow-sm transition-all duration-500"
+                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-foreground border border-background transition-all duration-500"
                             style={{ left: `calc(${clampedRange}% - 4px)` }}
                           />
                         </div>
