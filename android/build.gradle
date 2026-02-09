@@ -5,6 +5,8 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        // Fallback Maven repository for network resilience in CI
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.7.2'
@@ -21,6 +23,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Fallback Maven repository for network resilience in CI
+        maven { url "https://jitpack.io" }
     }
     
     // Force consistent Kotlin stdlib versions to prevent duplicate class errors
