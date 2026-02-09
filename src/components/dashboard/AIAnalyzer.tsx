@@ -973,8 +973,8 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
                 })}
               </div>
               <div className={cn(
-                "text-sm font-medium px-2 py-0.5 rounded",
-                currentChange >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                "text-sm font-medium",
+                currentChange >= 0 ? "text-success" : "text-destructive"
               )}>
                 {currentChange >= 0 ? "+" : ""}{currentChange.toFixed(2)}%
               </div>
