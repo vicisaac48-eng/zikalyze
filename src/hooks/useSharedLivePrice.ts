@@ -3,12 +3,12 @@ import { useCryptoPrices, CryptoPrice } from "./useCryptoPrices";
 import { useTickerLiveStream } from "./useTickerLiveStream";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM SMOOTH ANIMATION CONFIGURATION (matching useTickerLiveStream)
-// Professional CoinMarketCap-style updates: readable, fluid, and premium feel
+// LIVE RESPONSIVE ANIMATION CONFIGURATION (matching useTickerLiveStream)
+// Fast responsive updates: feels like real-time crypto exchange
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;           // Price stays still long enough to read (1.5s)
-const INTERPOLATION_STEPS = 20;            // Many steps for buttery-smooth fluid movement
-const INTERPOLATION_INTERVAL_MS = 30;      // Quick frames (20 steps * 30ms = 600ms total animation)
+const UPDATE_THROTTLE_MS = 800;            // Fast responsive updates (800ms)
+const INTERPOLATION_STEPS = 10;            // Quick smooth transitions
+const INTERPOLATION_INTERVAL_MS = 40;      // Fast frames (10 steps * 40ms = 400ms total animation)
 const PRICE_CHANGE_THRESHOLD = 0.0001;     // 0.01% - minimum price change to trigger interpolation
 
 interface SharedLivePriceData {

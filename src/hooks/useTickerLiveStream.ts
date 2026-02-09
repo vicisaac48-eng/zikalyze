@@ -16,14 +16,14 @@ const MAX_RECONNECT_ATTEMPTS = 10;        // Reset backoff after this many attem
 const HEALTH_CHECK_INTERVAL_MS = 30000;   // Check connection health every 30 seconds
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM SMOOTH ANIMATION CONFIGURATION
-// Stable updates with smooth interpolation - prevents aggressive price fluctuations
+// LIVE RESPONSIVE ANIMATION CONFIGURATION
+// Fast updates with smooth interpolation - feels like real-time crypto exchange
 // ═══════════════════════════════════════════════════════════════════════════
-const UPDATE_THROTTLE_MS = 1500;           // Stable updates (1.5s between updates)
-const INTERPOLATION_STEPS = 15;            // More steps for smoother transitions
-const INTERPOLATION_INTERVAL_MS = 50;      // Relaxed frames (15 steps * 50ms = 750ms total animation)
-const MAX_PRICE_CHANGE_PERCENT = 1.0;      // Limit to 1% change per update to prevent aggressive fluctuations
-const SIGNIFICANT_CHANGE_THRESHOLD = 0.0005; // 0.0005 = 0.05% - threshold to reduce visual noise
+const UPDATE_THROTTLE_MS = 800;            // Fast responsive updates (800ms between updates)
+const INTERPOLATION_STEPS = 10;            // Quick smooth transitions
+const INTERPOLATION_INTERVAL_MS = 40;      // Fast frames (10 steps * 40ms = 400ms total animation)
+const MAX_PRICE_CHANGE_PERCENT = 2.5;      // Allow up to 2.5% change per update for responsive feel
+const SIGNIFICANT_CHANGE_THRESHOLD = 0.0002; // 0.0002 = 0.02% - trigger on smaller price changes
 
 // The 10 specific coins to track with live streaming
 export const TICKER_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "DOGE", "KAS", "ADA", "AVAX", "LINK", "DOT"];

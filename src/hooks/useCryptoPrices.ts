@@ -401,10 +401,10 @@ export const useCryptoPrices = () => {
   const priceHistoryRef = useRef<Map<string, number[]>>(new Map()); // Store last 10 valid prices per symbol
   const updateCountRef = useRef<Map<string, number>>(new Map()); // Track number of updates per symbol for grace period
   
-  // Throttle interval - stable updates to prevent aggressive price fluctuations
-  const UPDATE_THROTTLE_MS = 1500;
-  // Slightly faster updates for priority altcoins (but still conservative)
-  const FAST_UPDATE_THROTTLE_MS = 1200;
+  // Throttle interval - fast responsive updates for live trading feel
+  const UPDATE_THROTTLE_MS = 800;
+  // Even faster updates for priority altcoins
+  const FAST_UPDATE_THROTTLE_MS = 600;
 
   // Update price with source tracking and throttling for readable updates
   const updatePrice = useCallback((symbol: string, updates: Partial<CryptoPrice>, source: string) => {
