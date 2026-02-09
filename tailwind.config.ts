@@ -114,21 +114,17 @@ export default {
         "ticker-flash-up": {
           "0%": {
             borderColor: "hsl(var(--success) / 0.8)",
-            boxShadow: "0 0 8px hsl(var(--success) / 0.4)",
           },
           "100%": {
             borderColor: "hsl(var(--border))",
-            boxShadow: "none",
           },
         },
         "ticker-flash-down": {
           "0%": {
             borderColor: "hsl(var(--destructive) / 0.8)",
-            boxShadow: "0 0 8px hsl(var(--destructive) / 0.4)",
           },
           "100%": {
             borderColor: "hsl(var(--border))",
-            boxShadow: "none",
           },
         },
         "spin-slow": {
