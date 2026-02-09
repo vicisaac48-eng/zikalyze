@@ -916,7 +916,7 @@ export const useCryptoPrices = () => {
         // Subscribe to tickers for symbols with OKX support
         const subscribeArgs = cryptoListRef.current
           .filter(c => OKX_SYMBOLS[c.symbol.toUpperCase()])
-          .slice(0, 50)
+          .slice(0, 100)  // Increased from 50 to cover all Top 100 cryptos
           .map(c => ({ channel: "tickers", instId: OKX_SYMBOLS[c.symbol.toUpperCase()] }));
         
         if (subscribeArgs.length > 0) {
@@ -1096,7 +1096,7 @@ export const useCryptoPrices = () => {
         // Subscribe to tickers
         const symbols = cryptoListRef.current
           .filter(c => BYBIT_SYMBOLS[c.symbol.toUpperCase()])
-          .slice(0, 30)
+          .slice(0, 100)  // Increased from 30 to cover all Top 100 cryptos
           .map(c => `tickers.${BYBIT_SYMBOLS[c.symbol.toUpperCase()]}`);
         
         if (symbols.length > 0) {
@@ -1183,7 +1183,7 @@ export const useCryptoPrices = () => {
         });
         
         // Kraken allows max 50 pairs per subscription
-        const uniquePairs = [...new Set(pairs)].slice(0, 40);
+        const uniquePairs = [...new Set(pairs)].slice(0, 50);
         
         if (uniquePairs.length > 0) {
           console.log(`[Kraken] Subscribing to ${uniquePairs.length} pairs`);
