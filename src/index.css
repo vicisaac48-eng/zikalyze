@@ -693,12 +693,9 @@ All colors MUST be HSL.
     }
   }
 
-  /* Content area spacing to account for fixed header on Android/native apps */
-  /* Must use !important to override Tailwind padding utilities like p-3 */
+  /* Content area spacing to account for fixed header on Android/native apps ONLY */
+  /* Web uses sticky header which is part of normal document flow - no extra padding needed */
   .main-content {
-    /* On Android, add safe-area-inset-top (status bar height) + header height */
-    /* calc() with env() fallback to 0 for web browsers */
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
     /* Create stacking context below the fixed header without affecting positioning */
     /* isolation: isolate creates a new stacking context with implicit z-index: 0 */
     /* which keeps content below the fixed header (z-index: 1000) */
@@ -708,8 +705,16 @@ All colors MUST be HSL.
     z-index: 0;
   }
 
+  /* Android/native ONLY: Add padding for fixed header */
+  /* On web, sticky header is part of normal flow - no padding needed */
+  html.android-native .main-content {
+    /* On Android, add safe-area-inset-top (status bar height) + header height */
+    /* Must use !important to override Tailwind padding utilities like p-3 */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+  }
+
   @media (min-width: 640px) {
-    .main-content {
+    html.android-native .main-content {
       padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
