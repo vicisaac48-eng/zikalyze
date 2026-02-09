@@ -285,11 +285,10 @@ const BYBIT_SYMBOLS: Record<string, string> = {
 // Priority symbols for faster update throttling (applies to non-ticker symbols only)
 const FAST_UPDATE_CRYPTOS = ["kas", "kaspa", "hbar", "icp", "fil", "algo", "xlm", "xmr", "vet"];
 
-// Ticker symbols handled by useTickerLiveStream - skip WebSocket updates for these
-// to prevent duplicate/inconsistent price data between the two hooks.
-// Note: "kas" appears in both arrays but TICKER_LIVESTREAM_SYMBOLS takes precedence
-// since these symbols are completely skipped in updatePrice() before throttling applies.
-const TICKER_LIVESTREAM_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
+// These are high-priority symbols that should get faster updates (same throttle as FAST_UPDATE_CRYPTOS)
+// Previously these were skipped because useTickerLiveStream handled them, but now useCryptoPrices
+// handles ALL symbols consistently.
+const PRIORITY_TICKER_SYMBOLS = ["btc", "eth", "sol", "xrp", "doge", "kas", "ada", "avax", "link", "dot"];
 
 // ===== PRICE VALIDATION CONSTANTS =====
 // Prevents aggressive price fluctuations by rejecting unrealistic changes
@@ -411,11 +410,8 @@ export const useCryptoPrices = () => {
     const normalizedSymbol = symbol.toLowerCase();
     const now = Date.now();
     
-    // SKIP TICKER SYMBOLS - These are handled by useTickerLiveStream for consistency
-    // This prevents duplicate/conflicting price updates from multiple WebSocket sources
-    if (TICKER_LIVESTREAM_SYMBOLS.includes(normalizedSymbol)) {
-      return; // useTickerLiveStream handles these symbols exclusively
-    }
+    // Priority symbols (BTC, ETH, etc.) get fast throttle updates like FAST_UPDATE_CRYPTOS
+    // All symbols are now handled by useCryptoPrices consistently
     
     // CRITICAL: Never overwrite valid prices with zeros
     if (updates.current_price !== undefined && updates.current_price <= 0) {
@@ -535,9 +531,10 @@ export const useCryptoPrices = () => {
       return;
     }
     
-    // Use faster throttle for priority altcoins
+    // Use faster throttle for priority symbols (BTC, ETH, etc.) and priority altcoins
+    const isPrioritySymbol = PRIORITY_TICKER_SYMBOLS.includes(normalizedSymbol);
     const isFastUpdateCrypto = FAST_UPDATE_CRYPTOS.includes(normalizedSymbol);
-    const throttleMs = isFastUpdateCrypto ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
+    const throttleMs = (isPrioritySymbol || isFastUpdateCrypto) ? FAST_UPDATE_THROTTLE_MS : UPDATE_THROTTLE_MS;
     
     // Throttle updates - only update if enough time has passed
     const lastUpdate = lastUpdateTimeRef.current.get(normalizedSymbol) || 0;
