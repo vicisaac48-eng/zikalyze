@@ -7,36 +7,63 @@ import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useSharedLivePrice } from "@/hooks/useSharedLivePrice";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
+
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const { getPriceBySymbol, loading, isLive, refetch } = useCryptoPrices();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
 
+  // Get live data from CryptoPrices first to avoid duplicate lookups
+  const liveData = getPriceBySymbol(selectedCrypto);
+
+  // Use shared live price for the selected crypto - unified price source with smooth interpolation
+  const sharedLivePrice = useSharedLivePrice(
+    selectedCrypto, 
+    liveData?.current_price, 
+    liveData?.price_change_percentage_24h
+  );
+
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
 
-  const cryptoData: Record<string, { name: string; price: number; change: number }> = {
-    BTC: { name: "Bitcoin", price: getPriceBySymbol("BTC")?.current_price || 86512, change: getPriceBySymbol("BTC")?.price_change_percentage_24h || -4.87 },
-    ETH: { name: "Ethereum", price: getPriceBySymbol("ETH")?.current_price || 2842, change: getPriceBySymbol("ETH")?.price_change_percentage_24h || -5.46 },
-    SOL: { name: "Solana", price: getPriceBySymbol("SOL")?.current_price || 127.18, change: getPriceBySymbol("SOL")?.price_change_percentage_24h || -6.85 },
-    XRP: { name: "Ripple", price: getPriceBySymbol("XRP")?.current_price || 2.05, change: getPriceBySymbol("XRP")?.price_change_percentage_24h || -6.63 },
-    DOGE: { name: "Dogecoin", price: getPriceBySymbol("DOGE")?.current_price || 0.1376, change: getPriceBySymbol("DOGE")?.price_change_percentage_24h || -7.84 },
-    KAS: { name: "Kaspa", price: getPriceBySymbol("KAS")?.current_price || 0.12, change: getPriceBySymbol("KAS")?.price_change_percentage_24h || 2.5 },
-    ADA: { name: "Cardano", price: getPriceBySymbol("ADA")?.current_price || 0.45, change: getPriceBySymbol("ADA")?.price_change_percentage_24h || -3.2 },
-    AVAX: { name: "Avalanche", price: getPriceBySymbol("AVAX")?.current_price || 28.5, change: getPriceBySymbol("AVAX")?.price_change_percentage_24h || -4.1 },
-    LINK: { name: "Chainlink", price: getPriceBySymbol("LINK")?.current_price || 14.2, change: getPriceBySymbol("LINK")?.price_change_percentage_24h || -2.8 },
-    DOT: { name: "Polkadot", price: getPriceBySymbol("DOT")?.current_price || 5.8, change: getPriceBySymbol("DOT")?.price_change_percentage_24h || -3.5 },
-  };
-
-  const selected = cryptoData[selectedCrypto];
+  // Use shared live price for consistent data with smooth interpolation (same as Dashboard)
+  const selected = (() => {
+    // Priority: Shared live price with valid price > CryptoPrice
+    if (sharedLivePrice.price > 0) {
+      return {
+        name: liveData?.name || selectedCrypto,
+        price: sharedLivePrice.price,
+        change: sharedLivePrice.change24h,
+        high24h: sharedLivePrice.high24h || liveData?.high_24h || 0,
+        low24h: sharedLivePrice.low24h || liveData?.low_24h || 0,
+        volume: sharedLivePrice.volume || liveData?.total_volume || 0,
+        marketCap: liveData?.market_cap || 0,
+      };
+    }
+    
+    if (liveData) {
+      return {
+        name: liveData.name,
+        price: liveData.current_price,
+        change: liveData.price_change_percentage_24h,
+        high24h: liveData.high_24h,
+        low24h: liveData.low_24h,
+        volume: liveData.total_volume,
+        marketCap: liveData.market_cap,
+      };
+    }
+    
+    return { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
+  })();
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -101,13 +128,13 @@ const Analyzer = () => {
               <div>
                 <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.high24h")}</div>
                 <div className="font-semibold text-foreground text-sm sm:text-base">
-                  ${getPriceBySymbol(selectedCrypto)?.high_24h?.toLocaleString() || "---"}
+                  ${selected.high24h > 0 ? selected.high24h.toLocaleString() : "---"}
                 </div>
               </div>
               <div>
                 <div className="text-xs text-muted-foreground sm:text-sm">{t("analyzer.low24h")}</div>
                 <div className="font-semibold text-foreground text-sm sm:text-base">
-                  ${getPriceBySymbol(selectedCrypto)?.low_24h?.toLocaleString() || "---"}
+                  ${selected.low24h > 0 ? selected.low24h.toLocaleString() : "---"}
                 </div>
               </div>
             </div>
@@ -118,6 +145,9 @@ const Analyzer = () => {
             crypto={selectedCrypto}
             price={selected.price}
             change={selected.change}
+            volume={selected.volume}
+            marketCap={selected.marketCap}
+            coinGeckoId={liveData?.id}
           />
 
           {/* AI Analyzer & News Events Calendar Grid */}
@@ -126,11 +156,12 @@ const Analyzer = () => {
               crypto={selectedCrypto} 
               price={selected.price} 
               change={selected.change}
-              high24h={getPriceBySymbol(selectedCrypto)?.high_24h}
-              low24h={getPriceBySymbol(selectedCrypto)?.low_24h}
-              volume={getPriceBySymbol(selectedCrypto)?.total_volume}
-              marketCap={getPriceBySymbol(selectedCrypto)?.market_cap}
-              isLive={isLive}
+              high24h={selected.high24h}
+              low24h={selected.low24h}
+              volume={selected.volume}
+              marketCap={selected.marketCap}
+              // Show live if either WebSocket source (useCryptoPrices or useSharedLivePrice/useTickerLiveStream) is connected
+              isLive={isLive || sharedLivePrice.isLive}
             />
             <NewsEventsCalendar crypto={selectedCrypto} />
           </div>
