@@ -16,6 +16,19 @@ const MAX_RECONNECT_ATTEMPTS = 10;        // Reset backoff after this many attem
 const HEALTH_CHECK_INTERVAL_MS = 30000;   // Check connection health every 30 seconds
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PING/PONG HEARTBEAT - Required by Binance for stable connections
+// Binance sends ping frames every ~20 seconds, we must respond with pong
+// ═══════════════════════════════════════════════════════════════════════════
+const PING_INTERVAL_MS = 15000;           // Send ping every 15 seconds to keep connection alive
+const PONG_TIMEOUT_MS = 5000;             // If no pong response within 5s, consider connection dead
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRE-EMPTIVE 24H RECONNECTION - Binance disconnects after 24 hours
+// Reconnect proactively before timeout to ensure continuous streaming
+// ═══════════════════════════════════════════════════════════════════════════
+const CONNECTION_MAX_AGE_MS = 23 * 60 * 60 * 1000; // 23 hours - reconnect before 24h timeout
+
+// ═══════════════════════════════════════════════════════════════════════════
 // LIVE RESPONSIVE ANIMATION CONFIGURATION
 // Fast updates with smooth interpolation - feels like real-time crypto exchange
 // ═══════════════════════════════════════════════════════════════════════════
@@ -108,6 +121,13 @@ export const useTickerLiveStream = () => {
   const reconnectAttemptsRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
   const lastMessageTimeRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ping/Pong heartbeat tracking
+  const pingIntervalsRef = useRef<Record<string, NodeJS.Timeout | null>>({ binance: null, okx: null, bybit: null });
+  const lastPongTimeRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
+  
+  // Connection age tracking for pre-emptive 24h reconnection
+  const connectionStartTimeRef = useRef<Record<string, number>>({ binance: 0, okx: 0, bybit: 0 });
   
   // ═══════════════════════════════════════════════════════════════════════════
   // CONNECTION HEALTH — Exponential backoff with jitter
@@ -319,14 +339,39 @@ export const useTickerLiveStream = () => {
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
         resetReconnectAttempts('binance');
-        lastMessageTimeRef.current.binance = Date.now();
+        const now = Date.now();
+        lastMessageTimeRef.current.binance = now;
+        connectionStartTimeRef.current.binance = now; // Track connection start for 24h reconnect
+        lastPongTimeRef.current.binance = now; // Initialize pong time
         console.log(`[Ticker LiveStream] ✓ Binance connected - LIVE streaming active`);
         setIsConnected(true);
         setSources(prev => prev.includes("Binance") ? prev : [...prev, "Binance"]);
+        
+        // Start heartbeat monitoring to detect dead connections
+        // Binance sends data frequently; if no data for extended period, connection is dead
+        if (pingIntervalsRef.current.binance) {
+          clearInterval(pingIntervalsRef.current.binance);
+        }
+        pingIntervalsRef.current.binance = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            // Check if we received any data recently
+            // Binance streams are high-frequency - if no messages, connection is dead
+            const timeSinceLastMessage = Date.now() - lastPongTimeRef.current.binance;
+            if (timeSinceLastMessage > PING_INTERVAL_MS + PONG_TIMEOUT_MS) {
+              console.log(`[Ticker LiveStream] Binance no data for ${Math.round(timeSinceLastMessage / 1000)}s, reconnecting...`);
+              ws.close();
+              return;
+            }
+            // Note: Browser WebSocket API doesn't support ws.ping(), Binance handles pings at protocol level
+            // We passively monitor message activity as proof of connection health
+          }
+        }, PING_INTERVAL_MS);
       };
       
       ws.onmessage = (event) => {
-        lastMessageTimeRef.current.binance = Date.now();
+        const now = Date.now();
+        lastMessageTimeRef.current.binance = now;
+        lastPongTimeRef.current.binance = now; // Treat any message as a "pong" (connection is alive)
         try {
           const message = JSON.parse(event.data);
           if (message.data) {
@@ -366,6 +411,11 @@ export const useTickerLiveStream = () => {
       
       ws.onclose = (e) => {
         clearTimeout(connectionTimeout);
+        // Clear ping interval on close
+        if (pingIntervalsRef.current.binance) {
+          clearInterval(pingIntervalsRef.current.binance);
+          pingIntervalsRef.current.binance = null;
+        }
         setSources(prev => {
           const newSources = prev.filter(s => s !== "Binance");
           // Update connected state based on remaining sources
@@ -387,7 +437,7 @@ export const useTickerLiveStream = () => {
     } catch (err) {
       console.log(`[Ticker LiveStream] Binance connection failed:`, err);
     }
-  }, [updateTicker]);
+  }, [updateTicker, resetReconnectAttempts, incrementReconnectAttempts, getReconnectDelay]);
 
   // Connect to OKX - Primary for KAS, fallback for all coins if Binance fails
   const connectOKX = useCallback(() => {
@@ -555,33 +605,67 @@ export const useTickerLiveStream = () => {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CONNECTION HEALTH CHECK — Detect stale connections and reconnect proactively
+  // Also handles pre-emptive 24h reconnection to avoid Binance timeout
   // ═══════════════════════════════════════════════════════════════════════════
   const checkConnectionHealth = useCallback(() => {
     const now = Date.now();
     // Connection is stale if no data received for 2x health check interval
     const staleThreshold = HEALTH_CHECK_INTERVAL_MS * 2;
     
-    // Check Binance
+    // Check Binance - also check for 24h connection age
     if (binanceWsRef.current?.readyState === WebSocket.OPEN) {
       const lastMessage = lastMessageTimeRef.current.binance;
+      const connectionStart = connectionStartTimeRef.current.binance;
+      
+      // Only check connection age if we have a valid start time (> 0)
+      if (connectionStart > 0) {
+        const connectionAge = now - connectionStart;
+        // Pre-emptive reconnect before 24h timeout
+        if (connectionAge > CONNECTION_MAX_AGE_MS) {
+          console.log(`[Ticker LiveStream] Binance connection age ${Math.round(connectionAge / 3600000)}h, pre-emptive reconnect before 24h timeout...`);
+          binanceWsRef.current.close();
+          return; // Exit early, don't check stale
+        }
+      }
+      // Stale connection detection
       if (lastMessage && now - lastMessage > staleThreshold) {
         console.log(`[Ticker LiveStream] Binance connection stale (${Math.round((now - lastMessage) / 1000)}s without data), reconnecting...`);
         binanceWsRef.current.close();
       }
     }
     
-    // Check OKX
+    // Check OKX - also check for 24h connection age
     if (okxWsRef.current?.readyState === WebSocket.OPEN) {
       const lastMessage = lastMessageTimeRef.current.okx;
+      const connectionStart = connectionStartTimeRef.current.okx;
+      
+      if (connectionStart > 0) {
+        const connectionAge = now - connectionStart;
+        if (connectionAge > CONNECTION_MAX_AGE_MS) {
+          console.log(`[Ticker LiveStream] OKX connection age ${Math.round(connectionAge / 3600000)}h, pre-emptive reconnect...`);
+          okxWsRef.current.close();
+          return;
+        }
+      }
       if (lastMessage && now - lastMessage > staleThreshold) {
         console.log(`[Ticker LiveStream] OKX connection stale, reconnecting...`);
         okxWsRef.current.close();
       }
     }
     
-    // Check Bybit
+    // Check Bybit - also check for 24h connection age
     if (bybitWsRef.current?.readyState === WebSocket.OPEN) {
       const lastMessage = lastMessageTimeRef.current.bybit;
+      const connectionStart = connectionStartTimeRef.current.bybit;
+      
+      if (connectionStart > 0) {
+        const connectionAge = now - connectionStart;
+        if (connectionAge > CONNECTION_MAX_AGE_MS) {
+          console.log(`[Ticker LiveStream] Bybit connection age ${Math.round(connectionAge / 3600000)}h, pre-emptive reconnect...`);
+          bybitWsRef.current.close();
+          return;
+        }
+      }
       if (lastMessage && now - lastMessage > staleThreshold) {
         console.log(`[Ticker LiveStream] Bybit connection stale, reconnecting...`);
         bybitWsRef.current.close();
@@ -623,6 +707,7 @@ export const useTickerLiveStream = () => {
     return () => {
       // Copy ref values to local variables for cleanup
       const timeouts = { ...reconnectTimeoutsRef.current };
+      const pingIntervals = { ...pingIntervalsRef.current };
       const binanceWs = binanceWsRef.current;
       const okxWs = okxWsRef.current;
       const bybitWs = bybitWsRef.current;
@@ -633,6 +718,13 @@ export const useTickerLiveStream = () => {
       if (healthCheck) {
         clearInterval(healthCheck);
       }
+      
+      // Clear all ping intervals
+      Object.values(pingIntervals).forEach(interval => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      });
       
       // Clear all reconnect timeouts
       Object.values(timeouts).forEach(timeout => {
