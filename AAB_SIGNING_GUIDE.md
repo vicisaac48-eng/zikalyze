@@ -1,5 +1,7 @@
 # 🔐 AAB Signing Guide
 
+> **❓ Not sure what information you need to provide?** → **[Click here for a clear answer →](./SIGNING_INFO_NEEDED.md)**
+
 This guide explains how to sign your Android App Bundle (AAB) for Google Play Store upload.
 
 ## 🎯 Quick Start
@@ -427,6 +429,12 @@ After signing:
 ---
 
 ## 🆘 Need Help?
+
+### Quick Reference
+
+- **[What Information Do I Need? →](./SIGNING_INFO_NEEDED.md)** - Clear explanation of signing requirements
+- **[Quick Start Guide](./QUICK_START_SIGNING.md)** - Fast track to signing
+- **[Example Output](./SIGNING_EXAMPLES.md)** - See what to expect
 
 ### Check Existing Documentation
 

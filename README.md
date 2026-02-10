@@ -222,6 +222,14 @@ Complete guide for signing your AAB:
 - Security best practices
 - Troubleshooting common signing issues
 
+❓ **[What Information Do I Need to Sign? →](./SIGNING_INFO_NEEDED.md)**
+
+Quick reference for signing command requirements:
+- **TL;DR**: Just run `./scripts/sign_aab.sh` - the script will guide you!
+- Understand default values vs. custom options
+- Find your keystore, alias, and AAB file locations
+- Common scenarios and examples
+
 📖 **[Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md)**
 
 Everything you need for Play Store assets:

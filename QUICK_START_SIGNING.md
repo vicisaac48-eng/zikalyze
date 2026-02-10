@@ -1,5 +1,7 @@
 # 🚀 Quick Start: Sign Your AAB
 
+> **❓ Confused about what information you need?** → See **[SIGNING_INFO_NEEDED.md](./SIGNING_INFO_NEEDED.md)** for a clear explanation.
+
 This is a quick reference for signing your Android App Bundle (AAB). For complete details, see [AAB_SIGNING_GUIDE.md](./AAB_SIGNING_GUIDE.md).
 
 ## ⚡ Fastest Way to Sign Your AAB
