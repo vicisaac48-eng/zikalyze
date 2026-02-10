@@ -30,6 +30,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selectedThemeColor, setSelectedThemeColor] = useState(settings.themeColor || "cyan");
 
   // Pull-to-refresh handler - Settings page doesn't have much to refresh,
   // but we provide the consistent pull-to-refresh UI for native app feel
@@ -43,10 +44,56 @@ const Settings = () => {
     setMounted(true);
   }, []);
 
+  // Apply saved theme color on mount
+  useEffect(() => {
+    if (mounted && settings.themeColor) {
+      const root = document.documentElement;
+      const colorMap: Record<string, { primary: string; ring: string }> = {
+        cyan: { primary: "168 76% 73%", ring: "168 76% 73%" },
+        green: { primary: "142 76% 60%", ring: "142 76% 60%" },
+        purple: { primary: "267 84% 81%", ring: "267 84% 81%" },
+        amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
+      };
+      
+      if (colorMap[settings.themeColor]) {
+        root.style.setProperty("--primary", colorMap[settings.themeColor].primary);
+        root.style.setProperty("--ring", colorMap[settings.themeColor].ring);
+        root.style.setProperty("--sidebar-primary", colorMap[settings.themeColor].primary);
+        root.style.setProperty("--sidebar-ring", colorMap[settings.themeColor].ring);
+      }
+    }
+  }, [mounted, settings.themeColor]);
+
   const isDarkMode = mounted ? resolvedTheme === "dark" : true;
 
   const handleThemeToggle = (checked: boolean) => {
     setTheme(checked ? "dark" : "light");
+  };
+
+  const handleThemeColorChange = (color: string) => {
+    setSelectedThemeColor(color);
+    saveSettings({ themeColor: color });
+    
+    // Apply color to CSS variables immediately
+    const root = document.documentElement;
+    const colorMap: Record<string, { primary: string; ring: string }> = {
+      cyan: { primary: "168 76% 73%", ring: "168 76% 73%" },
+      green: { primary: "142 76% 60%", ring: "142 76% 60%" },
+      purple: { primary: "267 84% 81%", ring: "267 84% 81%" },
+      amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
+    };
+    
+    if (colorMap[color]) {
+      root.style.setProperty("--primary", colorMap[color].primary);
+      root.style.setProperty("--ring", colorMap[color].ring);
+      root.style.setProperty("--sidebar-primary", colorMap[color].primary);
+      root.style.setProperty("--sidebar-ring", colorMap[color].ring);
+    }
+    
+    toast({
+      title: "Theme color updated",
+      description: `Changed to ${color}`,
+    });
   };
 
   const handleSoundToggle = (checked: boolean) => {
@@ -65,7 +112,8 @@ const Settings = () => {
   useEffect(() => {
     setSelectedLanguage(settings.language);
     setSelectedCurrency(settings.currency);
-  }, [settings.language, settings.currency]);
+    setSelectedThemeColor(settings.themeColor || "cyan");
+  }, [settings.language, settings.currency, settings.themeColor]);
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
@@ -477,10 +525,50 @@ const Settings = () => {
                     <div className="p-4 rounded-xl bg-secondary/50">
                       <div className="font-medium text-foreground mb-3">Theme Colors</div>
                       <div className="flex gap-3">
-                        <button className="w-10 h-10 rounded-full bg-primary border-2 border-primary-foreground" />
-                        <button className="w-10 h-10 rounded-full bg-chart-cyan border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-success border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-warning border-2 border-transparent hover:border-foreground/50" />
+                        <button 
+                          onClick={() => handleThemeColorChange("cyan")}
+                          className={cn(
+                            "w-10 h-10 rounded-full border-2 transition-all",
+                            "bg-[hsl(168,76%,73%)]",
+                            selectedThemeColor === "cyan" 
+                              ? "border-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background" 
+                              : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Cyan theme"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("green")}
+                          className={cn(
+                            "w-10 h-10 rounded-full border-2 transition-all",
+                            "bg-[hsl(142,76%,60%)]",
+                            selectedThemeColor === "green" 
+                              ? "border-primary-foreground ring-2 ring-success ring-offset-2 ring-offset-background" 
+                              : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Green theme"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("purple")}
+                          className={cn(
+                            "w-10 h-10 rounded-full border-2 transition-all",
+                            "bg-[hsl(267,84%,81%)]",
+                            selectedThemeColor === "purple" 
+                              ? "border-primary-foreground ring-2 ring-accent ring-offset-2 ring-offset-background" 
+                              : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Purple theme"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("amber")}
+                          className={cn(
+                            "w-10 h-10 rounded-full border-2 transition-all",
+                            "bg-[hsl(38,92%,60%)]",
+                            selectedThemeColor === "amber" 
+                              ? "border-primary-foreground ring-2 ring-warning ring-offset-2 ring-offset-background" 
+                              : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Amber theme"
+                        />
                       </div>
                     </div>
                   </div>
