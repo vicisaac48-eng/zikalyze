@@ -189,9 +189,21 @@ You can also install Zikalyze as a Progressive Web App (PWA) directly from your 
 2. Tap the menu (⋮) → "Add to Home screen"
 3. The app will work offline with full functionality
 
+### 🎨 Android App Logo & Icons
+
+Need the Zikalyze logo for your Android app or other use?
+
+📖 **[Download Android Logo & Icons](./ANDROID_LOGO.md)**
+
+All logo files with direct download links:
+- High-resolution logo files (512x512, 192x192)
+- All Android icon sizes (MDPI to XXXHDPI)
+- Square and round icon variants
+- PWA icons and favicons
+
 ### 🏪 Publishing to Google Play Store
 
-Want to publish Zikalyze to the Google Play Store? See our comprehensive guide:
+Want to publish Zikalyze to the Google Play Store? See our comprehensive guides:
 
 📖 **[Play Store Deployment Guide](./docs/PLAYSTORE_DEPLOYMENT.md)**
 
@@ -200,6 +212,23 @@ The guide covers:
 - Setting up your Play Console listing
 - Signing your app
 - Submitting for review
+
+📖 **[Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md)**
+
+Everything you need for Play Store assets:
+- Feature graphic (1024×500) - ready to download
+- App icon (512×512) - ready-to-use download
+- Screenshots - capture methods and guidelines
+- Brand guidelines and design tips
+
+🔧 **[AAB Troubleshooting Guide](./AAB_TROUBLESHOOTING.md)**
+
+If your AAB upload fails or app doesn't work:
+- Common AAB rejection reasons and fixes
+- ProGuard configuration for Capacitor apps
+- Version code and signing issues
+- Privacy policy requirements
+- Verification script: `python3 scripts/verify_aab.py`
 
 ## 🌐 IPFS Deployment
 
