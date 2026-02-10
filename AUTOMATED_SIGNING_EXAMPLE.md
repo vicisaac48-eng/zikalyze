@@ -63,11 +63,12 @@ Step 2: Building Release AAB
 Step 3: Setting Up Keystore
 ================================================
 
-▶️  Creating new keystore with default credentials...
-⚠️  Using default password: zikalyze2024
+▶️  Creating new keystore...
+ℹ️  Generated secure random password for keystore
 ✅ Keystore created successfully!
 ℹ️  Location: zikalyze-release-key.jks
-⚠️  Password: zikalyze2024 (SAVE THIS!)
+⚠️  Password saved to: keystore-password.txt (keep this file safe!)
+ℹ️  Your keystore password: Ab3dK9mP2vR8sL1q
 ```
 
 ### 5. Signing
@@ -120,7 +121,7 @@ File Name:      zikalyze-signed.aab
 File Size:      12.3M
 Full Path:      /home/user/zikalyze/zikalyze-signed.aab
 Keystore:       zikalyze-release-key.jks
-Password:       zikalyze2024
+Password File:  keystore-password.txt
 
 ================================================
 🚀 Next Steps: Upload to Google Play
@@ -145,17 +146,20 @@ Password:       zikalyze2024
 7. Click "Start rollout"
 
 ================================================
-⚠️  IMPORTANT - SAVE THESE CREDENTIALS!
+⚠️  IMPORTANT - SAVE THESE FILES!
 ================================================
 
 You MUST keep these for future app updates:
 
 Keystore file:     zikalyze-release-key.jks
-Keystore password: zikalyze2024
+Password file:     keystore-password.txt
 Key alias:         zikalyze
 
-Without these, you cannot update your app!
-Backup the keystore file to a secure location!
+Your keystore password is saved in: keystore-password.txt
+View it with: cat keystore-password.txt
+
+Without these, you CANNOT update your app!
+Backup both files to a secure location!
 
 ================================================
 📚 Additional Resources
@@ -180,27 +184,40 @@ After running the script, you'll have:
 
 1. **zikalyze-signed.aab** - Your signed app bundle (ready to upload)
 2. **zikalyze-release-key.jks** - Your keystore file (keep this safe!)
+3. **keystore-password.txt** - Your secure password (keep this safe!)
 
-## 🔑 Default Credentials
+## 🔑 Your Credentials
 
-The script uses these default credentials (you can change them in the script if needed):
+The script automatically generates a secure random password (like `Ab3dK9mP2vR8sL1q`) and saves it to `keystore-password.txt`.
 
-- **Keystore Password:** `zikalyze2024`
-- **Key Password:** `zikalyze2024`
-- **Key Alias:** `zikalyze`
-- **Organization:** Zikalyze Development
+View your password:
+```bash
+cat keystore-password.txt
+```
+
+**Want to use your own password?** Set it before running:
+```bash
+export ZIKALYZE_KEYSTORE_PASSWORD="your-password-here"
+./scripts/auto_sign_aab.sh
+```
+
+Default settings:
+- **Keystore file:** `zikalyze-release-key.jks`
+- **Password file:** `keystore-password.txt`
+- **Key alias:** `zikalyze`
 
 ## ⚠️ CRITICAL: Save Your Keystore!
 
 After the script completes, **immediately backup** these files:
 
 ```bash
-# Example: Copy to a safe location
+# Example: Copy both files to a safe location
 cp zikalyze-release-key.jks ~/Dropbox/zikalyze-backup/
+cp keystore-password.txt ~/Dropbox/zikalyze-backup/
 # Or upload to Google Drive, USB drive, password manager, etc.
 ```
 
-Without the keystore file and password, you **cannot** update your app!
+Without the keystore file and password file, you **cannot** update your app!
 
 ## 🎯 What If Something Goes Wrong?
 

@@ -43,27 +43,37 @@ After running the script, you'll find:
 
 - **zikalyze-signed.aab** - Your signed app bundle, ready for upload
 - **zikalyze-release-key.jks** - Your keystore file (keep this safe!)
+- **keystore-password.txt** - Your secure password (keep this safe!)
 
 ---
 
 ## 🔑 Important: Save Your Credentials
 
-The script uses these default credentials:
+The script automatically generates a **secure random password** and saves it to:
+- **keystore-password.txt**
 
-- **Keystore Password:** `zikalyze2024`
-- **Key Alias:** `zikalyze`
-- **Keystore File:** `zikalyze-release-key.jks`
+View your password:
+```bash
+cat keystore-password.txt
+```
 
-**⚠️ CRITICAL: You MUST keep the keystore file and password safe!**
+**Custom Password (Optional):** Set your own password before running:
+```bash
+export ZIKALYZE_KEYSTORE_PASSWORD="your-secure-password"
+./scripts/auto_sign_aab.sh
+```
+
+**⚠️ CRITICAL: You MUST keep the keystore file and password file safe!**
 
 Without them, you cannot update your app on Google Play Store!
 
 ### How to Backup Your Keystore
 
 ```bash
-# Copy to a safe location (example)
+# Copy both files to a safe location (example)
 cp zikalyze-release-key.jks ~/Dropbox/zikalyze-backup/
-# Or upload to cloud storage, USB drive, etc.
+cp keystore-password.txt ~/Dropbox/zikalyze-backup/
+# Or upload to cloud storage, USB drive, password manager, etc.
 ```
 
 ---
@@ -99,11 +109,17 @@ Make sure you're in the project root directory and have all dependencies install
 npm install
 ```
 
-### Want to change the password?
-Edit `scripts/auto_sign_aab.sh` and change these lines:
+### Where's my password?
+The password is saved in `keystore-password.txt`:
 ```bash
-KEYSTORE_PASSWORD="your-password-here"
-KEY_PASSWORD="your-password-here"
+cat keystore-password.txt
+```
+
+### Want to use your own password?
+Set it before running the script:
+```bash
+export ZIKALYZE_KEYSTORE_PASSWORD="your-secure-password"
+./scripts/auto_sign_aab.sh
 ```
 
 ---

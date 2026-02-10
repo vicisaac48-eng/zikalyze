@@ -23,13 +23,28 @@ After running the command (it takes 3-5 minutes), you'll have:
 
 ## 🔑 Important Info to Save
 
-The script uses these default credentials:
+The script automatically generates a secure random password and saves it to:
+- **Password file:** `keystore-password.txt`
 
+You can view your password with:
+```bash
+cat keystore-password.txt
+```
+
+Additional details:
 - **Keystore file:** `zikalyze-release-key.jks`
-- **Keystore password:** `zikalyze2024`
 - **Key alias:** `zikalyze`
 
-**⚠️ CRITICAL:** Save the keystore file and password! You need them for future app updates!
+**⚠️ CRITICAL:** Save both the keystore file and password file! You need them for future app updates!
+
+### Setting a Custom Password (Optional)
+
+If you want to use your own password instead of a random one, set it before running the script:
+
+```bash
+export ZIKALYZE_KEYSTORE_PASSWORD="your-secure-password-here"
+./scripts/auto_sign_aab.sh
+```
 
 ## 📤 How to Upload to Google Play Store
 
@@ -120,8 +135,9 @@ chmod +x ./scripts/auto_sign_aab.sh
 **This is CRITICAL!** After the script runs, immediately backup:
 
 ```bash
-# Example: Copy to cloud storage
+# Example: Copy both files to cloud storage
 cp zikalyze-release-key.jks ~/Dropbox/zikalyze-backup/
+cp keystore-password.txt ~/Dropbox/zikalyze-backup/
 
 # Or save to USB drive, Google Drive, password manager, etc.
 ```
@@ -163,21 +179,26 @@ ZIKALYZE AAB SIGNING - QUICK REFERENCE
 1. RUN: ./scripts/auto_sign_aab.sh
 2. WAIT: 3-5 minutes
 3. UPLOAD: zikalyze-signed.aab to Play Console
-4. SAVE: zikalyze-release-key.jks + password
+4. SAVE: zikalyze-release-key.jks + keystore-password.txt
 
 CREDENTIALS:
 - Keystore: zikalyze-release-key.jks
-- Password: zikalyze2024
+- Password: See keystore-password.txt
 - Alias: zikalyze
+- View password: cat keystore-password.txt
 
 PLAY CONSOLE:
 https://play.google.com/console
 
-BACKUP KEYSTORE TO:
+BACKUP THESE FILES TO:
 □ Cloud storage (Dropbox/Drive)
 □ USB drive
 □ Password manager
 □ Email to yourself
+
+FILES TO BACKUP:
+□ zikalyze-release-key.jks
+□ keystore-password.txt
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

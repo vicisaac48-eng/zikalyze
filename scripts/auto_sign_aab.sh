@@ -31,10 +31,12 @@ BOLD='\033[1m'
 # Configuration
 KEYSTORE_PATH="zikalyze-release-key.jks"
 KEY_ALIAS="zikalyze"
-KEYSTORE_PASSWORD="zikalyze2024"  # Default password - change if needed
-KEY_PASSWORD="zikalyze2024"        # Default password - change if needed
+# Generate a secure random password if not provided via environment variable
+KEYSTORE_PASSWORD="${ZIKALYZE_KEYSTORE_PASSWORD:-$(openssl rand -base64 16 2>/dev/null || echo "zikalyze$(date +%s)")}"
+KEY_PASSWORD="$KEYSTORE_PASSWORD"  # Use same password for simplicity
 AAB_PATH="android/app/build/outputs/bundle/release/app-release.aab"
 OUTPUT_AAB="zikalyze-signed.aab"
+PASSWORD_FILE="keystore-password.txt"
 
 # Keystore details (used for automatic keystore creation)
 DNAME="CN=Zikalyze, OU=Development, O=Zikalyze, L=San Francisco, ST=California, C=US"
@@ -140,9 +142,18 @@ print_header "Step 3: Setting Up Keystore"
 if [ -f "$KEYSTORE_PATH" ]; then
     print_success "Keystore already exists: $KEYSTORE_PATH"
     print_info "Using existing keystore for signing"
+    
+    # Try to read password from password file if it exists
+    if [ -f "$PASSWORD_FILE" ]; then
+        KEYSTORE_PASSWORD=$(cat "$PASSWORD_FILE")
+        KEY_PASSWORD="$KEYSTORE_PASSWORD"
+        print_info "Using saved password from $PASSWORD_FILE"
+    else
+        print_warning "Password file not found. Using environment variable or generated password."
+    fi
 else
-    print_step "Creating new keystore with default credentials..."
-    print_warning "Using default password: $KEYSTORE_PASSWORD"
+    print_step "Creating new keystore..."
+    print_info "Generated secure random password for keystore"
     
     # Create keystore with all defaults (no prompts)
     keytool -genkey -v \
@@ -159,7 +170,12 @@ else
     if [ $? -eq 0 ]; then
         print_success "Keystore created successfully!"
         print_info "Location: $KEYSTORE_PATH"
-        print_warning "Password: $KEYSTORE_PASSWORD (SAVE THIS!)"
+        
+        # Save password to file (with secure permissions)
+        echo "$KEYSTORE_PASSWORD" > "$PASSWORD_FILE"
+        chmod 600 "$PASSWORD_FILE"
+        print_warning "Password saved to: $PASSWORD_FILE (keep this file safe!)"
+        print_info "Your keystore password: $KEYSTORE_PASSWORD"
     else
         print_error "Failed to create keystore"
         exit 1
@@ -207,9 +223,9 @@ print_step "Copying signed AAB to root directory..."
 cp "$AAB_PATH" "./$OUTPUT_AAB"
 print_success "Signed AAB copied to: ./$OUTPUT_AAB"
 
-# Get file info
+# Get file info (cross-platform way to get absolute path)
 FINAL_SIZE=$(du -h "./$OUTPUT_AAB" | cut -f1)
-ABSOLUTE_PATH=$(readlink -f "./$OUTPUT_AAB")
+ABSOLUTE_PATH="$(cd "$(dirname "./$OUTPUT_AAB")" && pwd)/$(basename "./$OUTPUT_AAB")"
 
 # Success summary
 echo ""
@@ -226,7 +242,7 @@ echo -e "${BOLD}File Name:${NC}      $OUTPUT_AAB"
 echo -e "${BOLD}File Size:${NC}      $FINAL_SIZE"
 echo -e "${BOLD}Full Path:${NC}      $ABSOLUTE_PATH"
 echo -e "${BOLD}Keystore:${NC}       $KEYSTORE_PATH"
-echo -e "${BOLD}Password:${NC}       $KEYSTORE_PASSWORD"
+echo -e "${BOLD}Password File:${NC}  $PASSWORD_FILE"
 echo ""
 
 print_header "🚀 Next Steps: Upload to Google Play"
@@ -250,16 +266,19 @@ echo ""
 echo "7. Click ${BOLD}\"Start rollout\"${NC}"
 echo ""
 
-print_header "⚠️  IMPORTANT - SAVE THESE CREDENTIALS!"
+print_header "⚠️  IMPORTANT - SAVE THESE FILES!"
 echo ""
 echo -e "${BOLD}${RED}You MUST keep these for future app updates:${NC}"
 echo ""
-echo -e "${BOLD}Keystore file:${NC}     $KEYSTORE_PATH"
-echo -e "${BOLD}Keystore password:${NC} $KEYSTORE_PASSWORD"
-echo -e "${BOLD}Key alias:${NC}         $KEY_ALIAS"
+echo -e "${BOLD}1. Keystore file:${NC}       $KEYSTORE_PATH"
+echo -e "${BOLD}2. Password file:${NC}       $PASSWORD_FILE"
+echo -e "${BOLD}3. Key alias:${NC}           $KEY_ALIAS"
 echo ""
-echo -e "${YELLOW}Without these, you cannot update your app!${NC}"
-echo -e "${YELLOW}Backup the keystore file to a secure location!${NC}"
+echo -e "${YELLOW}Your keystore password is saved in:${NC} ${BOLD}$PASSWORD_FILE${NC}"
+echo -e "${YELLOW}View it with:${NC} ${BOLD}cat $PASSWORD_FILE${NC}"
+echo ""
+echo -e "${YELLOW}Without these, you CANNOT update your app!${NC}"
+echo -e "${YELLOW}Backup both files to a secure location!${NC}"
 echo ""
 
 print_header "📚 Additional Resources"
