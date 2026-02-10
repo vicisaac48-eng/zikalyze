@@ -127,7 +127,7 @@ Added DNS prefetch hints for:
 - **Initial load:** All crypto hooks loaded upfront
 
 ### After Optimization
-- **Main bundle:** 610.70 kB (gzipped: 214.20 kB) - **4% reduction**
+- **Main bundle:** 610.63 kB (gzipped: 214.18 kB) - **4.4% reduction**
 - **Crypto hooks chunk:** 37.34 kB (gzipped: 11.29 kB) - **separate chunk**
 - **WebSocket connections per page:** 1 shared set (reused across all pages)
 - **Page navigation:** Instant (connections persist)
