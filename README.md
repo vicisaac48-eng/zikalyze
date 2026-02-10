@@ -213,6 +213,14 @@ The guide covers:
 - Signing your app
 - Submitting for review
 
+🔐 **[ONE COMMAND AAB SIGNING](./ONE_COMMAND_SIGNING.md)** ⚡ **NEW!**
+
+**Can't follow the manual steps? Just run ONE command:**
+```bash
+./scripts/auto_sign_aab.sh
+```
+Everything is automated - no questions asked! See [ONE_COMMAND_SIGNING.md](./ONE_COMMAND_SIGNING.md) for details.
+
 🔐 **[AAB Signing Guide](./AAB_SIGNING_GUIDE.md)**
 
 Complete guide for signing your AAB:
