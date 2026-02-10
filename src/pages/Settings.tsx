@@ -527,7 +527,7 @@ const Settings = () => {
                             "w-10 h-10 rounded-full border-2 transition-all",
                             "bg-[hsl(168,76%,73%)]",
                             selectedThemeColor === "cyan" 
-                              ? "border-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background" 
+                              ? "border-primary-foreground ring-2 ring-[hsl(168,76%,73%)] ring-offset-2 ring-offset-background" 
                               : "border-transparent hover:border-foreground/50"
                           )}
                           aria-label="Cyan theme"
@@ -538,7 +538,7 @@ const Settings = () => {
                             "w-10 h-10 rounded-full border-2 transition-all",
                             "bg-[hsl(142,76%,60%)]",
                             selectedThemeColor === "green" 
-                              ? "border-primary-foreground ring-2 ring-success ring-offset-2 ring-offset-background" 
+                              ? "border-primary-foreground ring-2 ring-[hsl(142,76%,60%)] ring-offset-2 ring-offset-background" 
                               : "border-transparent hover:border-foreground/50"
                           )}
                           aria-label="Green theme"
@@ -549,7 +549,7 @@ const Settings = () => {
                             "w-10 h-10 rounded-full border-2 transition-all",
                             "bg-[hsl(267,84%,81%)]",
                             selectedThemeColor === "purple" 
-                              ? "border-primary-foreground ring-2 ring-accent ring-offset-2 ring-offset-background" 
+                              ? "border-primary-foreground ring-2 ring-[hsl(267,84%,81%)] ring-offset-2 ring-offset-background" 
                               : "border-transparent hover:border-foreground/50"
                           )}
                           aria-label="Purple theme"
@@ -560,7 +560,7 @@ const Settings = () => {
                             "w-10 h-10 rounded-full border-2 transition-all",
                             "bg-[hsl(38,92%,60%)]",
                             selectedThemeColor === "amber" 
-                              ? "border-primary-foreground ring-2 ring-warning ring-offset-2 ring-offset-background" 
+                              ? "border-primary-foreground ring-2 ring-[hsl(38,92%,60%)] ring-offset-2 ring-offset-background" 
                               : "border-transparent hover:border-foreground/50"
                           )}
                           aria-label="Amber theme"
