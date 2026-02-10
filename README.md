@@ -213,6 +213,15 @@ The guide covers:
 - Signing your app
 - Submitting for review
 
+🔐 **[AAB Signing Guide](./AAB_SIGNING_GUIDE.md)**
+
+Complete guide for signing your AAB:
+- Easy signing with automated script: `./scripts/sign_aab.sh`
+- Google Play App Signing vs. local signing
+- Keystore creation and management
+- Security best practices
+- Troubleshooting common signing issues
+
 📖 **[Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md)**
 
 Everything you need for Play Store assets:
