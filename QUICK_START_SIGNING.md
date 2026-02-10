@@ -12,10 +12,11 @@ This is a quick reference for signing your Android App Bundle (AAB). For complet
 
 This does EVERYTHING automatically:
 - ✅ Builds the AAB
-- ✅ Creates keystore (with default password)
+- ✅ Creates keystore (with secure random password)
 - ✅ Signs the AAB
 - ✅ Verifies signature
 - ✅ Copies signed AAB to root directory
+- ✅ Saves password to keystore-password.txt
 
 **No questions, no manual input - just run and go!**
 

@@ -5,7 +5,7 @@
 # 
 # This script AUTOMATICALLY handles EVERYTHING for AAB signing:
 # - Builds the release AAB
-# - Creates a keystore with default credentials
+# - Creates a keystore with a secure random password
 # - Signs the AAB
 # - Verifies the signature
 # - Copies the signed AAB to an easy-to-find location
@@ -32,7 +32,13 @@ BOLD='\033[1m'
 KEYSTORE_PATH="zikalyze-release-key.jks"
 KEY_ALIAS="zikalyze"
 # Generate a secure random password if not provided via environment variable
-KEYSTORE_PASSWORD="${ZIKALYZE_KEYSTORE_PASSWORD:-$(openssl rand -base64 16 2>/dev/null || echo "zikalyze$(date +%s)")}"
+# Requires OpenSSL for secure random generation
+if ! command -v openssl &> /dev/null; then
+    echo "ERROR: OpenSSL is required for secure password generation but was not found."
+    echo "Please install OpenSSL: https://www.openssl.org/"
+    exit 1
+fi
+KEYSTORE_PASSWORD="${ZIKALYZE_KEYSTORE_PASSWORD:-$(openssl rand -base64 16)}"
 KEY_PASSWORD="$KEYSTORE_PASSWORD"  # Use same password for simplicity
 AAB_PATH="android/app/build/outputs/bundle/release/app-release.aab"
 OUTPUT_AAB="zikalyze-signed.aab"
