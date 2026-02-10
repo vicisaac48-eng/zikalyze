@@ -24,10 +24,11 @@ Both do the SAME thing - completely automated AAB signing!
 
 **Fully automated** - Does everything with zero manual input:
 - ✅ Builds the AAB
-- ✅ Creates keystore (default password: `zikalyze2024`)
+- ✅ Creates keystore (secure random password generated)
 - ✅ Signs the AAB
 - ✅ Verifies signature
 - ✅ Copies `zikalyze-signed.aab` to root directory
+- ✅ Saves password to `keystore-password.txt`
 
 **Usage:**
 ```bash
@@ -103,15 +104,27 @@ python3 scripts/verify_aab.py
 - **Troubleshooting:** [AAB_TROUBLESHOOTING.md](../AAB_TROUBLESHOOTING.md)
 - **Play Store Guide:** [docs/PLAYSTORE_DEPLOYMENT.md](../docs/PLAYSTORE_DEPLOYMENT.md)
 
-## 🔑 Default Credentials
+## 🔑 Credentials & Security
 
-The `auto_sign_aab.sh` script uses these defaults:
+The `auto_sign_aab.sh` script generates a **secure random password** and saves it to `keystore-password.txt`.
 
+**View your password:**
+```bash
+cat keystore-password.txt
+```
+
+**Use a custom password (optional):**
+```bash
+export ZIKALYZE_KEYSTORE_PASSWORD="your-password-here"
+./scripts/auto_sign_aab.sh
+```
+
+**Default settings:**
 - **Keystore file:** `zikalyze-release-key.jks`
-- **Keystore password:** `zikalyze2024`
+- **Password file:** `keystore-password.txt` (randomly generated)
 - **Key alias:** `zikalyze`
 
-**⚠️ IMPORTANT:** Save these credentials! You need them for app updates!
+**⚠️ IMPORTANT:** Save both files! You need them for app updates!
 
 ## 📁 Output Files
 
@@ -119,6 +132,9 @@ After running the automated script, you'll get:
 
 - `zikalyze-signed.aab` - Your signed app (upload this to Play Store)
 - `zikalyze-release-key.jks` - Your keystore (keep this safe!)
+- `keystore-password.txt` - Your password (keep this safe!)
+
+**⚠️ Backup all three files to secure locations!**
 
 ## 🆘 Common Issues
 
