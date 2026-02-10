@@ -105,8 +105,8 @@ def create_feature_graphic():
     draw.rectangle([(text_x, accent_y), (WIDTH - 80, accent_y + 4)], 
                    fill=hex_to_rgb(PRIMARY_COLOR))
     
-    # Save the image
-    img.save(OUTPUT_PATH, 'PNG', quality=95)
+    # Save the image with optimization
+    img.save(OUTPUT_PATH, 'PNG', optimize=True)
     print(f"✅ Feature graphic created successfully!")
     print(f"📁 Location: {OUTPUT_PATH}")
     print(f"📐 Size: {WIDTH}x{HEIGHT} pixels")

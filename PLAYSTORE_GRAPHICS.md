@@ -300,7 +300,6 @@ curl -O https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/pw
    - App icon (512×512) ✅ Ready
    - Feature graphic (1024×500) ✅ Ready
    - Screenshots (2-8 images) ⚠️ Need to capture
-   - Screenshots (2-8 images)
 4. Fill in descriptions and save
 
 ---
