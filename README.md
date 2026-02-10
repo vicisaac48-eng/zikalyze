@@ -189,6 +189,18 @@ You can also install Zikalyze as a Progressive Web App (PWA) directly from your 
 2. Tap the menu (⋮) → "Add to Home screen"
 3. The app will work offline with full functionality
 
+### 🎨 Android App Logo & Icons
+
+Need the Zikalyze logo for your Android app or other use?
+
+📖 **[Download Android Logo & Icons](./ANDROID_LOGO.md)**
+
+All logo files with direct download links:
+- High-resolution logo files (512x512, 192x192)
+- All Android icon sizes (MDPI to XXXHDPI)
+- Square and round icon variants
+- PWA icons and favicons
+
 ### 🏪 Publishing to Google Play Store
 
 Want to publish Zikalyze to the Google Play Store? See our comprehensive guide:
