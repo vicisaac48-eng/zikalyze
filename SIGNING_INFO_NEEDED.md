@@ -195,13 +195,13 @@ When prompted, choose `y` to create a new keystore.
 
 1. **Keystore Password**: You'll ALWAYS be asked for your keystore password when signing. This is normal and secure - the script never stores passwords.
 
-2. **Same Keystore for Updates**: For app updates, you MUST use the SAME keystore and alias. If you lose your keystore, you can't update your app on Play Store!
+2. **Same Keystore for Updates**: For app updates, you MUST use the SAME keystore and alias. If you lose your keystore, you can't update your app on Play Store (unless you're using Google Play App Signing, which provides key recovery options).
 
 3. **Backup Your Keystore**: Immediately after creating a keystore, back it up to:
-   - Password manager (as a file attachment)
-   - Cloud storage (encrypted)
-   - External drive
-   - USB stick (in safe place)
+   - Password manager (encrypt the file before attaching, or use secure vault features)
+   - Cloud storage (use encrypted cloud storage like Google Drive with 2FA)
+   - External drive (store in a safe location)
+   - USB stick (keep in a secure place, preferably encrypted)
 
 4. **Don't Commit to Git**: The script automatically ensures `.jks` files are in `.gitignore` to prevent accidentally committing your keystore.
 
@@ -226,7 +226,9 @@ cd android && ./gradlew bundleRelease
 
 ### "I forgot my keystore password"
 
-→ Unfortunately, there's no way to recover it. You'll need to create a new keystore, which means publishing as a new app on Play Store. This is why backing up and storing passwords is critical!
+→ If using **Google Play App Signing** (recommended): You can reset your upload key through Play Console. See [Play App Signing documentation](https://support.google.com/googleplay/android-developer/answer/9842756).
+
+→ If using **local signing only**: Unfortunately, there's no way to recover the password. You'll need to create a new keystore, which means publishing as a new app on Play Store. This is why using Google Play App Signing and backing up passwords is critical!
 
 ### "Wrong keystore alias"
 
