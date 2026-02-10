@@ -16,15 +16,17 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Increase chunk size limit to reduce warnings
     chunkSizeWarningLimit: 600,
-    // Optimize chunking for better caching
+    // Optimize chunking for better caching and faster initial load
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks - split large dependencies
+          // Vendor chunks - split large dependencies for better caching
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
           'vendor-charts': ['recharts'],
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
+          // Split crypto price hooks for lazy loading
+          'crypto-hooks': ['@/hooks/useCryptoPrices', '@/hooks/useTickerLiveStream'],
         }
       }
     },
@@ -35,9 +37,11 @@ export default defineConfig(({ mode }) => ({
     // Target modern browsers for smaller bundles
     target: 'es2020'
   },
-  // Optimize dependencies
+  // Optimize dependencies for faster initial load
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
+    include: ['react', 'react-dom', 'react-router-dom'],
+    // Exclude large dependencies from pre-bundling to reduce dev server startup time
+    exclude: ['@capacitor/core', '@capacitor/android']
   },
   plugins: [
     react(),
