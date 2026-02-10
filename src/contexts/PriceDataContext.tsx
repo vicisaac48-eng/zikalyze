@@ -24,15 +24,9 @@ export function PriceDataProvider({ children }: { children: ReactNode }) {
   // Single source of truth for all crypto price data
   const priceData = useCryptoPrices();
   
-  // Memoize the context value to prevent unnecessary re-renders
-  const value = useMemo(() => priceData, [
-    priceData.prices,
-    priceData.loading,
-    priceData.isLive,
-    priceData.getPriceBySymbol,
-    priceData.getPriceById,
-    priceData.refetch
-  ]);
+  // Memoize the context value
+  // Functions are already memoized in useCryptoPrices with useCallback
+  const value = useMemo(() => priceData, [priceData]);
   
   return (
     <PriceDataContext.Provider value={value}>

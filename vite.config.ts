@@ -25,7 +25,11 @@ export default defineConfig(({ mode }) => ({
           'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
           'vendor-charts': ['recharts'],
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
-          // Split crypto price hooks for lazy loading
+          // Crypto hooks in separate chunk for better browser caching
+          // Even though loaded at app startup, this enables:
+          // - Better cache invalidation (app updates don't invalidate crypto code)
+          // - Parallel downloading of chunks
+          // - Reduced main bundle size
           'crypto-hooks': ['@/hooks/useCryptoPrices', '@/hooks/useTickerLiveStream'],
         }
       }
