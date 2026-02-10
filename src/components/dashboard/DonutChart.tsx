@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useMemo } from "react";
 
 const COLORS = [
@@ -11,7 +11,7 @@ const COLORS = [
 ];
 
 const DonutChart = () => {
-  const { prices, loading } = useCryptoPrices();
+  const { prices, loading } = usePriceData();
 
   const chartData = useMemo(() => {
     if (prices.length === 0) return [];

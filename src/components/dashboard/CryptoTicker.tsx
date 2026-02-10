@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { CryptoPrice, useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
 
 const cryptoMeta = [
