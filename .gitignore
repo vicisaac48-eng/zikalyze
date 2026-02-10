@@ -30,3 +30,10 @@ dist-ssr
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Android signing keys - NEVER commit these!
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
+android/app/keystore.properties
