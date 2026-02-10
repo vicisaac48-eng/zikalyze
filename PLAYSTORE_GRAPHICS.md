@@ -191,6 +191,7 @@ Once you have your graphics ready, here's what to upload:
   ```
   AI-powered cryptocurrency analysis with real-time signals and whale tracking
   ```
+  _(79 characters - edit carefully to stay under 80 char limit)_
 - [ ] **Full Description** (4000 chars max):
   ```
   Zikalyze AI is your professional-grade cryptocurrency analysis companion.
@@ -296,13 +297,22 @@ Once you have your graphics ready, here's what to upload:
 
 Download these immediately:
 
+**Using Command Line:**
 ```bash
 # App Icon (512×512) - REQUIRED ✅
 wget https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/pwa-512x512.png
+# or using curl:
+curl -O https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/pwa-512x512.png
 
 # Reference image for creating feature graphic
 wget https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/og-image.png
+# or using curl:
+curl -O https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/og-image.png
 ```
+
+**Using Browser:**
+- Click the links in the "Available Assets" section above
+- Right-click the image → "Save Image As..."
 
 ### Step 2: Create Feature Graphic
 
