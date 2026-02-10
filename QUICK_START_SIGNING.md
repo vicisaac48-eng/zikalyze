@@ -2,7 +2,28 @@
 
 This is a quick reference for signing your Android App Bundle (AAB). For complete details, see [AAB_SIGNING_GUIDE.md](./AAB_SIGNING_GUIDE.md).
 
-## ⚡ Fastest Way to Sign Your AAB
+## 🎯 EASIEST WAY - Fully Automated (NEW!)
+
+**Can't follow the manual steps? Use the ONE-COMMAND automated script:**
+
+```bash
+./scripts/auto_sign_aab.sh
+```
+
+This does EVERYTHING automatically:
+- ✅ Builds the AAB
+- ✅ Creates keystore (with default password)
+- ✅ Signs the AAB
+- ✅ Verifies signature
+- ✅ Copies signed AAB to root directory
+
+**No questions, no manual input - just run and go!**
+
+📖 **See [ONE_COMMAND_SIGNING.md](./ONE_COMMAND_SIGNING.md) for full details**
+
+---
+
+## ⚡ Semi-Automated Way (With Prompts)
 
 ### Step 1: Build the AAB
 

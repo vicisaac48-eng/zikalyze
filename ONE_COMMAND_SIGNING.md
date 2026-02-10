@@ -32,6 +32,9 @@ When you run the script, it automatically:
 5. **Verifies signature** - Confirms the signing was successful
 6. **Copies the file** - Places `zikalyze-signed.aab` in the root directory for easy access
 
+**Want to see exactly what it looks like when you run it?**
+📸 **[See Example Output](./AUTOMATED_SIGNING_EXAMPLE.md)** - Visual walkthrough with screenshots of the process!
+
 ---
 
 ## 📦 What You Get
