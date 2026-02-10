@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, Key, User, Lock, Eye, EyeOff, Sparkles, Copy, Check, AlertCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -558,8 +558,19 @@ const Auth = () => {
 
           <DemoModeAuth />
 
+          {/* Legal agreement text with clickable links for Google Play Store compliance.
+              Note: Hardcoded for legal clarity and consistency with other legal pages.
+              The actual legal policy pages (PrivacyPolicy.tsx, TermsOfService.tsx) are also not internationalized. */}
           <p className="mt-4 text-center text-xs text-muted-foreground sm:mt-6">
-            {t("auth.termsAgreement")}
+            By continuing, you agree to our{" "}
+            <Link to="/terms" className="text-primary hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            .
           </p>
         </div>
       </div>
