@@ -202,6 +202,31 @@ Declare what data your app collects:
 - **Data shared:** None
 - **Security practices:** Data encrypted in transit
 
+### 6. Privacy Policy URL (Required)
+
+Google Play Store requires a publicly accessible privacy policy URL. Use the following URL for your app:
+
+```
+https://zikalyze.com/privacy.html
+```
+
+This standalone HTML privacy policy is:
+- ✅ Publicly accessible without login
+- ✅ Mobile-friendly and responsive
+- ✅ GDPR compliant
+- ✅ Includes all required disclosures
+
+**Alternative URLs** (both work):
+- Main URL: `https://zikalyze.com/privacy.html`
+- In-app route: `https://zikalyze.com/#/privacy` (requires app routing)
+
+**Note:** The standalone `privacy.html` file is preferred for Play Store submissions as it's directly accessible without requiring the React app to load.
+
+You can also provide the **Terms of Service URL** if requested:
+```
+https://zikalyze.com/terms.html
+```
+
 ---
 
 ## 🔄 Updating Your App

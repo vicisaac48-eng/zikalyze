@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Terms of Service for Zikalyze AI - AI-powered cryptocurrency analysis platform">
+    <title>Terms of Service - Zikalyze AI</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #1a1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3548;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --warning-bg: rgba(239, 68, 68, 0.1);
+            --warning-border: rgba(239, 68, 68, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 56rem;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            background-color: rgba(10, 15, 26, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 2rem;
+            height: 2rem;
+            background-color: var(--accent-color);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        main {
+            padding: 2rem 0 3rem;
+        }
+
+        .title-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .title-icon {
+            width: 3rem;
+            height: 3rem;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .last-updated {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .content {
+            margin-top: 2rem;
+        }
+
+        section {
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 0.75rem;
+        }
+
+        ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: var(--text-primary);
+        }
+
+        .text-accent {
+            color: var(--accent-color);
+        }
+
+        .disclaimer-box {
+            background-color: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .contact-box {
+            margin-top: 0.75rem;
+            padding: 1rem;
+            background-color: rgba(45, 53, 72, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+
+        .contact-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-nav {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            font-size: 0.875rem;
+        }
+
+        .footer-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-nav a:hover {
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.125rem;
+            }
+
+            h3 {
+                font-size: 1rem;
+            }
+
+            main {
+                padding: 1.5rem 0 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="https://zikalyze.com" class="logo">
+                    <div class="logo-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                            <polyline points="16 7 22 7 22 13"></polyline>
+                        </svg>
+                    </div>
+                    <span class="logo-text">Zikalyze</span>
+                </a>
+                <a href="https://zikalyze.com" class="back-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main>
+        <div class="container">
+            <div class="title-section">
+                <div class="title-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Terms of Service</h1>
+                    <p class="last-updated">Last updated: January 20, 2025</p>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Introduction -->
+                <section>
+                    <h2>1. Agreement to Terms</h2>
+                    <p>
+                        Welcome to Zikalyze. These Terms of Service ("Terms") govern your access to and use of our AI-powered 
+                        cryptocurrency analysis platform, including any content, functionality, and services offered through 
+                        our website and applications (collectively, the "Service").
+                    </p>
+                    <p>
+                        By accessing or using the Service, you agree to be bound by these Terms. If you do not agree to these 
+                        Terms, you must not access or use the Service.
+                    </p>
+                </section>
+
+                <!-- Eligibility -->
+                <section>
+                    <h2>2. Eligibility</h2>
+                    <p>
+                        You must be at least 18 years old to use the Service. By using the Service, you represent and warrant that:
+                    </p>
+                    <ul>
+                        <li>You are at least 18 years of age</li>
+                        <li>You have the legal capacity to enter into these Terms</li>
+                        <li>You are not prohibited from using the Service under applicable laws</li>
+                        <li>Your use of the Service does not violate any applicable law or regulation</li>
+                    </ul>
+                </section>
+
+                <!-- Account -->
+                <section>
+                    <h2>3. Account Registration</h2>
+                    <p>
+                        To access certain features of the Service, you must create an account. When creating an account, you agree to:
+                    </p>
+                    <ul>
+                        <li>Provide accurate, current, and complete information</li>
+                        <li>Maintain and promptly update your account information</li>
+                        <li>Keep your password secure and confidential</li>
+                        <li>Notify us immediately of any unauthorized access to your account</li>
+                        <li>Accept responsibility for all activities that occur under your account</li>
+                    </ul>
+                    <p>
+                        We reserve the right to suspend or terminate your account if any information provided is inaccurate, 
+                        false, or in violation of these Terms.
+                    </p>
+                </section>
+
+                <!-- Service Description -->
+                <section>
+                    <h2>4. Service Description</h2>
+                    <p>
+                        Zikalyze provides AI-powered cryptocurrency market analysis, including but not limited to:
+                    </p>
+                    <ul>
+                        <li>Real-time price tracking and market data visualization</li>
+                        <li>AI-generated market analysis and predictions</li>
+                        <li>Technical indicators and chart analysis</li>
+                        <li>Price alerts and notifications</li>
+                        <li>Portfolio tracking features</li>
+                        <li>Smart Money Concepts and ICT analysis</li>
+                    </ul>
+                </section>
+
+                <!-- Important Disclaimer -->
+                <section class="disclaimer-box">
+                    <h2>5. Important Disclaimer - Not Financial Advice</h2>
+                    <p style="color: var(--text-primary); font-weight: 500;">
+                        THE SERVICE IS FOR INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY.
+                    </p>
+                    <p>
+                        <strong>Nothing contained in the Service constitutes:</strong>
+                    </p>
+                    <ul>
+                        <li>Financial, investment, trading, or legal advice</li>
+                        <li>A recommendation to buy, sell, or hold any cryptocurrency</li>
+                        <li>A solicitation or offer to buy or sell securities</li>
+                        <li>A guarantee of future performance or results</li>
+                    </ul>
+                    <p>
+                        Cryptocurrency investments are highly volatile and risky. You may lose some or all of your investment. 
+                        Always conduct your own research and consult with a qualified financial advisor before making any 
+                        investment decisions. Past performance is not indicative of future results.
+                    </p>
+                    <p>
+                        AI-generated predictions and analysis are based on historical data and algorithms and should not be 
+                        relied upon as the sole basis for investment decisions.
+                    </p>
+                </section>
+
+                <!-- Acceptable Use -->
+                <section>
+                    <h2>6. Acceptable Use</h2>
+                    <p>You agree not to:</p>
+                    <ul>
+                        <li>Use the Service for any unlawful purpose or in violation of any laws</li>
+                        <li>Attempt to gain unauthorized access to any part of the Service</li>
+                        <li>Interfere with or disrupt the Service or servers</li>
+                        <li>Use automated scripts, bots, or scrapers to access the Service</li>
+                        <li>Transmit viruses, malware, or other harmful code</li>
+                        <li>Impersonate any person or entity</li>
+                        <li>Use the Service to manipulate or deceive other users</li>
+                        <li>Resell, redistribute, or commercially exploit the Service without permission</li>
+                        <li>Reverse engineer or attempt to extract source code from the Service</li>
+                    </ul>
+                </section>
+
+                <!-- Intellectual Property -->
+                <section>
+                    <h2>7. Intellectual Property</h2>
+                    <p>
+                        The Service and its original content, features, and functionality are owned by Zikalyze and are protected 
+                        by international copyright, trademark, patent, trade secret, and other intellectual property laws.
+                    </p>
+                    <p>
+                        You are granted a limited, non-exclusive, non-transferable license to access and use the Service for 
+                        personal, non-commercial purposes, subject to these Terms.
+                    </p>
+                </section>
+
+                <!-- Third-Party Data -->
+                <section>
+                    <h2>8. Third-Party Data and Services</h2>
+                    <p>
+                        The Service may display data from third-party sources, including cryptocurrency exchanges, market data 
+                        providers, and on-chain analytics platforms. We do not guarantee the accuracy, completeness, or timeliness 
+                        of third-party data.
+                    </p>
+                    <p>
+                        We are not responsible for any third-party websites, services, or content linked to or from the Service.
+                    </p>
+                </section>
+
+                <!-- Privacy -->
+                <section>
+                    <h2>9. Privacy</h2>
+                    <p>
+                        Your use of the Service is also governed by our 
+                        <a href="https://zikalyze.com/privacy.html" class="text-accent" style="text-decoration: underline;">Privacy Policy</a>, which describes how 
+                        we collect, use, and protect your personal information. By using the Service, you consent to the 
+                        collection and use of information as described in our Privacy Policy.
+                    </p>
+                </section>
+
+                <!-- Limitation of Liability -->
+                <section>
+                    <h2>10. Limitation of Liability</h2>
+                    <p>
+                        TO THE MAXIMUM EXTENT PERMITTED BY LAW:
+                    </p>
+                    <ul>
+                        <li>
+                            THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED
+                        </li>
+                        <li>
+                            WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE
+                        </li>
+                        <li>
+                            WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES
+                        </li>
+                        <li>
+                            WE SHALL NOT BE LIABLE FOR ANY LOSS OF PROFITS, DATA, OR OTHER INTANGIBLE LOSSES
+                        </li>
+                        <li>
+                            WE SHALL NOT BE LIABLE FOR ANY TRADING LOSSES OR INVESTMENT DECISIONS MADE BASED ON THE SERVICE
+                        </li>
+                        <li>
+                            OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID TO US IN THE PAST 12 MONTHS, IF ANY
+                        </li>
+                    </ul>
+                </section>
+
+                <!-- Indemnification -->
+                <section>
+                    <h2>11. Indemnification</h2>
+                    <p>
+                        You agree to defend, indemnify, and hold harmless Zikalyze, its affiliates, and their respective officers, 
+                        directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including 
+                        legal fees) arising out of or related to your use of the Service or violation of these Terms.
+                    </p>
+                </section>
+
+                <!-- Modifications -->
+                <section>
+                    <h2>12. Modifications to Service and Terms</h2>
+                    <p>
+                        We reserve the right to modify, suspend, or discontinue the Service at any time without notice. We also 
+                        reserve the right to modify these Terms at any time. Material changes will be communicated via email or 
+                        through the Service. Your continued use of the Service after changes constitutes acceptance of the 
+                        modified Terms.
+                    </p>
+                </section>
+
+                <!-- Termination -->
+                <section>
+                    <h2>13. Termination</h2>
+                    <p>
+                        We may terminate or suspend your account and access to the Service immediately, without prior notice, for 
+                        any reason, including breach of these Terms. Upon termination, your right to use the Service will 
+                        immediately cease.
+                    </p>
+                    <p>
+                        You may terminate your account at any time through the Settings page. Upon termination, your data will 
+                        be handled in accordance with our Privacy Policy.
+                    </p>
+                </section>
+
+                <!-- Governing Law -->
+                <section>
+                    <h2>14. Governing Law and Dispute Resolution</h2>
+                    <p>
+                        These Terms shall be governed by and construed in accordance with applicable laws, without regard to 
+                        conflict of law principles. Any disputes arising from these Terms or the Service shall be resolved 
+                        through binding arbitration, except where prohibited by law.
+                    </p>
+                    <p>
+                        For users in the European Union, nothing in these Terms affects your statutory rights under applicable 
+                        consumer protection laws.
+                    </p>
+                </section>
+
+                <!-- Severability -->
+                <section>
+                    <h2>15. Severability</h2>
+                    <p>
+                        If any provision of these Terms is found to be unenforceable or invalid, that provision shall be limited 
+                        or eliminated to the minimum extent necessary, and the remaining provisions shall remain in full force 
+                        and effect.
+                    </p>
+                </section>
+
+                <!-- Entire Agreement -->
+                <section>
+                    <h2>16. Entire Agreement</h2>
+                    <p>
+                        These Terms, together with the Privacy Policy, constitute the entire agreement between you and Zikalyze 
+                        regarding the Service and supersede all prior agreements and understandings.
+                    </p>
+                </section>
+
+                <!-- Contact -->
+                <section>
+                    <h2>17. Contact Us</h2>
+                    <p>
+                        If you have any questions about these Terms, please contact us:
+                    </p>
+                    <div class="contact-box">
+                        <p><strong>Zikalyze Legal</strong></p>
+                        <p>Email: <span class="text-accent">privacyzikalyze@gmail.com</span></p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div class="footer-nav">
+                <a href="https://zikalyze.com/privacy.html">Privacy Policy</a>
+                <span>•</span>
+                <a href="https://zikalyze.com">Home</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
