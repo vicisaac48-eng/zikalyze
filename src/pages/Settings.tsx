@@ -26,6 +26,17 @@ const THEME_COLOR_MAP: Record<string, { primary: string; ring: string }> = {
   amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
 };
 
+// Apply theme color to CSS custom properties
+const applyThemeColor = (color: string) => {
+  if (THEME_COLOR_MAP[color]) {
+    const root = document.documentElement;
+    root.style.setProperty("--primary", THEME_COLOR_MAP[color].primary);
+    root.style.setProperty("--ring", THEME_COLOR_MAP[color].ring);
+    root.style.setProperty("--sidebar-primary", THEME_COLOR_MAP[color].primary);
+    root.style.setProperty("--sidebar-ring", THEME_COLOR_MAP[color].ring);
+  }
+};
+
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
@@ -55,14 +66,7 @@ const Settings = () => {
   // Apply saved theme color on mount
   useEffect(() => {
     if (mounted && settings.themeColor) {
-      const root = document.documentElement;
-      
-      if (THEME_COLOR_MAP[settings.themeColor]) {
-        root.style.setProperty("--primary", THEME_COLOR_MAP[settings.themeColor].primary);
-        root.style.setProperty("--ring", THEME_COLOR_MAP[settings.themeColor].ring);
-        root.style.setProperty("--sidebar-primary", THEME_COLOR_MAP[settings.themeColor].primary);
-        root.style.setProperty("--sidebar-ring", THEME_COLOR_MAP[settings.themeColor].ring);
-      }
+      applyThemeColor(settings.themeColor);
     }
   }, [mounted, settings.themeColor]);
 
@@ -75,16 +79,7 @@ const Settings = () => {
   const handleThemeColorChange = (color: string) => {
     setSelectedThemeColor(color);
     saveSettings({ themeColor: color });
-    
-    // Apply color to CSS variables immediately
-    const root = document.documentElement;
-    
-    if (THEME_COLOR_MAP[color]) {
-      root.style.setProperty("--primary", THEME_COLOR_MAP[color].primary);
-      root.style.setProperty("--ring", THEME_COLOR_MAP[color].ring);
-      root.style.setProperty("--sidebar-primary", THEME_COLOR_MAP[color].primary);
-      root.style.setProperty("--sidebar-ring", THEME_COLOR_MAP[color].ring);
-    }
+    applyThemeColor(color);
     
     toast({
       title: "Theme color updated",

@@ -81,8 +81,9 @@ describe('🎨 Theme Color Settings', () => {
         amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
       };
 
-      // Validate HSL format (H S% L%)
-      const hslPattern = /^\d{1,3} \d{1,3}% \d{1,3}%$/;
+      // Validate HSL format with proper ranges:
+      // Hue: 0-360, Saturation: 0-100%, Lightness: 0-100%
+      const hslPattern = /^([0-9]|[1-9][0-9]|[1-2][0-9]{2}|3[0-5][0-9]|360) ([0-9]|[1-9][0-9]|100)% ([0-9]|[1-9][0-9]|100)%$/;
 
       Object.entries(colorMap).forEach(([color, values]) => {
         expect(values.primary).toMatch(hslPattern);
