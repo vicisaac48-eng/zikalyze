@@ -18,6 +18,14 @@ import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
 
+// Theme color mappings - HSL values for each available theme
+const THEME_COLOR_MAP: Record<string, { primary: string; ring: string }> = {
+  cyan: { primary: "168 76% 73%", ring: "168 76% 73%" },
+  green: { primary: "142 76% 60%", ring: "142 76% 60%" },
+  purple: { primary: "267 84% 81%", ring: "267 84% 81%" },
+  amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
+};
+
 const Settings = () => {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
@@ -48,18 +56,12 @@ const Settings = () => {
   useEffect(() => {
     if (mounted && settings.themeColor) {
       const root = document.documentElement;
-      const colorMap: Record<string, { primary: string; ring: string }> = {
-        cyan: { primary: "168 76% 73%", ring: "168 76% 73%" },
-        green: { primary: "142 76% 60%", ring: "142 76% 60%" },
-        purple: { primary: "267 84% 81%", ring: "267 84% 81%" },
-        amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
-      };
       
-      if (colorMap[settings.themeColor]) {
-        root.style.setProperty("--primary", colorMap[settings.themeColor].primary);
-        root.style.setProperty("--ring", colorMap[settings.themeColor].ring);
-        root.style.setProperty("--sidebar-primary", colorMap[settings.themeColor].primary);
-        root.style.setProperty("--sidebar-ring", colorMap[settings.themeColor].ring);
+      if (THEME_COLOR_MAP[settings.themeColor]) {
+        root.style.setProperty("--primary", THEME_COLOR_MAP[settings.themeColor].primary);
+        root.style.setProperty("--ring", THEME_COLOR_MAP[settings.themeColor].ring);
+        root.style.setProperty("--sidebar-primary", THEME_COLOR_MAP[settings.themeColor].primary);
+        root.style.setProperty("--sidebar-ring", THEME_COLOR_MAP[settings.themeColor].ring);
       }
     }
   }, [mounted, settings.themeColor]);
@@ -76,18 +78,12 @@ const Settings = () => {
     
     // Apply color to CSS variables immediately
     const root = document.documentElement;
-    const colorMap: Record<string, { primary: string; ring: string }> = {
-      cyan: { primary: "168 76% 73%", ring: "168 76% 73%" },
-      green: { primary: "142 76% 60%", ring: "142 76% 60%" },
-      purple: { primary: "267 84% 81%", ring: "267 84% 81%" },
-      amber: { primary: "38 92% 60%", ring: "38 92% 60%" },
-    };
     
-    if (colorMap[color]) {
-      root.style.setProperty("--primary", colorMap[color].primary);
-      root.style.setProperty("--ring", colorMap[color].ring);
-      root.style.setProperty("--sidebar-primary", colorMap[color].primary);
-      root.style.setProperty("--sidebar-ring", colorMap[color].ring);
+    if (THEME_COLOR_MAP[color]) {
+      root.style.setProperty("--primary", THEME_COLOR_MAP[color].primary);
+      root.style.setProperty("--ring", THEME_COLOR_MAP[color].ring);
+      root.style.setProperty("--sidebar-primary", THEME_COLOR_MAP[color].primary);
+      root.style.setProperty("--sidebar-ring", THEME_COLOR_MAP[color].ring);
     }
     
     toast({

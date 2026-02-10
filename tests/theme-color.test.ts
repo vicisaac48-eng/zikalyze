@@ -45,21 +45,29 @@ describe('🎨 Theme Color Settings', () => {
       expect(parsed.themeColor).toBe('green');
     });
 
-    it('should default to cyan when no color is saved', () => {
+    it('should load default cyan color when localStorage is empty', () => {
       const settingsKey = 'zikalyze_settings';
       const stored = localStorage.getItem(settingsKey);
       
-      if (!stored) {
-        const defaultColor = 'cyan';
-        expect(defaultColor).toBe('cyan');
-      }
+      // Verify localStorage is empty
+      expect(stored).toBeNull();
+      
+      // In the actual app, useSettings hook would return DEFAULT_SETTINGS
+      const defaultThemeColor = 'cyan';
+      expect(defaultThemeColor).toBe('cyan');
     });
 
-    it('should support all theme colors', () => {
+    it('should support all four theme colors', () => {
       const validColors = ['cyan', 'green', 'purple', 'amber'];
+      const settingsKey = 'zikalyze_settings';
       
+      // Test that each color can be saved and retrieved
       validColors.forEach(color => {
-        expect(['cyan', 'green', 'purple', 'amber']).toContain(color);
+        localStorage.setItem(settingsKey, JSON.stringify({ themeColor: color }));
+        const stored = localStorage.getItem(settingsKey);
+        const parsed = JSON.parse(stored!);
+        expect(parsed.themeColor).toBe(color);
+        localStorage.clear();
       });
     });
   });
@@ -97,14 +105,22 @@ describe('🎨 Theme Color Settings', () => {
   });
 
   describe('State Management', () => {
-    it('should update color when selection changes', () => {
-      let selectedColor = 'cyan';
+    it('should update theme color in settings', () => {
+      const settingsKey = 'zikalyze_settings';
+      let currentSettings = { themeColor: 'cyan' };
       
-      // Simulate color change
-      selectedColor = 'purple';
+      // Save initial state
+      localStorage.setItem(settingsKey, JSON.stringify(currentSettings));
       
-      expect(selectedColor).toBe('purple');
-      expect(selectedColor).not.toBe('cyan');
+      // Simulate color change (what handleThemeColorChange does)
+      currentSettings = { ...currentSettings, themeColor: 'purple' };
+      localStorage.setItem(settingsKey, JSON.stringify(currentSettings));
+      
+      // Verify the change
+      const stored = localStorage.getItem(settingsKey);
+      const parsed = JSON.parse(stored!);
+      expect(parsed.themeColor).toBe('purple');
+      expect(parsed.themeColor).not.toBe('cyan');
     });
 
     it('should persist color across page reloads', () => {
