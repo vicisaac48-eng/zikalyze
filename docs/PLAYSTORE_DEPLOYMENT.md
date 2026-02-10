@@ -113,9 +113,23 @@ Let Google manage your app signing key. This is the easiest and most secure opti
 
 ### Option B: Sign Locally with Your Own Keystore
 
-If you need to sign locally:
+Use our automated signing script:
 
-#### Create a Keystore (one-time)
+```bash
+./scripts/sign_aab.sh
+```
+
+The script will:
+- ✅ Check if you have a keystore (or help you create one)
+- ✅ Sign your AAB with proper algorithms
+- ✅ Verify the signature (optional)
+- ✅ Guide you through the upload process
+
+#### Manual Signing
+
+If you prefer manual control:
+
+##### Create a Keystore (one-time)
 
 ```bash
 keytool -genkey -v -keystore zikalyze-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias zikalyze
@@ -128,7 +142,7 @@ You'll be prompted to set:
 
 > ⚠️ **IMPORTANT:** Keep your keystore file and passwords safe! You'll need them for ALL future updates.
 
-#### Sign the AAB
+##### Sign the AAB
 
 ```bash
 jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
@@ -136,6 +150,8 @@ jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
   android/app/build/outputs/bundle/release/app-release.aab \
   zikalyze
 ```
+
+📖 **For detailed signing instructions, see [AAB_SIGNING_GUIDE.md](../AAB_SIGNING_GUIDE.md)**
 
 ---
 

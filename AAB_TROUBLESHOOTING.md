@@ -123,36 +123,22 @@ Use Google Play App Signing (recommended):
 2. Enable **"Play App Signing"**
 3. Upload unsigned AAB - Google signs it automatically
 
-**For custom keystore:**
+**For local signing with custom keystore:**
 
-Create `android/keystore.properties`:
-```properties
-storePassword=YOUR_KEYSTORE_PASSWORD
-keyPassword=YOUR_KEY_PASSWORD
-keyAlias=YOUR_KEY_ALIAS
-storeFile=path/to/your/keystore.jks
+Use our automated signing script:
+```bash
+./scripts/sign_aab.sh
 ```
 
-Add to `android/app/build.gradle`:
-```gradle
-signingConfigs {
-    release {
-        def keystorePropertiesFile = rootProject.file("keystore.properties")
-        def keystoreProperties = new Properties()
-        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-        
-        keyAlias keystoreProperties['keyAlias']
-        keyPassword keystoreProperties['keyPassword']
-        storeFile file(keystoreProperties['storeFile'])
-        storePassword keystoreProperties['storePassword']
-    }
-}
-buildTypes {
-    release {
-        signingConfig signingConfigs.release
-    }
-}
+Or sign manually:
+```bash
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+  -keystore zikalyze-release-key.jks \
+  android/app/build/outputs/bundle/release/app-release.aab \
+  zikalyze
 ```
+
+📖 **See [AAB_SIGNING_GUIDE.md](./AAB_SIGNING_GUIDE.md) for complete signing instructions**
 
 ### Fix 5: Verify Manifest Permissions
 
