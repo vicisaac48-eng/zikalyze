@@ -6,7 +6,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ const Dashboard = () => {
     }
   });
   const [userName, setUserName] = useState<string | null>(null);
-  const { prices, loading, isLive, getPriceBySymbol, refetch } = useCryptoPrices();
+  const { prices, loading, isLive, getPriceBySymbol, refetch } = usePriceData();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
 

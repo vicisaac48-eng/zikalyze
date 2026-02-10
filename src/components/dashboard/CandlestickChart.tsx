@@ -1,5 +1,5 @@
 import { ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useMemo, useState } from "react";
 
 interface CandlestickChartProps {
@@ -7,7 +7,7 @@ interface CandlestickChartProps {
 }
 
 const CandlestickChart = ({ crypto = "BTC" }: CandlestickChartProps) => {
-  const { prices, loading, getPriceBySymbol } = useCryptoPrices();
+  const { prices, loading, getPriceBySymbol } = usePriceData();
   const [viewMode, setViewMode] = useState<"indicator" | "dashboard">("dashboard");
 
   const chartData = useMemo(() => {
