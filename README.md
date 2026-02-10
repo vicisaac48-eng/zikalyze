@@ -216,10 +216,19 @@ The guide covers:
 📖 **[Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md)**
 
 Everything you need for Play Store assets:
-- Feature graphic (1024×500) - design templates and instructions
+- Feature graphic (1024×500) - ready to download
 - App icon (512×512) - ready-to-use download
 - Screenshots - capture methods and guidelines
 - Brand guidelines and design tips
+
+🔧 **[AAB Troubleshooting Guide](./AAB_TROUBLESHOOTING.md)**
+
+If your AAB upload fails or app doesn't work:
+- Common AAB rejection reasons and fixes
+- ProGuard configuration for Capacitor apps
+- Version code and signing issues
+- Privacy policy requirements
+- Verification script: `python3 scripts/verify_aab.py`
 
 ## 🌐 IPFS Deployment
 

@@ -43,6 +43,8 @@ This is the easiest method - no local setup required!
 
 > **Note:** For your first release, start with Internal Testing to verify everything works before going to Production.
 
+> **⚠️ AAB Upload Issues?** If your AAB is rejected or not working, see the comprehensive [AAB Troubleshooting Guide](../AAB_TROUBLESHOOTING.md) for solutions to common problems.
+
 ---
 
 ## 🔧 Method 2: Build AAB Locally
@@ -318,6 +320,26 @@ Review the rejection email, make necessary changes, and resubmit. Common issues:
 - [Play Console Academy](https://play.google.com/console/academy)
 - [Android App Bundle Guide](https://developer.android.com/guide/app-bundle)
 - [App Signing Documentation](https://developer.android.com/studio/publish/app-signing)
+- [AAB Troubleshooting Guide](../AAB_TROUBLESHOOTING.md) - Fix AAB upload issues
+
+---
+
+## 🔧 Troubleshooting
+
+**Having issues with AAB uploads?**
+
+See the comprehensive [AAB Troubleshooting Guide](../AAB_TROUBLESHOOTING.md) which covers:
+- Common AAB rejection reasons
+- ProGuard configuration fixes
+- Version code issues
+- Privacy policy requirements
+- Testing procedures
+- Step-by-step debugging
+
+**Quick diagnostic tool:**
+```bash
+python3 scripts/verify_aab.py
+```
 
 ---
 
