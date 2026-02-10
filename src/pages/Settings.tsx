@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { useSettings, SoundType } from "@/hooks/useSettings";
+import { useSettings, SoundType, ThemeColor } from "@/hooks/useSettings";
 import { alertSound, isNativePlatform } from "@/lib/alertSound";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import NotificationSettings from "@/components/settings/NotificationSettings";
@@ -57,6 +57,43 @@ const Settings = () => {
     }
   };
 
+  const handleThemeColorChange = (color: ThemeColor) => {
+    saveSettings({ themeColor: color });
+    
+    // Apply the color to the root element immediately
+    const root = document.documentElement;
+    const isDark = resolvedTheme === "dark";
+    
+    // Map theme colors to HSL values from index.css
+    const colorMap: Record<ThemeColor, { light: string, dark: string }> = {
+      primary: {
+        light: "168 76% 42%",
+        dark: "168 76% 73%"
+      },
+      cyan: {
+        light: "168 76% 42%",
+        dark: "168 76% 73%"
+      },
+      success: {
+        light: "142 76% 36%",
+        dark: "142 76% 46%"
+      },
+      warning: {
+        light: "38 92% 50%",
+        dark: "38 92% 50%"
+      }
+    };
+    
+    const selectedColor = colorMap[color];
+    root.style.setProperty('--primary', isDark ? selectedColor.dark : selectedColor.light);
+    root.style.setProperty('--ring', isDark ? selectedColor.dark : selectedColor.light);
+    
+    toast({
+      title: "Theme Color Updated",
+      description: `Theme color changed to ${color}`,
+    });
+  };
+
   // General settings local state (saved on button click)
   const [selectedLanguage, setSelectedLanguage] = useState(settings.language);
   const [selectedCurrency, setSelectedCurrency] = useState(settings.currency);
@@ -66,6 +103,38 @@ const Settings = () => {
     setSelectedLanguage(settings.language);
     setSelectedCurrency(settings.currency);
   }, [settings.language, settings.currency]);
+
+  // Apply theme color on mount and when theme or themeColor changes
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const root = document.documentElement;
+    const isDark = resolvedTheme === "dark";
+    
+    // Map theme colors to HSL values from index.css
+    const colorMap: Record<ThemeColor, { light: string, dark: string }> = {
+      primary: {
+        light: "168 76% 42%",
+        dark: "168 76% 73%"
+      },
+      cyan: {
+        light: "168 76% 42%",
+        dark: "168 76% 73%"
+      },
+      success: {
+        light: "142 76% 36%",
+        dark: "142 76% 46%"
+      },
+      warning: {
+        light: "38 92% 50%",
+        dark: "38 92% 50%"
+      }
+    };
+    
+    const selectedColor = colorMap[settings.themeColor];
+    root.style.setProperty('--primary', isDark ? selectedColor.dark : selectedColor.light);
+    root.style.setProperty('--ring', isDark ? selectedColor.dark : selectedColor.light);
+  }, [mounted, resolvedTheme, settings.themeColor]);
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
@@ -477,10 +546,38 @@ const Settings = () => {
                     <div className="p-4 rounded-xl bg-secondary/50">
                       <div className="font-medium text-foreground mb-3">Theme Colors</div>
                       <div className="flex gap-3">
-                        <button className="w-10 h-10 rounded-full bg-primary border-2 border-primary-foreground" />
-                        <button className="w-10 h-10 rounded-full bg-chart-cyan border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-success border-2 border-transparent hover:border-foreground/50" />
-                        <button className="w-10 h-10 rounded-full bg-warning border-2 border-transparent hover:border-foreground/50" />
+                        <button 
+                          onClick={() => handleThemeColorChange("primary")}
+                          className={cn(
+                            "w-10 h-10 rounded-full bg-primary border-2 transition-all",
+                            settings.themeColor === "primary" ? "border-primary-foreground scale-110" : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Primary theme color"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("cyan")}
+                          className={cn(
+                            "w-10 h-10 rounded-full bg-chart-cyan border-2 transition-all",
+                            settings.themeColor === "cyan" ? "border-foreground scale-110" : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Cyan theme color"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("success")}
+                          className={cn(
+                            "w-10 h-10 rounded-full bg-success border-2 transition-all",
+                            settings.themeColor === "success" ? "border-foreground scale-110" : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Success theme color"
+                        />
+                        <button 
+                          onClick={() => handleThemeColorChange("warning")}
+                          className={cn(
+                            "w-10 h-10 rounded-full bg-warning border-2 transition-all",
+                            settings.themeColor === "warning" ? "border-foreground scale-110" : "border-transparent hover:border-foreground/50"
+                          )}
+                          aria-label="Warning theme color"
+                        />
                       </div>
                     </div>
                   </div>

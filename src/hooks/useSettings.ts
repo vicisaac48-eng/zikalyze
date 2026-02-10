@@ -19,6 +19,8 @@ export interface NotificationAlertSettings {
   whaleTransactionThreshold: number; // in millions USD
 }
 
+export type ThemeColor = "primary" | "cyan" | "success" | "warning";
+
 export interface AppSettings {
   soundEnabled: boolean;
   soundVolume: number;
@@ -29,6 +31,7 @@ export interface AppSettings {
   language: string;
   currency: string;
   twoFactorAuth: boolean;
+  themeColor: ThemeColor;
   
   // Advanced notification settings
   notificationAlerts: NotificationAlertSettings;
@@ -58,6 +61,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   language: "English",
   currency: "USD",
   twoFactorAuth: false,
+  themeColor: "primary",
   notificationAlerts: DEFAULT_NOTIFICATION_ALERTS,
 };
 
