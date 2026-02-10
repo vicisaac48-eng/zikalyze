@@ -558,6 +558,9 @@ const Auth = () => {
 
           <DemoModeAuth />
 
+          {/* Legal agreement text with clickable links for Google Play Store compliance.
+              Note: Hardcoded for legal clarity and consistency with other legal pages.
+              The actual legal policy pages (PrivacyPolicy.tsx, TermsOfService.tsx) are also not internationalized. */}
           <p className="mt-4 text-center text-xs text-muted-foreground sm:mt-6">
             By continuing, you agree to our{" "}
             <Link to="/terms" className="text-primary hover:underline">
