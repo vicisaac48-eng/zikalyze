@@ -27,6 +27,18 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
     
+    // Force Java 17 for all subprojects including Capacitor modules
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+    
     // Force consistent Kotlin stdlib versions to prevent duplicate class errors
     // Starting with Kotlin 1.8.0, kotlin-stdlib-jdk7 and kotlin-stdlib-jdk8 are merged into kotlin-stdlib
     configurations.all {
