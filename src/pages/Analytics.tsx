@@ -6,7 +6,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User, TrendingUp, TrendingDown, BarChart3, Activity, PieChart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AnalyticsChart from "@/components/dashboard/AnalyticsChart";
@@ -16,7 +16,7 @@ import VolumeChart from "@/components/dashboard/VolumeChart";
 import { cn } from "@/lib/utils";
 
 const Analytics = () => {
-  const { prices, loading, refetch } = useCryptoPrices();
+  const { prices, loading, refetch } = usePriceData();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const [timeframe, setTimeframe] = useState("24h");
   const { t } = useTranslation();

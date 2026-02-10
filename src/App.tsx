@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { CurrencyProvider } from "@/hooks/useCurrency";
+import { PriceDataProvider } from "@/contexts/PriceDataContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 import { ZikalyzeWatermark } from "./components/ZikalyzeWatermark";
@@ -35,7 +36,22 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+// Optimize React Query for better performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Keep data fresh for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Cache data for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed requests
+      retry: 1,
+      // Refetch on window focus for fresh data
+      refetchOnWindowFocus: true,
+    },
+  },
+});
+
 
 // Seamless loading fallback with Zikalyze logo - theme-aware background
 const PageLoader = () => (
@@ -78,34 +94,36 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="zikalyze-theme">
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
-          <TooltipProvider>
-            <Sonner />
-            <PWAInstallBanner />
-            <ZikalyzeWatermark />
-            <NetworkStatusBanner position="bottom" />
-            <HashRouter>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Auth />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Dashboard"><Dashboard /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/dashboard/portfolio" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Portfolio"><Portfolio /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/dashboard/analytics" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analytics"><Analytics /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/dashboard/analyzer" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analyzer"><Analyzer /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/dashboard/alerts" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Alerts"><Alerts /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/dashboard/settings" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Settings"><Settings /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                  <Route path="/install" element={<Install />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/contact" element={<Contact />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </HashRouter>
-          </TooltipProvider>
+          <PriceDataProvider>
+            <TooltipProvider>
+              <Sonner />
+              <PWAInstallBanner />
+              <ZikalyzeWatermark />
+              <NetworkStatusBanner position="bottom" />
+              <HashRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/login" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/dashboard" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Dashboard"><Dashboard /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/dashboard/portfolio" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Portfolio"><Portfolio /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/dashboard/analytics" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analytics"><Analytics /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/dashboard/analyzer" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analyzer"><Analyzer /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/dashboard/alerts" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Alerts"><Alerts /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/dashboard/settings" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Settings"><Settings /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                    <Route path="/install" element={<Install />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/contact" element={<Contact />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </HashRouter>
+            </TooltipProvider>
+          </PriceDataProvider>
         </CurrencyProvider>
       </QueryClientProvider>
     </ThemeProvider>
