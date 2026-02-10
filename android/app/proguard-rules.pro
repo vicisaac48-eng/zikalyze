@@ -47,9 +47,9 @@
 # Android & AndroidX
 # ===========================
 
-# Keep Android framework classes
--keep class android.** { *; }
--keep class androidx.** { *; }
+# AndroidX and Android framework are already part of the platform
+# Only keep specific classes if you have reflection issues
+# (These rules are usually not needed and can bloat APK size)
 
 # Keep Google Play Services (if used)
 -keep class com.google.android.gms.** { *; }
@@ -62,8 +62,9 @@
 # Keep main activity
 -keep class com.zikalyze.app.MainActivity { *; }
 
-# Keep all classes in the app package
--keep class com.zikalyze.app.** { *; }
+# Only keep classes accessed via reflection or JNI
+# Don't keep all app classes - defeats ProGuard purpose
+# Add specific keep rules only if you encounter ClassNotFoundException
 
 # ===========================
 # Reflection & Serialization

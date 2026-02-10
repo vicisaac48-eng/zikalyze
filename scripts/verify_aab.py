@@ -127,8 +127,16 @@ def check_proguard_rules():
         print_info("This is CRITICAL for Capacitor apps - WebView JS won't work without it!")
         issues.append("javascript-interface")
     
-    # Check for source file attributes
-    if '-keepattributes SourceFile,LineNumberTable' in content and not content.startswith('#-keepattributes SourceFile'):
+    # Check for source file attributes (line by line to avoid false positives)
+    has_source_attributes = False
+    for line in content.split('\n'):
+        line = line.strip()
+        if line.startswith('-keepattributes') and 'SourceFile' in line and 'LineNumberTable' in line:
+            if not line.startswith('#'):
+                has_source_attributes = True
+                break
+    
+    if has_source_attributes:
         print_success("Source file attributes preserved (helps with debugging)")
     else:
         print_warning("Source file attributes not preserved")
