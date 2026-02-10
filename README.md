@@ -203,7 +203,7 @@ All logo files with direct download links:
 
 ### 🏪 Publishing to Google Play Store
 
-Want to publish Zikalyze to the Google Play Store? See our comprehensive guide:
+Want to publish Zikalyze to the Google Play Store? See our comprehensive guides:
 
 📖 **[Play Store Deployment Guide](./docs/PLAYSTORE_DEPLOYMENT.md)**
 
@@ -212,6 +212,14 @@ The guide covers:
 - Setting up your Play Console listing
 - Signing your app
 - Submitting for review
+
+📖 **[Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md)**
+
+Everything you need for Play Store assets:
+- Feature graphic (1024×500) - design templates and instructions
+- App icon (512×512) - ready-to-use download
+- Screenshots - capture methods and guidelines
+- Brand guidelines and design tips
 
 ## 🌐 IPFS Deployment
 

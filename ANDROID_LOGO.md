@@ -128,6 +128,7 @@ cd zikalyze
 2. **For Web/PWA:** Use `public/pwa-512x512.png` or `public/pwa-192x192.png`
 3. **For General Use:** Use `src/assets/zikalyze-logo.png` (512x512, high quality)
 4. **For Social Media:** Use `public/og-image.png` (optimized for sharing)
+5. **For Google Play Store:** See [PLAYSTORE_GRAPHICS.md](./PLAYSTORE_GRAPHICS.md) for feature graphics and screenshots
 
 ## 📄 License
 
@@ -136,3 +137,8 @@ These logo files are part of the Zikalyze project. Please refer to the repositor
 ---
 
 **Need help?** Open an issue on the [GitHub repository](https://github.com/vicisaac48-eng/zikalyze/issues) or check the main [README](./README.md).
+
+## 🔗 Related Resources
+
+- [Play Store Graphics Guide](./PLAYSTORE_GRAPHICS.md) - Feature graphics, screenshots, and Play Store assets
+- [Play Store Deployment Guide](./docs/PLAYSTORE_DEPLOYMENT.md) - Publishing to Google Play Store

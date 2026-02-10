@@ -184,6 +184,8 @@ Required information:
 - **App icon:** 512x512 PNG (already included in the app)
 - **Feature graphic:** 1024x500 PNG
 
+> 📖 **See [PLAYSTORE_GRAPHICS.md](../PLAYSTORE_GRAPHICS.md) for complete graphics guide** with download links, design templates, and creation instructions for all required Play Store assets.
+
 ### 3. Set App Category
 
 - **Category:** Finance
