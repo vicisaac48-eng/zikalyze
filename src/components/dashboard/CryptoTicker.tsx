@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -28,6 +29,82 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   // Use dedicated live stream for real-time prices
   const { getPrice, isConnected, sources } = useTickerLiveStream();
   
+  // Flash animation state for price changes (like Top100CryptoList)
+  const [priceFlashes, setPriceFlashes] = useState<Map<string, "up" | "down">>(new Map());
+  const prevPricesRef = useRef<Map<string, number>>(new Map());
+  
+  // Throttle price updates - Reduced to match AI Analyzer responsiveness (500ms)
+  const lastUpdateTimesRef = useRef<Map<string, number>>(new Map());
+  const THROTTLE_MS = 500; // Update at most once every 500ms per symbol (like AI price display)
+  
+  // Flash animation effect - detect price changes and trigger flash (throttled)
+  // Use interval to periodically check for price changes
+  useEffect(() => {
+    // Track flash animation timeouts to clean them up properly
+    const flashTimeouts = new Map<string, NodeJS.Timeout>();
+    
+    const checkPriceChanges = () => {
+      cryptoMeta.forEach((crypto) => {
+        const liveStreamPrice = getPrice(crypto.symbol);
+        const currentPrice = liveStreamPrice?.price || 0;
+        
+        if (currentPrice > 0) {
+          const prevPrice = prevPricesRef.current.get(crypto.symbol);
+          
+          // Always update the previous price for accurate tracking
+          prevPricesRef.current.set(crypto.symbol, currentPrice);
+          
+          // Check if we should trigger a flash animation (throttled)
+          if (prevPrice && prevPrice !== currentPrice) {
+            const now = Date.now();
+            const lastUpdate = lastUpdateTimesRef.current.get(crypto.symbol) || 0;
+            
+            // Throttle: Only trigger flash if enough time has passed since last flash
+            if (now - lastUpdate >= THROTTLE_MS) {
+              // Price changed - trigger flash animation
+              const flash = currentPrice > prevPrice ? "up" : "down";
+              setPriceFlashes(prev => new Map(prev).set(crypto.symbol, flash));
+              
+              // Clear any existing timeout for this symbol to prevent memory leaks
+              const existingTimeout = flashTimeouts.get(crypto.symbol);
+              if (existingTimeout) {
+                clearTimeout(existingTimeout);
+              }
+              
+              // Clear flash after animation completes (2000ms)
+              const timeoutId = setTimeout(() => {
+                setPriceFlashes(prev => {
+                  const next = new Map(prev);
+                  next.delete(crypto.symbol);
+                  return next;
+                });
+                flashTimeouts.delete(crypto.symbol);
+              }, 2000);
+              
+              // Track this timeout so we can clean it up
+              flashTimeouts.set(crypto.symbol, timeoutId);
+              
+              // Update last flash time
+              lastUpdateTimesRef.current.set(crypto.symbol, now);
+            }
+          }
+        }
+      });
+    };
+    
+    // Check immediately on mount
+    checkPriceChanges();
+    
+    // Then check every 500ms for price updates
+    const interval = setInterval(checkPriceChanges, 500);
+    
+    return () => {
+      clearInterval(interval);
+      // Clean up all pending flash animation timeouts
+      flashTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    };
+  }, [getPrice]); // Only depend on getPrice - cryptoMeta is a static constant
+  
   return (
     <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
       {cryptoMeta.map((crypto) => {
@@ -45,6 +122,9 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
           : parentPrice?.price_change_percentage_24h || 0;
         
         const isLive = liveStreamPrice?.lastUpdate && (Date.now() - liveStreamPrice.lastUpdate < 5000);
+        
+        // Get flash animation state for this symbol
+        const flash = priceFlashes.get(crypto.symbol);
         
         return (
           <button
@@ -72,8 +152,11 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
               </span>
             </div>
             <span className={cn(
-              "text-sm font-semibold text-foreground transition-colors sm:text-lg",
-              isLive ? "text-foreground" : "text-muted-foreground"
+              "text-sm font-semibold transition-colors sm:text-lg",
+              isLive ? "text-foreground" : "text-muted-foreground",
+              // Flash animations for price changes (like Top100CryptoList)
+              flash === "up" && "animate-price-flash-up",
+              flash === "down" && "animate-price-flash-down"
             )}>
               {loading && !isConnected ? "..." : (price > 0 ? formatPrice(price) : "---")}
             </span>

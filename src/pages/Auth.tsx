@@ -31,7 +31,7 @@ const DemoModeAuth = () => {
   return (
     <div className="text-center py-4">
       <Sparkles className="h-8 w-8 text-primary mx-auto mb-3" />
-      <h3 className="text-base font-semibold mb-2">Just Exploring?</h3>
+      <h2 className="text-base font-semibold mb-2">Just Exploring?</h2>
       <p className="text-sm text-muted-foreground mb-3">
         Try the dashboard without creating an account.
       </p>
@@ -128,7 +128,7 @@ const SignUpForm = () => {
           <div className="h-12 w-12 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-3">
             <Check className="h-6 w-6 text-success" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Wallet Created!</h3>
+          <h2 className="text-lg font-semibold mb-2">Wallet Created!</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Save your private key securely. You'll need it to sign in.
           </p>
@@ -514,7 +514,7 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <div className="min-h-[100dvh] bg-background flex items-center justify-center p-3 sm:p-4">
+    <div className="min-h-[100dvh] max-h-screen overflow-y-auto bg-background flex items-center justify-center p-3 sm:p-4">
       {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />

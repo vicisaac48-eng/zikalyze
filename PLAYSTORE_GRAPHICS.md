@@ -2,6 +2,8 @@
 
 This guide provides all the graphic assets and requirements needed for publishing Zikalyze to the Google Play Store.
 
+> **✅ Recently Updated (2026-02-11):** All logo files have been converted to proper PNG format with correct dimensions. App icons are now 512×512 PNG with transparency. See [LOGO_FIX_COMPLETE.md](./LOGO_FIX_COMPLETE.md) for details.
+
 ## 📋 Required Graphics Overview
 
 Google Play Store requires specific graphic assets for your app listing. Here's what you need:
@@ -43,8 +45,8 @@ Google Play Store requires specific graphic assets for your app listing. Here's 
 
 📥 **[Download App Icon (512×512 PNG)](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/pwa-512x512.png)**
 
-- ✅ Exact size required by Play Store
-- ✅ 32-bit PNG with transparency
+- ✅ Exact size required by Play Store (512×512)
+- ✅ 32-bit PNG with RGBA transparency (verified 2026-02-11)
 - ✅ Professional Zikalyze branding
 - ✅ Ready to upload directly
 

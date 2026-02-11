@@ -2,6 +2,8 @@
 
 This document provides direct download links to all Zikalyze logo and icon files used in the Android app.
 
+> **✅ Recently Updated (2026-02-11):** All logo files have been converted to proper PNG format with correct dimensions. All Android icons are now square and meet platform requirements. See [LOGO_FIX_COMPLETE.md](./LOGO_FIX_COMPLETE.md) for details.
+
 ## 🎨 Main Logo Files
 
 ### High-Resolution Logo (512x512)
@@ -126,9 +128,15 @@ cd zikalyze
 
 1. **For Android Development:** Use the appropriate density folder from `android/app/src/main/res/mipmap-*/`
 2. **For Web/PWA:** Use `public/pwa-512x512.png` or `public/pwa-192x192.png`
-3. **For General Use:** Use `src/assets/zikalyze-logo.png` (512x512, high quality)
+3. **For General Use:** Use `src/assets/zikalyze-logo.png` (512×512, high quality PNG with RGBA)
 4. **For Social Media:** Use `public/og-image.png` (optimized for sharing)
 5. **For Google Play Store:** See [PLAYSTORE_GRAPHICS.md](./PLAYSTORE_GRAPHICS.md) for feature graphics and screenshots
+
+**All files verified (2026-02-11):**
+- ✅ Proper PNG format (not JPEG)
+- ✅ Correct dimensions matching specifications
+- ✅ RGBA transparency support
+- ✅ Square icons for Android (48×48, 72×72, 96×96, 144×144, 192×192)
 
 ## 📄 License
 

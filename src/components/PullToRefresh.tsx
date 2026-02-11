@@ -40,7 +40,8 @@ export function PullToRefresh({
   return (
     <div
       ref={containerRef as React.RefObject<HTMLDivElement>}
-      className={cn("relative min-h-screen", className)}
+      className={cn("relative min-h-screen max-h-screen overflow-y-auto", className)}
+      style={{ touchAction: 'pan-y' }}
     >
       {/* Pull-to-refresh indicator - only visible on native app when pulling */}
       <div
