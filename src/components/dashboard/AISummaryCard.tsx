@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, CheckCircle, Clock, XCircle } from "lucide-react";
 
 interface AISummaryCardProps {
   bias: 'LONG' | 'SHORT' | 'NEUTRAL';
@@ -9,6 +9,7 @@ interface AISummaryCardProps {
   successProbability?: number;
   crypto: string;
   isVisible: boolean;
+  tradeRecommendation?: 'EXECUTE' | 'WAIT_CONFIRMATION' | 'AVOID_BAD_TRADE' | 'SKIPPED_NN_FILTER';
 }
 
 const AISummaryCard = ({ 
@@ -18,7 +19,8 @@ const AISummaryCard = ({
   timing, 
   successProbability = 50,
   crypto,
-  isVisible 
+  isVisible,
+  tradeRecommendation
 }: AISummaryCardProps) => {
   if (!isVisible) return null;
 
@@ -55,6 +57,38 @@ const AISummaryCard = ({
   };
 
   const getTimingConfig = () => {
+    // If tradeRecommendation is provided, use it to override timing display
+    // This ensures Quick View matches the analysis output (e.g., "SKIPPED" when NN filter fails)
+    if (tradeRecommendation) {
+      switch (tradeRecommendation) {
+        case 'EXECUTE':
+          return {
+            label: 'EXECUTE',
+            icon: CheckCircle,
+            className: 'text-success bg-success/10'
+          };
+        case 'WAIT_CONFIRMATION':
+          return {
+            label: 'WAIT',
+            icon: Clock,
+            className: 'text-warning bg-warning/10'
+          };
+        case 'SKIPPED_NN_FILTER':
+          return {
+            label: 'SKIPPED',
+            icon: XCircle,
+            className: 'text-destructive bg-destructive/10'
+          };
+        case 'AVOID_BAD_TRADE':
+          return {
+            label: 'AVOID',
+            icon: AlertTriangle,
+            className: 'text-destructive bg-destructive/10'
+          };
+      }
+    }
+
+    // Fallback to timing if tradeRecommendation not provided (backwards compatibility)
     switch (timing) {
       case 'NOW':
         return {

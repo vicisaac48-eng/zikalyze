@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Capacitor } from "@capacitor/core";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -37,6 +38,9 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   const [targetPrice, setTargetPrice] = useState("");
   const [alertCondition, setAlertCondition] = useState<"above" | "below">("above");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Check if running on Android platform
+  const isAndroid = Capacitor.getPlatform() === 'android';
   
   // Track previous prices for flash animation
   const prevPricesRef = useRef<Map<string, number>>(new Map());
@@ -253,7 +257,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           <table className="w-full min-w-[320px]">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-2 font-medium sm:pb-3">#</th>
+                {!isAndroid && <th className="pb-2 font-medium sm:pb-3">#</th>}
                 <th className="pb-2 font-medium sm:pb-3">Name</th>
                 <th className="pb-2 font-medium text-right sm:pb-3">Price</th>
                 <th className="pb-2 font-medium text-right sm:pb-3">24h %</th>
@@ -280,7 +284,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                       isSelected ? "bg-primary/10" : ""
                     }`}
                   >
-                    <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>
+                    {!isAndroid && <td className="py-2 text-xs text-muted-foreground sm:py-3 sm:text-sm">{index + 1}</td>}
                     <td className="py-2 sm:py-3">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <img 
@@ -299,11 +303,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                     </td>
                     <td className="py-2 text-right sm:py-3">
                       <span
-                        className={`font-medium text-xs transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
+                        className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm ${
                           flash === "up"
-                            ? "bg-success/20 text-success animate-price-flash-up"
+                            ? "animate-price-flash-up"
                             : flash === "down"
-                              ? "bg-destructive/20 text-destructive animate-price-flash-down"
+                              ? "animate-price-flash-down"
                               : "text-foreground"
                         }`}
                       >

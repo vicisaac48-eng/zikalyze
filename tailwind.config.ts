@@ -91,30 +91,18 @@ export default {
         },
         "price-flash-up": {
           "0%": {
-            backgroundColor: "hsl(var(--success) / 0.3)",
-            transform: "scale(1.05)",
-          },
-          "50%": {
-            backgroundColor: "hsl(var(--success) / 0.2)",
-            transform: "scale(1.02)",
+            color: "hsl(var(--success))",
           },
           "100%": {
-            backgroundColor: "transparent",
-            transform: "scale(1)",
+            color: "hsl(var(--foreground))",
           },
         },
         "price-flash-down": {
           "0%": {
-            backgroundColor: "hsl(var(--destructive) / 0.3)",
-            transform: "scale(1.05)",
-          },
-          "50%": {
-            backgroundColor: "hsl(var(--destructive) / 0.2)",
-            transform: "scale(1.02)",
+            color: "hsl(var(--destructive))",
           },
           "100%": {
-            backgroundColor: "transparent",
-            transform: "scale(1)",
+            color: "hsl(var(--foreground))",
           },
         },
         "spin-slow": {
