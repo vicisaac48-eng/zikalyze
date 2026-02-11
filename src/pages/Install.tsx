@@ -117,13 +117,13 @@ const Install = () => {
       <main className="container max-w-2xl mx-auto px-4 py-8">
         {/* Hero Section with Native App-Style Logo */}
         <div className="text-center mb-8">
-          {/* Native App Icon Container - iOS/Android style with proper shadow and rounded corners */}
+          {/* Native App Icon Container - iOS/Android style with rounded corners */}
           <div className="relative inline-block mb-6">
             {/* Outer glow effect */}
             <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-primary/30 via-cyan-500/20 to-purple-500/30 blur-xl scale-110 opacity-60" />
             
             {/* App Icon - Native style with proper iOS/Android rounding */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px] shadow-2xl shadow-primary/20">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px]">
               {/* Inner gradient border */}
               <div className="absolute inset-0 rounded-[24px] sm:rounded-[28px] bg-gradient-to-br from-primary/40 via-cyan-500/20 to-purple-500/30 opacity-80" />
               
@@ -142,7 +142,7 @@ const Install = () => {
             </div>
             
             {/* Floating badge for native feel */}
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center shadow-lg border-2 border-background">
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center border-2 border-background">
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
             </div>
           </div>
