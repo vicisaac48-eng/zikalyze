@@ -38,41 +38,52 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const THROTTLE_MS = 1500; // Update at most once every 1.5 seconds per symbol
   
   // Flash animation effect - detect price changes and trigger flash (throttled)
+  // Use interval to periodically check for price changes
   useEffect(() => {
-    cryptoMeta.forEach((crypto) => {
-      const liveStreamPrice = getPrice(crypto.symbol);
-      const currentPrice = liveStreamPrice?.price || 0;
-      
-      if (currentPrice > 0) {
-        const now = Date.now();
-        const lastUpdate = lastUpdateTimesRef.current.get(crypto.symbol) || 0;
+    const checkPriceChanges = () => {
+      cryptoMeta.forEach((crypto) => {
+        const liveStreamPrice = getPrice(crypto.symbol);
+        const currentPrice = liveStreamPrice?.price || 0;
         
-        // Throttle: Only process if enough time has passed since last update
-        if (now - lastUpdate >= THROTTLE_MS) {
-          const prevPrice = prevPricesRef.current.get(crypto.symbol);
+        if (currentPrice > 0) {
+          const now = Date.now();
+          const lastUpdate = lastUpdateTimesRef.current.get(crypto.symbol) || 0;
           
-          if (prevPrice && prevPrice !== currentPrice) {
-            // Price changed - trigger flash animation
-            const flash = currentPrice > prevPrice ? "up" : "down";
-            setPriceFlashes(prev => new Map(prev).set(crypto.symbol, flash));
+          // Throttle: Only process if enough time has passed since last update
+          if (now - lastUpdate >= THROTTLE_MS) {
+            const prevPrice = prevPricesRef.current.get(crypto.symbol);
             
-            // Clear flash after animation completes (2000ms)
-            setTimeout(() => {
-              setPriceFlashes(prev => {
-                const next = new Map(prev);
-                next.delete(crypto.symbol);
-                return next;
-              });
-            }, 2000);
+            if (prevPrice && prevPrice !== currentPrice) {
+              // Price changed - trigger flash animation
+              const flash = currentPrice > prevPrice ? "up" : "down";
+              setPriceFlashes(prev => new Map(prev).set(crypto.symbol, flash));
+              
+              // Clear flash after animation completes (2000ms)
+              setTimeout(() => {
+                setPriceFlashes(prev => {
+                  const next = new Map(prev);
+                  next.delete(crypto.symbol);
+                  return next;
+                });
+              }, 2000);
+            }
+            
+            // Update refs
+            prevPricesRef.current.set(crypto.symbol, currentPrice);
+            lastUpdateTimesRef.current.set(crypto.symbol, now);
           }
-          
-          // Update refs
-          prevPricesRef.current.set(crypto.symbol, currentPrice);
-          lastUpdateTimesRef.current.set(crypto.symbol, now);
         }
-      }
-    });
-  }, [getPrice]); // Re-run when prices update
+      });
+    };
+    
+    // Check immediately on mount
+    checkPriceChanges();
+    
+    // Then check every 500ms for price updates
+    const interval = setInterval(checkPriceChanges, 500);
+    
+    return () => clearInterval(interval);
+  }, [getPrice, cryptoMeta]); // Re-run when getPrice or cryptoMeta changes
   
   return (
     <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
