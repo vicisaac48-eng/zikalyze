@@ -103,9 +103,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   }, [prices]);
 
   // Log tracked cryptos for verification (runs once when prices are loaded, development only)
+  const hasLoggedRef = useRef(false);
   useEffect(() => {
-    if (import.meta.env.DEV && prices.length > 0 && prevPricesRef.current.size === 0) {
+    if (import.meta.env.DEV && !hasLoggedRef.current && prices.length > 0) {
       console.log(`[Flash Animation] Tracking ${prices.length} cryptocurrencies for price updates`);
+      hasLoggedRef.current = true;
     }
   }, [prices]);
 
