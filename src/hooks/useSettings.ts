@@ -29,6 +29,7 @@ export interface AppSettings {
   language: string;
   currency: string;
   twoFactorAuth: boolean;
+  themeColor: string; // Add theme color preference
   
   // Advanced notification settings
   notificationAlerts: NotificationAlertSettings;
@@ -58,6 +59,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   language: "English",
   currency: "USD",
   twoFactorAuth: false,
+  themeColor: "cyan", // Default theme color
   notificationAlerts: DEFAULT_NOTIFICATION_ALERTS,
 };
 

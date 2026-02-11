@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useEffect, useState } from "react";
 
 interface DataPoint {
@@ -8,7 +8,7 @@ interface DataPoint {
 }
 
 const AnalyticsChart = () => {
-  const { prices, loading } = useCryptoPrices();
+  const { prices, loading } = usePriceData();
   const [chartData, setChartData] = useState<DataPoint[]>([]);
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
@@ -14,7 +14,7 @@ import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
-  const { getPriceBySymbol, loading, isLive, refetch } = useCryptoPrices();
+  const { getPriceBySymbol, loading, isLive, refetch } = usePriceData();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
 

@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -40,7 +40,7 @@ interface TriggeredAlert {
 
 const Alerts = () => {
   const { alerts, loading, removeAlert, refetch, checkAlerts } = usePriceAlerts();
-  const { prices, getPriceBySymbol, refetch: refetchPrices } = useCryptoPrices();
+  const { prices, getPriceBySymbol, refetch: refetchPrices } = usePriceData();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
   const isNativeApp = useIsNativeApp();

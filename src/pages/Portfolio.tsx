@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,7 +38,7 @@ interface Holding {
 const STORAGE_KEY = "zikalyze_portfolio_holdings";
 
 const Portfolio = () => {
-  const { prices, loading, getPriceBySymbol, getPriceById, refetch } = useCryptoPrices();
+  const { prices, loading, getPriceBySymbol, getPriceById, refetch } = usePriceData();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
   const isNativeApp = useIsNativeApp();
