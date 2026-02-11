@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => ({
           // - Better cache invalidation (app updates don't invalidate crypto code)
           // - Parallel downloading of chunks
           // - Reduced main bundle size
-          'crypto-hooks': ['@/hooks/useCryptoPrices', '@/hooks/useTickerLiveStream'],
+          'crypto-hooks': ['@/hooks/useCryptoPrices'],
         }
       }
     },

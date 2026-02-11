@@ -119,34 +119,37 @@ const Install = () => {
         <div className="text-center mb-8">
           {/* Native App Icon Container - iOS/Android style with rounded corners */}
           <div className="relative inline-block mb-6">
+            {/* Animated glow effect behind the icon */}
+            <div className="absolute inset-0 -m-2 rounded-full bg-gradient-to-br from-primary/20 via-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow opacity-60" />
+            
             {/* App Icon - Native style with proper iOS/Android rounding */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px]">
-              {/* Inner gradient border */}
-              <div className="absolute inset-0 rounded-[24px] sm:rounded-[28px] bg-gradient-to-br from-primary/40 via-cyan-500/20 to-purple-500/30 opacity-80" />
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[32px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px] shadow-2xl shadow-primary/20">
+              {/* Animated gradient border */}
+              <div className="absolute inset-0 rounded-[28px] sm:rounded-[32px] bg-gradient-to-br from-primary/50 via-cyan-500/30 to-purple-500/40 opacity-90 animate-glow-pulse" />
               
               {/* Logo container with background */}
-              <div className="relative w-full h-full rounded-[22px] sm:rounded-[26px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
-                {/* Logo image */}
+              <div className="relative w-full h-full rounded-[26px] sm:rounded-[30px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
+                {/* Logo image with smooth rotation */}
                 <img 
                   src={zikalyzeLogo} 
                   alt="Zikalyze" 
-                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain relative z-10"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative z-10 animate-spin-slow"
                   style={{ filter: 'none', boxShadow: 'none' }}
                 />
               </div>
             </div>
             
-            {/* Floating badge for native feel */}
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center border-2 border-background">
-              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
+            {/* Floating badge for native feel with pulse animation */}
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center border-2 border-background shadow-lg shadow-primary/30 animate-pulse">
+              <Download className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-primary-foreground" />
             </div>
           </div>
           
           {/* App Name with native styling */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent mb-2 tracking-tight">
             {t("install.title", "Install Zikalyze")}
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
             {t("install.subtitle", "Get the full app experience with offline access and quick launch")}
           </p>
           
