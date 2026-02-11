@@ -178,7 +178,9 @@ The flash animation system is **fully operational** and **correctly implemented*
 3. ✅ Uses text-only color transitions (green for up, red for down)
 4. ✅ Updates in real-time via shared WebSocket connection
 
-The debug logging added will help verify this behavior in production by showing:
+The debug logging added (development mode only) helps verify this behavior during testing by showing:
 - How many cryptos are being tracked on load
 - Which cryptos trigger flash animations when prices change
 - The direction of each price change (up/down)
+
+Note: Logging is wrapped in `import.meta.env.DEV` check and only runs in development mode to avoid production performance overhead.
