@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 const cryptoMeta = [
   { symbol: "BTC", name: "Bitcoin", color: "text-warning" },
@@ -25,6 +26,7 @@ interface CryptoTickerProps {
 
 const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoTickerProps) => {
   const { formatPrice } = useCurrency();
+  const isNativeApp = useIsNativeApp();
   // Use shared price system (same as AI Analyzer) for better responsiveness
   // getPriceBySymbol already provides live WebSocket data from useCryptoPrices
   
@@ -82,7 +84,14 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   }, [getPriceBySymbol]); // React to price updates from shared WebSocket system
   
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible">
+    <div 
+      className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar sm:flex-wrap sm:gap-3 sm:pb-0 sm:overflow-x-visible"
+      style={{
+        // On Android native, enable horizontal touch scrolling specifically for CryptoTicker
+        // This allows swiping through crypto cards while keeping pull-to-refresh working
+        touchAction: isNativeApp ? 'pan-x pan-y' : undefined
+      }}
+    >
       {cryptoMeta.map((crypto) => {
         // Use shared price system (same as AI Analyzer for consistent, fast updates)
         const priceData = getPriceBySymbol(crypto.symbol);

@@ -1,7 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { cn } from "@/lib/utils";
 
 interface PullToRefreshProps {
@@ -22,7 +21,6 @@ export function PullToRefresh({
   className,
 }: PullToRefreshProps) {
   const { t } = useTranslation();
-  const isNativeApp = useIsNativeApp();
   const {
     pullDistance,
     isRefreshing,
@@ -103,12 +101,7 @@ export function PullToRefresh({
       <div
         ref={containerRef as React.RefObject<HTMLDivElement>}
         className={cn("relative min-h-screen max-h-screen overflow-y-auto", className)}
-        style={{ 
-          // On Android native, allow both vertical and horizontal touch gestures
-          // This enables pull-to-refresh AND horizontal scrolling (e.g., CryptoTicker)
-          // On web, only vertical is needed since horizontal scroll works by default
-          touchAction: isNativeApp ? 'pan-x pan-y' : 'pan-y' 
-        }}
+        style={{ touchAction: 'pan-y' }}
       >
         <div style={contentStyle}>
           {children}
