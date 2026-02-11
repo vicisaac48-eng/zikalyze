@@ -299,11 +299,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                     </td>
                     <td className="py-2 text-right sm:py-3">
                       <span
-                        className={`font-medium text-xs transition-all duration-150 inline-block px-1 py-0.5 rounded sm:text-sm sm:px-1.5 ${
+                        className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm ${
                           flash === "up"
-                            ? "bg-success/20 text-success animate-price-flash-up"
+                            ? "animate-price-flash-up"
                             : flash === "down"
-                              ? "bg-destructive/20 text-destructive animate-price-flash-down"
+                              ? "animate-price-flash-down"
                               : "text-foreground"
                         }`}
                       >
