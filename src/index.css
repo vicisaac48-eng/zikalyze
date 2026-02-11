@@ -654,6 +654,7 @@ All colors MUST be HSL.
 
   /* Content area spacing to account for header */
   /* Both sticky (web) and fixed (Android) headers need padding to prevent content overlap */
+  /* On Android, header is positioned at top: env(safe-area-inset-top), so header height padding is sufficient */
   .main-content {
     /* Account for header height on all devices */
     padding-top: var(--header-height-mobile) !important;
@@ -661,19 +662,6 @@ All colors MUST be HSL.
 
   @media (min-width: 640px) {
     .main-content {
-      padding-top: var(--header-height-desktop) !important;
-    }
-  }
-
-  /* Android-only: Additional safe area handling for fixed header */
-  /* On Android, header is positioned at top: env(safe-area-inset-top), so no extra safe area needed in content */
-  html.android-native .main-content {
-    /* Keep same padding as web - header already accounts for safe area */
-    padding-top: var(--header-height-mobile) !important;
-  }
-
-  @media (min-width: 640px) {
-    html.android-native .main-content {
       padding-top: var(--header-height-desktop) !important;
     }
   }
