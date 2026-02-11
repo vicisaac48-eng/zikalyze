@@ -102,6 +102,7 @@ const Landing = () => {
           width={64}
           height={64}
           className="h-16 w-16 animate-spin-slow opacity-80"
+          style={{ filter: 'none', boxShadow: 'none' }}
         />
       </div>
     );
