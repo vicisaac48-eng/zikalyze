@@ -266,6 +266,19 @@ All colors MUST be HSL.
     }
   }
 
+  /* Android: Add top spacing to main content when header is fixed */
+  /* This prevents the fixed header from covering content */
+  html.android-native main {
+    /* Add padding-top equal to header height to prevent content from being covered */
+    padding-top: var(--header-height-mobile);
+  }
+
+  @media (min-width: 640px) {
+    html.android-native main {
+      padding-top: var(--header-height-desktop);
+    }
+  }
+
   /* Legacy sticky header optimization - keep for fallback */
   header[class*="sticky"] {
     backface-visibility: hidden;
