@@ -159,11 +159,10 @@ const Alerts = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
-        <Sidebar />
-        <BottomNav />
-
+    <>
+      <Sidebar />
+      <BottomNav />
+      
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
@@ -186,10 +185,12 @@ const Alerts = () => {
           </div>
         </header>
 
-        <div className={cn(
-          "main-content space-y-3 sm:space-y-4 md:space-y-6",
-          isNativeApp ? "p-2 pb-4" : "p-3 sm:p-4 md:p-6"
-        )}>
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+            <div className={cn(
+              "main-content space-y-3 sm:space-y-4 md:space-y-6",
+              isNativeApp ? "p-2 pb-4" : "p-3 sm:p-4 md:p-6"
+            )}>
           {/* Stats Cards */}
           <div className={cn(
             "grid gap-3",
@@ -641,7 +642,9 @@ const Alerts = () => {
               </>
             )}
           </div>
-        </div>
+            </div>
+          </div>
+        </PullToRefresh>
       </main>
 
       {/* Delete Single Alert Confirmation Dialog */}
@@ -687,8 +690,7 @@ const Alerts = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-    </PullToRefresh>
+    </>
   );
 };
 

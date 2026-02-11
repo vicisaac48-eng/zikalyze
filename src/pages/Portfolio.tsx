@@ -116,11 +116,10 @@ const Portfolio = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
-        <Sidebar />
-        <BottomNav />
-
+    <>
+      <Sidebar />
+      <BottomNav />
+      
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -195,7 +194,9 @@ const Portfolio = () => {
           </div>
         </header>
 
-        <div className="main-content p-6 space-y-6">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+            <div className="main-content p-6 space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="bg-card border-border">
@@ -329,10 +330,11 @@ const Portfolio = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+            </div>
+          </div>
+        </PullToRefresh>
       </main>
-    </div>
-    </PullToRefresh>
+    </>
   );
 };
 
