@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Capacitor } from "@capacitor/core";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -38,9 +37,6 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   const [targetPrice, setTargetPrice] = useState("");
   const [alertCondition, setAlertCondition] = useState<"above" | "below">("above");
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Check if running on Android platform
-  const isAndroid = Capacitor.getPlatform() === 'android';
   
   // Track previous prices for flash animation
   const prevPricesRef = useRef<Map<string, number>>(new Map());
@@ -270,11 +266,10 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           </div>
         )}
         
-        <div className="overflow-x-auto -mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0 custom-scrollbar">
-          <table className="w-full min-w-[320px]">
+        <div className="-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0">
+          <table className="w-full">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                {!isAndroid && <th className="pb-2 pr-2 font-medium sm:pb-3 sm:pr-3 lg:pr-4">#</th>}
                 <th className="pb-2 pr-2 font-medium sm:pb-3 sm:pr-4 lg:pr-6">Name</th>
                 <th className="pb-2 px-2 font-medium text-right sm:pb-3 sm:px-3 lg:px-4">Price</th>
                 <th className="pb-2 px-2 font-medium text-right sm:pb-3 sm:px-3 lg:px-4">24h %</th>
@@ -301,7 +296,6 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                       isSelected ? "bg-primary/10" : ""
                     }`}
                   >
-                    {!isAndroid && <td className="py-2 pr-2 text-xs text-muted-foreground sm:py-3 sm:pr-3 sm:text-sm lg:pr-4">{index + 1}</td>}
                     <td className="py-2 pr-2 sm:py-3 sm:pr-4 lg:pr-6">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <img 
