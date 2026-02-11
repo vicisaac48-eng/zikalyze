@@ -653,16 +653,28 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
-  /* Both sticky (web) and fixed (Android) headers need padding to prevent content overlap */
-  /* On Android, header is positioned at top: env(safe-area-inset-top), so header height padding is sufficient */
+  /* Web: sticky header needs padding equal to header height */
+  /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Account for header height on all devices */
+    /* Web/default: Account for sticky header height */
     padding-top: var(--header-height-mobile) !important;
   }
 
   @media (min-width: 640px) {
     .main-content {
       padding-top: var(--header-height-desktop) !important;
+    }
+  }
+
+  /* Android-specific: Add safe-area-inset-top to account for fixed header position */
+  /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
+  html.android-native .main-content {
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+  }
+
+  @media (min-width: 640px) {
+    html.android-native .main-content {
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
 }
