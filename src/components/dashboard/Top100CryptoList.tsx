@@ -78,11 +78,10 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     if (newFlashes.size > 0) {
       // Log flash animations for verification (development only)
       if (import.meta.env.DEV) {
-        console.log(`[Flash Animation] ${newFlashes.size} price changes detected:`, 
-          Array.from(newFlashes.entries()).map(([symbol, direction]) => 
-            `${symbol.toUpperCase()}: ${direction}`
-          ).join(', ')
-        );
+        const changes = Array.from(newFlashes.entries())
+          .map(([symbol, direction]) => `${symbol.toUpperCase()}: ${direction}`)
+          .join(', ');
+        console.log(`[Flash Animation] ${newFlashes.size} price changes detected: ${changes}`);
       }
       
       setPriceFlashes(prev => {
