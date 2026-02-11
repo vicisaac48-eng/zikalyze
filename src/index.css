@@ -652,24 +652,29 @@ All colors MUST be HSL.
     }
   }
 
-  /* Content area spacing to account for fixed header on Android/native apps */
-  /* On web, header is sticky so content flows naturally below it */
-  /* On Android native, header is fixed so we need padding */
+  /* Content area spacing to account for header */
+  /* Web: sticky header needs padding equal to header height */
+  /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Minimal padding for safe area (status bar) */
-    padding-top: env(safe-area-inset-top, 0px) !important;
-  }
-
-  /* Android-only: Add padding for fixed header */
-  html.android-native .main-content {
-    /* Account for fixed header height on Android */
-    /* Note: safe-area-inset-top NOT added here as header is already positioned at top: env(safe-area-inset-top) */
+    /* Web/default: Account for sticky header height */
     padding-top: var(--header-height-mobile) !important;
   }
 
   @media (min-width: 640px) {
-    html.android-native .main-content {
+    .main-content {
       padding-top: var(--header-height-desktop) !important;
+    }
+  }
+
+  /* Android-specific: Add safe-area-inset-top to account for fixed header position */
+  /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
+  html.android-native .main-content {
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+  }
+
+  @media (min-width: 640px) {
+    html.android-native .main-content {
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
 }
