@@ -97,7 +97,7 @@ const Dashboard = () => {
         <Sidebar />
         <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64 pb-16 md:pb-0 safe-area-inset-bottom">
+      <main className="md:ml-16 lg:ml-64 pb-20 md:pb-0 safe-area-inset-bottom">
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
@@ -129,7 +129,7 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="main-content px-3 pb-6 space-y-2 sm:px-4 sm:pb-8 sm:space-y-3 md:px-6 md:space-y-4">
+        <div className="main-content px-3 pb-4 space-y-2 sm:px-4 sm:pb-6 sm:space-y-3 md:px-6 md:space-y-4">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
