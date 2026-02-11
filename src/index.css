@@ -56,9 +56,12 @@ All colors MUST be HSL.
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 168 76% 73%;
     
-    /* Header height - tight fit, content immediately below header */
-    --header-height-mobile: 2.25rem;
-    --header-height-desktop: 3rem;
+    /* Header height - matches actual rendered height with py-2 and content */
+    --header-height-mobile: 3.5rem; /* 56px: accounts for py-2 (16px) + content (~24px) + borders */
+    --header-height-desktop: 4rem; /* 64px: accounts for py-4 (32px) + content (~32px) */
+    
+    /* Bottom navigation height - for proper content padding on mobile */
+    --bottom-nav-height: 4.5rem; /* 72px: nav bar (~50px) + safe area (~22px avg) */
   }
 
   /* Light mode theme for Zikalyze */
@@ -266,18 +269,8 @@ All colors MUST be HSL.
     }
   }
 
-  /* Android: Add top spacing to main content when header is fixed */
-  /* This prevents the fixed header from covering content */
-  html.android-native main {
-    /* Add padding-top equal to header height to prevent content from being covered */
-    padding-top: var(--header-height-mobile);
-  }
-
-  @media (min-width: 640px) {
-    html.android-native main {
-      padding-top: var(--header-height-desktop);
-    }
-  }
+  /* Android: Spacing handled by .main-content instead of main element */
+  /* See lines 657-667 for .main-content padding that accounts for fixed header */
 
   /* Legacy sticky header optimization - keep for fallback */
   header[class*="sticky"] {
@@ -555,6 +548,11 @@ All colors MUST be HSL.
     margin-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     margin-bottom: max(constant(safe-area-inset-bottom, 0px), 16px);
   }
+  
+  /* Bottom nav clearance - proper spacing for mobile bottom navigation */
+  .pb-bottom-nav {
+    padding-bottom: var(--bottom-nav-height);
+  }
 
   /* Top safe area padding with minimum fallback - clears status bar on Android/iOS */
   .pt-safe {
@@ -654,15 +652,16 @@ All colors MUST be HSL.
     padding-top: env(safe-area-inset-top, 0px) !important;
   }
 
-  /* Android-only: Add extra padding for fixed header */
+  /* Android-only: Add padding for fixed header */
   html.android-native .main-content {
     /* Account for fixed header height on Android */
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+    /* Note: safe-area-inset-top NOT added here as header is already positioned at top: env(safe-area-inset-top) */
+    padding-top: var(--header-height-mobile) !important;
   }
 
   @media (min-width: 640px) {
     html.android-native .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
+      padding-top: var(--header-height-desktop) !important;
     }
   }
 }
