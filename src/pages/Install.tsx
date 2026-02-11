@@ -119,9 +119,6 @@ const Install = () => {
         <div className="text-center mb-8">
           {/* Native App Icon Container - iOS/Android style with rounded corners */}
           <div className="relative inline-block mb-6">
-            {/* Outer glow effect */}
-            <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-primary/30 via-cyan-500/20 to-purple-500/30 blur-xl scale-110 opacity-60" />
-            
             {/* App Icon - Native style with proper iOS/Android rounding */}
             <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px]">
               {/* Inner gradient border */}
@@ -129,9 +126,6 @@ const Install = () => {
               
               {/* Logo container with background */}
               <div className="relative w-full h-full rounded-[22px] sm:rounded-[26px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
-                {/* Subtle inner shadow for depth */}
-                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
-                
                 {/* Logo image */}
                 <img 
                   src={zikalyzeLogo} 
