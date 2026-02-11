@@ -118,8 +118,8 @@ const BottomNav = () => {
         </div>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm safe-area-inset-bottom md:hidden">
+      {/* Bottom Navigation Bar - Hardware accelerated for smooth fixed positioning */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm safe-area-inset-bottom md:hidden" style={{ transform: 'translateZ(0)', willChange: 'transform' }}>
         <div className="flex items-center justify-around px-1 py-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
