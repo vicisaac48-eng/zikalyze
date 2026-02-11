@@ -56,12 +56,18 @@ All colors MUST be HSL.
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 168 76% 73%;
     
-    /* Header height - matches actual rendered height with py-2 and content */
-    --header-height-mobile: 3.5rem; /* 56px: accounts for py-2 (16px) + content (~24px) + borders */
-    --header-height-desktop: 4rem; /* 64px: accounts for py-4 (32px) + content (~32px) */
+    /* Header height - matches actual rendered height with py-2/py-4 and content */
+    /* Mobile: py-2 (8px top + 8px bottom) + text-base h1 (~40px line-height) = ~56px */
+    /* Desktop: py-4 (16px top + 16px bottom) + larger text (~32px) = ~64px */
+    --header-height-mobile: 3.5rem; /* 56px - see Dashboard.tsx header with py-2 */
+    --header-height-desktop: 4rem; /* 64px - see Dashboard.tsx header with py-4 */
     
     /* Bottom navigation height - for proper content padding on mobile */
-    --bottom-nav-height: 4.5rem; /* 72px: nav bar (~50px) + safe area (~22px avg) */
+    /* Nav bar: py-2 (16px) + icon (20px) + gap (2px) + text (12px) = ~50px */
+    /* Plus safe-area-inset-bottom class adds max(env(safe-area-inset-bottom), 16px) */
+    /* Total: ~50px nav + ~22px safe area average = 72px */
+    /* Note: This is an approximation; actual safe area varies by device (0-34px) */
+    --bottom-nav-height: 4.5rem; /* 72px - see BottomNav.tsx */
   }
 
   /* Light mode theme for Zikalyze */
