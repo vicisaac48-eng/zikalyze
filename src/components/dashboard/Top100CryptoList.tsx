@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useCurrency } from "@/hooks/useCurrency";
-import { TrendingUp, TrendingDown, Bell, X, BellRing, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, Bell, X, BellRing, Search, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -180,6 +180,33 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         <h3 className="text-base font-bold text-foreground mb-3 sm:text-lg sm:mb-4">Top 100 Cryptocurrencies</h3>
         <div className="flex items-center justify-center py-8 sm:py-12">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary sm:h-8 sm:w-8"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle empty state when data fails to load
+  if (!pricesLoading && prices.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-3 sm:rounded-2xl sm:p-4 md:p-6">
+        <h3 className="text-base font-bold text-foreground mb-3 sm:text-lg sm:mb-4">Top 100 Cryptocurrencies</h3>
+        <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+          <AlertCircle className="w-10 h-10 text-muted-foreground mb-3 sm:w-12 sm:h-12 sm:mb-4" />
+          <h4 className="text-sm font-medium text-foreground mb-1.5 sm:text-base sm:mb-2">
+            Failed to Load Cryptocurrencies
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4 max-w-sm sm:text-sm sm:mb-6">
+            Unable to fetch cryptocurrency data. Please check your internet connection and try again.
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Reload Page
+          </Button>
         </div>
       </div>
     );
