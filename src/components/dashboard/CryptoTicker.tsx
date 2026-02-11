@@ -33,9 +33,9 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
   const [priceFlashes, setPriceFlashes] = useState<Map<string, "up" | "down">>(new Map());
   const prevPricesRef = useRef<Map<string, number>>(new Map());
   
-  // Throttle price updates to prevent too-frequent changes (500ms minimum between updates)
+  // Throttle price updates to prevent too-frequent changes (1500ms minimum between updates)
   const lastUpdateTimesRef = useRef<Map<string, number>>(new Map());
-  const THROTTLE_MS = 500; // Update at most once every 500ms per symbol
+  const THROTTLE_MS = 1500; // Update at most once every 1.5 seconds per symbol
   
   // Flash animation effect - detect price changes and trigger flash (throttled)
   useEffect(() => {
