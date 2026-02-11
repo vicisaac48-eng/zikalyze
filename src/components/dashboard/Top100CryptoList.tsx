@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
@@ -24,6 +24,151 @@ interface Top100CryptoListProps {
 // Track price changes for flash animations
 type PriceFlash = "up" | "down" | null;
 
+// Memoized PriceCell component - only re-renders when price or flash changes
+const PriceCell = memo(({ 
+  price, 
+  flash, 
+  formatPrice 
+}: { 
+  price: number; 
+  flash: PriceFlash; 
+  formatPrice: (p: number) => string;
+}) => {
+  return (
+    <span
+      className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm ${
+        flash === "up"
+          ? "animate-price-flash-up"
+          : flash === "down"
+            ? "animate-price-flash-down"
+            : "text-foreground"
+      }`}
+    >
+      {formatPrice(price)}
+    </span>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if price or flash changed
+  return prevProps.price === nextProps.price && 
+         prevProps.flash === nextProps.flash;
+});
+
+PriceCell.displayName = "PriceCell";
+
+// Memoized CryptoRow component - only re-renders when this crypto's data changes
+const CryptoRow = memo(({ 
+  crypto, 
+  isSelected, 
+  hasAlert, 
+  flash,
+  onSelect,
+  onOpenAlert,
+  formatPrice,
+  currencySymbol
+}: {
+  crypto: CryptoPrice;
+  isSelected: boolean;
+  hasAlert: boolean;
+  flash: PriceFlash;
+  onSelect: (symbol: string) => void;
+  onOpenAlert: (crypto: CryptoPrice, e: React.MouseEvent) => void;
+  formatPrice: (p: number) => string;
+  currencySymbol: string;
+}) => {
+  const isPositive = crypto.price_change_percentage_24h >= 0;
+  
+  return (
+    <tr
+      onClick={() => onSelect(crypto.symbol.toUpperCase())}
+      className={`border-b border-border/50 cursor-pointer transition-colors hover:bg-secondary/50 ${
+        isSelected ? "bg-primary/10" : ""
+      }`}
+    >
+      <td className="py-2 pr-2 sm:py-3 sm:pr-4 lg:pr-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img 
+            src={crypto.image} 
+            alt={crypto.name}
+            className="w-7 h-7 rounded-full shrink-0 sm:w-10 sm:h-10"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <div className="min-w-0">
+            <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none">{crypto.name}</div>
+            <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
+          </div>
+        </div>
+      </td>
+      <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-4">
+        <PriceCell 
+          price={crypto.current_price}
+          flash={flash}
+          formatPrice={formatPrice}
+        />
+      </td>
+      <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-4">
+        <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
+          {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+          {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
+        </div>
+      </td>
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+        {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
+      </td>
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+        {crypto.circulating_supply 
+          ? (crypto.circulating_supply >= 1e9 
+            ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
+            : crypto.circulating_supply >= 1e6 
+              ? (crypto.circulating_supply / 1e6).toFixed(2) + "M"
+              : crypto.circulating_supply.toLocaleString())
+          : "---"} {crypto.symbol.toUpperCase()}
+      </td>
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+        {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
+      </td>
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+        {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
+      </td>
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+        {(() => {
+          const v = crypto.total_volume;
+          if (!v) return "---";
+          if (v >= 1e9) return `${currencySymbol}${(v / 1e9).toFixed(2)}B`;
+          if (v >= 1e6) return `${currencySymbol}${(v / 1e6).toFixed(1)}M`;
+          if (v >= 1e3) return `${currencySymbol}${(v / 1e3).toFixed(1)}K`;
+          return `${currencySymbol}${v.toFixed(0)}`;
+        })()}
+      </td>
+      <td className="py-2 pl-2 text-center sm:py-3 sm:pl-3 lg:pl-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-6 w-6 sm:h-8 sm:w-8 ${hasAlert ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+          onClick={(e) => onOpenAlert(crypto, e)}
+        >
+          {hasAlert ? <BellRing className="h-3 w-3 sm:h-4 sm:w-4" /> : <Bell className="h-3 w-3 sm:h-4 sm:w-4" />}
+        </Button>
+      </td>
+    </tr>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if this specific crypto's relevant data changed
+  return (
+    prevProps.crypto.id === nextProps.crypto.id &&
+    prevProps.crypto.current_price === nextProps.crypto.current_price &&
+    prevProps.crypto.price_change_percentage_24h === nextProps.crypto.price_change_percentage_24h &&
+    prevProps.crypto.market_cap === nextProps.crypto.market_cap &&
+    prevProps.crypto.total_volume === nextProps.crypto.total_volume &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.hasAlert === nextProps.hasAlert &&
+    prevProps.flash === nextProps.flash
+  );
+});
+
+CryptoRow.displayName = "CryptoRow";
+
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
   // Use prices from props (required) - removes duplicate WebSocket connections
   const prices = propPrices ?? [];
@@ -40,6 +185,11 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
   // Track previous prices for flash animation
   const prevPricesRef = useRef<Map<string, number>>(new Map());
   const [priceFlashes, setPriceFlashes] = useState<Map<string, PriceFlash>>(new Map());
+  const throttleTimeoutRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // UI Update throttling: max 1 update every 500ms
+  const RENDER_THROTTLE_MS = 500;
 
   // Filter prices based on search query
   const filteredPrices = useMemo(() => {
@@ -52,29 +202,45 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     );
   }, [prices, searchQuery]);
 
-  // Detect price changes and trigger flash animations
+  // Detect price changes and trigger flash animations with UI throttling
   useEffect(() => {
     if (prices.length === 0) return;
 
     const newFlashes = new Map<string, PriceFlash>();
-    const flashTimeouts: NodeJS.Timeout[] = [];
     
     prices.forEach((crypto) => {
       const prevPrice = prevPricesRef.current.get(crypto.symbol);
       if (prevPrice !== undefined && prevPrice !== crypto.current_price) {
+        // Check if this symbol is currently throttled
+        const existingTimeout = throttleTimeoutRef.current.get(crypto.symbol);
+        if (existingTimeout) {
+          // Still throttled - skip UI update but store price
+          prevPricesRef.current.set(crypto.symbol, crypto.current_price);
+          return;
+        }
+        
+        // Determine flash direction
         if (crypto.current_price > prevPrice) {
           newFlashes.set(crypto.symbol, "up");
         } else if (crypto.current_price < prevPrice) {
           newFlashes.set(crypto.symbol, "down");
         }
+        
+        // Set throttle timeout - prevents UI updates for this symbol for RENDER_THROTTLE_MS
+        const throttleId = setTimeout(() => {
+          throttleTimeoutRef.current.delete(crypto.symbol);
+        }, RENDER_THROTTLE_MS);
+        
+        throttleTimeoutRef.current.set(crypto.symbol, throttleId);
       }
+      // Always update the ref with current price
       prevPricesRef.current.set(crypto.symbol, crypto.current_price);
     });
 
     if (newFlashes.size > 0) {
       // Log flash animations for verification (development only)
       if (import.meta.env.DEV) {
-        console.log(`[Flash Animation] ${newFlashes.size} price changes:`, 
+        console.log(`[Flash Animation] ${newFlashes.size} price changes (throttled to ${RENDER_THROTTLE_MS}ms):`, 
           Array.from(newFlashes.keys()).join(', '));
       }
       
@@ -84,23 +250,29 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         return merged;
       });
 
-      // Clear flashes after animation - track timeout for cleanup
-      const timeoutId = setTimeout(() => {
+      // Clear flashes after animation
+      if (flashTimeoutRef.current) {
+        clearTimeout(flashTimeoutRef.current);
+      }
+      
+      flashTimeoutRef.current = setTimeout(() => {
         setPriceFlashes(prev => {
           const updated = new Map(prev);
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
       }, 2000);
-      
-      flashTimeouts.push(timeoutId);
     }
     
     // Cleanup function to clear any pending timeouts
     return () => {
-      flashTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      throttleTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
+      throttleTimeoutRef.current.clear();
+      if (flashTimeoutRef.current) {
+        clearTimeout(flashTimeoutRef.current);
+      }
     };
-  }, [prices]);
+  }, [prices, RENDER_THROTTLE_MS]);
 
   // Log tracked cryptos for verification (runs once when prices are loaded, development only)
   const hasLoggedRef = useRef(false);
@@ -314,96 +486,19 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
               </tr>
             </thead>
             <tbody>
-              {filteredPrices.map((crypto, index) => {
-                const isPositive = crypto.price_change_percentage_24h >= 0;
-                const isSelected = crypto.symbol.toUpperCase() === selected;
-                const hasAlert = alerts.some(a => a.symbol === crypto.symbol.toUpperCase());
-                const flash = priceFlashes.get(crypto.symbol);
-                
-                return (
-                  <tr
-                    key={crypto.id}
-                    onClick={() => onSelect(crypto.symbol.toUpperCase())}
-                    className={`border-b border-border/50 cursor-pointer transition-colors hover:bg-secondary/50 ${
-                      isSelected ? "bg-primary/10" : ""
-                    }`}
-                  >
-                    <td className="py-2 pr-2 sm:py-3 sm:pr-4 lg:pr-6">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <img 
-                          src={crypto.image} 
-                          alt={crypto.name}
-                          className="w-7 h-7 rounded-full shrink-0 sm:w-10 sm:h-10"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <div className="min-w-0">
-                          <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none">{crypto.name}</div>
-                          <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-4">
-                      <span
-                        className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm ${
-                          flash === "up"
-                            ? "animate-price-flash-up"
-                            : flash === "down"
-                              ? "animate-price-flash-down"
-                              : "text-foreground"
-                        }`}
-                      >
-                        {formatPrice(crypto.current_price)}
-                      </span>
-                    </td>
-                    <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-4">
-                      <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
-                        {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
-                        {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
-                      {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
-                      {crypto.circulating_supply 
-                        ? (crypto.circulating_supply >= 1e9 
-                          ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
-                          : crypto.circulating_supply >= 1e6 
-                            ? (crypto.circulating_supply / 1e6).toFixed(2) + "M"
-                            : crypto.circulating_supply.toLocaleString())
-                        : "---"} {crypto.symbol.toUpperCase()}
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
-                      {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
-                      {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
-                      {(() => {
-                        const v = crypto.total_volume;
-                        if (!v) return "---";
-                        if (v >= 1e9) return `${currencySymbol}${(v / 1e9).toFixed(2)}B`;
-                        if (v >= 1e6) return `${currencySymbol}${(v / 1e6).toFixed(1)}M`;
-                        if (v >= 1e3) return `${currencySymbol}${(v / 1e3).toFixed(1)}K`;
-                        return `${currencySymbol}${v.toFixed(0)}`;
-                      })()}
-                    </td>
-                    <td className="py-2 pl-2 text-center sm:py-3 sm:pl-3 lg:pl-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`h-6 w-6 sm:h-8 sm:w-8 ${hasAlert ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                        onClick={(e) => handleOpenAlertDialog(crypto, e)}
-                      >
-                        <Bell className={`w-3 h-3 sm:w-4 sm:h-4 ${hasAlert ? "fill-current" : ""}`} />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredPrices.map((crypto) => (
+                <CryptoRow
+                  key={crypto.id}
+                  crypto={crypto}
+                  isSelected={crypto.symbol.toUpperCase() === selected}
+                  hasAlert={alerts.some(a => a.symbol === crypto.symbol.toUpperCase())}
+                  flash={priceFlashes.get(crypto.symbol) || null}
+                  onSelect={onSelect}
+                  onOpenAlert={handleOpenAlertDialog}
+                  formatPrice={formatPrice}
+                  currencySymbol={currencySymbol}
+                />
+              ))}
             </tbody>
           </table>
         </div>
