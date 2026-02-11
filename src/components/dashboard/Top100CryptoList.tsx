@@ -93,7 +93,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
-      }, 1200);
+      }, 2000);
     }
   }, [prices]);
 
