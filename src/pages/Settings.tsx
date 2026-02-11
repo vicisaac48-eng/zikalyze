@@ -135,7 +135,7 @@ const Settings = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
         <Sidebar />
         <BottomNav />
 
