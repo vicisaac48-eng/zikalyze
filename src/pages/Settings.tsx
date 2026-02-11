@@ -134,11 +134,10 @@ const Settings = () => {
   };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
-        <Sidebar />
-        <BottomNav />
-
+    <>
+      <Sidebar />
+      <BottomNav />
+      
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
@@ -158,7 +157,9 @@ const Settings = () => {
           </div>
         </header>
 
-        <div className="main-content p-3 sm:p-4 md:p-6">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+            <div className="main-content p-3 sm:p-4 md:p-6">
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">
             {tabs.map((tab) => (
@@ -603,10 +604,11 @@ const Settings = () => {
 
             </div>
           </div>
-        </div>
+            </div>
+          </div>
+        </PullToRefresh>
       </main>
-    </div>
-    </PullToRefresh>
+    </>
   );
 };
 

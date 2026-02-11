@@ -38,12 +38,9 @@ export function PullToRefresh({
   });
 
   return (
-    <div
-      ref={containerRef as React.RefObject<HTMLDivElement>}
-      className={cn("relative min-h-screen max-h-screen overflow-y-auto", className)}
-      style={{ touchAction: 'pan-y' }}
-    >
+    <>
       {/* Pull-to-refresh indicator - only visible on native app when pulling */}
+      {/* Fixed elements stay outside the transform to prevent movement */}
       <div
         className="pointer-events-none fixed left-0 right-0 z-50 flex justify-center"
         style={{
@@ -62,11 +59,6 @@ export function PullToRefresh({
         >
           <RefreshCw className="h-5 w-5" />
         </div>
-      </div>
-
-      {/* Content wrapper with pull transform */}
-      <div style={contentStyle}>
-        {children}
       </div>
 
       {/* Loading indicator text when refreshing */}
@@ -104,7 +96,18 @@ export function PullToRefresh({
           <span className="text-xs text-muted-foreground">{t("common.pullToRefresh", "Pull down to refresh")}</span>
         </div>
       )}
-    </div>
+
+      {/* Content wrapper - only scrollable content gets the transform, fixed elements are children */}
+      <div
+        ref={containerRef as React.RefObject<HTMLDivElement>}
+        className={cn("relative min-h-screen max-h-screen overflow-y-auto", className)}
+        style={{ touchAction: 'pan-y' }}
+      >
+        <div style={contentStyle}>
+          {children}
+        </div>
+      </div>
+    </>
   );
 }
 

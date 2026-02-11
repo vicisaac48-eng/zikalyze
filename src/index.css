@@ -244,22 +244,25 @@ All colors MUST be HSL.
   /* Android-only: Truly fixed header for stable scrolling on Android WebView (like WhatsApp) */
   /* This class is applied conditionally via React when running on native/Android platform */
   header.fixed-header.android-fixed {
-    position: fixed;
+    position: fixed !important;
     /* Position below the status bar (notifications, network, battery icons) */
-    top: env(safe-area-inset-top, 0px);
-    left: 0;
-    right: 0;
-    /* High z-index to ensure header stays above all scrolling content */
-    z-index: 1000;
+    top: env(safe-area-inset-top, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    /* High z-index to ensure header stays above all scrolling content and pull-to-refresh */
+    z-index: 1000 !important;
     /* Explicit opaque background to prevent content bleeding through on Android WebView */
     /* Uses the design system CSS variable for consistency */
     background-color: hsl(var(--background));
     /* Hardware acceleration for smooth fixed positioning on Android */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* Use translateZ(0) to create a new stacking context WITHOUT creating a containing block */
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
     /* Prevent content from bleeding through during scroll on Android */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    /* Prevent parent transform from affecting this fixed element */
+    will-change: transform;
   }
 
   /* Adjust fixed header position on desktop with sidebar (Android only) */

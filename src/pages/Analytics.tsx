@@ -40,10 +40,9 @@ const Analytics = () => {
   const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
-        <Sidebar />
-        <BottomNav />
+    <>
+      <Sidebar />
+      <BottomNav />
 
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
@@ -64,7 +63,9 @@ const Analytics = () => {
           </div>
         </header>
 
-        <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+            <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Timeframe Filter */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
             {timeframes.map((tf) => (
@@ -204,12 +205,13 @@ const Analytics = () => {
                 ))}
               </div>
             </div>
+            </div>
           </div>
         </div>
-      </main>
-    </div>
-    </PullToRefresh>
-  );
+      </PullToRefresh>
+    </main>
+  </>
+);
 };
 
 export default Analytics;

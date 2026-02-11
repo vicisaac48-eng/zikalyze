@@ -92,11 +92,10 @@ const Dashboard = () => {
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen min-h-[100dvh] max-h-screen overflow-y-auto bg-background texture-noise custom-scrollbar" style={{ pointerEvents: 'auto' }}>
-        <Sidebar />
-        <BottomNav />
-
+    <>
+      <Sidebar />
+      <BottomNav />
+      
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
@@ -129,7 +128,9 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="main-content px-3 pb-4 space-y-2 sm:px-4 sm:pb-6 sm:space-y-3 md:px-6 md:space-y-4">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen min-h-[100dvh] max-h-screen overflow-y-auto bg-background texture-noise custom-scrollbar" style={{ pointerEvents: 'auto' }}>
+            <div className="main-content px-3 pb-4 space-y-2 sm:px-4 sm:pb-6 sm:space-y-3 md:px-6 md:space-y-4">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
@@ -226,10 +227,11 @@ const Dashboard = () => {
               <Top100CryptoList selected={selectedCrypto} onSelect={setSelectedCrypto} prices={prices} loading={loading} />
             </Suspense>
           </ErrorBoundary>
-        </div>
+            </div>
+          </div>
+        </PullToRefresh>
       </main>
-    </div>
-    </PullToRefresh>
+    </>
   );
 };
 

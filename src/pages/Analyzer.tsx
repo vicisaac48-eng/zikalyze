@@ -39,11 +39,10 @@ const Analyzer = () => {
   const selected = cryptoData[selectedCrypto];
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
-        <Sidebar />
-        <BottomNav />
-
+    <>
+      <Sidebar />
+      <BottomNav />
+      
       <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
@@ -63,7 +62,9 @@ const Analyzer = () => {
           </div>
         </header>
 
-        <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+            <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Crypto Selection */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
@@ -159,10 +160,11 @@ const Analyzer = () => {
               </div>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
+        </PullToRefresh>
       </main>
-    </div>
-    </PullToRefresh>
+    </>
   );
 };
 
