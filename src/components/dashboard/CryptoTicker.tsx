@@ -56,14 +56,14 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
             const flash = currentPrice > prevPrice ? "up" : "down";
             setPriceFlashes(prev => new Map(prev).set(crypto.symbol, flash));
             
-            // Clear flash after animation completes (600ms)
+            // Clear flash after animation completes (1200ms)
             setTimeout(() => {
               setPriceFlashes(prev => {
                 const next = new Map(prev);
                 next.delete(crypto.symbol);
                 return next;
               });
-            }, 600);
+            }, 1200);
           }
           
           // Update refs
