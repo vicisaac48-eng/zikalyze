@@ -121,7 +121,7 @@ const Portfolio = () => {
         <Sidebar />
         <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64 pb-28 md:pb-0">
+      <main className="md:ml-16 lg:ml-64 pb-32 md:pb-0">
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>

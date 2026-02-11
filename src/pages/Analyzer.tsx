@@ -44,7 +44,7 @@ const Analyzer = () => {
         <Sidebar />
         <BottomNav />
 
-      <main className="md:ml-16 lg:ml-64 pb-28 md:pb-0">
+      <main className="md:ml-16 lg:ml-64 pb-32 md:pb-0">
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>
