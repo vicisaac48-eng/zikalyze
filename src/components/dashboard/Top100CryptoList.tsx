@@ -76,12 +76,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     });
 
     if (newFlashes.size > 0) {
-      // Log flash animations for verification
-      console.log(`[Flash Animation] ${newFlashes.size} price changes detected:`, 
-        Array.from(newFlashes.entries()).map(([symbol, direction]) => 
-          `${symbol.toUpperCase()}: ${direction}`
-        ).join(', ')
-      );
+      // Log flash animations for verification (development only)
+      if (import.meta.env.DEV) {
+        console.log(`[Flash Animation] ${newFlashes.size} price changes detected:`, 
+          Array.from(newFlashes.entries()).map(([symbol, direction]) => 
+            `${symbol.toUpperCase()}: ${direction}`
+          ).join(', ')
+        );
+      }
       
       setPriceFlashes(prev => {
         const merged = new Map(prev);
@@ -100,9 +102,9 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     }
   }, [prices]);
 
-  // Log tracked cryptos for verification (runs once when prices are loaded)
+  // Log tracked cryptos for verification (runs once when prices are loaded, development only)
   useEffect(() => {
-    if (prices.length > 0 && prevPricesRef.current.size === 0) {
+    if (import.meta.env.DEV && prices.length > 0 && prevPricesRef.current.size === 0) {
       console.log(`[Flash Animation] Tracking ${prices.length} cryptocurrencies for price updates`);
     }
   }, [prices]);
