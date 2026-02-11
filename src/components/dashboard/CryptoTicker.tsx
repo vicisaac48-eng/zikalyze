@@ -117,7 +117,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
                 : "border-border bg-card hover:border-primary/50"
             )}
           >
-            <div className="flex items-center gap-2 sm:gap-2">
+            <div className="flex items-center gap-2">
               <span className={cn("font-bold text-sm sm:text-base", crypto.color)}>{crypto.symbol}</span>
               {isLive && (
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title={`Live from ${priceData?.source || 'WebSocket'}`} />
