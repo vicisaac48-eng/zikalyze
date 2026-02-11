@@ -2,14 +2,16 @@
 
 ## Summary
 
-Fixed the layout structure in 4 pages to move `Sidebar`, `BottomNav`, and `header` elements **OUTSIDE** of the `PullToRefresh` component. This prevents fixed elements from being affected by the pull-to-refresh transform, ensuring a smooth native-app-like experience.
+Fixed the layout structure in 6 pages to move `Sidebar`, `BottomNav`, and `header` elements **OUTSIDE** of the `PullToRefresh` component. This prevents fixed elements from being affected by the pull-to-refresh transform, ensuring a smooth native-app-like experience.
 
 ## Files Updated
 
-1. ✅ `src/pages/Portfolio.tsx`
-2. ✅ `src/pages/Alerts.tsx`
-3. ✅ `src/pages/Analyzer.tsx`
-4. ✅ `src/pages/Settings.tsx`
+1. ✅ `src/pages/Dashboard.tsx`
+2. ✅ `src/pages/Analytics.tsx`
+3. ✅ `src/pages/Portfolio.tsx`
+4. ✅ `src/pages/Alerts.tsx`
+5. ✅ `src/pages/Analyzer.tsx`
+6. ✅ `src/pages/Settings.tsx`
 
 ## Changes Made
 

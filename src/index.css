@@ -255,14 +255,13 @@ All colors MUST be HSL.
     /* Uses the design system CSS variable for consistency */
     background-color: hsl(var(--background));
     /* Hardware acceleration for smooth fixed positioning on Android */
-    /* Use translateZ(0) to create a new stacking context WITHOUT creating a containing block */
+    /* translateZ(0) enables GPU acceleration while maintaining visual quality */
+    /* Note: Header is outside PullToRefresh's transformed content div, preventing movement during pull gestures */
     -webkit-transform: translateZ(0) !important;
     transform: translateZ(0) !important;
     /* Prevent content from bleeding through during scroll on Android */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    /* Prevent parent transform from affecting this fixed element */
-    will-change: transform;
   }
 
   /* Adjust fixed header position on desktop with sidebar (Android only) */
