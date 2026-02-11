@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CryptoPrice } from "@/hooks/useCryptoPrices";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
@@ -26,8 +26,7 @@ type PriceFlash = "up" | "down" | null;
 
 const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: propLoading }: Top100CryptoListProps) => {
   // Use prices from props (required) - removes duplicate WebSocket connections
-  // Memoize to prevent unnecessary re-renders
-  const prices = useMemo(() => propPrices ?? [], [propPrices]);
+  const prices = propPrices ?? [];
   const pricesLoading = propLoading ?? false;
   const { alerts, loading: alertsLoading, createAlert, removeAlert, checkAlerts } = usePriceAlerts();
   const { formatPrice, symbol: currencySymbol } = useCurrency();
@@ -58,6 +57,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     if (prices.length === 0) return;
 
     const newFlashes = new Map<string, PriceFlash>();
+    const flashTimeouts: NodeJS.Timeout[] = [];
     
     prices.forEach((crypto) => {
       const prevPrice = prevPricesRef.current.get(crypto.symbol);
@@ -74,10 +74,8 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
     if (newFlashes.size > 0) {
       // Log flash animations for verification (development only)
       if (import.meta.env.DEV) {
-        const changes = Array.from(newFlashes.entries())
-          .map(([symbol, direction]) => `${symbol.toUpperCase()}: ${direction}`)
-          .join(', ');
-        console.log(`[Flash Animation] ${newFlashes.size} price changes detected: ${changes}`);
+        console.log(`[Flash Animation] ${newFlashes.size} price changes:`, 
+          Array.from(newFlashes.keys()).join(', '));
       }
       
       setPriceFlashes(prev => {
@@ -86,15 +84,22 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         return merged;
       });
 
-      // Clear flashes after animation
-      setTimeout(() => {
+      // Clear flashes after animation - track timeout for cleanup
+      const timeoutId = setTimeout(() => {
         setPriceFlashes(prev => {
           const updated = new Map(prev);
           newFlashes.forEach((_, key) => updated.delete(key));
           return updated;
         });
       }, 2000);
+      
+      flashTimeouts.push(timeoutId);
     }
+    
+    // Cleanup function to clear any pending timeouts
+    return () => {
+      flashTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    };
   }, [prices]);
 
   // Log tracked cryptos for verification (runs once when prices are loaded, development only)
