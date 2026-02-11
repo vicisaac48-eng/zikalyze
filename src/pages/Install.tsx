@@ -136,7 +136,7 @@ const Install = () => {
                 <img 
                   src={zikalyzeLogo} 
                   alt="Zikalyze" 
-                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg relative z-10"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain relative z-10"
                 />
               </div>
             </div>
