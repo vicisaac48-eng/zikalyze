@@ -175,7 +175,8 @@ All colors MUST be HSL.
 
   /* Android: Exception - horizontal scrollable areas need pan-x pan-y */
   html.android-native .overflow-x-auto {
-    touch-action: pan-x pan-y;
+    touch-action: pan-x pan-y !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
