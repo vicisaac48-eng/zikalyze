@@ -760,17 +760,21 @@ All colors MUST be HSL.
 }
 
 /* Professional rotation animation for loading states */
+/* Professional logo rotation with scale - rotates in small, out normal */
 @keyframes logoRotate {
   0% {
-    transform: rotate(0deg);
+    transform: rotate(0deg) scale(0.6);
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
   }
   100% {
-    transform: rotate(360deg);
+    transform: rotate(360deg) scale(0.6);
   }
 }
 
 .logo-rotate {
-  animation: logoRotate 1.5s linear infinite;
+  animation: logoRotate 2s ease-in-out infinite;
 }
 
 /* Rectangular loading logo shape */
