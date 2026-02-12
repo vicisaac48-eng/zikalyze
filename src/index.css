@@ -653,18 +653,17 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
-  /* Reduced padding for tighter, more modern layout across all platforms */
-  /* Web: sticky header needs padding equal to header height */
+  /* Web: sticky header doesn't need padding - content flows naturally below it */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Web/default: Reduced for tighter spacing - was 56px (3.5rem) */
-    padding-top: 2.875rem !important; /* 46px - reduced from 56px for minimal breathing room */
+    /* Web/default: No padding needed for sticky header - content flows naturally */
+    padding-top: 0 !important;
   }
 
   @media (min-width: 640px) {
     .main-content {
-      /* Desktop: Reduced for tighter spacing - was 64px (4rem) */
-      padding-top: 3.25rem !important; /* 52px - reduced from 64px for minimal breathing room */
+      /* Desktop: No padding needed for sticky header */
+      padding-top: 0 !important;
     }
   }
 
