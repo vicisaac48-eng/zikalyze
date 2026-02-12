@@ -48,8 +48,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           alt="Loading"
           width={64}
           height={64}
-          className="h-16 w-16 animate-spin-slow opacity-80"
-          style={{ filter: 'none', boxShadow: 'none' }}
+          className="h-16 w-16 animate-pulse opacity-80"
+          style={{ 
+            imageRendering: 'crisp-edges',
+            filter: 'none', 
+            boxShadow: 'none' 
+          }}
         />
       </div>
     );
