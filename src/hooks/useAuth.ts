@@ -252,7 +252,10 @@ export const useAuth = () => {
 
   // Sign out function
   const signOut = useCallback(async (): Promise<{ error: Error | null }> => {
+    setState(prev => ({ ...prev, isProcessing: true }));
     localStorage.removeItem(WALLET_DATA_KEY);
+    // Small delay to show loading animation
+    await new Promise(resolve => setTimeout(resolve, 300));
     setState({
       user: null,
       isSignedIn: false,
