@@ -103,6 +103,8 @@ export function PullToRefresh({
         className={cn("relative min-h-screen overflow-y-auto", className)}
         style={{ 
           touchAction: 'pan-y',
+          // Required for smooth momentum scrolling on Android WebView
+          // Even though deprecated in iOS, still critical for Android native apps
           WebkitOverflowScrolling: 'touch'
         }}
       >
