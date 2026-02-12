@@ -195,7 +195,7 @@ const Portfolio = () => {
         </header>
 
         <PullToRefresh onRefresh={handleRefresh}>
-          <div className="min-h-screen overflow-y-auto bg-background">
+          <div className="min-h-screen bg-background">
             <div className="main-content p-6 space-y-6">
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">

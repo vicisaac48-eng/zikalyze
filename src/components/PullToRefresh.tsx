@@ -101,7 +101,10 @@ export function PullToRefresh({
       <div
         ref={containerRef as React.RefObject<HTMLDivElement>}
         className={cn("relative min-h-screen overflow-y-auto", className)}
-        style={{ touchAction: 'pan-y' }}
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch'
+        }}
       >
         <div style={contentStyle}>
           {children}
