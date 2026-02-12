@@ -111,13 +111,13 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
             key={crypto.symbol}
             onClick={() => onSelect(crypto.symbol)}
             className={cn(
-              "flex flex-col gap-1 rounded-xl border px-3 py-2 transition-all relative flex-shrink-0 min-w-[100px] sm:min-w-0 sm:px-4 sm:py-3",
+              "flex flex-col gap-1.5 rounded-xl border px-3 py-2 transition-all relative flex-shrink-0 min-w-[100px] sm:min-w-0 sm:px-4 sm:py-3",
               selected === crypto.symbol
                 ? "border-primary bg-primary/10"
                 : "border-border bg-card hover:border-primary/50"
             )}
           >
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
               <span className={cn("font-bold text-sm sm:text-base", crypto.color)}>{crypto.symbol}</span>
               {isLive && (
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title={`Live from ${priceData?.source || 'WebSocket'}`} />
