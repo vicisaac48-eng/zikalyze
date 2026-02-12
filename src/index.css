@@ -672,8 +672,8 @@ All colors MUST be HSL.
 
   @media (min-width: 640px) {
     .main-content {
-      /* Desktop: Add padding equal to desktop header height */
-      padding-top: var(--header-height-desktop) !important;
+      /* Desktop: Remove padding-top for tight layout - header is sticky so content can start at top */
+      padding-top: 0 !important;
     }
   }
 
