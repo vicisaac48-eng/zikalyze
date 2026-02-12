@@ -119,28 +119,32 @@ const Install = () => {
         <div className="text-center mb-8">
           {/* Native App Icon Container - iOS/Android style with rounded corners */}
           <div className="relative inline-block mb-6">
-            {/* Animated glow effect behind the icon */}
-            <div className="absolute inset-0 -m-2 rounded-full bg-gradient-to-br from-primary/20 via-cyan-500/20 to-purple-500/20 blur-xl animate-pulse-slow opacity-60" />
+            {/* Subtle background shadow - no blur for clarity */}
+            <div className="absolute inset-0 -m-1 rounded-full bg-primary/10 opacity-40" />
             
             {/* App Icon - Native style with proper iOS/Android rounding */}
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[32px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px] shadow-2xl shadow-primary/20">
-              {/* Animated gradient border */}
-              <div className="absolute inset-0 rounded-[28px] sm:rounded-[32px] bg-gradient-to-br from-primary/50 via-cyan-500/30 to-purple-500/40 opacity-90 animate-glow-pulse" />
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-[28px] sm:rounded-[32px] overflow-hidden bg-gradient-to-br from-[#0a0f1a] via-[#0d1420] to-[#0a0f1a] p-[2px] shadow-xl shadow-primary/10">
+              {/* Subtle gradient border */}
+              <div className="absolute inset-0 rounded-[28px] sm:rounded-[32px] bg-gradient-to-br from-primary/30 via-cyan-500/20 to-purple-500/30 opacity-80" />
               
               {/* Logo container with background */}
               <div className="relative w-full h-full rounded-[26px] sm:rounded-[30px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
-                {/* Logo image with smooth rotation */}
+                {/* Logo image - crisp and clear */}
                 <img 
                   src={zikalyzeLogo} 
                   alt="Zikalyze" 
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative z-10 animate-spin-slow"
-                  style={{ filter: 'none', boxShadow: 'none' }}
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative z-10"
+                  style={{ 
+                    imageRendering: '-webkit-optimize-contrast',
+                    filter: 'none',
+                    boxShadow: 'none'
+                  }}
                 />
               </div>
             </div>
             
-            {/* Floating badge for native feel with pulse animation */}
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center border-2 border-background shadow-lg shadow-primary/30 animate-pulse">
+            {/* Floating badge for native feel */}
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center border-2 border-background shadow-lg">
               <Download className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-primary-foreground" />
             </div>
           </div>
