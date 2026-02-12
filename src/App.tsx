@@ -51,10 +51,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Seamless loading fallback with Zikalyze logo - no flash
+// Professional loading fallback with fade in/out animation
 const PageLoader = () => (
   <div 
-    className="fixed inset-0 flex items-center justify-center"
+    className="fixed inset-0 flex items-center justify-center fade-in"
     style={{ backgroundColor: '#0a0f1a' }}
   >
     <img 
@@ -62,7 +62,7 @@ const PageLoader = () => (
       alt="Loading"
       width={64}
       height={64}
-      className="h-16 w-16 animate-pulse opacity-80"
+      className="h-16 w-16 logo-pulse"
       style={{ 
         filter: 'none', 
         boxShadow: 'none' 

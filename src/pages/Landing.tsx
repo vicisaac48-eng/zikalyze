@@ -623,7 +623,7 @@ const Landing = () => {
             { label: t("landing.accuracyRate"), value: "60%", icon: Activity },
             { label: t("landing.activeUsers"), value: userCount !== null ? `${Math.floor(userCount / 1000)}K+` : "25K+", icon: TrendingUp },
             { label: t("landing.predictionsPerDay"), value: "50K+", icon: Brain },
-            { label: t("landing.marketsTracked"), value: "200+", icon: BarChart3 },
+            { label: t("landing.marketsTracked"), value: "100+", icon: BarChart3 },
           ].map((stat, i) => (
             <div key={i} className="text-center p-3 sm:p-0">
               <stat.icon className="h-5 w-5 text-primary mx-auto mb-1.5 sm:h-6 sm:w-6 sm:mb-2 lg:h-8 lg:w-8 lg:mb-3" />

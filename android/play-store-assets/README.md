@@ -1,0 +1,93 @@
+# Google Play Store Assets
+
+This directory contains assets required for uploading Zikalyze to the Google Play Store.
+
+## Assets Included
+
+### 1. High-Resolution Icon (512×512)
+- **File:** `icon-512x512.png`
+- **Size:** 512×512 pixels
+- **Format:** PNG, 32-bit with alpha channel
+- **Purpose:** App icon displayed in Google Play Console
+- **Requirement:** **Required** by Google Play Store
+
+### 2. Feature Graphic (1024×500)
+- **File:** `feature-graphic-1024x500.png`
+- **Size:** 1024×500 pixels
+- **Format:** PNG
+- **Purpose:** Header graphic displayed at the top of your app's Play Store listing
+- **Requirement:** **Recommended** (highly visible in store)
+
+## Upload Instructions
+
+### Step 1: Access Play Console
+1. Go to [Google Play Console](https://play.google.com/console)
+2. Select your app or create a new app
+
+### Step 2: Upload High-Res Icon
+1. Navigate to **Main store listing** in the left menu
+2. Scroll to **App icon** section
+3. Click **Upload** and select `icon-512x512.png`
+4. Verify the preview looks correct
+
+### Step 3: Upload Feature Graphic
+1. In the same **Main store listing** page
+2. Scroll to **Feature graphic** section
+3. Click **Upload** and select `feature-graphic-1024x500.png`
+4. Verify the preview looks correct
+
+### Step 4: Additional Assets
+You'll also need to provide:
+- **Screenshots** (minimum 2, up to 8)
+  - Phone: 320-3840px on shortest side
+  - Tablet (if applicable): 1200-7680px on shortest side
+- **Short description** (80 characters max)
+- **Full description** (4000 characters max)
+- **App category**
+- **Content rating**
+
+## Asset Specifications
+
+### Logo Design
+- **Source:** GitHub Gist design (trending chart with arrow)
+- **Background:** Green (#B5EAD7)
+- **Foreground:** Dark trending line (#1A1C1E)
+- **Style:** Professional, analytics-focused
+
+### Quality Standards
+- All images optimized with PNG compression
+- High-quality LANCZOS resampling
+- Meets Google Play Store requirements
+- Professional presentation
+
+## Launcher Icons
+
+The app's launcher icons are located in:
+```
+android/app/src/main/res/mipmap-{density}/
+```
+
+Densities available:
+- **MDPI** (48×48px) - Medium
+- **HDPI** (72×72px) - High
+- **XHDPI** (96×96px) - Extra-high
+- **XXHDPI** (144×144px) - Extra-extra-high
+- **XXXHDPI** (192×192px) - Extra-extra-extra-high
+
+## Notes
+
+- Keep source files for future updates
+- Test on multiple devices before publishing
+- Follow Google Play Store policies and guidelines
+- Update assets if you change the app's branding
+
+## Questions?
+
+For more information, visit:
+- [Google Play Console Help](https://support.google.com/googleplay/android-developer/)
+- [Graphic Assets Guidelines](https://support.google.com/googleplay/android-developer/answer/9866151)
+
+---
+
+*Generated: 2026-02-12*
+*App: Zikalyze - Crypto Analytics*

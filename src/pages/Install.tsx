@@ -129,11 +129,13 @@ const Install = () => {
               
               {/* Logo container with background */}
               <div className="relative w-full h-full rounded-[26px] sm:rounded-[30px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
-                {/* Logo image - crisp and clear */}
+                {/* Logo image - crisp and clear - Standard Android size 128x128 */}
                 <img 
                   src={zikalyzeLogo} 
                   alt="Zikalyze" 
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative z-10"
+                  width={128}
+                  height={128}
+                  className="w-28 h-28 sm:w-32 sm:h-32 object-contain relative z-10"
                   style={{ 
                     filter: 'none',
                     boxShadow: 'none'
