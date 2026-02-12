@@ -671,12 +671,12 @@ All colors MUST be HSL.
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
   /* No gap - crypto cards start immediately after header for tight layout */
   html.android-native .main-content {
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important; /* 56px header height - no gap */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
   }
 
   @media (min-width: 640px) {
     html.android-native .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important; /* 64px header height - no gap */
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
 }
