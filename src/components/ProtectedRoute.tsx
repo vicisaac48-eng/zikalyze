@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
@@ -13,6 +13,8 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const handleTimeout = useCallback(async () => {
     await signOut();
@@ -27,6 +29,21 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   });
 
   useEffect(() => {
+    // Only show loading on initial mount
+    if (loading) return;
+    
+    if (isInitialLoad) {
+      // Fade out after initial load completes
+      setIsFadingOut(true);
+      const timer = setTimeout(() => {
+        setIsInitialLoad(false);
+        setIsFadingOut(false);
+      }, 300); // Match fade-out animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isInitialLoad]);
+
+  useEffect(() => {
     // Only redirect to auth if loading is complete, no user, and NOT in demo mode
     // Demo mode is when loading is false and user is null (no wallet connected)
     // We allow access in demo mode so users can explore the app
@@ -36,11 +53,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     }
   }, [user, loading, navigate]);
 
-  // Seamless loading with logo - matches index.html background exactly
-  if (loading) {
+  // Only show loading on initial load or when auth is actually loading
+  // NOT on navigation between pages
+  if ((loading && isInitialLoad) || isFadingOut) {
     return (
       <div 
-        className="fixed inset-0 flex items-center justify-center"
+        className={`fixed inset-0 flex items-center justify-center ${isFadingOut ? 'fade-out' : 'fade-in'}`}
         style={{ backgroundColor: '#0a0f1a' }}
       >
         <img 
@@ -48,7 +66,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           alt="Loading"
           width={64}
           height={64}
-          className="h-16 w-16 animate-pulse opacity-80"
+          className="h-16 w-16 logo-pulse"
           style={{ 
             filter: 'none', 
             boxShadow: 'none' 
