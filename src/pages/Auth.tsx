@@ -514,7 +514,7 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <div className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-center justify-center p-3 sm:p-4 safe-area-inset-top">
+    <div className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top">
       {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
