@@ -135,7 +135,7 @@ const Dashboard = () => {
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
           {/* Time Filter */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
+          <div className="tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
             {["1s", "5s", "1m", "5m", "15m", "1h"].map((time) => (
               <button
                 key={time}
