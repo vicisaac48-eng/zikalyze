@@ -96,7 +96,7 @@ const CryptoRow = memo(({
           />
           <div className="min-w-0">
             <div className="font-medium text-foreground text-xs truncate max-w-[140px] sm:text-sm sm:max-w-none lg:text-xs lg:max-w-[220px]">{crypto.name}</div>
-            <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
+            <div className="text-xs text-muted-foreground font-semibold sm:text-sm lg:text-xs">{crypto.symbol.toUpperCase()}</div>
           </div>
         </div>
       </td>
@@ -473,7 +473,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
         <div className="-mx-3 px-3 pb-2 sm:-mx-0 sm:px-0 sm:pb-0">
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <tr className="text-left text-xs text-muted-foreground border-b border-border sm:text-sm lg:text-xs">
                 <th className="pb-2 pr-2 font-medium sm:pb-3 sm:pr-4 lg:pr-6">Name</th>
                 <th className="pb-2 px-2 font-medium text-right sm:pb-3 sm:px-3 lg:px-6 xl:px-8">Price</th>
                 <th className="pb-2 px-2 font-medium text-right sm:pb-3 sm:px-3 lg:px-6 xl:px-8">24h %</th>
