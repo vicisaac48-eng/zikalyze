@@ -659,15 +659,15 @@ All colors MUST be HSL.
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
-  /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* No gap - crypto cards start immediately after header for tight layout */
+  /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height + gap */
+  /* Gap matches web mobile's space-y-2 (0.5rem = 8px) and space-y-3 (0.75rem = 12px) */
   html.android-native .main-content {
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile) + 0.5rem) !important;
   }
 
   @media (min-width: 640px) {
     html.android-native .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop) + 0.75rem) !important;
     }
   }
 }
