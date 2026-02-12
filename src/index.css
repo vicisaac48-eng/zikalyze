@@ -670,14 +670,14 @@ All colors MUST be HSL.
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* Further reduced padding for even tighter spacing on mobile devices */
+  /* Ultra-minimal 2px gap between header and crypto cards for compact Android layout */
   html.android-native .main-content {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 2.625rem) !important; /* 42px - reduced from 56px for minimal breathing room */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 3.625rem) !important; /* 58px (56px header + 2px gap) - ultra-minimal spacing */
   }
 
   @media (min-width: 640px) {
     html.android-native .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + 3rem) !important; /* 48px - reduced from 64px for minimal breathing room */
+      padding-top: calc(env(safe-area-inset-top, 0px) + 4.6875rem) !important; /* 75px (73px actual header + 2px gap) - ultra-minimal spacing */
     }
   }
 }
