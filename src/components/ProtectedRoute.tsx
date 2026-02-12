@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   });
 
   useEffect(() => {
-    // Only show loading on initial mount
+    // Wait until auth loading completes before handling initial load state
     if (loading) return;
     
     if (isInitialLoad) {
