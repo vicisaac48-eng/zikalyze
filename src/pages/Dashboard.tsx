@@ -130,7 +130,7 @@ const Dashboard = () => {
 
         <PullToRefresh onRefresh={handleRefresh}>
           <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
-            <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6 space-y-4">
+            <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
 
