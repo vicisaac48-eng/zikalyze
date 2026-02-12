@@ -669,14 +669,14 @@ All colors MUST be HSL.
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* Ultra-minimal 2px gap between header and crypto cards for compact Android layout */
+  /* No gap - crypto cards start immediately after header for tight layout */
   html.android-native .main-content {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 3.625rem) !important; /* 58px (56px header + 2px gap) - ultra-minimal spacing */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important; /* 56px header height - no gap */
   }
 
   @media (min-width: 640px) {
     html.android-native .main-content {
-      padding-top: calc(env(safe-area-inset-top, 0px) + 4.6875rem) !important; /* 75px (73px actual header + 2px gap) - ultra-minimal spacing */
+      padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important; /* 64px header height - no gap */
     }
   }
 }
