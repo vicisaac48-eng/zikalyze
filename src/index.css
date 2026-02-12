@@ -653,22 +653,24 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
+  /* Reduced padding for tighter, more modern layout across all platforms */
   /* Web: sticky header needs padding equal to header height */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Web/default: Account for sticky header height */
-    padding-top: var(--header-height-mobile) !important;
+    /* Web/default: Reduced for tighter spacing - was 56px (3.5rem) */
+    padding-top: 2.875rem !important; /* 46px - reduced from 56px for minimal breathing room */
   }
 
   @media (min-width: 640px) {
     .main-content {
-      padding-top: var(--header-height-desktop) !important;
+      /* Desktop: Reduced for tighter spacing - was 64px (4rem) */
+      padding-top: 3.25rem !important; /* 52px - reduced from 64px for minimal breathing room */
     }
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* Reduced padding for tighter spacing between header and crypto cards */
+  /* Further reduced padding for even tighter spacing on mobile devices */
   html.android-native .main-content {
     padding-top: calc(env(safe-area-inset-top, 0px) + 2.625rem) !important; /* 42px - reduced from 56px for minimal breathing room */
   }
