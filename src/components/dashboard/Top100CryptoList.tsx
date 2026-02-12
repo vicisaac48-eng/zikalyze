@@ -36,7 +36,7 @@ const PriceCell = memo(({
 }) => {
   return (
     <span
-      className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm ${
+      className={`font-medium text-xs transition-all duration-150 inline-block sm:text-sm lg:text-xs ${
         flash === "up"
           ? "animate-price-flash-up"
           : flash === "down"
@@ -95,7 +95,7 @@ const CryptoRow = memo(({
             }}
           />
           <div className="min-w-0">
-            <div className="font-medium text-foreground text-xs truncate max-w-[140px] sm:text-sm sm:max-w-none lg:max-w-[220px]">{crypto.name}</div>
+            <div className="font-medium text-foreground text-xs truncate max-w-[140px] sm:text-sm sm:max-w-none lg:text-xs lg:max-w-[220px]">{crypto.name}</div>
             <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
           </div>
         </div>
@@ -108,15 +108,15 @@ const CryptoRow = memo(({
         />
       </td>
       <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-6 xl:px-8">
-        <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
+        <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm lg:text-xs ${isPositive ? "text-success" : "text-destructive"}`}>
           {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
           {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
         </div>
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 xl:px-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 lg:text-xs xl:px-8">
         {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 xl:px-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 lg:text-xs xl:px-8">
         {crypto.circulating_supply 
           ? (crypto.circulating_supply >= 1e9 
             ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
@@ -125,13 +125,13 @@ const CryptoRow = memo(({
               : crypto.circulating_supply.toLocaleString())
           : "---"} {crypto.symbol.toUpperCase()}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 xl:px-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 lg:text-xs xl:px-8">
         {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 xl:px-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 lg:text-xs xl:px-8">
         {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 xl:px-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-6 lg:text-xs xl:px-8">
         {(() => {
           const v = crypto.total_volume;
           if (!v) return "---";
