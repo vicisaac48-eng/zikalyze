@@ -135,7 +135,6 @@ const Install = () => {
                   alt="Zikalyze" 
                   className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative z-10"
                   style={{ 
-                    imageRendering: 'crisp-edges',
                     filter: 'none',
                     boxShadow: 'none'
                   }}
