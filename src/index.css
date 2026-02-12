@@ -243,8 +243,8 @@ All colors MUST be HSL.
     /* High z-index to ensure header stays above all scrolling content and pull-to-refresh */
     z-index: 1000 !important;
     /* Explicit opaque background to prevent content bleeding through on Android WebView */
-    /* Uses the design system CSS variable for consistency */
-    background-color: hsl(var(--background));
+    /* Uses the design system CSS variable for consistency with !important to override any conflicting styles */
+    background-color: hsl(var(--background)) !important;
     /* Hardware acceleration for smooth fixed positioning on Android */
     /* translateZ(0) enables GPU acceleration while maintaining visual quality */
     /* Note: Header is outside PullToRefresh's transformed content div, preventing movement during pull gestures */
@@ -253,6 +253,8 @@ All colors MUST be HSL.
     /* Prevent content from bleeding through during scroll on Android */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    /* Ensure border is visible and opaque for clear header separation */
+    border-bottom: 1px solid hsl(var(--border)) !important;
   }
 
   /* Adjust fixed header position on desktop with sidebar (Android only) */
