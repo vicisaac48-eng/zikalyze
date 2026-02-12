@@ -521,7 +521,7 @@ const Auth = () => {
         <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-md mt-4 sm:mt-0">
         {/* Logo - responsive sizing */}
         <div className="flex items-center justify-center gap-2 mb-6 sm:gap-3 sm:mb-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-14 sm:w-14">
