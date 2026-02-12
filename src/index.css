@@ -215,11 +215,12 @@ All colors MUST be HSL.
     position: sticky;
     top: 0;
     min-height: var(--header-height-mobile);
+    background-color: hsl(var(--background));
     /* Prevent subpixel rendering issues */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     /* Ensure it stays above all content */
-    z-index: 50;
+    z-index: 999;
     /* Hardware acceleration hint */
     will-change: transform;
     /* Ensure the header doesn't get pushed by content */
@@ -675,6 +676,30 @@ All colors MUST be HSL.
   @media (min-width: 640px) {
     html.android-native .main-content {
       padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
+    }
+  }
+
+  /* Sticky tab bar row - stays below the header */
+  .tab-bar-row {
+    position: sticky;
+    top: var(--header-height-mobile);
+    z-index: 998;
+    background-color: hsl(var(--background));
+  }
+
+  @media (min-width: 640px) {
+    .tab-bar-row {
+      top: var(--header-height-desktop);
+    }
+  }
+
+  html.android-native .tab-bar-row {
+    top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile));
+  }
+
+  @media (min-width: 640px) {
+    html.android-native .tab-bar-row {
+      top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop));
     }
   }
 }

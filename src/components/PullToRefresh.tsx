@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -36,6 +37,36 @@ export function PullToRefresh({
     maxPull: 150,
     resistance: 0.5,
   });
+  const [headerOffset, setHeaderOffset] = useState(0);
+
+  useEffect(() => {
+    const header = document.querySelector("header.fixed-header") as HTMLElement | null;
+    if (!header) return;
+
+    const computeOffset = () => {
+      const computed = window.getComputedStyle(header);
+      const isFixedHeader =
+        computed.position === "fixed" || header.classList.contains("android-fixed");
+
+      if (!isFixedHeader) {
+        setHeaderOffset(0);
+        return;
+      }
+
+      const rect = header.getBoundingClientRect();
+      const mainContent = document.querySelector(".main-content") as HTMLElement | null;
+      const contentPaddingTop = mainContent
+        ? parseFloat(window.getComputedStyle(mainContent).paddingTop || "0")
+        : 0;
+      const requiredOffset = Math.max(rect.top + rect.height - contentPaddingTop, 0);
+
+      setHeaderOffset(requiredOffset);
+    };
+
+    computeOffset();
+    window.addEventListener("resize", computeOffset);
+    return () => window.removeEventListener("resize", computeOffset);
+  }, []);
 
   return (
     <>
@@ -102,6 +133,7 @@ export function PullToRefresh({
         ref={containerRef as React.RefObject<HTMLDivElement>}
         className={cn("relative h-full overflow-y-auto", className)}
         style={{ 
+          paddingTop: headerOffset ? `${headerOffset}px` : undefined,
           touchAction: 'pan-y',
           // Required for smooth momentum scrolling on Android WebView
           // Even though deprecated in iOS, still critical for Android native apps
