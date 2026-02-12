@@ -397,6 +397,147 @@ test.describe('Android Scroll Functionality', () => {
     expect(htmlScrollBehavior).toBe('auto');
   });
 
+  test('should verify Android header has maximum z-index and solid background', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Add android-native class for testing
+    await page.evaluate(() => {
+      document.documentElement.classList.add('android-native');
+    });
+
+    await page.waitForTimeout(200);
+
+    // Check header z-index and background properties
+    const headerStyles = await page.evaluate(() => {
+      const header = document.querySelector('header.fixed-header.android-fixed');
+      if (!header) return null;
+
+      const computedStyle = window.getComputedStyle(header);
+      return {
+        zIndex: computedStyle.zIndex,
+        position: computedStyle.position,
+        backgroundColor: computedStyle.backgroundColor,
+        opacity: computedStyle.opacity,
+        isolation: computedStyle.isolation,
+        top: computedStyle.top,
+      };
+    });
+
+    if (headerStyles) {
+      // Verify z-index is maximum (9999) to ensure header is always on top
+      expect(headerStyles.zIndex).toBe('9999');
+      // Verify position is fixed on Android
+      expect(headerStyles.position).toBe('fixed');
+      // Verify opacity is 1 (fully opaque)
+      expect(headerStyles.opacity).toBe('1');
+      // Verify isolation is set to create stacking context
+      expect(headerStyles.isolation).toBe('isolate');
+      // Verify header has a background color (not transparent)
+      expect(headerStyles.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      expect(headerStyles.backgroundColor).not.toBe('transparent');
+    }
+  });
+
+  test('should verify Android main-content has proper padding to clear fixed header', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Add android-native class for testing
+    await page.evaluate(() => {
+      document.documentElement.classList.add('android-native');
+    });
+
+    await page.waitForTimeout(200);
+
+    // Check main-content padding
+    const contentPadding = await page.evaluate(() => {
+      const content = document.querySelector('.main-content');
+      if (!content) return null;
+
+      const computedStyle = window.getComputedStyle(content);
+      const paddingTop = computedStyle.paddingTop;
+
+      // Get expected padding from CSS variables
+      const rootStyles = window.getComputedStyle(document.documentElement);
+      const headerHeight = rootStyles.getPropertyValue('--header-height-mobile').trim();
+
+      return {
+        paddingTop,
+        paddingTopPx: parseFloat(paddingTop),
+        expectedHeaderHeight: headerHeight,
+      };
+    });
+
+    if (contentPadding) {
+      // Verify padding-top is set (not 0)
+      expect(contentPadding.paddingTopPx).toBeGreaterThan(0);
+      // Verify padding is at least the header height (should be safe-area + header height)
+      // Mobile header is 3.5rem = 56px minimum
+      expect(contentPadding.paddingTopPx).toBeGreaterThanOrEqual(56);
+      console.log('Android main-content padding-top:', contentPadding.paddingTop);
+    }
+  });
+
+  test('should verify content never overlaps fixed header during scroll', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Add android-native class for testing
+    await page.evaluate(() => {
+      document.documentElement.classList.add('android-native');
+    });
+
+    await page.waitForTimeout(200);
+
+    // Check if page has scrollable content
+    const scrollInfo = await page.evaluate(() => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      return {
+        maxScroll,
+        isScrollable: maxScroll > 0
+      };
+    });
+
+    if (scrollInfo.isScrollable) {
+      // Scroll to various positions and verify header stays on top
+      const positions = [100, 300, 500];
+
+      for (const pos of positions) {
+        await page.evaluate((scrollPos) => {
+          window.scrollTo({ top: scrollPos, behavior: 'auto' });
+        }, Math.min(pos, scrollInfo.maxScroll));
+
+        await page.waitForTimeout(100);
+
+        // Verify header properties remain correct during scroll
+        const headerCheck = await page.evaluate(() => {
+          const header = document.querySelector('header.fixed-header.android-fixed');
+          if (!header) return null;
+
+          const rect = header.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(header);
+
+          return {
+            zIndex: computedStyle.zIndex,
+            position: computedStyle.position,
+            isAtTop: rect.top >= 0 && rect.top <= 50, // Should be at top (accounting for safe area)
+            opacity: computedStyle.opacity,
+          };
+        });
+
+        if (headerCheck) {
+          expect(headerCheck.zIndex).toBe('9999');
+          expect(headerCheck.position).toBe('fixed');
+          expect(headerCheck.isAtTop).toBe(true);
+          expect(headerCheck.opacity).toBe('1');
+        }
+      }
+
+      // Scroll back to top
+      await page.evaluate(() => {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      });
+    }
+  });
+
   test('should complete full scroll cycle without pointer event blocking', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
