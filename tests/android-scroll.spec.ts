@@ -129,7 +129,8 @@ test.describe('Android Scroll Functionality', () => {
     });
 
     // Verify body has proper scroll settings
-    expect(bodyScrollProps.overflowY).toMatch(/scroll|auto/);
+    // After single scroll layer fix: body doesn't have overflow, PullToRefresh handles scrolling
+    expect(bodyScrollProps.overflowY).toBe('visible');
     expect(bodyScrollProps.touchAction).toBe('pan-y');
   });
 

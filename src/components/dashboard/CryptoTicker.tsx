@@ -89,7 +89,10 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
       style={{
         // On Android native, enable horizontal touch scrolling specifically for CryptoTicker
         // This allows swiping through crypto cards while keeping pull-to-refresh working
-        touchAction: isNativeApp ? 'pan-x pan-y' : undefined
+        // Always set on native to ensure it overrides any parent touch-action settings
+        touchAction: isNativeApp ? 'pan-x pan-y' : undefined,
+        // Enable momentum scrolling on Android WebView for smooth horizontal scroll
+        WebkitOverflowScrolling: isNativeApp ? 'touch' as any : undefined,
       }}
     >
       {cryptoMeta.map((crypto) => {

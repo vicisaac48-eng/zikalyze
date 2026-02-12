@@ -158,7 +158,7 @@ const Settings = () => {
         </header>
 
         <PullToRefresh onRefresh={handleRefresh}>
-          <div className="min-h-screen max-h-screen overflow-y-auto bg-background">
+          <div className="min-h-screen bg-background">
             <div className="main-content p-3 sm:p-4 md:p-6">
           {/* Tabs Navigation - Stacked vertically */}
           <div className="space-y-2 mb-6">

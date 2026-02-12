@@ -129,7 +129,7 @@ const Dashboard = () => {
         </header>
 
         <PullToRefresh onRefresh={handleRefresh}>
-          <div className="min-h-screen min-h-[100dvh] max-h-screen overflow-y-auto bg-background texture-noise custom-scrollbar" style={{ pointerEvents: 'auto' }}>
+          <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
             <div className="main-content px-3 pb-4 space-y-2 sm:px-4 sm:pb-6 sm:space-y-3 md:px-6 md:space-y-4">
           {/* Crypto Ticker */}
           <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
