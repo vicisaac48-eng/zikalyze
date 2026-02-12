@@ -100,7 +100,7 @@ export function PullToRefresh({
       {/* Content wrapper - only scrollable content gets the transform, fixed elements are children */}
       <div
         ref={containerRef as React.RefObject<HTMLDivElement>}
-        className={cn("relative min-h-screen overflow-y-auto", className)}
+        className={cn("relative h-full overflow-y-auto", className)}
         style={{ 
           touchAction: 'pan-y',
           // Required for smooth momentum scrolling on Android WebView
