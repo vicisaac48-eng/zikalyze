@@ -240,11 +240,14 @@ All colors MUST be HSL.
     top: env(safe-area-inset-top, 0px) !important;
     left: 0 !important;
     right: 0 !important;
-    /* High z-index to ensure header stays above all scrolling content and pull-to-refresh */
-    z-index: 1000 !important;
+    /* Maximum z-index to ensure header is ALWAYS on top of ALL content including modals, overlays, and scrolling content */
+    /* Must be higher than BottomNav (z-50), Sidebar (z-40), PullToRefresh (z-50), and all other UI elements */
+    z-index: 9999 !important;
     /* Explicit opaque background to prevent content bleeding through on Android WebView */
     /* Uses the design system CSS variable for consistency with !important to override any conflicting styles */
     background-color: hsl(var(--background)) !important;
+    /* Create a new stacking context to isolate header from other elements */
+    isolation: isolate;
     /* Hardware acceleration for smooth fixed positioning on Android */
     /* translateZ(0) enables GPU acceleration while maintaining visual quality */
     /* Note: Header is outside PullToRefresh's transformed content div, preventing movement during pull gestures */
@@ -255,6 +258,8 @@ All colors MUST be HSL.
     backface-visibility: hidden;
     /* Ensure border is visible and opaque for clear header separation */
     border-bottom: 1px solid hsl(var(--border)) !important;
+    /* Ensure no transparency - fully opaque background */
+    opacity: 1 !important;
   }
 
   /* Adjust fixed header position on desktop with sidebar (Android only) */
