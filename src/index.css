@@ -215,12 +215,15 @@ All colors MUST be HSL.
     position: sticky;
     top: 0;
     min-height: var(--header-height-mobile);
-    background-color: hsl(var(--background));
+    /* Opaque background to prevent content showing through */
+    background-color: hsl(var(--background)) !important;
+    /* Border for clear separation */
+    border-bottom: 1px solid hsl(var(--border)) !important;
     /* Prevent subpixel rendering issues */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    /* Ensure it stays above all content */
-    z-index: 999;
+    /* Ensure it stays above all content - increased to 1000 as requested */
+    z-index: 1000;
     /* Hardware acceleration hint */
     will-change: transform;
     /* Ensure the header doesn't get pushed by content */
@@ -652,17 +655,17 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
-  /* Web: sticky header doesn't need padding - content flows naturally below it */
+  /* Web: sticky header needs padding to prevent content starting at same position as header */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Web/default: No padding needed for sticky header - content flows naturally */
-    padding-top: 0 !important;
+    /* Web/default: Add padding equal to header height so content starts below header */
+    padding-top: var(--header-height-mobile) !important;
   }
 
   @media (min-width: 640px) {
     .main-content {
-      /* Desktop: No padding needed for sticky header */
-      padding-top: 0 !important;
+      /* Desktop: Add padding equal to desktop header height */
+      padding-top: var(--header-height-desktop) !important;
     }
   }
 
@@ -684,7 +687,8 @@ All colors MUST be HSL.
     position: sticky;
     top: var(--header-height-mobile);
     z-index: 998;
-    background-color: hsl(var(--background));
+    /* Opaque background to prevent content showing through */
+    background-color: hsl(var(--background)) !important;
   }
 
   @media (min-width: 640px) {
