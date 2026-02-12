@@ -12,6 +12,7 @@ import { PWAInstallBanner } from "./components/PWAInstallBanner";
 import { ZikalyzeWatermark } from "./components/ZikalyzeWatermark";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { useIsNativeApp } from "./hooks/useIsNativeApp";
 
 
 // Session tracking wrapper component - non-critical feature
@@ -52,22 +53,31 @@ const queryClient = new QueryClient({
 });
 
 // Professional loading fallback with fade in/out animation
-const PageLoader = () => (
-  <div 
-    className="fixed inset-0 flex items-center justify-center fade-in"
-    style={{ backgroundColor: '#0a0f1a' }}
-  >
-    <img 
-      src={zikalyzeLogo} 
-      alt="Loading"
-      className="loading-logo-rect logo-rotate"
-      style={{ 
-        filter: 'none', 
-        boxShadow: 'none' 
-      }}
-    />
-  </div>
-);
+const PageLoader = () => {
+  const isNativeApp = useIsNativeApp();
+  
+  return (
+    <div 
+      className="fixed inset-0 flex flex-col items-center justify-center fade-in gap-6"
+      style={{ backgroundColor: '#0a0f1a' }}
+    >
+      <img 
+        src={zikalyzeLogo} 
+        alt="Loading"
+        className="loading-logo-rect logo-rotate"
+        style={{ 
+          filter: 'none', 
+          boxShadow: 'none' 
+        }}
+      />
+      {isNativeApp && (
+        <div className="typewriter-text">
+          Zikalyze AI
+        </div>
+      )}
+    </div>
+  );
+};
 
 // App-level error fallback
 const AppErrorFallback = () => (
