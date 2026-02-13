@@ -7,8 +7,10 @@ import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePriceData } from "@/contexts/PriceDataContext";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
-import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import { SESSION_STORAGE_KEYS, LOCAL_STORAGE_KEYS } from "@/constants/storage";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,9 @@ const MetricsSkeleton = () => (
   </div>
 );
 
+// Loading phases enum
+type LoadingPhase = 'splash' | 'skeleton' | 'revealed';
+
 const Dashboard = () => {
   // Restore last viewed crypto from localStorage, default to BTC
   const [selectedCrypto, setSelectedCrypto] = useState(() => {
@@ -52,7 +57,14 @@ const Dashboard = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const { prices, loading, isLive, getPriceBySymbol, refetch } = usePriceData();
   const { t } = useTranslation();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state using reusable hook - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.DASHBOARD_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200 // Responsive timing: 200ms skeleton visibility
+  });
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -90,14 +102,39 @@ const Dashboard = () => {
       }
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
+  // Phase 1: Show splash screen
+  if (loadingPhase === 'splash') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <DashboardSplash onComplete={handleSplashComplete} />
+      </>
+    );
+  }
+
+  // Phase 2: Show skeleton loader
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <DashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Revealed content with staggered animations (only for native app)
+  const isRevealing = isNativeApp && loadingPhase === 'revealed';
+
   return (
     <>
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isRevealing ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
-        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
+        <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0s' } : undefined}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative hidden md:block">
@@ -131,12 +168,12 @@ const Dashboard = () => {
           <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
             <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6 space-y-3 sm:space-y-4 md:space-y-6">
           {/* Crypto Ticker */}
-          <div>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
             <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
           </div>
 
           {/* Time Filter */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
+          <div className={`flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.15s' } : undefined}>
             {["1s", "5s", "1m", "5m", "15m", "1h"].map((time) => (
               <button
                 key={time}
@@ -152,7 +189,7 @@ const Dashboard = () => {
           </div>
 
           {/* Live On-Chain Data */}
-          <div>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.25s' } : undefined}>
             <ErrorBoundary componentName="On-Chain Metrics" fallback={<MinimalErrorFallback />}>
               <Suspense fallback={<MetricsSkeleton />}>
                 <OnChainMetrics
@@ -168,7 +205,7 @@ const Dashboard = () => {
           </div>
 
           {/* AI Analyzer & Sentiment Analysis Grid */}
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+          <div className={`grid gap-4 md:gap-6 lg:grid-cols-2${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.35s' } : undefined}>
             <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
               <Suspense fallback={<ChartSkeleton />}>
                 <AIAnalyzer 
@@ -225,7 +262,7 @@ const Dashboard = () => {
           </div>
 
           {/* Top 100 Crypto List */}
-          <div>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.55s' } : undefined}>
             <ErrorBoundary componentName="Crypto List" fallback={<ChartErrorFallback />}>
               <Suspense fallback={<ChartSkeleton />}>
                 <Top100CryptoList selected={selectedCrypto} onSelect={setSelectedCrypto} prices={prices} loading={loading} />

@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import AnalyticsChart from "@/components/dashboard/AnalyticsChart";
 import PredictiveChart from "@/components/dashboard/PredictiveChart";
 import DonutChart from "@/components/dashboard/DonutChart";
 import VolumeChart from "@/components/dashboard/VolumeChart";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 import { cn } from "@/lib/utils";
 
 const Analytics = () => {
@@ -20,7 +23,14 @@ const Analytics = () => {
   const { formatPrice, symbol: currencySymbol } = useCurrency();
   const [timeframe, setTimeframe] = useState("24h");
   const { t } = useTranslation();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.ANALYTICS_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200
+  });
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -39,12 +49,29 @@ const Analytics = () => {
   const topGainers = [...prices].sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0)).slice(0, 3);
   const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
       <BottomNav />
 
-      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0`}>
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isNativeApp && loadingPhase === 'revealed' ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analytics.title")}</h1>

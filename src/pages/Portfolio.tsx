@@ -23,8 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 interface Holding {
   id: string;
@@ -41,7 +44,14 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = usePriceData();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.PORTFOLIO_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.PORTFOLIO_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200
+  });
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -115,12 +125,29 @@ const Portfolio = () => {
     setHoldings(holdings.filter((h) => h.id !== id));
   };
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
       <BottomNav />
       
-      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0`}>
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isNativeApp && loadingPhase === 'revealed' ? ' content-fade-in' : ''}`}>
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("portfolio.title")}</h1>

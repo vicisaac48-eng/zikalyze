@@ -7,17 +7,27 @@ import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { usePriceData } from "@/contexts/PriceDataContext";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 const Analyzer = () => {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const { getPriceBySymbol, loading, isLive, refetch, prices } = usePriceData();
   const { t } = useTranslation();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.ANALYZER_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.ANALYZER_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200
+  });
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -39,12 +49,29 @@ const Analyzer = () => {
 
   const selected = cryptoData[selectedCrypto];
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isNativeApp && loadingPhase === 'revealed' ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("analyzer.title")}</h1>

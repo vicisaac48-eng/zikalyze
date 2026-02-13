@@ -13,10 +13,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useSettings, SoundType } from "@/hooks/useSettings";
 import { alertSound, isNativePlatform } from "@/lib/alertSound";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 // Theme color mappings - HSL values for each available theme
 const THEME_COLOR_MAP: Record<string, { primary: string; ring: string }> = {
@@ -43,7 +46,15 @@ const Settings = () => {
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
   const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  // Settings don't need data loading, so always mark as ready
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.SETTINGS_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.SETTINGS_VISITED,
+    isDataReady: true, // Settings page doesn't need to wait for data
+    skeletonDelay: 200 // Consistent with other pages
+  });
   
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -133,12 +144,29 @@ const Settings = () => {
     });
   };
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isNativeApp && loadingPhase === 'revealed' ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">Settings</h1>
