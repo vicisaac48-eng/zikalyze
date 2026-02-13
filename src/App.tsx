@@ -52,7 +52,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Minimal loading fallback - no animations
+// Professional loading fallback with rotating logo - ONLY for initial app load
 const PageLoader = () => {
   return (
     <div 
@@ -64,6 +64,7 @@ const PageLoader = () => {
         alt="Zikalyze"
         width={80}
         height={64}
+        className="logo-rotate"
         style={{ 
           filter: 'none', 
           boxShadow: 'none',
