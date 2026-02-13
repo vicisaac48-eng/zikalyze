@@ -1,4 +1,4 @@
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import { TrendingUp } from "lucide-react";
 
 interface AuthLoadingOverlayProps {
   isVisible: boolean;
@@ -35,13 +35,9 @@ export function AuthLoadingOverlay({ isVisible }: AuthLoadingOverlayProps) {
         {/* Logo container with shadow */}
         <div className="relative z-10">
           <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full auth-logo-glow" />
-          <img
-            src={zikalyzeLogo}
-            alt="Zikalyze"
-            width={96}
-            height={96}
-            className="relative z-10 logo-spin-professional drop-shadow-2xl"
-          />
+          <div className="relative z-10 flex items-center justify-center w-24 h-24 rounded-3xl bg-primary logo-spin-professional drop-shadow-2xl">
+            <TrendingUp className="w-12 h-12 text-primary-foreground" />
+          </div>
         </div>
       </div>
       

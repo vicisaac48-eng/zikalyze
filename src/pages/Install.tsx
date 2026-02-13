@@ -11,12 +11,12 @@ import {
   Download,
   Check,
   Apple,
-  Chrome
+  Chrome,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 // App version from package.json
 const APP_VERSION = "1.1.0";
@@ -129,18 +129,10 @@ const Install = () => {
               
               {/* Logo container with background */}
               <div className="relative w-full h-full rounded-[26px] sm:rounded-[30px] bg-gradient-to-br from-[#0d1420] to-[#080c14] flex items-center justify-center overflow-hidden">
-                {/* Logo image - crisp and clear - Standard Android size 128x128 */}
-                <img 
-                  src={zikalyzeLogo} 
-                  alt="Zikalyze" 
-                  width={128}
-                  height={128}
-                  className="w-28 h-28 sm:w-32 sm:h-32 object-contain relative z-10"
-                  style={{ 
-                    filter: 'none',
-                    boxShadow: 'none'
-                  }}
-                />
+                {/* Logo icon - TrendingUp in colored box - Standard Android size 128x128 */}
+                <div className="flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-primary relative z-10">
+                  <TrendingUp className="w-14 h-14 sm:w-16 sm:h-16 text-primary-foreground" />
+                </div>
               </div>
             </div>
             

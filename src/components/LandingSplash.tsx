@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import { TrendingUp } from "lucide-react";
 
 interface LandingSplashProps {
   onComplete: () => void;
@@ -60,15 +60,8 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo with pulse animation */}
-        <div className="logo-splash-pulse">
-          <img 
-            src={zikalyzeLogo}
-            alt="Zikalyze"
-            className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
-            style={{ 
-              filter: 'drop-shadow(0 8px 24px rgba(17, 24, 39, 0.15))',
-            }}
-          />
+        <div className="logo-splash-pulse flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl bg-primary">
+          <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 text-primary-foreground" />
         </div>
 
         {/* Brand text */}

@@ -11,7 +11,6 @@ import { useBotProtection } from "@/hooks/useBotProtection";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { toast } from "sonner";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 // Helper function to format retry time consistently
 const formatRetryTime = (seconds: number): string => {
