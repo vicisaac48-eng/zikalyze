@@ -49,7 +49,7 @@ const Portfolio = () => {
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.PORTFOLIO_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400
+    skeletonDelay: 200
   });
 
   // Pull-to-refresh handler

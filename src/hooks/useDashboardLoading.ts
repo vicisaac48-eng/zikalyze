@@ -20,7 +20,7 @@ interface UseDashboardLoadingOptions {
   
   /**
    * Delay before transitioning from skeleton to revealed (in ms)
-   * Default: 400ms for professional smooth transition
+   * Default: 200ms for responsive smooth transition
    */
   skeletonDelay?: number;
 }
@@ -34,14 +34,14 @@ interface UseDashboardLoadingOptions {
  * const { loadingPhase, handleSplashComplete } = useDashboardLoading({
  *   sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN,
  *   isDataReady: !loading && prices.length > 0,
- *   skeletonDelay: 400
+ *   skeletonDelay: 200
  * });
  * ```
  */
 export function useDashboardLoading({
   sessionKey,
   isDataReady = true,
-  skeletonDelay = 400
+  skeletonDelay = 200
 }: UseDashboardLoadingOptions) {
   const isNativeApp = useIsNativeApp();
   

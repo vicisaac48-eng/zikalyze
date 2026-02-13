@@ -62,7 +62,7 @@ const Dashboard = () => {
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400 // Professional timing: 400ms skeleton visibility
+    skeletonDelay: 200 // Responsive timing: 200ms skeleton visibility
   });
 
   // Pull-to-refresh handler
