@@ -10,6 +10,7 @@ import { usePriceData } from "@/contexts/PriceDataContext";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import { SESSION_STORAGE_KEYS, LOCAL_STORAGE_KEYS } from "@/constants/storage";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,8 +42,6 @@ const MetricsSkeleton = () => (
   </div>
 );
 
-const LAST_CRYPTO_KEY = "zikalyze_last_crypto";
-
 // Loading phases enum
 type LoadingPhase = 'splash' | 'skeleton' | 'revealed';
 
@@ -50,7 +49,7 @@ const Dashboard = () => {
   // Restore last viewed crypto from localStorage, default to BTC
   const [selectedCrypto, setSelectedCrypto] = useState(() => {
     try {
-      return localStorage.getItem(LAST_CRYPTO_KEY) || "BTC";
+      return localStorage.getItem(LOCAL_STORAGE_KEYS.LAST_CRYPTO) || "BTC";
     } catch {
       return "BTC";
     }
@@ -66,7 +65,7 @@ const Dashboard = () => {
     if (!isNativeApp) return 'revealed';
     
     // Check if this is the first visit to dashboard in this session
-    const hasSeenSplash = sessionStorage.getItem('dashboard_splash_shown');
+    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN);
     return hasSeenSplash ? 'revealed' : 'splash';
   });
 
@@ -78,14 +77,14 @@ const Dashboard = () => {
   // Save selected crypto to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem(LAST_CRYPTO_KEY, selectedCrypto);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.LAST_CRYPTO, selectedCrypto);
     } catch (error) {
       console.error("Error saving last crypto:", error);
     }
   }, [selectedCrypto]);
 
   useEffect(() => {
-    const session = localStorage.getItem("wallet_session");
+    const session = localStorage.getItem(LOCAL_STORAGE_KEYS.WALLET_SESSION);
     if (session) {
       const parsed = JSON.parse(session);
       setUserName(parsed.name || null);
@@ -95,7 +94,7 @@ const Dashboard = () => {
   // Phase 1: Splash → Phase 2: Skeleton after 1 second
   const handleSplashComplete = useCallback(() => {
     setLoadingPhase('skeleton');
-    sessionStorage.setItem('dashboard_splash_shown', 'true');
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN, 'true');
   }, []);
 
   // Phase 2: Skeleton → Phase 3: Revealed when data is loaded (only for native app)

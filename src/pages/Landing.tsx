@@ -10,6 +10,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 import LandingSplash from "@/components/LandingSplash";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -25,14 +26,14 @@ const Landing = () => {
     if (!isNativeApp) return false;
     
     // Check if splash has been shown in this session
-    const hasSeenSplash = sessionStorage.getItem('landing_splash_shown');
+    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
     return !hasSeenSplash;
   });
 
   // Handle splash completion
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
-    sessionStorage.setItem('landing_splash_shown', 'true');
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
   }, []);
 
   // Handle navigation - direct navigation for auth, loading for dashboard

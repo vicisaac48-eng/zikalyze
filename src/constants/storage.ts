@@ -21,4 +21,7 @@ export const LOCAL_STORAGE_KEYS = {
   
   /** Cookie consent status */
   COOKIE_CONSENT: 'cookieConsent',
+  
+  /** PWA install banner dismissed flag */
+  PWA_INSTALL_DISMISSED: 'pwa-install-dismissed',
 } as const;
