@@ -67,13 +67,13 @@ const Analytics = () => {
           <div className="min-h-screen bg-background">
             <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Timeframe Filter */}
-          <div className="tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
+          <div className="tab-bar-row flex gap-2 overflow-x-auto pb-1 sm:gap-3 custom-scrollbar">
             {timeframes.map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap sm:px-4 sm:py-2 sm:text-sm",
+                  "rounded-lg px-4 py-2 text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 sm:px-5 sm:py-2.5",
                   timeframe === tf
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
