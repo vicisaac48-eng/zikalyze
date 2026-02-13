@@ -810,14 +810,27 @@ export function generateSimplifiedSummary(
   
   // Convert direction to simple action - but override if trade is skipped
   let action: string;
+  let displayConfidence: string;
+  let displayPercentage: number;
+  
   if (isTradeSkipped) {
     action = '🔴 NO TRADE / WAITING';
+    // When trade is skipped, show the skip reason instead of misleading direction
+    displayConfidence = 'WAITING';
+    displayPercentage = 0; // No confidence when skipping
   } else {
     action = weightedConfidenceScore.direction === 'LONG' 
       ? '📈 Consider BUYING' 
       : weightedConfidenceScore.direction === 'SHORT' 
         ? '📉 Consider SELLING' 
         : '⏸️ WAIT and watch';
+    // Convert confidence to simple terms
+    displayConfidence = weightedConfidenceScore.percentage >= 75 
+      ? 'HIGH confidence' 
+      : weightedConfidenceScore.percentage >= 55 
+        ? 'MEDIUM confidence' 
+        : 'LOW confidence';
+    displayPercentage = weightedConfidenceScore.percentage;
   }
   
   // Generate skip reason explanation for beginners if trade is skipped
@@ -828,13 +841,6 @@ export function generateSimplifiedSummary(
           : ''
       }\n`
     : '';
-  
-  // Convert confidence to simple terms
-  const confidenceLevel = weightedConfidenceScore.percentage >= 75 
-    ? 'HIGH confidence' 
-    : weightedConfidenceScore.percentage >= 55 
-      ? 'MEDIUM confidence' 
-      : 'LOW confidence';
   
   // Simple explanation of market mood
   const marketMood = layerBeta.marketPhase === 'EUPHORIA' 
@@ -860,11 +866,13 @@ export function generateSimplifiedSummary(
   
   // Simple kill switch explanation
   const exitPrice = killSwitchLevel.price.toFixed(decimals);
-  const exitExplanation = weightedConfidenceScore.direction === 'LONG'
-    ? `If price drops below $${exitPrice}, consider exiting`
-    : weightedConfidenceScore.direction === 'SHORT'
-      ? `If price rises above $${exitPrice}, consider exiting`
-      : `Watch for breakout above or below $${exitPrice}`;
+  const exitExplanation = isTradeSkipped
+    ? 'Wait for better market conditions before entering'
+    : weightedConfidenceScore.direction === 'LONG'
+      ? `If price drops below $${exitPrice}, consider exiting`
+      : weightedConfidenceScore.direction === 'SHORT'
+        ? `If price rises above $${exitPrice}, consider exiting`
+        : `Watch for breakout above or below $${exitPrice}`;
 
   // Agreement indicator
   const agreementStatus = conflictReport.hasConflict
@@ -883,7 +891,7 @@ export function generateSimplifiedSummary(
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 🎯 WHAT TO DO: ${action}
-   Confidence: ${confidenceLevel} (${weightedConfidenceScore.percentage}%)
+   Confidence: ${displayConfidence}${displayPercentage > 0 ? ` (${displayPercentage}%)` : ''}
 ${skipExplanation}
 ${marketMood}
 

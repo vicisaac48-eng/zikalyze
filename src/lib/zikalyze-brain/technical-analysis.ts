@@ -92,7 +92,10 @@ export function calculateADX(
     // Not enough data — estimate from price action
     const lastCandle = candles[candles.length - 1] || { high: 0, low: 0, close: 0 };
     const range = lastCandle.high - lastCandle.low;
-    const estimatedADX = Math.min(50, Math.max(15, (range / lastCandle.close) * 1000));
+    // Prevent NaN by checking if close is valid (non-zero)
+    const estimatedADX = lastCandle.close > 0 
+      ? Math.min(50, Math.max(15, (range / lastCandle.close) * 1000))
+      : 25; // Default to 25 if close is 0 or invalid
     
     return {
       adx: estimatedADX,
@@ -136,8 +139,11 @@ export function calculateADX(
 
   // Calculate +DI and -DI
   const lastTR = smoothedTR[smoothedTR.length - 1] || 1;
-  const plusDI = (smoothedPlusDM[smoothedPlusDM.length - 1] / lastTR) * 100;
-  const minusDI = (smoothedMinusDM[smoothedMinusDM.length - 1] / lastTR) * 100;
+  const plusDIValue = (smoothedPlusDM[smoothedPlusDM.length - 1] / lastTR) * 100;
+  const minusDIValue = (smoothedMinusDM[smoothedMinusDM.length - 1] / lastTR) * 100;
+  // Ensure DI values are valid numbers, default to 50 if NaN
+  const plusDI = isNaN(plusDIValue) ? 50 : plusDIValue;
+  const minusDI = isNaN(minusDIValue) ? 50 : minusDIValue;
 
   // Calculate DX (Directional Index)
   const dx: number[] = [];
@@ -150,7 +156,9 @@ export function calculateADX(
 
   // Calculate ADX as smoothed average of DX
   const smoothedDX = wilderSmoothing(dx, period);
-  const adx = smoothedDX[smoothedDX.length - 1] || 25;
+  const adxValue = smoothedDX[smoothedDX.length - 1] || 25;
+  // Ensure ADX is a valid number, default to 25 if NaN
+  const adx = isNaN(adxValue) ? 25 : adxValue;
 
   // Determine regime
   let regime: MarketRegimeType;
