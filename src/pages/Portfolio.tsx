@@ -23,8 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 interface Holding {
   id: string;
@@ -41,7 +44,13 @@ const Portfolio = () => {
   const { prices, loading, getPriceBySymbol, getPriceById, refetch } = usePriceData();
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.PORTFOLIO_SPLASH_SHOWN,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 400
+  });
 
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
@@ -115,6 +124,23 @@ const Portfolio = () => {
     setHoldings(holdings.filter((h) => h.id !== id));
   };
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />

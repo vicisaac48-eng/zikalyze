@@ -13,10 +13,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useSettings, SoundType } from "@/hooks/useSettings";
 import { alertSound, isNativePlatform } from "@/lib/alertSound";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 // Theme color mappings - HSL values for each available theme
 const THEME_COLOR_MAP: Record<string, { primary: string; ring: string }> = {
@@ -43,7 +46,14 @@ const Settings = () => {
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
   const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  // Settings don't need data loading, so always mark as ready
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.SETTINGS_SPLASH_SHOWN,
+    isDataReady: true, // Settings page doesn't need to wait for data
+    skeletonDelay: 300 // Shorter delay since no data loading needed
+  });
   
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -133,6 +143,23 @@ const Settings = () => {
     });
   };
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
