@@ -10,6 +10,21 @@ export const SESSION_STORAGE_KEYS = {
   
   /** Landing page splash screen shown flag (native app only) */
   LANDING_SPLASH_SHOWN: 'landing_splash_shown',
+  
+  /** Portfolio page splash screen shown flag (native app only) */
+  PORTFOLIO_SPLASH_SHOWN: 'portfolio_splash_shown',
+  
+  /** Analytics page splash screen shown flag (native app only) */
+  ANALYTICS_SPLASH_SHOWN: 'analytics_splash_shown',
+  
+  /** Analyzer page splash screen shown flag (native app only) */
+  ANALYZER_SPLASH_SHOWN: 'analyzer_splash_shown',
+  
+  /** Alerts page splash screen shown flag (native app only) */
+  ALERTS_SPLASH_SHOWN: 'alerts_splash_shown',
+  
+  /** Settings page splash screen shown flag (native app only) */
+  SETTINGS_SPLASH_SHOWN: 'settings_splash_shown',
 } as const;
 
 export const LOCAL_STORAGE_KEYS = {
