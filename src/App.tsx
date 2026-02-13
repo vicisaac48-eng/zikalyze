@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import { TrendingUp } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -59,16 +59,9 @@ const PageLoader = () => {
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: '#0a0f1a' }}
     >
-      <img 
-        src={zikalyzeLogo} 
-        alt="Zikalyze"
-        className="w-12 h-12 sm:w-16 sm:h-16"
-        style={{ 
-          filter: 'none', 
-          boxShadow: 'none',
-          objectFit: 'contain'
-        }}
-      />
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-16 sm:w-16 lg:h-20 lg:w-20">
+        <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
+      </div>
     </div>
   );
 };
