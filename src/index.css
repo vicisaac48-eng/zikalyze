@@ -919,28 +919,129 @@ All colors MUST be HSL.
   animation: landingSplashFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Auth loading overlay - spinning logo animation */
-@keyframes logoSpin {
+/* Auth loading overlay - Professional animations */
+
+/* Overlay fade-in */
+@keyframes authOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Professional logo spin with smooth easing */
+@keyframes logoSpinProfessional {
   from {
     transform: rotate(0deg) scale(1);
   }
   50% {
-    transform: rotate(180deg) scale(1.1);
+    transform: rotate(180deg) scale(1.05);
   }
   to {
     transform: rotate(360deg) scale(1);
   }
 }
 
-.logo-spin {
-  animation: logoSpin 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Outer ring rotation */
+@keyframes ringRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reverse ring rotation */
+@keyframes ringRotateReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* Glow pulse effect */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Logo glow breathing */
+@keyframes logoGlowBreath {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+}
+
+/* Loading dots pulse */
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* CSS Classes */
+.auth-overlay-fade-in {
+  animation: authOverlayFadeIn 0.3s ease-out forwards;
+}
+
+.logo-spin-professional {
+  animation: logoSpinProfessional 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.auth-ring-rotate {
+  animation: ringRotate 3s linear infinite;
+}
+
+.auth-ring-rotate-reverse {
+  animation: ringRotateReverse 4s linear infinite;
+}
+
+.auth-glow-pulse {
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(112, 255, 193, 0.3) 0%, transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.auth-logo-glow {
+  animation: logoGlowBreath 2.5s ease-in-out infinite;
+}
+
+.auth-dot-pulse {
+  display: inline-block;
+  animation: dotPulse 1.4s ease-in-out infinite;
+  color: hsl(var(--primary));
+  font-weight: bold;
 }
 
 .auth-loading-overlay {
-  background: rgba(10, 15, 26, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(135deg, rgba(10, 15, 26, 0.92) 0%, rgba(15, 20, 31, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
+
+/* Remove old simple animation */
 
 .logo-splash-pulse {
   animation: logoSplashPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
