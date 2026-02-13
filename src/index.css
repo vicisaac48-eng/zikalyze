@@ -663,18 +663,11 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
-  /* Web: sticky header needs padding to prevent content starting at same position as header */
+  /* Web: No gap layout - content starts at top on all screen sizes */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Web/default: Add padding equal to header height so content starts below header */
-    padding-top: var(--header-height-mobile) !important;
-  }
-
-  @media (min-width: 640px) {
-    .main-content {
-      /* Desktop: Remove padding-top for tight layout - header is sticky so content can start at top */
-      padding-top: 0 !important;
-    }
+    /* Web: No padding-top for tight layout - header is sticky so content can start at top */
+    padding-top: 0 !important;
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
