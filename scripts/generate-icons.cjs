@@ -21,10 +21,10 @@ const ICON_SIZES = {
   favicon: 192         // Web favicon
 };
 
-// Brand colors (cyan primary from Tailwind config)
+// Brand colors (mint green from branding)
 const COLORS = {
-  background: '#168076', // bg-primary (cyan-ish from theme)
-  foreground: '#ffffff', // white for icon
+  background: '#B2EBE0', // Mint green branded color
+  foreground: '#111827', // Dark gray/black for icon (better contrast on light background)
   rounded: true,
   roundRadius: 0.15      // 15% of size for rounded corners
 };
