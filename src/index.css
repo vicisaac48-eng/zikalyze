@@ -718,6 +718,27 @@ All colors MUST be HSL.
 
 /* Dashboard 3-Phase Loading Animations - Professional */
 
+/* ========================================
+   PROFESSIONAL 3-PHASE LOADING SYSTEM
+   ======================================== */
+
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .logo-spin-professional,
+  .auth-ring-rotate,
+  .auth-ring-rotate-reverse,
+  .auth-glow-pulse,
+  .auth-logo-glow,
+  .auth-dot-pulse,
+  .splash-icon,
+  .logo-splash-pulse,
+  .color-band,
+  .skeleton-shimmer,
+  .skeleton-pulse {
+    animation: none !important;
+  }
+}
+
 /* Phase 1: Splash screen with professional fade-in and pulse */
 @keyframes splashFadeIn {
   from {

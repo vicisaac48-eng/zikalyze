@@ -7,6 +7,9 @@ const DashboardSkeleton = () => {
           backgroundColor: '#0a0f1a',
           backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(112, 255, 193, 0.03) 0%, transparent 50%)'
         }}
+        role="status"
+        aria-live="polite"
+        aria-label="Loading dashboard content"
       >
         {/* Main content area skeleton with professional design */}
         <div className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6 h-full overflow-hidden">

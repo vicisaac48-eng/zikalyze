@@ -33,6 +33,9 @@ const DashboardSplash = ({ onComplete }: DashboardSplashProps) => {
         backgroundColor: '#B2EBE0',
         backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)'
       }}
+      role="status"
+      aria-live="polite"
+      aria-label="Loading dashboard"
     >
       <div className="flex flex-col items-center gap-6">
         {/* Professional icon with shadow and pulse */}

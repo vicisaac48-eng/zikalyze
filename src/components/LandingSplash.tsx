@@ -22,6 +22,9 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
         backgroundColor: '#B2EBE0',
         backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
       }}
+      role="status"
+      aria-live="polite"
+      aria-label="Loading Zikalyze application"
     >
       {/* Animated color bands - darker versions for contrast on mint background */}
       <div className="absolute inset-0 overflow-hidden opacity-30">

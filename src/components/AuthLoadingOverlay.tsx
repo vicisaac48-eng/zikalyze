@@ -17,7 +17,12 @@ export function AuthLoadingOverlay({ isVisible }: AuthLoadingOverlayProps) {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center auth-loading-overlay auth-overlay-fade-in">
+    <div 
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center auth-loading-overlay auth-overlay-fade-in"
+      role="status"
+      aria-live="polite"
+      aria-label="Authenticating your credentials"
+    >
       {/* Outer pulsing ring */}
       <div className="relative flex items-center justify-center">
         {/* Glow effect background */}
@@ -42,8 +47,10 @@ export function AuthLoadingOverlay({ isVisible }: AuthLoadingOverlayProps) {
       
       {/* Loading text */}
       <div className="mt-8 flex items-center gap-2">
-        <span className="text-sm font-medium text-primary/90">Authenticating</span>
-        <div className="flex gap-1">
+        <span className="text-sm font-medium text-primary/90" aria-label="Authentication in progress">
+          Authenticating
+        </span>
+        <div className="flex gap-1" aria-hidden="true">
           <span className="auth-dot-pulse" style={{ animationDelay: "0s" }}>.</span>
           <span className="auth-dot-pulse" style={{ animationDelay: "0.2s" }}>.</span>
           <span className="auth-dot-pulse" style={{ animationDelay: "0.4s" }}>.</span>
