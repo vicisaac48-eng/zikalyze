@@ -869,13 +869,23 @@ ${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECU
 ${confirmations.length > 0 ? confirmations.slice(0, 3).map(c => `   ${c}`).join('\n') : '   ⚠️ No confirmations yet — wait for setup'}
 ${badTradeReasons.length > 0 ? `\n⚠️ Bad Trade Signals:\n${badTradeReasons.slice(0, 3).map(r => `   ${r}`).join('\n')}` : ''}
 
-📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%${regimeConsensus.skipTrade ? ' (Capped by NN Filter)' : triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID' ? ' (Capped by Tri-Modular AVOID)' : baseQualityScore !== qualityScore ? ` (Base: ${baseQualityScore}%)` : ''}
-   └─ ${regimeConsensus.skipTrade || triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID' 
-      ? '🚫 TRADE BLOCKED — AI safety filters active' 
-      : qualityScore >= 70 ? 'HIGH QUALITY — Good setup, manage risk' 
-      : qualityScore >= 50 ? 'MODERATE — Proceed with caution' 
-      : qualityScore >= 30 ? 'LOW QUALITY — Consider smaller size or skip' 
-      : 'POOR — High probability of bad trade'}
+📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%${(() => {
+  // Helper: Determine veto reason suffix
+  if (regimeConsensus.skipTrade) return ' (Capped by NN Filter)';
+  if (triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID') return ' (Capped by Tri-Modular AVOID)';
+  if (baseQualityScore !== qualityScore) return ` (Base: ${baseQualityScore}%)`;
+  return '';
+})()}
+   └─ ${(() => {
+      // Helper: Determine quality message
+      if (regimeConsensus.skipTrade || triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID') {
+        return '🚫 TRADE BLOCKED — AI safety filters active';
+      }
+      if (qualityScore >= 70) return 'HIGH QUALITY — Good setup, manage risk';
+      if (qualityScore >= 50) return 'MODERATE — Proceed with caution';
+      if (qualityScore >= 30) return 'LOW QUALITY — Consider smaller size or skip';
+      return 'POOR — High probability of bad trade';
+    })()}
 
 ━━━ 🔮 SCENARIOS (Both Directions) ━━━━━━━━━━━━━━
 
