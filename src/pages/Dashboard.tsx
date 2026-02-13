@@ -195,7 +195,7 @@ const Dashboard = () => {
           </div>
 
           {/* Time Filter */}
-          <div className={`tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.15s' } : undefined}>
+          <div className={`flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.15s' } : undefined}>
             {["1s", "5s", "1m", "5m", "15m", "1h"].map((time) => (
               <button
                 key={time}

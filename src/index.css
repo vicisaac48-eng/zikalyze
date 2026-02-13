@@ -665,20 +665,9 @@ All colors MUST be HSL.
   /* Content area spacing to account for header */
   /* Web: No gap layout - content starts at top on all screen sizes */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
-  /* Default: No padding for "no gap" tight layout on pages without sticky tab bars */
+  /* Web: No padding-top for "no gap" tight layout - content starts immediately */
   .main-content {
     padding-top: 0 !important;
-  }
-
-  /* Only add padding when tab-bar-row exists (for sticky positioning on Dashboard/Analytics) */
-  .main-content:has(.tab-bar-row) {
-    padding-top: var(--header-height-mobile) !important;
-  }
-
-  @media (min-width: 640px) {
-    .main-content:has(.tab-bar-row) {
-      padding-top: var(--header-height-desktop) !important;
-    }
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
@@ -690,31 +679,6 @@ All colors MUST be HSL.
   @media (min-width: 640px) {
     html.android-native .main-content {
       padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
-    }
-  }
-
-  /* Sticky tab bar row - stays at top of main-content area (below fixed/sticky header) */
-  .tab-bar-row {
-    position: sticky;
-    top: var(--header-height-mobile);
-    z-index: 998;
-    /* Opaque background to prevent content showing through */
-    background-color: hsl(var(--background)) !important;
-  }
-
-  @media (min-width: 640px) {
-    .tab-bar-row {
-      top: var(--header-height-desktop);
-    }
-  }
-
-  html.android-native .tab-bar-row {
-    top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile));
-  }
-
-  @media (min-width: 640px) {
-    html.android-native .tab-bar-row {
-      top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop));
     }
   }
 }
