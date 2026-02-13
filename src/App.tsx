@@ -62,8 +62,7 @@ const PageLoader = () => {
       <img 
         src={zikalyzeLogo} 
         alt="Zikalyze"
-        width={80}
-        height={64}
+        className="w-12 h-12 sm:w-16 sm:h-16"
         style={{ 
           filter: 'none', 
           boxShadow: 'none',
