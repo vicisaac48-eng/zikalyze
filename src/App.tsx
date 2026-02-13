@@ -52,29 +52,24 @@ const queryClient = new QueryClient({
   },
 });
 
-// Professional loading fallback with fade in/out animation
+// Minimal loading fallback - no animations
 const PageLoader = () => {
-  const isNativeApp = useIsNativeApp();
-  
   return (
     <div 
-      className="fixed inset-0 flex flex-col items-center justify-center fade-in gap-6"
+      className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: '#0a0f1a' }}
     >
       <img 
         src={zikalyzeLogo} 
-        alt="Loading"
-        className="loading-logo-rect logo-rotate"
+        alt="Zikalyze"
+        width={80}
+        height={64}
         style={{ 
           filter: 'none', 
-          boxShadow: 'none' 
+          boxShadow: 'none',
+          objectFit: 'contain'
         }}
       />
-      {isNativeApp && (
-        <div className="typewriter-text">
-          Zikalyze AI
-        </div>
-      )}
     </div>
   );
 };

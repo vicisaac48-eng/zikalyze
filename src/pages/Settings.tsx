@@ -42,7 +42,7 @@ const Settings = () => {
   const { t, i18n } = useTranslation();
   const { setTheme, resolvedTheme } = useTheme();
   const { settings, saveSettings } = useSettings();
-  const { user, isSignedIn, signOut, getPrivateKey, isProcessing } = useAuth();
+  const { user, isSignedIn, signOut, getPrivateKey } = useAuth();
   const isNativeApp = useIsNativeApp();
   
   const [mounted, setMounted] = useState(false);
@@ -135,24 +135,6 @@ const Settings = () => {
 
   return (
     <>
-      {/* Loading overlay when authentication is processing (logout) */}
-      {isProcessing && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center z-50 fade-in"
-          style={{ backgroundColor: 'rgba(10, 15, 26, 0.95)' }}
-        >
-          <img 
-            src={zikalyzeLogo} 
-            alt="Loading"
-            className="loading-logo-rect logo-rotate"
-            style={{ 
-              filter: 'none', 
-              boxShadow: 'none' 
-            }}
-          />
-        </div>
-      )}
-      
       <Sidebar />
       <BottomNav />
       
