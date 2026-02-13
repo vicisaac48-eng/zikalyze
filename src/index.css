@@ -666,13 +666,18 @@ All colors MUST be HSL.
   /* Web: No gap layout - content starts at top on all screen sizes */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
   .main-content {
-    /* Web: No padding-top for tight layout - header is sticky so content can start at top */
-    padding-top: 0 !important;
+    /* Web: Add header height padding for pages with sticky elements (like tab-bar-row) */
+    padding-top: var(--header-height-mobile) !important;
+  }
+
+  @media (min-width: 640px) {
+    .main-content {
+      padding-top: var(--header-height-desktop) !important;
+    }
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* No gap - crypto cards start immediately after header for tight layout */
   html.android-native .main-content {
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
   }
@@ -683,7 +688,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* Sticky tab bar row - stays below the header */
+  /* Sticky tab bar row - stays at top of main-content area (below fixed/sticky header) */
   .tab-bar-row {
     position: sticky;
     top: var(--header-height-mobile);
