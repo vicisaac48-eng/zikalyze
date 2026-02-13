@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 const BottomNav = () => {
   const location = useLocation();
@@ -22,7 +21,6 @@ const BottomNav = () => {
   const { t } = useTranslation();
   const { signOut } = useAuth();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Shared styles for nav items
   const navItemBaseClass = "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[48px]";
@@ -36,30 +34,9 @@ const BottomNav = () => {
 
   const handleLogout = async () => {
     setShowMoreMenu(false);
-    setIsLoggingOut(true);
-    try {
-      await signOut();
-      navigate("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      setIsLoggingOut(false);
-    }
+    await signOut();
+    navigate("/");
   };
-
-  if (isLoggingOut) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center md:hidden">
-        <div className="flex flex-col items-center gap-4">
-          <img 
-            src={zikalyzeLogo} 
-            alt="Loading" 
-            className="loading-logo-rect logo-rotate"
-          />
-          <p className="text-sm text-muted-foreground">{t("sidebar.signingOut", "Signing out...")}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>

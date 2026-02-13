@@ -129,7 +129,7 @@ const AISummaryCard = ({
 
   return (
     <div className={cn(
-      "mb-4 rounded-xl border p-4 bg-gradient-to-r transition-all duration-300 animate-fade-in",
+      "mb-4 rounded-xl border p-4 bg-gradient-to-r transition-all duration-300",
       biasConfig.bgClass,
       biasConfig.borderClass
     )}>
