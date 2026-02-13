@@ -22,8 +22,8 @@ const BottomNav = () => {
   const { signOut } = useAuth();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
-  // Shared styles for nav items
-  const navItemBaseClass = "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[48px]";
+  // Shared styles for nav items with GPU-optimized animations for 60fps
+  const navItemBaseClass = "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform min-w-[48px]";
 
   const navItems = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard", "Home"), path: "/dashboard" },
@@ -54,7 +54,7 @@ const BottomNav = () => {
         <div className="fixed bottom-16 right-2 z-50 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[160px] md:hidden safe-area-inset-bottom">
           <button
             onClick={() => setShowMoreMenu(false)}
-            className="absolute -top-2 -right-2 p-1 bg-card border border-border rounded-full"
+            className="absolute -top-2 -right-2 p-1 bg-card border border-border rounded-full transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -62,7 +62,7 @@ const BottomNav = () => {
             to="/dashboard/alerts"
             onClick={() => setShowMoreMenu(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform",
               location.pathname === "/dashboard/alerts"
                 ? "bg-primary text-primary-foreground"
                 : "text-foreground hover:bg-secondary"
@@ -75,7 +75,7 @@ const BottomNav = () => {
             to="/dashboard/portfolio"
             onClick={() => setShowMoreMenu(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform",
               location.pathname === "/dashboard/portfolio"
                 ? "bg-primary text-primary-foreground"
                 : "text-foreground hover:bg-secondary"
@@ -87,7 +87,7 @@ const BottomNav = () => {
           <div className="my-1 border-t border-border" />
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform"
           >
             <LogOut className="h-4 w-4" />
             <span className="text-sm">{t("sidebar.logout", "Sign Out")}</span>
