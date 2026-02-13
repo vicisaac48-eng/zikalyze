@@ -22,8 +22,8 @@ const BottomNav = () => {
   const { signOut } = useAuth();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
-  // Shared styles for nav items with GPU-optimized animations for 60fps and mint green branded active state
-  const navItemBaseClass = "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:bg-[#B2EBE0] active:text-gray-900 active:duration-100 will-change-transform min-w-[48px]";
+  // Shared styles for nav items with GPU-optimized animations for 60fps
+  const navItemBaseClass = "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:duration-100 will-change-transform min-w-[48px]";
 
   const navItems = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard", "Home"), path: "/dashboard" },
