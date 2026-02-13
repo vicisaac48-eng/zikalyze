@@ -1,4 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { 
+  ExponentialBackoff, 
+  NetworkQualityDetector, 
+  HeartbeatMonitor,
+  DataCache 
+} from "@/lib/websocket-resilience";
 
 interface LivePriceData {
   price: number;
@@ -19,9 +25,7 @@ const WS_PROXY_URL = `wss://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/cryp
 // Binance direct WebSocket as fallback
 const BINANCE_WS_URL = "wss://stream.binance.com:9443/ws";
 
-const CONNECTION_TIMEOUT = 8000; // Reduced from 10s for faster timeout detection
-const RECONNECT_DELAY = 1000; // Reduced from 2000ms for faster reconnection
-const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_RECONNECT_ATTEMPTS = 10; // Increased for better resilience
 
 export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fallbackChange?: number) => {
   const [liveData, setLiveData] = useState<LivePriceData>({
@@ -40,8 +44,14 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
-  const reconnectAttemptsRef = useRef(0);
   const useProxyRef = useRef(true); // Try proxy first
+  const connectionStartTimeRef = useRef<number>(0);
+
+  // Resilience utilities
+  const backoffRef = useRef(new ExponentialBackoff(1000, 60000, 0.3));
+  const networkQualityRef = useRef(new NetworkQualityDetector());
+  const heartbeatRef = useRef(new HeartbeatMonitor(30000, 60000));
+  const dataCacheRef = useRef(new DataCache<LivePriceData>(300000));
 
   const cleanup = useCallback(() => {
     if (connectionTimeoutRef.current) {
@@ -52,6 +62,7 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    heartbeatRef.current.stop();
     if (wsRef.current) {
       try {
         wsRef.current.onclose = null;
@@ -85,19 +96,21 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
       sourceName = 'Binance (Direct)';
     }
 
-    console.log(`[LivePrice] Connecting to ${sourceName} for ${symbol}`);
+    console.log(`[LivePrice] Connecting to ${sourceName} for ${symbol} (attempt ${backoffRef.current.getAttempt() + 1})`);
+    connectionStartTimeRef.current = Date.now();
 
     try {
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
-      // Connection timeout
+      // Adaptive connection timeout based on network quality
+      const timeout = networkQualityRef.current.getRecommendedTimeout();
       connectionTimeoutRef.current = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
-          console.log(`[LivePrice] Connection timeout for ${symbol}`);
+          console.log(`[LivePrice] Connection timeout for ${symbol} after ${timeout}ms`);
           ws.close();
         }
-      }, CONNECTION_TIMEOUT);
+      }, timeout);
 
       ws.onopen = () => {
         if (!isMountedRef.current) return;
@@ -106,8 +119,15 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
           clearTimeout(connectionTimeoutRef.current);
         }
 
-        console.log(`[LivePrice] Connected to ${sourceName} for ${symbol}`);
-        reconnectAttemptsRef.current = 0;
+        // Record connection time for network quality
+        const connectionTime = Date.now() - connectionStartTimeRef.current;
+        networkQualityRef.current.recordConnectionTime(connectionTime);
+        const networkQuality = networkQualityRef.current.getQuality();
+        
+        console.log(`[LivePrice] Connected to ${sourceName} for ${symbol} in ${connectionTime}ms (network: ${networkQuality})`);
+        
+        // Reset backoff on successful connection
+        backoffRef.current.reset();
         
         setLiveData(prev => ({ 
           ...prev, 
@@ -115,17 +135,40 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
           isConnecting: false,
           source: sourceName,
         }));
+
+        // Start heartbeat monitoring
+        heartbeatRef.current.start({
+          onTimeout: () => {
+            console.warn(`[LivePrice] Heartbeat timeout for ${symbol}, reconnecting...`);
+            ws.close(); // Will trigger onclose and reconnection
+          },
+          onHeartbeat: () => {
+            // Send ping if WebSocket supports it (some servers respond to any message)
+            try {
+              if (ws.readyState === WebSocket.OPEN) {
+                // Most crypto WebSockets don't need explicit pings, 
+                // they keep alive automatically or respond to data subscription
+                heartbeatRef.current.recordPong();
+              }
+            } catch (e) {
+              console.warn('[LivePrice] Heartbeat send failed:', e);
+            }
+          }
+        });
       };
 
       ws.onmessage = (event) => {
         if (!isMountedRef.current) return;
+        
+        // Record pong for heartbeat
+        heartbeatRef.current.recordPong();
         
         try {
           const data = JSON.parse(event.data);
           
           // Handle proxy format
           if (data.type === 'ticker' && data.source === 'binance') {
-            setLiveData({
+            const newData = {
               price: data.price,
               change24h: data.change24h,
               high24h: data.high24h,
@@ -135,7 +178,10 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
               isLive: true,
               isConnecting: false,
               source: 'Binance (Proxy)',
-            });
+            };
+            setLiveData(newData);
+            // Cache the data
+            dataCacheRef.current.set(symbol, newData);
             return;
           }
           
@@ -147,7 +193,7 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
           
           // Handle direct Binance format
           if (data.c) {
-            setLiveData({
+            const newData = {
               price: parseFloat(data.c),
               change24h: parseFloat(data.P),
               high24h: parseFloat(data.h),
@@ -157,7 +203,10 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
               isLive: true,
               isConnecting: false,
               source: 'Binance (Direct)',
-            });
+            };
+            setLiveData(newData);
+            // Cache the data
+            dataCacheRef.current.set(symbol, newData);
           }
         } catch {
           // Silent parse error
@@ -172,54 +221,62 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
         if (connectionTimeoutRef.current) {
           clearTimeout(connectionTimeoutRef.current);
         }
+        heartbeatRef.current.stop();
         if (!isMountedRef.current) return;
         
         console.log(`[LivePrice] Disconnected from ${sourceName} for ${symbol}`);
-        reconnectAttemptsRef.current++;
         
-        // Switch between proxy and direct on failures
-        if (reconnectAttemptsRef.current >= 2 && useProxyRef.current) {
-          console.log(`[LivePrice] Switching to direct Binance connection`);
-          useProxyRef.current = false;
-          reconnectAttemptsRef.current = 0;
-        } else if (reconnectAttemptsRef.current >= 2 && !useProxyRef.current) {
-          // Both failed, try proxy again
-          useProxyRef.current = true;
-          reconnectAttemptsRef.current = 0;
+        // Try cached data during reconnection
+        const cachedData = dataCacheRef.current.get(symbol);
+        if (cachedData) {
+          const cacheAge = dataCacheRef.current.getAge(symbol);
+          console.log(`[LivePrice] Using cached data (${Math.round((cacheAge || 0) / 1000)}s old) while reconnecting`);
+          setLiveData({ ...cachedData, isLive: false, isConnecting: true, source: 'Cached' });
         }
         
-        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          setLiveData(prev => ({ 
-            ...prev, 
-            isLive: false, 
-            isConnecting: true,
-          }));
-          
-          // Balanced exponential backoff (still faster than original but safer)
-          const delay = RECONNECT_DELAY * Math.min(reconnectAttemptsRef.current + 1, 3);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) connect();
-          }, delay);
-        } else {
-          // Max attempts reached - use fallback data
+        // Check if should retry
+        if (backoffRef.current.getAttempt() >= MAX_RECONNECT_ATTEMPTS) {
+          console.warn(`[LivePrice] Max reconnection attempts reached for ${symbol}`);
           setLiveData(prev => ({ 
             ...prev, 
             isLive: false, 
             isConnecting: false,
             price: fallbackPrice || prev.price,
             change24h: fallbackChange || prev.change24h,
-            source: 'Cached',
+            source: 'Offline',
           }));
           
-          // Retry after moderate delay (balanced from 30s to 20s)
+          // Final retry after long delay
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
-              reconnectAttemptsRef.current = 0;
+              backoffRef.current.reset();
               useProxyRef.current = true;
               connect();
             }
-          }, 20000);
+          }, 60000); // 1 minute
+          return;
         }
+        
+        // Switch between proxy and direct on failures
+        if (backoffRef.current.getAttempt() === 3 && useProxyRef.current) {
+          console.log(`[LivePrice] Switching to direct Binance connection`);
+          useProxyRef.current = false;
+        } else if (backoffRef.current.getAttempt() === 6 && !useProxyRef.current) {
+          console.log(`[LivePrice] Switching back to proxy connection`);
+          useProxyRef.current = true;
+        }
+        
+        setLiveData(prev => ({ 
+          ...prev, 
+          isLive: false, 
+          isConnecting: true,
+        }));
+        
+        // Exponential backoff with jitter
+        const delay = backoffRef.current.getNextDelay();
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) connect();
+        }, delay);
       };
     } catch (e) {
       console.log(`[LivePrice] Failed to create WebSocket:`, e);
@@ -230,15 +287,16 @@ export const useBinanceLivePrice = (symbol: string, fallbackPrice?: number, fall
         isConnecting: true,
       }));
       
+      const delay = backoffRef.current.getNextDelay();
       reconnectTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) connect();
-      }, RECONNECT_DELAY);
+      }, delay);
     }
   }, [symbol, fallbackPrice, fallbackChange, cleanup]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    reconnectAttemptsRef.current = 0;
+    backoffRef.current.reset();
     useProxyRef.current = true;
     
     // Small delay before connecting

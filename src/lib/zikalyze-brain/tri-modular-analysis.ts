@@ -808,16 +808,19 @@ export function generateSimplifiedSummary(
   // Check if trade should be skipped (NN Filter or other safety filters failed)
   const isTradeSkipped = skipTradeInfo?.skipTrade ?? false;
   
-  // Convert direction to simple action - but override if trade is skipped
+  // Check if Tri-Modular verdict is AVOID (overrides everything else)
+  const isTriModularAvoid = humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID';
+  
+  // Convert direction to simple action - but override if trade is skipped OR tri-modular says AVOID
   let action: string;
   let displayConfidence: string;
   let displayPercentage: number;
   
-  if (isTradeSkipped) {
+  if (isTradeSkipped || isTriModularAvoid) {
     action = '🔴 NO TRADE / WAITING';
-    // When trade is skipped, show the skip reason instead of misleading direction
-    displayConfidence = 'WAITING';
-    displayPercentage = 0; // No confidence when skipping
+    // When trade is skipped or avoided, show consistent messaging
+    displayConfidence = isTriModularAvoid ? 'AVOID' : 'WAITING';
+    displayPercentage = 0; // No confidence when skipping/avoiding
   } else {
     action = weightedConfidenceScore.direction === 'LONG' 
       ? '📈 Consider BUYING' 
@@ -833,13 +836,17 @@ export function generateSimplifiedSummary(
     displayPercentage = weightedConfidenceScore.percentage;
   }
   
-  // Generate skip reason explanation for beginners if trade is skipped
-  const skipExplanation = isTradeSkipped && skipTradeInfo?.skipReason
-    ? `\n🛑 WHY NO TRADE:\n   ${skipTradeInfo.skipReason}${
-        skipTradeInfo.neuralConfidence !== undefined
-          ? `\n   (AI confidence: ${(skipTradeInfo.neuralConfidence * 100).toFixed(0)}% - needs 51% to proceed)`
-          : ''
-      }\n`
+  // Generate skip reason explanation for beginners if trade is skipped or avoided
+  const skipExplanation = (isTradeSkipped || isTriModularAvoid)
+    ? isTriModularAvoid && !isTradeSkipped
+      ? `\n🛑 WHY NO TRADE:\n   Tri-Modular Analysis recommends AVOID\n   Confidence too low (${weightedConfidenceScore.percentage}%) - needs 50%+ to proceed\n   ${humanInTheLoopVerdict.reasoning}\n`
+      : isTradeSkipped && skipTradeInfo?.skipReason
+        ? `\n🛑 WHY NO TRADE:\n   ${skipTradeInfo.skipReason}${
+            skipTradeInfo.neuralConfidence !== undefined
+              ? `\n   (AI confidence: ${(skipTradeInfo.neuralConfidence * 100).toFixed(0)}% - needs 51% to proceed)`
+              : ''
+          }\n`
+        : '\n🛑 WHY NO TRADE:\n   AI safety filters recommend avoiding this trade\n'
     : '';
   
   // Simple explanation of market mood
@@ -866,7 +873,7 @@ export function generateSimplifiedSummary(
   
   // Simple kill switch explanation
   const exitPrice = killSwitchLevel.price.toFixed(decimals);
-  const exitExplanation = isTradeSkipped
+  const exitExplanation = isTradeSkipped || isTriModularAvoid
     ? 'Wait for better market conditions before entering'
     : weightedConfidenceScore.direction === 'LONG'
       ? `If price drops below $${exitPrice}, consider exiting`

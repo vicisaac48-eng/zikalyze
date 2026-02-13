@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useBotProtection } from "@/hooks/useBotProtection";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { toast } from "sonner";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 // Helper function to format retry time consistently
 const formatRetryTime = (seconds: number): string => {
@@ -51,6 +52,7 @@ const DemoModeAuth = () => {
 const SignUpForm = () => {
   const navigate = useNavigate();
   const { signUp, isProcessing } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -179,7 +181,11 @@ const SignUpForm = () => {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4">
+    <>
+      {/* Auth loading overlay - native app only */}
+      <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
+      
+      <form onSubmit={handleSignUp} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signup-username">Username</Label>
         <div className="relative">
@@ -267,6 +273,7 @@ const SignUpForm = () => {
         {isBlocked ? "Access Temporarily Blocked" : isProcessing ? "Creating Wallet..." : "Create Wallet"}
       </Button>
     </form>
+    </>
   );
 };
 
@@ -274,6 +281,7 @@ const SignUpForm = () => {
 const SignInForm = () => {
   const navigate = useNavigate();
   const { signInWithKey, recoverWallet, isProcessing, isSignedIn } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [mode, setMode] = useState<"key" | "recover">("key");
   const [privateKey, setPrivateKey] = useState("");
   const [username, setUsername] = useState("");
@@ -347,7 +355,11 @@ const SignInForm = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <>
+      {/* Auth loading overlay - native app only */}
+      <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
+      
+      <div className="space-y-4">
       <div className="flex gap-2 p-1 bg-muted rounded-lg">
         <button
           type="button"
@@ -500,13 +512,14 @@ const SignInForm = () => {
         </form>
       )}
     </div>
+    </>
   );
 };
 
 const Auth = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isSignedIn, isProcessing } = useAuth();
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     if (isSignedIn) {
@@ -515,27 +528,9 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <div className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top">
-      {/* Loading overlay when authentication is processing */}
-      {isProcessing && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center z-50 fade-in"
-          style={{ backgroundColor: 'rgba(10, 15, 26, 0.95)' }}
-        >
-          <img 
-            src={zikalyzeLogo} 
-            alt="Loading"
-            className="loading-logo-rect logo-rotate"
-            style={{ 
-              filter: 'none', 
-              boxShadow: 'none' 
-            }}
-          />
-        </div>
-      )}
-      
+    <main className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top">
       {/* Background effects - reduced on mobile for performance */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
         <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
       </div>
@@ -582,7 +577,7 @@ const Auth = () => {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

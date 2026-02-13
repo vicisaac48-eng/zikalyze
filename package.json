@@ -10,13 +10,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:health": "npx playwright test",
+    "icons:generate": "node scripts/generate-icons.cjs",
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",
     "android:build": "npm run build && npx cap sync android",
     "android:run": "npm run build && npx cap sync android && npx cap run android"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": "22.x"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.2",
@@ -92,6 +93,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "canvas": "^3.2.1",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

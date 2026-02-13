@@ -663,23 +663,15 @@ All colors MUST be HSL.
   }
 
   /* Content area spacing to account for header */
-  /* Web: sticky header needs padding to prevent content starting at same position as header */
+  /* Web: No gap layout - content starts at top on all screen sizes */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
+  /* Web: No padding-top for "no gap" tight layout - content starts immediately */
   .main-content {
-    /* Web/default: Add padding equal to header height so content starts below header */
-    padding-top: var(--header-height-mobile) !important;
-  }
-
-  @media (min-width: 640px) {
-    .main-content {
-      /* Desktop: Remove padding-top for tight layout - header is sticky so content can start at top */
-      padding-top: 0 !important;
-    }
+    padding-top: 0 !important;
   }
 
   /* Android-specific: Add safe-area-inset-top to account for fixed header position */
   /* Header is at top: env(safe-area-inset-top), so content needs safe-area + header-height */
-  /* No gap - crypto cards start immediately after header for tight layout */
   html.android-native .main-content {
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile)) !important;
   }
@@ -689,144 +681,365 @@ All colors MUST be HSL.
       padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop)) !important;
     }
   }
+}
 
-  /* Sticky tab bar row - stays below the header */
-  .tab-bar-row {
-    position: sticky;
-    top: var(--header-height-mobile);
-    z-index: 998;
-    /* Opaque background to prevent content showing through */
-    background-color: hsl(var(--background)) !important;
-  }
+/* Dashboard 3-Phase Loading Animations - Professional */
 
-  @media (min-width: 640px) {
-    .tab-bar-row {
-      top: var(--header-height-desktop);
-    }
-  }
+/* ========================================
+   PROFESSIONAL 3-PHASE LOADING SYSTEM
+   ======================================== */
 
-  html.android-native .tab-bar-row {
-    top: calc(env(safe-area-inset-top, 0px) + var(--header-height-mobile));
-  }
-
-  @media (min-width: 640px) {
-    html.android-native .tab-bar-row {
-      top: calc(env(safe-area-inset-top, 0px) + var(--header-height-desktop));
-    }
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .logo-spin-professional,
+  .auth-ring-rotate,
+  .auth-ring-rotate-reverse,
+  .auth-glow-pulse,
+  .auth-logo-glow,
+  .auth-dot-pulse,
+  .splash-icon,
+  .logo-splash-pulse,
+  .color-band,
+  .skeleton-shimmer,
+  .skeleton-pulse {
+    animation: none !important;
   }
 }
 
-/* Professional fade in/fade out animations for loading states */
-@keyframes fadeIn {
+/* Phase 1: Splash screen with professional fade-in and pulse */
+@keyframes splashFadeIn {
   from {
     opacity: 0;
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.3s ease-in forwards;
-}
-
-.fade-out {
-  animation: fadeOut 0.3s ease-out forwards;
-}
-
-/* Smooth logo pulse animation */
-@keyframes logoPulse {
+@keyframes iconPulse {
   0%, 100% {
-    opacity: 0.6;
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Phase 1 to 2 transition: Splash fade-out for smooth transition */
+@keyframes splashFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Phase 2: Skeleton fade-in to overlap with splash fade-out */
+@keyframes skeletonFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.splash-fade-in {
+  animation: splashFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.splash-fade-out {
+  animation: splashFadeOut 0.2s ease-out forwards;
+}
+
+.splash-icon {
+  animation: iconPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  filter: drop-shadow(0 4px 12px rgba(17, 24, 39, 0.2));
+}
+
+/* Phase 2: Professional diagonal shimmer effect for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(200%) translateY(200%) rotate(45deg);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0.03) 50%, 
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.skeleton-fade-in {
+  animation: skeletonFadeIn 0.2s ease-in forwards;
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Phase 3: Professional staggered card reveal with slide and fade */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-reveal {
+  animation: slideUpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Smooth overlay fade for phase transitions */
+@keyframes overlayFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.overlay-fade-out {
+  animation: overlayFade 0.3s ease-out forwards;
+}
+
+/* Professional skeleton pulse (subtle breathing effect) */
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 2s ease-in-out infinite;
+}
+
+/* Landing Splash Screen - Color Band Animations (Native Mobile App Only) */
+
+/* Splash fade-in with scale */
+@keyframes landingSplashFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animated color bands - sliding effect */
+@keyframes colorBandSlide {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+/* Logo pulse for splash */
+@keyframes logoSplashPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.95;
+  }
+}
+
+/* Gradient shimmer effect */
+@keyframes gradientShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.landing-splash-fade-in {
+  animation: landingSplashFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Auth loading overlay - Professional animations */
+
+/* Overlay fade-in */
+@keyframes authOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Professional logo spin with smooth easing */
+@keyframes logoSpinProfessional {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Outer ring rotation */
+@keyframes ringRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reverse ring rotation */
+@keyframes ringRotateReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* Glow pulse effect */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.3;
     transform: scale(1);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.05);
+    opacity: 0.6;
+    transform: scale(1.1);
   }
 }
 
-.logo-pulse {
-  animation: logoPulse 2s ease-in-out infinite;
-}
-
-/* Professional rotation animation for loading states */
-/* Professional logo rotation with scale - rotates in small, out normal */
-@keyframes logoRotate {
-  0% {
-    transform: rotate(0deg) scale(0.6);
-  }
-  50% {
-    transform: rotate(180deg) scale(1);
-  }
-  100% {
-    transform: rotate(360deg) scale(0.6);
-  }
-}
-
-.logo-rotate {
-  animation: logoRotate 2s ease-in-out infinite;
-}
-
-/* Rectangular loading logo shape */
-.loading-logo-rect {
-  width: 80px;
-  height: 64px;
-  object-fit: contain;
-}
-
-/* Professional typewriter animation for loading text */
-@keyframes typewriter {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-@keyframes blink-caret {
+/* Logo glow breathing */
+@keyframes logoGlowBreath {
   0%, 100% {
-    border-color: rgba(112, 255, 193, 0.8);
+    opacity: 0.4;
+    transform: scale(1);
   }
   50% {
-    border-color: transparent;
+    opacity: 0.7;
+    transform: scale(1.2);
   }
 }
 
-@keyframes fadeInText {
-  from {
-    opacity: 0;
+/* Loading dots pulse */
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
   }
-  to {
+  50% {
     opacity: 1;
+    transform: translateY(-4px);
   }
 }
 
-.typewriter-text {
-  overflow: hidden;
-  border-right: 2px solid rgba(112, 255, 193, 0.8);
-  white-space: nowrap;
-  margin: 0 auto;
-  letter-spacing: 0.08em;
-  animation: 
-    fadeInText 0.3s ease-in,
-    typewriter 2s steps(12, end) 0.4s forwards,
-    blink-caret 1s step-end infinite;
-  width: 0;
+/* CSS Classes */
+.auth-overlay-fade-in {
+  animation: authOverlayFadeIn 0.3s ease-out forwards;
+}
+
+.logo-spin-professional {
+  animation: logoSpinProfessional 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.auth-ring-rotate {
+  animation: ringRotate 3s linear infinite;
+}
+
+.auth-ring-rotate-reverse {
+  animation: ringRotateReverse 4s linear infinite;
+}
+
+.auth-glow-pulse {
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(112, 255, 193, 0.3) 0%, transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.auth-logo-glow {
+  animation: logoGlowBreath 2.5s ease-in-out infinite;
+}
+
+.auth-dot-pulse {
   display: inline-block;
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: #70ffc1;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  text-shadow: 0 0 20px rgba(112, 255, 193, 0.3);
+  animation: dotPulse 1.4s ease-in-out infinite;
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+
+.auth-loading-overlay {
+  background: linear-gradient(135deg, rgba(10, 15, 26, 0.92) 0%, rgba(15, 20, 31, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Remove old simple animation */
+
+.logo-splash-pulse {
+  animation: logoSplashPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.color-band {
+  animation: colorBandSlide 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.gradient-shimmer {
+  background-size: 200% 200%;
+  animation: gradientShimmer 3s ease infinite;
 }

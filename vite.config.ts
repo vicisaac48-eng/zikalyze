@@ -14,23 +14,66 @@ export default defineConfig(({ mode }) => ({
   },
   // Build optimizations for speed and stability
   build: {
-    // Increase chunk size limit to reduce warnings
-    chunkSizeWarningLimit: 600,
+    // Reduce chunk size warning limit to 500KB (more aggressive splitting)
+    chunkSizeWarningLimit: 500,
     // Optimize chunking for better caching and faster initial load
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks(id) {
           // Vendor chunks - split large dependencies for better caching
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
-          'vendor-charts': ['recharts'],
-          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
-          // Crypto hooks in separate chunk for better browser caching
-          // Even though loaded at app startup, this enables:
-          // - Better cache invalidation (app updates don't invalidate crypto code)
-          // - Parallel downloading of chunks
-          // - Reduced main bundle size
-          'crypto-hooks': ['@/hooks/useCryptoPrices'],
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            // Radix UI components
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            // Charts library
+            if (id.includes('recharts') || id.includes('victory')) {
+              return 'vendor-charts';
+            }
+            // Supabase and auth - can be large, separate chunk
+            if (id.includes('@supabase') || id.includes('supabase-js')) {
+              return 'vendor-supabase';
+            }
+            // Date/time utilities
+            if (id.includes('date-fns')) {
+              return 'vendor-date';
+            }
+            // Lucide icons - large icon library
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            // Class utilities (small, can group together)
+            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
+              return 'vendor-class-utils';
+            }
+            // Animation libraries
+            if (id.includes('framer-motion')) {
+              return 'vendor-animation';
+            }
+            // Form libraries
+            if (id.includes('react-hook-form') || id.includes('@hookform')) {
+              return 'vendor-forms';
+            }
+            // Tanstack query (react-query)
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            // Don't create vendor-other, let Vite handle remaining dependencies
+            // This prevents one huge chunk
+          }
+          
+          // Application code splitting - simplified to avoid circular dependencies
+          // Zikalyze brain (AI/trading logic) - separate chunk for better caching
+          if (id.includes('/lib/zikalyze-brain/')) {
+            return 'app-zikalyze-brain';
+          }
+          
+          // Don't manually split components and hooks - let Vite's automatic splitting handle it
+          // This prevents circular chunk dependencies between dashboard components, common components, and crypto hooks
         }
       }
     },

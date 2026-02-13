@@ -3,6 +3,7 @@ import { X, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -25,7 +26,7 @@ export const PWAInstallBanner = () => {
     }
 
     // Check if user dismissed the banner before
-    const dismissed = localStorage.getItem("pwa-install-dismissed");
+    const dismissed = localStorage.getItem(LOCAL_STORAGE_KEYS.PWA_INSTALL_DISMISSED);
     if (dismissed) {
       const dismissedTime = parseInt(dismissed, 10);
       // Show again after 7 days
@@ -69,7 +70,7 @@ export const PWAInstallBanner = () => {
 
   const handleDismiss = () => {
     setShowBanner(false);
-    localStorage.setItem("pwa-install-dismissed", Date.now().toString());
+    localStorage.setItem(LOCAL_STORAGE_KEYS.PWA_INSTALL_DISMISSED, Date.now().toString());
   };
 
   if (!showBanner || isInstalled) {

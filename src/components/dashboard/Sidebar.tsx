@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,14 +13,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { t } = useTranslation();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard" },
@@ -33,25 +30,9 @@ const Sidebar = () => {
   ];
 
   const handleLogout = async () => {
-    setIsLoggingOut(true);
     await signOut();
     navigate("/");
   };
-
-  if (isLoggingOut) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <img 
-            src={zikalyzeLogo} 
-            alt="Loading" 
-            className="loading-logo-rect logo-rotate"
-          />
-          <p className="text-sm text-muted-foreground">{t("sidebar.signingOut")}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 z-40 h-[100dvh] flex-col items-center border-r border-border bg-card pt-4 pb-20 w-16 lg:w-64 lg:pt-6 lg:pb-24 safe-area-inset-top">

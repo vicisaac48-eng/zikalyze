@@ -8,7 +8,8 @@ import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { toast } from "sonner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import LandingSplash from "@/components/LandingSplash";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -17,6 +18,22 @@ const Landing = () => {
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
   const [userCount, setUserCount] = useState<number | null>(null);
+  
+  // Splash screen state - only for native mobile app
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    // Only show splash on native app
+    if (!isNativeApp) return false;
+    
+    // Check if splash has been shown in this session
+    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
+    return !hasSeenSplash;
+  });
+
+  // Handle splash completion
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
+  }, []);
 
   // Handle navigation - direct navigation for auth, loading for dashboard
   const handleNavigate = useCallback((path: string) => {
@@ -81,6 +98,11 @@ const Landing = () => {
       navigate("/dashboard");
     }
   }, [navigate, user, authLoading]);
+
+  // Show splash screen on native app first visit
+  if (showSplash) {
+    return <LandingSplash onComplete={handleSplashComplete} />;
+  }
 
   return (
     <div className="h-full min-h-screen overflow-y-auto bg-background safe-area-inset-top">
@@ -336,7 +358,9 @@ const Landing = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <img src={zikalyzeLogo} alt="Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
+                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary sm:h-8 sm:w-8">
+                          <TrendingUp className="h-3 w-3 text-primary-foreground sm:h-4 sm:w-4" />
+                        </div>
                         <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg">Dashboard</span>
                       </div>
                       <div className="flex items-center gap-2">

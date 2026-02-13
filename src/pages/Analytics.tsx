@@ -67,13 +67,13 @@ const Analytics = () => {
           <div className="min-h-screen bg-background">
             <div className="main-content p-3 space-y-3 sm:p-4 sm:space-y-4 md:p-6 md:space-y-6">
           {/* Timeframe Filter */}
-          <div className="tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3 custom-scrollbar">
             {timeframes.map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap sm:px-4 sm:py-2 sm:text-sm",
+                  "rounded-lg px-4 py-2 text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 sm:px-5 sm:py-2.5",
                   timeframe === tf
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -86,54 +86,54 @@ const Analytics = () => {
 
           {/* Market Overview Stats */}
           <div className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <PieChart className="h-5 w-5 text-primary" />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-primary/20 flex-shrink-0">
+                  <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.totalMarketCap")}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground break-words">{t("analytics.totalMarketCap")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
                 {currencySymbol}{loading ? "..." : (totalMarketCap / 1e12).toFixed(2)}T
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-chart-cyan/20">
-                  <BarChart3 className="h-5 w-5 text-chart-cyan" />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-chart-cyan/20 flex-shrink-0">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-chart-cyan" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.volume24h")}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground break-words">{t("analytics.volume24h")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
                 {currencySymbol}{loading ? "..." : (totalVolume / 1e9).toFixed(2)}B
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className={cn("p-2 rounded-lg", avgChange >= 0 ? "bg-success/20" : "bg-destructive/20")}>
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className={cn("p-2 rounded-lg flex-shrink-0", avgChange >= 0 ? "bg-success/20" : "bg-destructive/20")}>
                   {avgChange >= 0 ? (
-                    <TrendingUp className="h-5 w-5 text-success" />
+                    <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
                   ) : (
-                    <TrendingDown className="h-5 w-5 text-destructive" />
+                    <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.avgChange24h")}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground break-words">{t("analytics.avgChange24h")}</span>
               </div>
-              <div className={cn("text-2xl font-bold", avgChange >= 0 ? "text-success" : "text-destructive")}>
+              <div className={cn("text-xl sm:text-2xl font-bold", avgChange >= 0 ? "text-success" : "text-destructive")}>
                 {avgChange >= 0 ? "+" : ""}{avgChange.toFixed(2)}%
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-lg bg-warning/20">
-                  <Activity className="h-5 w-5 text-warning" />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-warning/20 flex-shrink-0">
+                  <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
                 </div>
-                <span className="text-sm text-muted-foreground">{t("analytics.trackedAssets")}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground break-words">{t("analytics.trackedAssets")}</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : prices.length}
               </div>
             </div>
