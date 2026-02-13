@@ -23,13 +23,6 @@ interface UseDashboardLoadingOptions {
    * Default: 400ms for professional smooth transition
    */
   skeletonDelay?: number;
-  
-  /**
-   * Skip splash phase and start directly at skeleton
-   * Used for non-Dashboard pages that shouldn't show splash
-   * Default: false
-   */
-  skipSplash?: boolean;
 }
 
 /**
@@ -48,8 +41,7 @@ interface UseDashboardLoadingOptions {
 export function useDashboardLoading({
   sessionKey,
   isDataReady = true,
-  skeletonDelay = 400,
-  skipSplash = false
+  skeletonDelay = 400
 }: UseDashboardLoadingOptions) {
   const isNativeApp = useIsNativeApp();
   
@@ -58,13 +50,7 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // If skipSplash is true, start at skeleton (for non-Dashboard pages)
-    if (skipSplash) {
-      const hasSeenPage = sessionStorage.getItem(sessionKey);
-      return hasSeenPage ? 'revealed' : 'skeleton';
-    }
-    
-    // Otherwise, start at splash (for Dashboard)
+    // Check if splash has been shown in this session
     const hasSeenSplash = sessionStorage.getItem(sessionKey);
     return hasSeenSplash ? 'revealed' : 'splash';
   });
@@ -84,15 +70,11 @@ export function useDashboardLoading({
       // Professional delay ensures skeleton is visible for smooth UX
       const timer = setTimeout(() => {
         setLoadingPhase('revealed');
-        // Mark as seen for pages that skip splash
-        if (skipSplash) {
-          sessionStorage.setItem(sessionKey, 'true');
-        }
       }, skeletonDelay);
       
       return () => clearTimeout(timer);
     }
-  }, [isNativeApp, loadingPhase, isDataReady, skeletonDelay, skipSplash, sessionKey]);
+  }, [isNativeApp, loadingPhase, isDataReady, skeletonDelay]);
   
   return {
     loadingPhase,

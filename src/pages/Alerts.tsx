@@ -24,6 +24,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -45,12 +46,11 @@ const Alerts = () => {
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
   
-  // 2-Phase loading state (skeleton → revealed) - ONLY for native mobile app
+  // 3-Phase loading state - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.ALERTS_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400,
-    skipSplash: true
+    skeletonDelay: 400
   });
   
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
@@ -167,7 +167,12 @@ const Alerts = () => {
     }
   };
 
-  // Show skeleton loader (native app only, no splash)
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -178,7 +183,7 @@ const Alerts = () => {
     );
   }
 
-  // Show actual content
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />

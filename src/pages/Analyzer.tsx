@@ -12,6 +12,7 @@ import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -20,12 +21,11 @@ const Analyzer = () => {
   const { getPriceBySymbol, loading, isLive, refetch, prices } = usePriceData();
   const { t } = useTranslation();
   
-  // 2-Phase loading state (skeleton → revealed) - ONLY for native mobile app
+  // 3-Phase loading state - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.ANALYZER_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400,
-    skipSplash: true
+    skeletonDelay: 400
   });
 
   // Pull-to-refresh handler
@@ -48,7 +48,12 @@ const Analyzer = () => {
 
   const selected = cryptoData[selectedCrypto];
 
-  // Show skeleton loader (native app only, no splash)
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -59,7 +64,7 @@ const Analyzer = () => {
     );
   }
 
-  // Show actual content
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
