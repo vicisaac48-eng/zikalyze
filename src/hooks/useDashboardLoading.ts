@@ -36,9 +36,12 @@ interface UseDashboardLoadingOptions {
  * Only applies to native mobile apps. Web shows instant content.
  * 
  * Professional Navigation-Aware Loading:
- * - First visit ever: Shows splash + skeleton + content
- * - First navigation: Shows skeleton + content (if splash already seen)
+ * - First visit ever (Landing page): Shows splash + skeleton + content
+ * - First navigation (Dashboard pages): Shows skeleton + content ONLY (no splash)
  * - Subsequent visits: Shows content instantly
+ * 
+ * This ensures navigation buttons never trigger splash screen after initial app load.
+ * The splash is shown once globally on landing page, then all dashboard pages skip it.
  * 
  * Usage:
  * ```tsx
@@ -63,16 +66,18 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // Check if splash has been shown and if page has been visited
-    const hasSeenSplash = sessionStorage.getItem(sessionKey);
+    // Check if ANY splash has been shown (landing or page-specific)
+    // This ensures navigation buttons never show splash after initial app load
+    const hasSeenAnySplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN) || 
+                             sessionStorage.getItem(sessionKey);
     const hasBeenVisited = sessionStorage.getItem(visitedKey);
     
-    // Professional loading logic:
-    // 1. Never seen splash → show splash (first time ever)
-    // 2. Seen splash but not visited → show skeleton (first navigation)
-    // 3. Already visited → show content instantly (subsequent visits)
-    if (!hasSeenSplash) {
-      return 'splash'; // First time ever - show splash
+    // Professional loading logic for navigation:
+    // 1. Never seen ANY splash → show splash (first time ever on landing)
+    // 2. Seen splash but not visited this page → show skeleton only (first navigation)
+    // 3. Already visited this page → show content instantly (subsequent visits)
+    if (!hasSeenAnySplash) {
+      return 'splash'; // First time ever - show splash (only on landing page)
     } else if (!hasBeenVisited) {
       return 'skeleton'; // First navigation - show skeleton only
     } else {

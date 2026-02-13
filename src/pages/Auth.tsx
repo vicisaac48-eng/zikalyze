@@ -9,7 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useBotProtection } from "@/hooks/useBotProtection";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
+import AuthSkeleton from "@/components/AuthSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 import { toast } from "sonner";
 
 // Helper function to format retry time consistently
@@ -521,14 +524,30 @@ const Auth = () => {
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
 
+  // 3-Phase loading state using reusable hook - ONLY for native mobile app
+  // Auth page should never show splash (phase 1), only skeleton (phase 2) and content (phase 3)
+  const { loadingPhase, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN, // Shared key to ensure no splash
+    visitedKey: SESSION_STORAGE_KEYS.DASHBOARD_VISITED, // Shared key for visited tracking
+    isDataReady: true, // Auth page is always ready (no data fetching)
+    skeletonDelay: 200 // Responsive timing
+  });
+
   useEffect(() => {
     if (isSignedIn) {
       navigate("/dashboard");
     }
   }, [isSignedIn, navigate]);
 
+  // Show skeleton on native app during initial load (phase 2)
+  if (isNativeApp && loadingPhase === 'skeleton') {
+    return <AuthSkeleton />;
+  }
+
   return (
-    <main className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top">
+    <main className={`h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top ${
+      isNativeApp && loadingPhase === 'revealed' ? 'content-fade-in' : ''
+    }`}>
       {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
