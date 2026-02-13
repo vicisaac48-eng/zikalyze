@@ -71,8 +71,8 @@ export function useDashboardLoading({
     // We check BOTH keys to support two scenarios:
     // 1. LANDING_SPLASH_SHOWN: User came from landing page (most common)
     // 2. sessionKey: Direct page access without landing (e.g., deep link, bookmark)
-    const hasSeenAnySplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN) || 
-                             sessionStorage.getItem(sessionKey);
+    const hasSeenAnySplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN) ||
+      sessionStorage.getItem(sessionKey);
     const hasBeenVisited = sessionStorage.getItem(visitedKey);
     
     // Professional loading logic for navigation:

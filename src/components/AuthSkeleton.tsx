@@ -11,7 +11,7 @@ const AuthSkeleton = () => {
       {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
-        <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
+        <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96 [animation-delay:2s]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md mt-4 sm:mt-0">
