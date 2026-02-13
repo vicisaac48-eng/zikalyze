@@ -72,13 +72,9 @@ const AppErrorFallback = () => (
     className="fixed inset-0 flex flex-col items-center justify-center gap-4"
     style={{ backgroundColor: '#0a0f1a' }}
   >
-    <img 
-      src={zikalyzeLogo} 
-      alt="Zikalyze"
-      width={64}
-      height={64}
-      className="h-16 w-16 opacity-80"
-    />
+    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary opacity-80">
+      <TrendingUp className="h-8 w-8 text-primary-foreground" />
+    </div>
     <h1 className="text-xl font-bold text-white">Something went wrong</h1>
     <p className="text-gray-400 text-sm text-center max-w-md px-4">
       The application encountered an unexpected error. Please refresh the page to continue.
