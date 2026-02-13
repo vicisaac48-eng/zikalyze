@@ -7,7 +7,7 @@
       // Detect native app BEFORE React loads and apply mint green background
       // This prevents dark flash on mobile app startup while keeping web professional
       (function() {
-        var isNativeApp = false;
+        let isNativeApp = false;
         
         // Check PWA standalone mode (most reliable, available immediately)
         if (window.matchMedia('(display-mode: standalone)').matches) {
