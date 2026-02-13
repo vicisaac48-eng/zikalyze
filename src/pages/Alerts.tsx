@@ -49,6 +49,7 @@ const Alerts = () => {
   // 3-Phase loading state - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.ALERTS_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.ALERTS_VISITED,
     isDataReady: !loading && prices.length > 0,
     skeletonDelay: 200
   });

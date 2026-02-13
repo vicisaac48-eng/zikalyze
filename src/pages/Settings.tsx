@@ -51,6 +51,7 @@ const Settings = () => {
   // Settings don't need data loading, so always mark as ready
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.SETTINGS_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.SETTINGS_VISITED,
     isDataReady: true, // Settings page doesn't need to wait for data
     skeletonDelay: 200 // Consistent with other pages
   });

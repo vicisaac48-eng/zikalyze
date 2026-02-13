@@ -48,6 +48,7 @@ const Portfolio = () => {
   // 3-Phase loading state - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.PORTFOLIO_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.PORTFOLIO_VISITED,
     isDataReady: !loading && prices.length > 0,
     skeletonDelay: 200
   });

@@ -61,6 +61,7 @@ const Dashboard = () => {
   // 3-Phase loading state using reusable hook - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.DASHBOARD_VISITED,
     isDataReady: !loading && prices.length > 0,
     skeletonDelay: 200 // Responsive timing: 200ms skeleton visibility
   });

@@ -25,6 +25,24 @@ export const SESSION_STORAGE_KEYS = {
   
   /** Settings page splash screen shown flag (native app only) */
   SETTINGS_SPLASH_SHOWN: 'settings_splash_shown',
+  
+  /** Dashboard page visited via navigation flag (native app only) */
+  DASHBOARD_VISITED: 'dashboard_visited',
+  
+  /** Portfolio page visited via navigation flag (native app only) */
+  PORTFOLIO_VISITED: 'portfolio_visited',
+  
+  /** Analytics page visited via navigation flag (native app only) */
+  ANALYTICS_VISITED: 'analytics_visited',
+  
+  /** Analyzer page visited via navigation flag (native app only) */
+  ANALYZER_VISITED: 'analyzer_visited',
+  
+  /** Alerts page visited via navigation flag (native app only) */
+  ALERTS_VISITED: 'alerts_visited',
+  
+  /** Settings page visited via navigation flag (native app only) */
+  SETTINGS_VISITED: 'settings_visited',
 } as const;
 
 export const LOCAL_STORAGE_KEYS = {
