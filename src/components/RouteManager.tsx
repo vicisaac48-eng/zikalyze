@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouteRestoration } from "@/hooks/useRouteRestoration";
 

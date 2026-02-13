@@ -62,7 +62,8 @@ export function useRouteRestoration(isAuthenticated: boolean) {
     } catch (error) {
       console.error('Failed to restore last route:', error);
     }
-  }, [isAuthenticated]); // Only run when authentication changes, not on every route change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isNativeApp]); // Only run when authentication or platform changes
 
   return null;
 }
