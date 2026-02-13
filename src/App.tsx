@@ -53,13 +53,22 @@ const queryClient = new QueryClient({
 });
 
 // Minimal loading fallback - adapts to platform for professional experience
+// Native apps: No logo flash during navigation (instant)
+// Web/desktop: Show loading indicator during lazy route loading
 const PageLoader = () => {
   const isNativeApp = useIsNativeApp();
   
+  // Native mobile apps: Return null to prevent logo flash during navigation
+  // This creates instant navigation experience for mobile users
+  if (isNativeApp) {
+    return null;
+  }
+  
+  // Web/desktop: Show traditional loading indicator
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center"
-      style={{ backgroundColor: isNativeApp ? '#B2EBE0' : '#0a0f1a' }}
+      style={{ backgroundColor: '#0a0f1a' }}
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-16 sm:w-16 lg:h-20 lg:w-20">
         <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
