@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { TrendingUp } from "lucide-react";
 
 interface LandingSplashProps {
@@ -6,14 +6,24 @@ interface LandingSplashProps {
 }
 
 const LandingSplash = ({ onComplete }: LandingSplashProps) => {
+  // Store onComplete in ref to avoid effect re-runs on parent re-renders
+  const onCompleteRef = useRef(onComplete);
+  
+  // Keep ref up-to-date with latest callback
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+  
   // Auto-complete after 2 seconds for professional branded experience
+  // Optimized duration provides branded experience without unnecessary delay
+  // Effect runs only once on mount - timer won't reset on parent re-renders
   useEffect(() => {
     const timer = setTimeout(() => {
-      onComplete();
+      onCompleteRef.current();
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, []); // Empty deps - run only once on mount
 
   return (
     <div 

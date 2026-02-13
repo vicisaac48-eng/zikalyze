@@ -7,7 +7,7 @@ import BottomNav from "@/components/dashboard/BottomNav";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePriceData } from "@/contexts/PriceDataContext";
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { SESSION_STORAGE_KEYS, LOCAL_STORAGE_KEYS } from "@/constants/storage";
@@ -57,16 +57,13 @@ const Dashboard = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const { prices, loading, isLive, getPriceBySymbol, refetch } = usePriceData();
   const { t } = useTranslation();
-  const isNativeApp = useIsNativeApp();
   
-  // 3-Phase loading state - ONLY for native mobile app
-  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(() => {
-    // Only show splash on native app
-    if (!isNativeApp) return 'revealed';
-    
-    // Check if this is the first visit to dashboard in this session
-    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN);
-    return hasSeenSplash ? 'revealed' : 'splash';
+  // 3-Phase loading state using reusable hook - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.DASHBOARD_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200 // Responsive timing: 200ms skeleton visibility
   });
 
   // Pull-to-refresh handler
@@ -90,25 +87,6 @@ const Dashboard = () => {
       setUserName(parsed.name || null);
     }
   }, []);
-
-  // Phase 1: Splash → Phase 2: Skeleton after 1 second
-  const handleSplashComplete = useCallback(() => {
-    setLoadingPhase('skeleton');
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN, 'true');
-  }, []);
-
-  // Phase 2: Skeleton → Phase 3: Revealed when data is loaded (only for native app)
-  useEffect(() => {
-    if (!isNativeApp) return; // Skip for web
-    
-    if (loadingPhase === 'skeleton' && !loading && prices.length > 0) {
-      // Professional delay to ensure skeleton is visible and smooth transition
-      const timer = setTimeout(() => {
-        setLoadingPhase('revealed');
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isNativeApp, loadingPhase, loading, prices]);
 
   // Get selected crypto from live prices
   const liveData = getPriceBySymbol(selectedCrypto);
@@ -154,7 +132,7 @@ const Dashboard = () => {
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isRevealing ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0s' } : undefined}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>

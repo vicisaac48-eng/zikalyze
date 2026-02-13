@@ -804,6 +804,20 @@ All colors MUST be HSL.
   animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Phase 2 to 3 transition: Premium 150ms content fade-in for smooth skeleton swap */
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.content-fade-in {
+  animation: contentFadeIn 0.15s ease-in forwards;
+}
+
 /* Phase 3: Professional staggered card reveal with slide and fade */
 @keyframes slideUpFadeIn {
   from {
@@ -1024,9 +1038,10 @@ All colors MUST be HSL.
 }
 
 .auth-loading-overlay {
-  background: linear-gradient(135deg, rgba(10, 15, 26, 0.92) 0%, rgba(15, 20, 31, 0.95) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Professional transparent overlay - users can see through while authentication happens */
+  background: linear-gradient(135deg, rgba(10, 15, 26, 0.35) 0%, rgba(15, 20, 31, 0.40) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Remove old simple animation */

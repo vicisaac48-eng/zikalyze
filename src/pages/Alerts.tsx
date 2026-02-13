@@ -21,10 +21,12 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { usePriceData } from "@/contexts/PriceDataContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrency } from "@/hooks/useCurrency";
-
-import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import DashboardSplash from "@/components/dashboard/DashboardSplash";
+import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
+import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 import { toast } from "sonner";
 
@@ -43,7 +45,15 @@ const Alerts = () => {
   const { prices, getPriceBySymbol, refetch: refetchPrices } = usePriceData();
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const { formatPrice } = useCurrency();
-  const isNativeApp = useIsNativeApp();
+  
+  // 3-Phase loading state - ONLY for native mobile app
+  const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
+    sessionKey: SESSION_STORAGE_KEYS.ALERTS_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.ALERTS_VISITED,
+    isDataReady: !loading && prices.length > 0,
+    skeletonDelay: 200
+  });
+  
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [triggeredAlerts, setTriggeredAlerts] = useState<TriggeredAlert[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -158,12 +168,29 @@ const Alerts = () => {
     }
   };
 
+  // Phase 1: Show splash screen (native app only)
+  if (loadingPhase === 'splash') {
+    return <DashboardSplash onComplete={handleSplashComplete} />;
+  }
+
+  // Phase 2: Show skeleton loader (native app only)
+  if (loadingPhase === 'skeleton') {
+    return (
+      <>
+        <Sidebar />
+        <BottomNav />
+        <GenericDashboardSkeleton />
+      </>
+    );
+  }
+
+  // Phase 3: Show actual content
   return (
     <>
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isNativeApp && loadingPhase === 'revealed' ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}`}>
           <div className="flex items-center gap-2">

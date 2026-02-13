@@ -32,11 +32,11 @@ export function AuthLoadingOverlay({ isVisible }: AuthLoadingOverlayProps) {
         <div className="absolute w-32 h-32 rounded-full border-2 border-primary/30 auth-ring-rotate" />
         <div className="absolute w-28 h-28 rounded-full border-2 border-primary/20 auth-ring-rotate-reverse" />
         
-        {/* Logo container with shadow */}
+        {/* Logo container with shadow - Medium sized for professional balance */}
         <div className="relative z-10">
           <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full auth-logo-glow" />
-          <div className="relative z-10 flex items-center justify-center w-24 h-24 rounded-3xl bg-primary logo-spin-professional drop-shadow-2xl">
-            <TrendingUp className="w-12 h-12 text-primary-foreground" />
+          <div className="relative z-10 flex items-center justify-center w-20 h-20 rounded-2xl bg-primary logo-spin-professional drop-shadow-2xl">
+            <TrendingUp className="w-10 h-10 text-primary-foreground" />
           </div>
         </div>
       </div>

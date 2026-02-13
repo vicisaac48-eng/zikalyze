@@ -10,6 +10,7 @@ import { PriceDataProvider } from "@/contexts/PriceDataContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 import { ZikalyzeWatermark } from "./components/ZikalyzeWatermark";
+import { RouteManager } from "./components/RouteManager";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useIsNativeApp } from "./hooks/useIsNativeApp";
@@ -52,8 +53,19 @@ const queryClient = new QueryClient({
   },
 });
 
-// Minimal loading fallback - no animations
+// Minimal loading fallback - adapts to platform for professional experience
+// Native apps: No logo flash during navigation (instant)
+// Web/desktop: Show loading indicator during lazy route loading
 const PageLoader = () => {
+  const isNativeApp = useIsNativeApp();
+  
+  // Native mobile apps: Return null to prevent logo flash during navigation
+  // This creates instant navigation experience for mobile users
+  if (isNativeApp) {
+    return null;
+  }
+  
+  // Web/desktop: Show traditional loading indicator
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center"
@@ -99,26 +111,28 @@ const App = () => (
               <PWAInstallBanner />
               <ZikalyzeWatermark />
               <HashRouter>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/login" element={<Auth />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/dashboard" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Dashboard"><Dashboard /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/dashboard/portfolio" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Portfolio"><Portfolio /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/dashboard/analytics" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analytics"><Analytics /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/dashboard/analyzer" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analyzer"><Analyzer /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/dashboard/alerts" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Alerts"><Alerts /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/dashboard/settings" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Settings"><Settings /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
-                    <Route path="/install" element={<Install />} />
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/contact" element={<Contact />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
+                <RouteManager>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/login" element={<Auth />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/dashboard" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Dashboard"><Dashboard /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/dashboard/portfolio" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Portfolio"><Portfolio /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/dashboard/analytics" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analytics"><Analytics /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/dashboard/analyzer" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Analyzer"><Analyzer /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/dashboard/alerts" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Alerts"><Alerts /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/dashboard/settings" element={<ProtectedRoute><SessionTracker><ErrorBoundary componentName="Settings"><Settings /></ErrorBoundary></SessionTracker></ProtectedRoute>} />
+                      <Route path="/install" element={<Install />} />
+                      <Route path="/privacy" element={<PrivacyPolicy />} />
+                      <Route path="/terms" element={<TermsOfService />} />
+                      <Route path="/contact" element={<Contact />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </RouteManager>
               </HashRouter>
             </TooltipProvider>
           </PriceDataProvider>
