@@ -358,7 +358,9 @@ const Landing = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <img src={zikalyzeLogo} alt="Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
+                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary sm:h-8 sm:w-8">
+                          <TrendingUp className="h-3 w-3 text-primary-foreground sm:h-4 sm:w-4" />
+                        </div>
                         <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg">Dashboard</span>
                       </div>
                       <div className="flex items-center gap-2">
