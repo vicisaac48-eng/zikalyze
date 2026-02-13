@@ -9,6 +9,8 @@ interface UseDashboardLoadingOptions {
   /**
    * Session storage key to track if splash has been shown
    * e.g., SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN
+   * NOTE: This parameter is kept for backward compatibility but is not used
+   * The hook now uses global LANDING_SPLASH_SHOWN flag instead
    */
   sessionKey: string;
   
@@ -32,18 +34,29 @@ interface UseDashboardLoadingOptions {
 }
 
 /**
- * Custom hook for managing 3-phase loading (splash → skeleton → revealed)
+ * Custom hook for managing loading phases for Auth and Dashboard pages
  * Only applies to native mobile apps. Web shows instant content.
  * 
- * Professional Navigation-Aware Loading:
- * - First visit ever: Shows splash + skeleton + content
- * - First navigation: Shows skeleton + content (if splash already seen)
- * - Subsequent visits: Shows content instantly
+ * NOTE: Named `useDashboardLoading` for historical reasons but is used by both
+ * Dashboard pages and Auth page. Could be renamed to `usePageLoading` in future.
+ * 
+ * Loading Phases (Mobile Native App Only):
+ * - First page after app launch/return: Splash (phase 1) → Skeleton (phase 2) → Reveal (phase 3)
+ * - Navigation to other pages: Skeleton (phase 2) → Reveal (phase 3)
+ * - Subsequent visits to same page: Instant content (phase 3)
+ * 
+ * Splash appears when user:
+ * - Opens app for first time
+ * - Returns after leaving app (sessionStorage clears)
+ * - Clears app cache
+ * 
+ * Splash does NOT appear when:
+ * - Navigating between pages in same session
  * 
  * Usage:
  * ```tsx
  * const { loadingPhase, handleSplashComplete, markAsVisited } = useDashboardLoading({
- *   sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN,
+ *   sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN, // kept for compatibility
  *   visitedKey: SESSION_STORAGE_KEYS.ANALYTICS_VISITED,
  *   isDataReady: !loading && prices.length > 0,
  *   skeletonDelay: 200
@@ -63,32 +76,54 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // Check if splash has been shown and if page has been visited
-    const hasSeenSplash = sessionStorage.getItem(sessionKey);
-    const hasBeenVisited = sessionStorage.getItem(visitedKey);
+    // SSR-safe: Check if we're in browser environment
+    if (typeof window === 'undefined') return 'revealed';
     
-    // Professional loading logic:
-    // 1. Never seen splash → show splash (first time ever)
-    // 2. Seen splash but not visited → show skeleton (first navigation)
-    // 3. Already visited → show content instantly (subsequent visits)
-    if (!hasSeenSplash) {
-      return 'splash'; // First time ever - show splash
-    } else if (!hasBeenVisited) {
-      return 'skeleton'; // First navigation - show skeleton only
-    } else {
-      return 'revealed'; // Subsequent visits - instant content
+    try {
+      // Check if ANY splash has been shown in this session (global flag)
+      const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
+      const hasBeenVisited = sessionStorage.getItem(visitedKey);
+      
+      // Mobile Native App Loading Logic:
+      // - First page visited after app launch → show splash (phase 1)
+      // - Navigation to other pages → show skeleton only (phase 2) 
+      // - Subsequent visits to same page → instant content (phase 3)
+      // - After leaving app/clearing cache → shows splash again on first page
+      if (!hasSeenSplash) {
+        return 'splash'; // First page after app return - show splash
+      } else if (!hasBeenVisited) {
+        return 'skeleton'; // First visit to this page - show skeleton only
+      } else {
+        return 'revealed'; // Subsequent visits - instant content
+      }
+    } catch (error) {
+      // If sessionStorage access fails (e.g., private browsing), show splash
+      // This ensures graceful degradation
+      console.warn('Failed to access sessionStorage, defaulting to splash:', error);
+      return 'splash';
     }
   });
   
   // Handle splash completion - transition to skeleton phase
   const handleSplashComplete = useCallback(() => {
     setLoadingPhase('skeleton');
-    sessionStorage.setItem(sessionKey, 'true');
-  }, [sessionKey]);
+    // Set global splash shown flag to prevent splash on navigation
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
+    } catch (error) {
+      // Silently fail if sessionStorage is unavailable (e.g., private browsing)
+      console.warn('Failed to set splash shown flag:', error);
+    }
+  }, []);
   
   // Mark page as visited (called when skeleton completes)
   const markAsVisited = useCallback(() => {
-    sessionStorage.setItem(visitedKey, 'true');
+    try {
+      sessionStorage.setItem(visitedKey, 'true');
+    } catch (error) {
+      // Silently fail if sessionStorage is unavailable
+      console.warn('Failed to mark page as visited:', error);
+    }
   }, [visitedKey]);
   
   // Auto-transition from skeleton to revealed when data is ready
