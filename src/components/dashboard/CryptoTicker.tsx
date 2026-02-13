@@ -92,7 +92,7 @@ const CryptoTicker = ({ selected, onSelect, getPriceBySymbol, loading }: CryptoT
         // Always set on native to ensure it overrides any parent touch-action settings
         touchAction: isNativeApp ? 'pan-x pan-y' : undefined,
         // Enable momentum scrolling on Android WebView for smooth horizontal scroll
-        WebkitOverflowScrolling: isNativeApp ? 'touch' as any : undefined,
+        WebkitOverflowScrolling: isNativeApp ? ('touch' as React.CSSProperties['WebkitOverflowScrolling']) : undefined,
       }}
     >
       {cryptoMeta.map((crypto) => {
