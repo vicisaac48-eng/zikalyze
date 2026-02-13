@@ -665,13 +665,18 @@ All colors MUST be HSL.
   /* Content area spacing to account for header */
   /* Web: No gap layout - content starts at top on all screen sizes */
   /* Android: fixed header at top: env(safe-area-inset-top) needs padding for BOTH safe area + header height */
+  /* Default: No padding for "no gap" tight layout on pages without sticky tab bars */
   .main-content {
-    /* Web: Add header height padding for pages with sticky elements (like tab-bar-row) */
+    padding-top: 0 !important;
+  }
+
+  /* Only add padding when tab-bar-row exists (for sticky positioning on Dashboard/Analytics) */
+  .main-content:has(.tab-bar-row) {
     padding-top: var(--header-height-mobile) !important;
   }
 
   @media (min-width: 640px) {
-    .main-content {
+    .main-content:has(.tab-bar-row) {
       padding-top: var(--header-height-desktop) !important;
     }
   }
