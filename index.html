@@ -1,8 +1,38 @@
 <!doctype html>
-<html lang="en" class="dark" style="background-color:#B2EBE0">
+<html lang="en" class="dark" style="background-color:#0a0f1a">
   <head>
     <meta charset="UTF-8" />
-    <style>html,body{background-color:#B2EBE0;margin:0}</style>
+    <style>html,body{background-color:#0a0f1a;margin:0}</style>
+    <script>
+      // Detect native app BEFORE React loads and apply mint green background
+      // This prevents dark flash on mobile app startup while keeping web professional
+      (function() {
+        var isNativeApp = false;
+        
+        // Check Capacitor native platform (primary detection)
+        if (window.Capacitor) {
+          isNativeApp = true;
+        }
+        // Check PWA standalone mode
+        else if (window.matchMedia('(display-mode: standalone)').matches) {
+          isNativeApp = true;
+        }
+        // Check fullscreen mode (TWA)
+        else if (window.matchMedia('(display-mode: fullscreen)').matches) {
+          isNativeApp = true;
+        }
+        // Check iOS standalone
+        else if (navigator.standalone === true) {
+          isNativeApp = true;
+        }
+        
+        // Apply mint green background only for native apps
+        if (isNativeApp) {
+          document.documentElement.style.backgroundColor = '#B2EBE0';
+          document.body.style.backgroundColor = '#B2EBE0';
+        }
+      })();
+    </script>
     
     <!-- Preconnect hints FIRST for critical external origins -->
     <link rel="preconnect" href="https://api.exchangerate-api.com" />
@@ -93,7 +123,7 @@
     <meta name="format-detection" content="address=no" />
     <meta name="format-detection" content="email=no" />
   </head>
-  <body style="background-color:#B2EBE0">
+  <body style="background-color:#0a0f1a">
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
   </body>
