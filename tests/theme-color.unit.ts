@@ -17,7 +17,7 @@ const localStorageMock = (() => {
   };
 })();
 
-global.localStorage = localStorageMock as any;
+global.localStorage = localStorageMock as Storage;
 
 describe('🎨 Theme Color Settings', () => {
   beforeEach(() => {

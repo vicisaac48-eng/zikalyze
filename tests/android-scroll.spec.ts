@@ -124,7 +124,7 @@ test.describe('Android Scroll Functionality', () => {
       return {
         overflowY: computedStyle.overflowY,
         touchAction: computedStyle.touchAction,
-        webkitOverflowScrolling: computedStyle.webkitOverflowScrolling || computedStyle['-webkit-overflow-scrolling' as any],
+        webkitOverflowScrolling: computedStyle.webkitOverflowScrolling || (computedStyle as Record<string, string>)['-webkit-overflow-scrolling'],
       };
     });
 
