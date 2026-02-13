@@ -32,16 +32,16 @@ interface UseDashboardLoadingOptions {
 }
 
 /**
- * Custom hook for managing 3-phase loading (splash → skeleton → revealed)
+ * Custom hook for managing loading phases for Auth and Dashboard pages
  * Only applies to native mobile apps. Web shows instant content.
  * 
- * Professional Navigation-Aware Loading:
- * - First visit ever (Landing page): Shows splash + skeleton + content
- * - First navigation (Dashboard pages): Shows skeleton + content ONLY (no splash)
- * - Subsequent visits: Shows content instantly
+ * Loading Phases for Auth/Dashboard pages:
+ * - First visit: Shows skeleton (phase 2) → revealed (phase 3)
+ * - Subsequent visits: Shows content instantly (phase 3)
+ * - NEVER shows splash (phase 1) - splash is ONLY for Landing page
  * 
- * This ensures navigation buttons never trigger splash screen after initial app load.
- * The splash is shown once globally on landing page, then all dashboard pages skip it.
+ * The 3-phase loading (splash + skeleton + reveal) ONLY happens on Landing page
+ * when users first open the app or after clearing app cache/long absence.
  * 
  * Usage:
  * ```tsx
@@ -66,23 +66,15 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // Check if ANY splash has been shown (landing or page-specific)
-    // This ensures navigation buttons never show splash after initial app load
-    // We check BOTH keys to support two scenarios:
-    // 1. LANDING_SPLASH_SHOWN: User came from landing page (most common)
-    // 2. sessionKey: Direct page access without landing (e.g., deep link, bookmark)
-    const hasSeenAnySplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN) ||
-      sessionStorage.getItem(sessionKey);
+    // Check if page has been visited before
     const hasBeenVisited = sessionStorage.getItem(visitedKey);
     
-    // Professional loading logic for navigation:
-    // 1. Never seen ANY splash → show splash (first time ever on landing)
-    // 2. Seen splash but not visited this page → show skeleton only (first navigation)
-    // 3. Already visited this page → show content instantly (subsequent visits)
-    if (!hasSeenAnySplash) {
-      return 'splash'; // First time ever - show splash (only on landing page)
-    } else if (!hasBeenVisited) {
-      return 'skeleton'; // First navigation - show skeleton only
+    // Loading logic for Auth and Dashboard pages:
+    // - NEVER show splash (phase 1) - splash is ONLY for Landing page
+    // - First visit to page → show skeleton (phase 2) then reveal (phase 3)
+    // - Subsequent visits → show content instantly (phase 3)
+    if (!hasBeenVisited) {
+      return 'skeleton'; // First visit - show skeleton only (NO splash)
     } else {
       return 'revealed'; // Subsequent visits - instant content
     }
