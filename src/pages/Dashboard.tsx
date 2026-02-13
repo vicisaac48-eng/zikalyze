@@ -103,10 +103,10 @@ const Dashboard = () => {
     if (!isNativeApp) return; // Skip for web
     
     if (loadingPhase === 'skeleton' && !loading && prices.length > 0) {
-      // Small delay to ensure skeleton is visible
+      // Professional delay to ensure skeleton is visible and smooth transition
       const timer = setTimeout(() => {
         setLoadingPhase('revealed');
-      }, 300);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isNativeApp, loadingPhase, loading, prices]);
@@ -191,12 +191,12 @@ const Dashboard = () => {
           <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
             <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6 space-y-3 sm:space-y-4 md:space-y-6">
           {/* Crypto Ticker */}
-          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.1s' } : undefined}>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
             <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
           </div>
 
           {/* Time Filter */}
-          <div className={`tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.2s' } : undefined}>
+          <div className={`tab-bar-row flex gap-1.5 overflow-x-auto pb-1 sm:gap-2 custom-scrollbar${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.15s' } : undefined}>
             {["1s", "5s", "1m", "5m", "15m", "1h"].map((time) => (
               <button
                 key={time}
@@ -212,7 +212,7 @@ const Dashboard = () => {
           </div>
 
           {/* Live On-Chain Data */}
-          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.3s' } : undefined}>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.25s' } : undefined}>
             <ErrorBoundary componentName="On-Chain Metrics" fallback={<MinimalErrorFallback />}>
               <Suspense fallback={<MetricsSkeleton />}>
                 <OnChainMetrics
@@ -228,7 +228,7 @@ const Dashboard = () => {
           </div>
 
           {/* AI Analyzer & Sentiment Analysis Grid */}
-          <div className={`grid gap-4 md:gap-6 lg:grid-cols-2${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.4s' } : undefined}>
+          <div className={`grid gap-4 md:gap-6 lg:grid-cols-2${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.35s' } : undefined}>
             <ErrorBoundary componentName="AI Analyzer" fallback={<ChartErrorFallback />}>
               <Suspense fallback={<ChartSkeleton />}>
                 <AIAnalyzer 
@@ -285,7 +285,7 @@ const Dashboard = () => {
           </div>
 
           {/* Top 100 Crypto List */}
-          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.6s' } : undefined}>
+          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.55s' } : undefined}>
             <ErrorBoundary componentName="Crypto List" fallback={<ChartErrorFallback />}>
               <Suspense fallback={<ChartSkeleton />}>
                 <Top100CryptoList selected={selectedCrypto} onSelect={setSelectedCrypto} prices={prices} loading={loading} />
