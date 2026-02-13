@@ -804,6 +804,20 @@ All colors MUST be HSL.
   animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Phase 2 to 3 transition: Premium 150ms content fade-in for smooth skeleton swap */
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.content-fade-in {
+  animation: contentFadeIn 0.15s ease-in forwards;
+}
+
 /* Phase 3: Professional staggered card reveal with slide and fade */
 @keyframes slideUpFadeIn {
   from {

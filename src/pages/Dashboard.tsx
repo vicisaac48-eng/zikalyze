@@ -132,7 +132,7 @@ const Dashboard = () => {
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
+      <main className={`md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0${isRevealing ? ' content-fade-in' : ''}`}>
         {/* Header - Fixed positioning on Android for stable scrolling like WhatsApp, sticky on web */}
         <header className={`fixed-header flex items-center justify-between border-b border-border bg-background px-3 py-2 sm:px-6 sm:py-4${isNativeApp ? ' android-fixed' : ''}${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0s' } : undefined}>
           <h1 className="text-base font-bold text-foreground sm:text-xl md:text-2xl">{t("dashboard.title")}</h1>
