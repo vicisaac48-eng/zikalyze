@@ -3,6 +3,8 @@
  * 
  * Professional loading skeleton with glassmorphism and diagonal shimmer animation.
  * Used across all dashboard pages for consistent UX on native mobile apps.
+ * 
+ * @returns {JSX.Element} Full-page skeleton loader with professional animations
  */
 const GenericDashboardSkeleton = () => {
   return (
