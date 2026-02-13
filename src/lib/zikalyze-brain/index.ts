@@ -695,12 +695,30 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   
   const isBadTrade = badTradeReasons.length >= 2; // 2+ bad signals = bad trade
   
-  // Calculate overall trade quality score
-  let qualityScore = 50; // Start at neutral
-  qualityScore += confirmationCount * 10; // +10 per confirmation (max +50)
-  qualityScore += followsTrend ? 15 : -20; // +15 for trend-following, -20 for counter-trend
-  qualityScore -= badTradeReasons.length * 12; // -12 per bad trade reason
-  qualityScore = Math.max(0, Math.min(100, qualityScore)); // Clamp 0-100
+  // Calculate base quality score from confirmations
+  let baseQualityScore = 50; // Start at neutral
+  baseQualityScore += confirmationCount * 10; // +10 per confirmation (max +50)
+  baseQualityScore += followsTrend ? 15 : -20; // +15 for trend-following, -20 for counter-trend
+  baseQualityScore -= badTradeReasons.length * 12; // -12 per bad trade reason
+  baseQualityScore = Math.max(0, Math.min(100, baseQualityScore)); // Clamp 0-100
+  
+  // ⚡ HIERARCHICAL VETO SYSTEM: Higher-level AI decisions constrain quality score
+  // This prevents "Split Personality Syndrome" where quality shows 85% but verdict is AVOID
+  let qualityScore = baseQualityScore;
+  
+  // VETO LEVEL 1: Neural Network Filter
+  // When NN filter fails (NN confidence < 51% in TRENDING mode), cap quality at 35%
+  if (regimeConsensus.skipTrade) {
+    qualityScore = Math.min(35, baseQualityScore);
+    console.log(`[Quality Veto] NN Filter: Base ${baseQualityScore}% → Capped ${qualityScore}%`);
+  }
+  
+  // VETO LEVEL 2: Tri-Modular Human-In-The-Loop verdict
+  // When tri-modular analysis recommends AVOID, cap quality at 30%
+  if (triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID') {
+    qualityScore = Math.min(30, qualityScore);
+    console.log(`[Quality Veto] Tri-Modular AVOID: Capped at ${qualityScore}%`);
+  }
   
   // Determine final recommendation
   // Include regimeConsensus.skipTrade to ensure alignment with regime-weighted consensus
@@ -851,8 +869,13 @@ ${qualityEmoji} Recommendation: ${tradeRecommendation === 'EXECUTE' ? '✅ EXECU
 ${confirmations.length > 0 ? confirmations.slice(0, 3).map(c => `   ${c}`).join('\n') : '   ⚠️ No confirmations yet — wait for setup'}
 ${badTradeReasons.length > 0 ? `\n⚠️ Bad Trade Signals:\n${badTradeReasons.slice(0, 3).map(r => `   ${r}`).join('\n')}` : ''}
 
-📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%
-   └─ ${qualityScore >= 70 ? 'HIGH QUALITY — Good setup, manage risk' : qualityScore >= 50 ? 'MODERATE — Proceed with caution' : qualityScore >= 30 ? 'LOW QUALITY — Consider smaller size or skip' : 'POOR — High probability of bad trade'}
+📊 Quality Score: [${createBar(qualityScore, 100, '█', '░', 10)}] ${qualityScore}%${regimeConsensus.skipTrade ? ' (Capped by NN Filter)' : triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID' ? ' (Capped by Tri-Modular AVOID)' : baseQualityScore !== qualityScore ? ` (Base: ${baseQualityScore}%)` : ''}
+   └─ ${regimeConsensus.skipTrade || triModularAnalysis.humanInTheLoopVerdict.positionSizeRecommendation === 'AVOID' 
+      ? '🚫 TRADE BLOCKED — AI safety filters active' 
+      : qualityScore >= 70 ? 'HIGH QUALITY — Good setup, manage risk' 
+      : qualityScore >= 50 ? 'MODERATE — Proceed with caution' 
+      : qualityScore >= 30 ? 'LOW QUALITY — Consider smaller size or skip' 
+      : 'POOR — High probability of bad trade'}
 
 ━━━ 🔮 SCENARIOS (Both Directions) ━━━━━━━━━━━━━━
 
