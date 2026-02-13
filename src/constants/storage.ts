@@ -39,4 +39,7 @@ export const LOCAL_STORAGE_KEYS = {
   
   /** PWA install banner dismissed flag */
   PWA_INSTALL_DISMISSED: 'pwa-install-dismissed',
+  
+  /** Last visited route for native mobile app restoration */
+  LAST_ROUTE: 'last_route',
 } as const;

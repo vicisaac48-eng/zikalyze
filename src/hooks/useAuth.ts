@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Wallet, formatEther, JsonRpcProvider, pbkdf2, toUtf8Bytes, hexlify, getBytes, AbiCoder, keccak256 } from "ethers";
+import { clearLastRoute } from "./useRouteRestoration";
 
 // User type for Web3 wallet authentication
 export interface Web3User {
@@ -253,6 +254,8 @@ export const useAuth = () => {
   // Sign out function
   const signOut = useCallback(async (): Promise<{ error: Error | null }> => {
     localStorage.removeItem(WALLET_DATA_KEY);
+    // Clear the last route so app starts fresh on next login
+    clearLastRoute();
     setState({
       user: null,
       isSignedIn: false,
