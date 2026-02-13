@@ -53,7 +53,7 @@ const BottomNav = () => {
           <img 
             src={zikalyzeLogo} 
             alt="Loading" 
-            className="h-16 w-16 animate-pulse"
+            className="loading-logo-rect logo-rotate"
           />
           <p className="text-sm text-muted-foreground">{t("sidebar.signingOut", "Signing out...")}</p>
         </div>

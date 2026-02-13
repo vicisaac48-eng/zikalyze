@@ -64,9 +64,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         <img 
           src={zikalyzeLogo} 
           alt="Loading"
-          width={64}
-          height={64}
-          className="h-16 w-16 logo-pulse"
+          className="loading-logo-rect logo-rotate"
           style={{ 
             filter: 'none', 
             boxShadow: 'none' 

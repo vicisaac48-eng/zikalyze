@@ -16,16 +16,12 @@ const Landing = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
-  const [isNavigating, setIsNavigating] = useState(false);
   const [userCount, setUserCount] = useState<number | null>(null);
 
-  // Handle navigation with loading state
+  // Handle navigation - direct navigation for auth, loading for dashboard
   const handleNavigate = useCallback((path: string) => {
-    setIsNavigating(true);
-    // Brief delay to show loading animation before navigation
-    setTimeout(() => {
-      navigate(path);
-    }, 400);
+    // Direct navigation to auth page (no loading)
+    navigate(path);
   }, [navigate]);
 
   // Fetch user count from database with realtime subscription
@@ -82,34 +78,9 @@ const Landing = () => {
   // Redirect to dashboard if already logged in (non-blocking)
   useEffect(() => {
     if (!authLoading && user) {
-      setIsNavigating(true);
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 400);
+      navigate("/dashboard");
     }
   }, [navigate, user, authLoading]);
-
-  // Loading overlay only when actively navigating away
-  if (isNavigating) {
-    return (
-      <div 
-        className="fixed inset-0 flex items-center justify-center z-50"
-        style={{ backgroundColor: '#0a0f1a' }}
-      >
-        <img 
-          src={zikalyzeLogo} 
-          alt="Loading"
-          width={64}
-          height={64}
-          className="h-16 w-16 animate-pulse opacity-80"
-          style={{ 
-            filter: 'none', 
-            boxShadow: 'none' 
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="h-full min-h-screen overflow-y-auto bg-background safe-area-inset-top">
