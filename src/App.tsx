@@ -52,12 +52,12 @@ const queryClient = new QueryClient({
   },
 });
 
-// Minimal loading fallback - no animations
+// Minimal loading fallback - mint green background to match splash screen
 const PageLoader = () => {
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center"
-      style={{ backgroundColor: '#0a0f1a' }}
+      style={{ backgroundColor: '#B2EBE0' }}
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-16 sm:w-16 lg:h-20 lg:w-20">
         <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
