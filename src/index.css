@@ -820,7 +820,7 @@ All colors MUST be HSL.
   letter-spacing: 0.08em;
   animation: 
     fadeInText 0.3s ease-in,
-    typewriter 1.8s steps(12, end) 0.4s forwards,
+    typewriter 2s steps(12, end) 0.4s forwards,
     blink-caret 1s step-end infinite;
   width: 0;
   display: inline-block;
