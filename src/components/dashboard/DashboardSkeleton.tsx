@@ -2,7 +2,7 @@ const DashboardSkeleton = () => {
   return (
     <div className="md:ml-16 lg:ml-64 pb-bottom-nav md:pb-0">
       <div 
-        className="fixed inset-0 md:left-16 lg:left-64 pb-16 md:pb-0 z-30" 
+        className="fixed inset-0 md:left-16 lg:left-64 pb-16 md:pb-0 z-30 skeleton-fade-in" 
         style={{ 
           backgroundColor: '#0a0f1a',
           backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(112, 255, 193, 0.03) 0%, transparent 50%)'

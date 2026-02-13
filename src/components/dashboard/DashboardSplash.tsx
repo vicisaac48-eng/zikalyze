@@ -1,23 +1,34 @@
 import { TrendingUp } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface DashboardSplashProps {
   onComplete: () => void;
 }
 
 const DashboardSplash = ({ onComplete }: DashboardSplashProps) => {
-  // Auto-complete after 1.2 seconds for a more professional feel
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  
+  // Start fade-out at 1000ms, complete at 1200ms for 200ms overlap with skeleton fade-in
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Start fade-out 200ms before completion to overlap with skeleton fade-in
+    const fadeOutTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, 1000);
+    
+    // Complete transition after fade-out animation finishes
+    const completeTimer = setTimeout(() => {
       onComplete();
     }, 1200);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(fadeOutTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center splash-fade-in"
+      className={`fixed inset-0 z-50 flex items-center justify-center ${isFadingOut ? 'splash-fade-out' : 'splash-fade-in'}`}
       style={{ 
         backgroundColor: '#B2EBE0',
         backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)'
