@@ -9,6 +9,8 @@ interface UseDashboardLoadingOptions {
   /**
    * Session storage key to track if splash has been shown
    * e.g., SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN
+   * NOTE: This parameter is kept for backward compatibility but is not used
+   * since Auth/Dashboard pages never show splash (only Landing page shows splash)
    */
   sessionKey: string;
   
@@ -35,6 +37,9 @@ interface UseDashboardLoadingOptions {
  * Custom hook for managing loading phases for Auth and Dashboard pages
  * Only applies to native mobile apps. Web shows instant content.
  * 
+ * NOTE: Named `useDashboardLoading` for historical reasons but is used by both
+ * Dashboard pages and Auth page. Could be renamed to `usePageLoading` in future.
+ * 
  * Loading Phases for Auth/Dashboard pages:
  * - First visit: Shows skeleton (phase 2) → revealed (phase 3)
  * - Subsequent visits: Shows content instantly (phase 3)
@@ -46,7 +51,7 @@ interface UseDashboardLoadingOptions {
  * Usage:
  * ```tsx
  * const { loadingPhase, handleSplashComplete, markAsVisited } = useDashboardLoading({
- *   sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN,
+ *   sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN, // kept for compatibility
  *   visitedKey: SESSION_STORAGE_KEYS.ANALYTICS_VISITED,
  *   isDataReady: !loading && prices.length > 0,
  *   skeletonDelay: 200
