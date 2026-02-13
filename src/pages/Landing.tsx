@@ -8,7 +8,6 @@ import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 import { toast } from "sonner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
-import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 import LandingSplash from "@/components/LandingSplash";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -121,11 +120,9 @@ const Landing = () => {
         isNativeApp ? ' android-fixed' : ''
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
-          <img 
-            src={zikalyzeLogo}
-            alt="Zikalyze Logo" 
-            className="h-9 w-9 sm:h-12 sm:w-12 lg:h-14 lg:w-14 object-contain"
-          />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary sm:h-12 sm:w-12 sm:rounded-xl lg:h-14 lg:w-14">
+            <TrendingUp className="h-4 w-4 text-primary-foreground sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+          </div>
           <span className="text-xl font-bold text-foreground sm:text-2xl lg:text-3xl">Zikalyze</span>
         </div>
         <Button 
