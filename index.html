@@ -9,20 +9,20 @@
       (function() {
         var isNativeApp = false;
         
-        // Check Capacitor native platform (primary detection)
-        if (window.Capacitor) {
+        // Check PWA standalone mode (most reliable, available immediately)
+        if (window.matchMedia('(display-mode: standalone)').matches) {
           isNativeApp = true;
         }
-        // Check PWA standalone mode
-        else if (window.matchMedia('(display-mode: standalone)').matches) {
-          isNativeApp = true;
-        }
-        // Check fullscreen mode (TWA)
+        // Check fullscreen mode (TWA - Trusted Web Activity)
         else if (window.matchMedia('(display-mode: fullscreen)').matches) {
           isNativeApp = true;
         }
-        // Check iOS standalone
+        // Check iOS standalone (available immediately)
         else if (navigator.standalone === true) {
+          isNativeApp = true;
+        }
+        // Check for Capacitor (may not be loaded yet, but worth trying)
+        else if (window.Capacitor) {
           isNativeApp = true;
         }
         
