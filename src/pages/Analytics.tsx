@@ -13,7 +13,6 @@ import AnalyticsChart from "@/components/dashboard/AnalyticsChart";
 import PredictiveChart from "@/components/dashboard/PredictiveChart";
 import DonutChart from "@/components/dashboard/DonutChart";
 import VolumeChart from "@/components/dashboard/VolumeChart";
-import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 import { cn } from "@/lib/utils";
@@ -24,11 +23,12 @@ const Analytics = () => {
   const [timeframe, setTimeframe] = useState("24h");
   const { t } = useTranslation();
   
-  // 3-Phase loading state - ONLY for native mobile app
+  // 2-Phase loading state (skeleton → revealed) - ONLY for native mobile app
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.ANALYTICS_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400
+    skeletonDelay: 400,
+    skipSplash: true
   });
 
   // Pull-to-refresh handler
@@ -48,12 +48,7 @@ const Analytics = () => {
   const topGainers = [...prices].sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0)).slice(0, 3);
   const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
 
-  // Phase 1: Show splash screen (native app only)
-  if (loadingPhase === 'splash') {
-    return <DashboardSplash onComplete={handleSplashComplete} />;
-  }
-
-  // Phase 2: Show skeleton loader (native app only)
+  // Show skeleton loader (native app only, no splash)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -64,7 +59,7 @@ const Analytics = () => {
     );
   }
 
-  // Phase 3: Show actual content
+  // Show actual content
   return (
     <>
       <Sidebar />

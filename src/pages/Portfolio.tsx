@@ -25,7 +25,6 @@ import { usePriceData } from "@/contexts/PriceDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -45,11 +44,13 @@ const Portfolio = () => {
   const { t } = useTranslation();
   const { formatPrice, convertPrice } = useCurrency();
   
-  // 3-Phase loading state - ONLY for native mobile app
+  // 2-Phase loading state (skeleton → revealed) - ONLY for native mobile app
+  // Dashboard has splash, other pages skip directly to skeleton
   const { loadingPhase, handleSplashComplete, isNativeApp } = useDashboardLoading({
     sessionKey: SESSION_STORAGE_KEYS.PORTFOLIO_SPLASH_SHOWN,
     isDataReady: !loading && prices.length > 0,
-    skeletonDelay: 400
+    skeletonDelay: 400,
+    skipSplash: true // Skip splash phase, start at skeleton
   });
 
   // Pull-to-refresh handler
@@ -124,12 +125,7 @@ const Portfolio = () => {
     setHoldings(holdings.filter((h) => h.id !== id));
   };
 
-  // Phase 1: Show splash screen (native app only)
-  if (loadingPhase === 'splash') {
-    return <DashboardSplash onComplete={handleSplashComplete} />;
-  }
-
-  // Phase 2: Show skeleton loader (native app only)
+  // Phase 1: Show skeleton loader (native app only, no splash)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -140,7 +136,7 @@ const Portfolio = () => {
     );
   }
 
-  // Phase 3: Show actual content
+  // Phase 2: Show actual content
   return (
     <>
       <Sidebar />
