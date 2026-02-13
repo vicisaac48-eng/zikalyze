@@ -76,21 +76,31 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // Check if ANY splash has been shown in this session (global flag)
-    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
-    const hasBeenVisited = sessionStorage.getItem(visitedKey);
+    // SSR-safe: Check if we're in browser environment
+    if (typeof window === 'undefined') return 'revealed';
     
-    // Mobile Native App Loading Logic:
-    // - First page visited after app launch → show splash (phase 1)
-    // - Navigation to other pages → show skeleton only (phase 2) 
-    // - Subsequent visits to same page → instant content (phase 3)
-    // - After leaving app/clearing cache → shows splash again on first page
-    if (!hasSeenSplash) {
-      return 'splash'; // First page after app return - show splash
-    } else if (!hasBeenVisited) {
-      return 'skeleton'; // First visit to this page - show skeleton only
-    } else {
-      return 'revealed'; // Subsequent visits - instant content
+    try {
+      // Check if ANY splash has been shown in this session (global flag)
+      const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
+      const hasBeenVisited = sessionStorage.getItem(visitedKey);
+      
+      // Mobile Native App Loading Logic:
+      // - First page visited after app launch → show splash (phase 1)
+      // - Navigation to other pages → show skeleton only (phase 2) 
+      // - Subsequent visits to same page → instant content (phase 3)
+      // - After leaving app/clearing cache → shows splash again on first page
+      if (!hasSeenSplash) {
+        return 'splash'; // First page after app return - show splash
+      } else if (!hasBeenVisited) {
+        return 'skeleton'; // First visit to this page - show skeleton only
+      } else {
+        return 'revealed'; // Subsequent visits - instant content
+      }
+    } catch (error) {
+      // If sessionStorage access fails (e.g., private browsing), show splash
+      // This ensures graceful degradation
+      console.warn('Failed to access sessionStorage, defaulting to splash:', error);
+      return 'splash';
     }
   });
   
@@ -98,12 +108,22 @@ export function useDashboardLoading({
   const handleSplashComplete = useCallback(() => {
     setLoadingPhase('skeleton');
     // Set global splash shown flag to prevent splash on navigation
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
+    } catch (error) {
+      // Silently fail if sessionStorage is unavailable (e.g., private browsing)
+      console.warn('Failed to set splash shown flag:', error);
+    }
   }, []);
   
   // Mark page as visited (called when skeleton completes)
   const markAsVisited = useCallback(() => {
-    sessionStorage.setItem(visitedKey, 'true');
+    try {
+      sessionStorage.setItem(visitedKey, 'true');
+    } catch (error) {
+      // Silently fail if sessionStorage is unavailable
+      console.warn('Failed to mark page as visited:', error);
+    }
   }, [visitedKey]);
   
   // Auto-transition from skeleton to revealed when data is ready
