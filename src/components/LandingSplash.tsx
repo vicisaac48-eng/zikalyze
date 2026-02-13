@@ -6,11 +6,12 @@ interface LandingSplashProps {
 }
 
 const LandingSplash = ({ onComplete }: LandingSplashProps) => {
-  // Auto-complete after 2 seconds for professional branded experience
+  // Auto-complete after 3 seconds for premium professional branded experience
+  // Extended duration creates more polished, premium feel for native mobile apps
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
-    }, 2000);
+    }, 3000);
     
     return () => clearTimeout(timer);
   }, [onComplete]);
