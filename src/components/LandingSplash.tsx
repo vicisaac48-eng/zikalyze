@@ -14,13 +14,13 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
   
-  // Auto-complete after 3 seconds for premium professional branded experience
-  // Extended duration creates more polished, premium feel for native mobile apps
+  // Auto-complete after 2 seconds for professional branded experience
+  // Optimized duration provides branded experience without unnecessary delay
   // Effect runs only once on mount - timer won't reset on parent re-renders
   useEffect(() => {
     const timer = setTimeout(() => {
       onCompleteRef.current();
-    }, 3000);
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []); // Empty deps - run only once on mount
