@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
+import LandingSplash from "@/components/LandingSplash";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -17,6 +18,22 @@ const Landing = () => {
   const { t } = useTranslation();
   const isNativeApp = useIsNativeApp();
   const [userCount, setUserCount] = useState<number | null>(null);
+  
+  // Splash screen state - only for native mobile app
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    // Only show splash on native app
+    if (!isNativeApp) return false;
+    
+    // Check if splash has been shown in this session
+    const hasSeenSplash = sessionStorage.getItem('landing_splash_shown');
+    return !hasSeenSplash;
+  });
+
+  // Handle splash completion
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem('landing_splash_shown', 'true');
+  }, []);
 
   // Handle navigation - direct navigation for auth, loading for dashboard
   const handleNavigate = useCallback((path: string) => {
@@ -81,6 +98,11 @@ const Landing = () => {
       navigate("/dashboard");
     }
   }, [navigate, user, authLoading]);
+
+  // Show splash screen on native app first visit
+  if (showSplash) {
+    return <LandingSplash onComplete={handleSplashComplete} />;
+  }
 
   return (
     <div className="h-full min-h-screen overflow-y-auto bg-background safe-area-inset-top">

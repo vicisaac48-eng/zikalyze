@@ -832,3 +832,74 @@ All colors MUST be HSL.
 .skeleton-pulse {
   animation: skeletonPulse 2s ease-in-out infinite;
 }
+
+/* Landing Splash Screen - Color Band Animations (Native Mobile App Only) */
+
+/* Splash fade-in with scale */
+@keyframes landingSplashFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animated color bands - sliding effect */
+@keyframes colorBandSlide {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+/* Logo pulse for splash */
+@keyframes logoSplashPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.95;
+  }
+}
+
+/* Gradient shimmer effect */
+@keyframes gradientShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.landing-splash-fade-in {
+  animation: landingSplashFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.logo-splash-pulse {
+  animation: logoSplashPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.color-band {
+  animation: colorBandSlide 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.gradient-shimmer {
+  background-size: 200% 200%;
+  animation: gradientShimmer 3s ease infinite;
+}
