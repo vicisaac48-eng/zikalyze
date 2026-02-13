@@ -10,7 +10,7 @@ interface UseDashboardLoadingOptions {
    * Session storage key to track if splash has been shown
    * e.g., SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN
    * NOTE: This parameter is kept for backward compatibility but is not used
-   * since Auth/Dashboard pages never show splash (only Landing page shows splash)
+   * The hook now uses global LANDING_SPLASH_SHOWN flag instead
    */
   sessionKey: string;
   
@@ -40,13 +40,18 @@ interface UseDashboardLoadingOptions {
  * NOTE: Named `useDashboardLoading` for historical reasons but is used by both
  * Dashboard pages and Auth page. Could be renamed to `usePageLoading` in future.
  * 
- * Loading Phases for Auth/Dashboard pages:
- * - First visit: Shows skeleton (phase 2) → revealed (phase 3)
- * - Subsequent visits: Shows content instantly (phase 3)
- * - NEVER shows splash (phase 1) - splash is ONLY for Landing page
+ * Loading Phases (Mobile Native App Only):
+ * - First page after app launch/return: Splash (phase 1) → Skeleton (phase 2) → Reveal (phase 3)
+ * - Navigation to other pages: Skeleton (phase 2) → Reveal (phase 3)
+ * - Subsequent visits to same page: Instant content (phase 3)
  * 
- * The 3-phase loading (splash + skeleton + reveal) ONLY happens on Landing page
- * when users first open the app or after clearing app cache/long absence.
+ * Splash appears when user:
+ * - Opens app for first time
+ * - Returns after leaving app (sessionStorage clears)
+ * - Clears app cache
+ * 
+ * Splash does NOT appear when:
+ * - Navigating between pages in same session
  * 
  * Usage:
  * ```tsx
@@ -71,15 +76,19 @@ export function useDashboardLoading({
     // Web always shows content immediately
     if (!isNativeApp) return 'revealed';
     
-    // Check if page has been visited before
+    // Check if ANY splash has been shown in this session (global flag)
+    const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
     const hasBeenVisited = sessionStorage.getItem(visitedKey);
     
-    // Loading logic for Auth and Dashboard pages:
-    // - NEVER show splash (phase 1) - splash is ONLY for Landing page
-    // - First visit to page → show skeleton (phase 2) then reveal (phase 3)
-    // - Subsequent visits → show content instantly (phase 3)
-    if (!hasBeenVisited) {
-      return 'skeleton'; // First visit - show skeleton only (NO splash)
+    // Mobile Native App Loading Logic:
+    // - First page visited after app launch → show splash (phase 1)
+    // - Navigation to other pages → show skeleton only (phase 2) 
+    // - Subsequent visits to same page → instant content (phase 3)
+    // - After leaving app/clearing cache → shows splash again on first page
+    if (!hasSeenSplash) {
+      return 'splash'; // First page after app return - show splash
+    } else if (!hasBeenVisited) {
+      return 'skeleton'; // First visit to this page - show skeleton only
     } else {
       return 'revealed'; // Subsequent visits - instant content
     }
@@ -88,8 +97,9 @@ export function useDashboardLoading({
   // Handle splash completion - transition to skeleton phase
   const handleSplashComplete = useCallback(() => {
     setLoadingPhase('skeleton');
-    sessionStorage.setItem(sessionKey, 'true');
-  }, [sessionKey]);
+    // Set global splash shown flag to prevent splash on navigation
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
+  }, []);
   
   // Mark page as visited (called when skeleton completes)
   const markAsVisited = useCallback(() => {
