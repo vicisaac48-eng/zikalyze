@@ -19,11 +19,12 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
     <div 
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center landing-splash-fade-in overflow-hidden"
       style={{ 
-        background: 'linear-gradient(135deg, #0a0f1a 0%, #0f1419 50%, #0a0f1a 100%)',
+        backgroundColor: '#B2EBE0',
+        backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
       }}
     >
-      {/* Animated color bands in background */}
-      <div className="absolute inset-0 overflow-hidden opacity-40">
+      {/* Animated color bands - darker versions for contrast on mint background */}
+      <div className="absolute inset-0 overflow-hidden opacity-30">
         {/* Cyan band */}
         <div 
           className="absolute top-1/4 left-0 w-[200%] h-32 color-band"
@@ -53,15 +54,6 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
         />
       </div>
 
-      {/* Gradient overlay for depth */}
-      <div 
-        className="absolute inset-0 gradient-shimmer"
-        style={{
-          background: 'linear-gradient(45deg, rgba(112, 255, 193, 0.1) 0%, rgba(197, 163, 255, 0.1) 100%)',
-          opacity: 0.3
-        }}
-      />
-
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo with pulse animation */}
@@ -71,25 +63,20 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
             alt="Zikalyze"
             className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
             style={{ 
-              filter: 'drop-shadow(0 8px 24px rgba(112, 255, 193, 0.3))',
+              filter: 'drop-shadow(0 8px 24px rgba(17, 24, 39, 0.15))',
             }}
           />
         </div>
 
-        {/* Brand text with gradient */}
+        {/* Brand text */}
         <div className="text-center space-y-2">
           <h1 
             className="text-3xl sm:text-4xl font-bold tracking-tight"
-            style={{
-              background: 'linear-gradient(135deg, #70ffc1 0%, #c5a3ff 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            style={{ color: '#111827' }}
           >
             Zikalyze
           </h1>
-          <p className="text-sm sm:text-base text-gray-400 font-medium">
+          <p className="text-sm sm:text-base font-medium" style={{ color: '#374151' }}>
             AI-Powered Trading Analysis
           </p>
         </div>
@@ -97,22 +84,25 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
         {/* Loading indicator */}
         <div className="flex gap-2 mt-4">
           <div 
-            className="w-2 h-2 rounded-full bg-cyan-400"
+            className="w-2 h-2 rounded-full"
             style={{ 
+              backgroundColor: '#70ffc1',
               animation: 'pulse 1.5s ease-in-out infinite',
               animationDelay: '0s'
             }}
           />
           <div 
-            className="w-2 h-2 rounded-full bg-purple-400"
+            className="w-2 h-2 rounded-full"
             style={{ 
+              backgroundColor: '#c5a3ff',
               animation: 'pulse 1.5s ease-in-out infinite',
               animationDelay: '0.3s'
             }}
           />
           <div 
-            className="w-2 h-2 rounded-full bg-cyan-400"
+            className="w-2 h-2 rounded-full"
             style={{ 
+              backgroundColor: '#70ffc1',
               animation: 'pulse 1.5s ease-in-out infinite',
               animationDelay: '0.6s'
             }}
