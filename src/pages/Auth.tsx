@@ -527,8 +527,8 @@ const Auth = () => {
   // 3-Phase loading state using reusable hook - ONLY for native mobile app
   // Auth page should never show splash (phase 1), only skeleton (phase 2) and content (phase 3)
   const { loadingPhase, isNativeApp } = useDashboardLoading({
-    sessionKey: SESSION_STORAGE_KEYS.DASHBOARD_SPLASH_SHOWN, // Shared key to ensure no splash
-    visitedKey: SESSION_STORAGE_KEYS.DASHBOARD_VISITED, // Shared key for visited tracking
+    sessionKey: SESSION_STORAGE_KEYS.AUTH_SPLASH_SHOWN,
+    visitedKey: SESSION_STORAGE_KEYS.AUTH_VISITED,
     isDataReady: true, // Auth page is always ready (no data fetching)
     skeletonDelay: 200 // Responsive timing
   });

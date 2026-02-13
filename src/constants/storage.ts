@@ -11,6 +11,9 @@ export const SESSION_STORAGE_KEYS = {
   /** Landing page splash screen shown flag (native app only) */
   LANDING_SPLASH_SHOWN: 'landing_splash_shown',
   
+  /** Authentication page splash screen shown flag (native app only) */
+  AUTH_SPLASH_SHOWN: 'auth_splash_shown',
+  
   /** Portfolio page splash screen shown flag (native app only) */
   PORTFOLIO_SPLASH_SHOWN: 'portfolio_splash_shown',
   
@@ -28,6 +31,9 @@ export const SESSION_STORAGE_KEYS = {
   
   /** Dashboard page visited via navigation flag (native app only) */
   DASHBOARD_VISITED: 'dashboard_visited',
+  
+  /** Authentication page visited via navigation flag (native app only) */
+  AUTH_VISITED: 'auth_visited',
   
   /** Portfolio page visited via navigation flag (native app only) */
   PORTFOLIO_VISITED: 'portfolio_visited',
