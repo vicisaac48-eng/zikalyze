@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useBotProtection } from "@/hooks/useBotProtection";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { toast } from "sonner";
 import zikalyzeLogo from "@/assets/zikalyze-logo.png";
 
@@ -51,6 +53,7 @@ const DemoModeAuth = () => {
 const SignUpForm = () => {
   const navigate = useNavigate();
   const { signUp, isProcessing } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -179,7 +182,11 @@ const SignUpForm = () => {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4">
+    <>
+      {/* Auth loading overlay - native app only */}
+      <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
+      
+      <form onSubmit={handleSignUp} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signup-username">Username</Label>
         <div className="relative">
@@ -267,6 +274,7 @@ const SignUpForm = () => {
         {isBlocked ? "Access Temporarily Blocked" : isProcessing ? "Creating Wallet..." : "Create Wallet"}
       </Button>
     </form>
+    </>
   );
 };
 
@@ -274,6 +282,7 @@ const SignUpForm = () => {
 const SignInForm = () => {
   const navigate = useNavigate();
   const { signInWithKey, recoverWallet, isProcessing, isSignedIn } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [mode, setMode] = useState<"key" | "recover">("key");
   const [privateKey, setPrivateKey] = useState("");
   const [username, setUsername] = useState("");
@@ -347,7 +356,11 @@ const SignInForm = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <>
+      {/* Auth loading overlay - native app only */}
+      <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
+      
+      <div className="space-y-4">
       <div className="flex gap-2 p-1 bg-muted rounded-lg">
         <button
           type="button"
@@ -500,6 +513,7 @@ const SignInForm = () => {
         </form>
       )}
     </div>
+    </>
   );
 };
 
