@@ -163,32 +163,44 @@
           margin: 0 0 0.5rem 0;
           letter-spacing: -0.025em;
         ">Zikalyze</h1>
+        <!-- Tagline: Only visible on native apps (PWA/Capacitor), hidden on web browsers -->
         <p id="splash-tagline" style="
           font-size: 0.875rem;
           font-weight: 500;
           color: #374151;
           margin: 0;
-          display: none;
+          display: none !important;
         ">AI-Powered Trading Analysis</p>
       </div>
       
-      <!-- Show tagline only on native app -->
+      <!-- Show tagline ONLY on native app - runs immediately, before any other scripts -->
       <script>
         (function() {
-          // Check if running as native app
-          var isNativeApp = (
-            (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
-            (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) ||
-            (window.navigator && window.navigator.standalone === true) ||
-            (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
-          );
-          
-          // Show tagline only on native app
-          if (isNativeApp) {
-            var tagline = document.getElementById('splash-tagline');
-            if (tagline) {
-              tagline.style.display = 'block';
+          try {
+            // Check if running as native app using multiple detection methods
+            var isNativeApp = (
+              // PWA installed in standalone mode
+              (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+              // TWA or fullscreen mode
+              (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) ||
+              // iOS Add to Home Screen
+              (window.navigator && window.navigator.standalone === true) ||
+              // Capacitor native app
+              (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
+            );
+            
+            // ONLY show tagline if this is definitely a native app
+            // Otherwise it stays hidden (display: none !important)
+            if (isNativeApp) {
+              var tagline = document.getElementById('splash-tagline');
+              if (tagline) {
+                tagline.style.display = 'block';
+                tagline.style.setProperty('display', 'block', 'important');
+              }
             }
+          } catch (e) {
+            // If any error occurs, tagline stays hidden (fail-safe)
+            console.error('Native app detection error:', e);
           }
         })();
       </script>
