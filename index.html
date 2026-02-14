@@ -40,16 +40,14 @@
     
     <!-- Instant native app detection via CSS media queries (no JavaScript delay!) -->
     <style>
-      /* Default for web browsers: dark background, hidden splash */
+      /* Default for ALL platforms: dark background to prevent mint green flash during navigation */
+      /* Mint green background is ONLY on the #initial-splash element, not the body */
       body {
-        background-color: #0a0f1a;
+        background-color: #0a0f1a !important;
       }
       
-      /* PWA Standalone Mode - Instant mint green, no flash! */
+      /* PWA Standalone Mode - Show splash screen, keep body dark */
       @media (display-mode: standalone) {
-        body {
-          background-color: #B2EBE0 !important;
-        }
         #initial-splash {
           display: flex !important;
         }
@@ -58,11 +56,8 @@
         }
       }
       
-      /* Android TWA Fullscreen Mode - Instant mint green, no flash! */
+      /* Android TWA Fullscreen Mode - Show splash screen, keep body dark */
       @media (display-mode: fullscreen) {
-        body {
-          background-color: #B2EBE0 !important;
-        }
         #initial-splash {
           display: flex !important;
         }
@@ -148,10 +143,11 @@
   <body style="background-color:#0a0f1a">
     <!-- Initial splash screen - ONLY shown on mobile native apps -->
     <!-- Hidden on web browsers for professional appearance -->
+    <!-- z-index: 10000 ensures splash is above header (9999) to prevent header showing during splash -->
     <div id="initial-splash" style="
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: 10000;
       display: none;
       flex-direction: column;
       align-items: center;
@@ -239,10 +235,10 @@
                 tagline.style.setProperty('display', 'block', 'important');
               }
               
-              // Set body background to mint green for native app
-              document.body.style.backgroundColor = '#B2EBE0';
+              // DO NOT set body background to mint green - keep it dark to prevent flash during navigation
+              // Mint green background is only on the splash screen itself
             }
-            // For web browsers: splash stays hidden, body stays dark (#0a0f1a)
+            // For all platforms: body stays dark (#0a0f1a) to prevent mint green flash during navigation
           } catch (e) {
             // If any error occurs, splash and tagline stay hidden (fail-safe)
             console.error('Native app detection error:', e);
