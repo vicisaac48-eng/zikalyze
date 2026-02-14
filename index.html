@@ -260,17 +260,17 @@
             // New user - randomly assign variant
             var randomIndex = Math.floor(Math.random() * TEST_VARIANTS.length);
             var randomVariant = TEST_VARIANTS[randomIndex];
-            var testData = {
+            var variantData = {
               duration: randomVariant,
               variant: String.fromCharCode(65 + randomIndex), // A, B, or C
               assignedAt: new Date().toISOString()
             };
-            localStorage.setItem('splash_duration_test', JSON.stringify(testData));
+            localStorage.setItem('splash_duration_test', JSON.stringify(variantData));
             
             // Analytics event - track variant assignment
             // TODO: Integrate with your analytics (Google Analytics, Mixpanel, etc.)
-            // Example: gtag('event', 'ab_test_assigned', { variant: testData.variant, duration: randomVariant });
-            console.log('[A/B Test] Splash duration variant assigned:', testData.variant, '(' + randomVariant + 'ms)');
+            // Example: gtag('event', 'ab_test_assigned', { variant: variantData.variant, duration: randomVariant });
+            console.log('[A/B Test] Splash duration variant assigned:', variantData.variant, '(' + randomVariant + 'ms)');
             
             return randomVariant;
           } catch (e) {
