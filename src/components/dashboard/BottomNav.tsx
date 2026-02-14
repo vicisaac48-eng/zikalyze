@@ -54,7 +54,7 @@ const BottomNav = () => {
         <div className="fixed bottom-16 right-2 z-50 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[160px] md:hidden safe-area-inset-bottom">
           <button
             onClick={() => setShowMoreMenu(false)}
-            className="absolute -top-2 -right-2 p-1 bg-card border border-border rounded-full transition-all duration-150 ease-out active:scale-95 active:bg-[#B2EBE0] active:text-gray-900 active:duration-100 will-change-transform"
+            className="absolute -top-2 -right-2 p-1 bg-card border border-border rounded-full transition-all duration-150 ease-out active:scale-95 active:bg-primary active:text-primary-foreground active:duration-100 will-change-transform"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -62,7 +62,7 @@ const BottomNav = () => {
             to="/dashboard/alerts"
             onClick={() => setShowMoreMenu(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:bg-[#B2EBE0] active:text-gray-900 active:duration-100 will-change-transform",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:bg-primary/90 active:text-primary-foreground active:duration-100 will-change-transform",
               location.pathname === "/dashboard/alerts"
                 ? "bg-primary text-primary-foreground"
                 : "text-foreground hover:bg-secondary"
@@ -75,7 +75,7 @@ const BottomNav = () => {
             to="/dashboard/portfolio"
             onClick={() => setShowMoreMenu(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:bg-[#B2EBE0] active:text-gray-900 active:duration-100 will-change-transform",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-out active:scale-95 active:bg-primary/90 active:text-primary-foreground active:duration-100 will-change-transform",
               location.pathname === "/dashboard/portfolio"
                 ? "bg-primary text-primary-foreground"
                 : "text-foreground hover:bg-secondary"
@@ -87,7 +87,7 @@ const BottomNav = () => {
           <div className="my-1 border-t border-border" />
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150 ease-out active:scale-95 active:bg-[#B2EBE0] active:text-gray-900 active:duration-100 will-change-transform"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150 ease-out active:scale-95 active:bg-destructive/20 active:text-destructive active:duration-100 will-change-transform"
           >
             <LogOut className="h-4 w-4" />
             <span className="text-sm">{t("sidebar.logout", "Sign Out")}</span>
