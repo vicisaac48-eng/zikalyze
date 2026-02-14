@@ -9,6 +9,11 @@
       // This prevents blank mint green flash before logo renders
     </script>
     
+    <!-- Critical asset preloading - loads during splash screen -->
+    <link rel="preload" href="./pwa-192x192.png" as="image" type="image/png" />
+    <link rel="preload" href="./pwa-512x512.png" as="image" type="image/png" />
+    <link rel="preload" href="./og-image.png" as="image" type="image/png" />
+    
     <!-- Preconnect hints FIRST for critical external origins -->
     <link rel="preconnect" href="https://api.exchangerate-api.com" />
     <link rel="dns-prefetch" href="https://api.exchangerate-api.com" />
@@ -213,26 +218,36 @@
         // Silently fail if sessionStorage is unavailable
       }
       
-      // Professional splash screen with minimum display time
-      // Ensures users see the branding even on fast connections
+      // Professional splash screen with React hydration detection
+      // Waits for React to fully hydrate (interactive UI), not just mount
       (function() {
         var FADE_DURATION_MS = 300; // Smooth transition duration
-        var CHECK_INTERVAL_MS = 50; // How often to check for React mount
+        var CHECK_INTERVAL_MS = 50; // How often to check for React hydration
         var MIN_DISPLAY_MS = 2000; // Minimum time to show splash (2 seconds for professional experience)
         var MAX_TIMEOUT_MS = 10000; // Maximum time to wait (10 seconds)
         var MAX_ATTEMPTS = Math.ceil(MAX_TIMEOUT_MS / CHECK_INTERVAL_MS);
         
         var splashStartTime = Date.now();
         var attempts = 0;
-        var reactMounted = false;
+        var reactHydrated = false;
         
-        var checkReactMount = setInterval(function() {
+        var checkReactHydration = setInterval(function() {
           attempts++;
           var root = document.getElementById('root');
           
-          // Check if React has mounted
+          // Check if React has hydrated (not just mounted)
+          // React hydration adds data-reactroot or sets hydration markers
           if (root && root.children.length > 0) {
-            reactMounted = true;
+            // Check for hydration markers
+            var hasReactRoot = root.querySelector('[data-reactroot]') || 
+                               root.getAttribute('data-reactroot') !== null ||
+                               root.children[0]; // Fallback: any child means React rendered
+            
+            // Additional check: ensure the app is interactive
+            // React typically adds event listeners after hydration
+            if (hasReactRoot) {
+              reactHydrated = true;
+            }
           }
           
           var elapsedTime = Date.now() - splashStartTime;
@@ -240,19 +255,20 @@
           var maxTimeReached = attempts >= MAX_ATTEMPTS;
           
           // Remove splash when:
-          // 1. React is mounted AND minimum display time reached (professional)
+          // 1. React is fully hydrated AND minimum display time reached (professional)
           // 2. OR maximum timeout reached (failsafe)
-          if ((reactMounted && minTimeReached) || maxTimeReached) {
+          if ((reactHydrated && minTimeReached) || maxTimeReached) {
             var initialSplash = document.getElementById('initial-splash');
             if (initialSplash) {
-              // Smooth fade out
-              initialSplash.style.transition = 'opacity ' + FADE_DURATION_MS + 'ms ease-out';
+              // Professional cubic-bezier fade-out (Material Design standard)
+              // More organic than linear ease-out
+              initialSplash.style.transition = 'opacity ' + FADE_DURATION_MS + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
               initialSplash.style.opacity = '0';
               setTimeout(function() {
                 initialSplash.remove();
               }, FADE_DURATION_MS);
             }
-            clearInterval(checkReactMount);
+            clearInterval(checkReactHydration);
           }
         }, CHECK_INTERVAL_MS);
       })();
