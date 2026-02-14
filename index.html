@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en" class="dark" style="background-color:#0a0f1a">
+<html lang="en" class="dark" style="background-color:#B2EBE0">
   <head>
     <meta charset="UTF-8" />
-    <style>html,body{background-color:#0a0f1a;margin:0}</style>
+    <style>html,body{background-color:#B2EBE0;margin:0}</style>
     <script>
       // Native app detection script removed
       // LandingSplash component now handles the branded mint green background
@@ -36,8 +36,8 @@
     <meta name="revisit-after" content="1 days" />
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#0a0f1a" />
-    <meta name="background-color" content="#0a0f1a" />
+    <meta name="theme-color" content="#B2EBE0" />
+    <meta name="background-color" content="#B2EBE0" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="Zikalyze" />
     
@@ -98,7 +98,128 @@
     <meta name="format-detection" content="address=no" />
     <meta name="format-detection" content="email=no" />
   </head>
-  <body style="background-color:#0a0f1a">
+  <body style="background-color:#B2EBE0">
+    <!-- Initial splash screen - shown immediately before React loads -->
+    <!-- Provides instant branded experience with mint green + logo -->
+    <div id="initial-splash" style="
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #B2EBE0;
+      background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    ">
+      <!-- Logo with background -->
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 6rem;
+        height: 6rem;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #70ffc1 0%, #b2ebe0 100%);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        margin-bottom: 2rem;
+      ">
+        <!-- TrendingUp Icon SVG -->
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="48" 
+          height="48" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="#111827" 
+          stroke-width="2.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        >
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      
+      <!-- Brand text -->
+      <div style="text-align: center;">
+        <h1 style="
+          font-size: 2rem;
+          font-weight: 700;
+          color: #111827;
+          margin: 0 0 0.5rem 0;
+          letter-spacing: -0.025em;
+        ">Zikalyze</h1>
+        <p style="
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+          margin: 0;
+        ">AI-Powered Trading Analysis</p>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div style="
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+      ">
+        <div style="
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background-color: #70ffc1;
+          animation: pulse 1.5s ease-in-out infinite;
+        "></div>
+        <div style="
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background-color: #c5a3ff;
+          animation: pulse 1.5s ease-in-out infinite;
+          animation-delay: 0.3s;
+        "></div>
+        <div style="
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background-color: #70ffc1;
+          animation: pulse 1.5s ease-in-out infinite;
+          animation-delay: 0.6s;
+        "></div>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+    </style>
+    
+    <script>
+      // Remove initial splash when React mounts and renders LandingSplash
+      // This ensures smooth transition from HTML splash to React splash
+      window.addEventListener('DOMContentLoaded', function() {
+        // Wait for React to mount, then remove initial splash
+        var checkReactMount = setInterval(function() {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            var initialSplash = document.getElementById('initial-splash');
+            if (initialSplash) {
+              // Fade out smoothly
+              initialSplash.style.transition = 'opacity 200ms ease-out';
+              initialSplash.style.opacity = '0';
+              setTimeout(function() {
+                initialSplash.remove();
+              }, 200);
+            }
+            clearInterval(checkReactMount);
+          }
+        }, 50);
+      });
+    </script>
+    
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
   </body>
