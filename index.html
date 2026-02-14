@@ -15,10 +15,10 @@
     <link rel="preload" href="./og-image.png" as="image" type="image/png" />
     
     <!-- Font preloading - add custom fonts here when available -->
-    <!-- Example: <link rel="preload" href="/fonts/CustomFont.woff2" as="font" type="font/woff2" crossorigin /> -->
+    <!-- Example: <link rel="preload" href="/fonts/CustomFont.woff2" as="font" type="font/woff2" crossorigin="anonymous" /> -->
     <!-- Google Fonts preload (if using): -->
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin /> -->
-    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /> -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" /> -->
     <!-- <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" /> -->
     
     <!-- Preconnect hints FIRST for critical external origins -->
@@ -253,8 +253,8 @@
           try {
             var storedTest = localStorage.getItem('splash_duration_test');
             if (storedTest) {
-              var testData = JSON.parse(storedTest);
-              return testData.duration;
+              var variantData = JSON.parse(storedTest);
+              return variantData.duration;
             }
             
             // New user - randomly assign variant
