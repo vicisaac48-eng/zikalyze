@@ -38,6 +38,40 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     
+    <!-- Instant native app detection via CSS media queries (no JavaScript delay!) -->
+    <style>
+      /* Default for web browsers: dark background, hidden splash */
+      body {
+        background-color: #0a0f1a;
+      }
+      
+      /* PWA Standalone Mode - Instant mint green, no flash! */
+      @media (display-mode: standalone) {
+        body {
+          background-color: #B2EBE0 !important;
+        }
+        #initial-splash {
+          display: flex !important;
+        }
+        #splash-tagline {
+          display: block !important;
+        }
+      }
+      
+      /* Android TWA Fullscreen Mode - Instant mint green, no flash! */
+      @media (display-mode: fullscreen) {
+        body {
+          background-color: #B2EBE0 !important;
+        }
+        #initial-splash {
+          display: flex !important;
+        }
+        #splash-tagline {
+          display: block !important;
+        }
+      }
+    </style>
+    
     <!-- Primary Meta Tags -->
     <title>Zikalyze - AI Crypto Trading Analysis</title>
     <meta name="title" content="Zikalyze - AI Crypto Trading Analysis" />
