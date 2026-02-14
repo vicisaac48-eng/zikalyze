@@ -236,18 +236,14 @@
           var root = document.getElementById('root');
           
           // Check if React has hydrated (not just mounted)
-          // React hydration adds data-reactroot or sets hydration markers
-          if (root && root.children.length > 0) {
-            // Check for hydration markers
-            var hasReactRoot = root.querySelector('[data-reactroot]') || 
-                               root.getAttribute('data-reactroot') !== null ||
-                               root.children[0]; // Fallback: any child means React rendered
-            
-            // Additional check: ensure the app is interactive
-            // React typically adds event listeners after hydration
-            if (hasReactRoot) {
-              reactHydrated = true;
-            }
+          // Priority 1: Check for React hydration markers
+          if (root && (root.querySelector('[data-reactroot]') || root.getAttribute('data-reactroot') !== null)) {
+            reactHydrated = true;
+          }
+          // Priority 2: Fallback - if React 18+ doesn't use data-reactroot, check for rendered content
+          else if (root && root.children.length > 0) {
+            // React has rendered content, assume hydration complete
+            reactHydrated = true;
           }
           
           var elapsedTime = Date.now() - splashStartTime;
