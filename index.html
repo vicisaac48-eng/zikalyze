@@ -259,9 +259,9 @@
             
             // New user - randomly assign variant
             var randomIndex = Math.floor(Math.random() * TEST_VARIANTS.length);
-            var randomVariant = TEST_VARIANTS[randomIndex];
+            var assignedDuration = TEST_VARIANTS[randomIndex];
             var variantData = {
-              duration: randomVariant,
+              duration: assignedDuration,
               variant: String.fromCharCode(65 + randomIndex), // A, B, or C
               assignedAt: new Date().toISOString()
             };
@@ -269,10 +269,10 @@
             
             // Analytics event - track variant assignment
             // TODO: Integrate with your analytics (Google Analytics, Mixpanel, etc.)
-            // Example: gtag('event', 'ab_test_assigned', { variant: variantData.variant, duration: randomVariant });
-            console.log('[A/B Test] Splash duration variant assigned:', variantData.variant, '(' + randomVariant + 'ms)');
+            // Example: gtag('event', 'ab_test_assigned', { variant: variantData.variant, duration: assignedDuration });
+            console.log('[A/B Test] Splash duration variant assigned:', variantData.variant, '(' + assignedDuration + 'ms)');
             
-            return randomVariant;
+            return assignedDuration;
           } catch (e) {
             // Fallback if localStorage fails
             return DEFAULT_DURATION;
