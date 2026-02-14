@@ -52,10 +52,12 @@ export function useRouteRestoration(isAuthenticated: boolean) {
       
       // If there's a saved route and it's different from current
       if (lastRoute && lastRoute !== currentPath && lastRoute.startsWith('/dashboard')) {
-        // Small delay to ensure app is fully loaded before navigating
+        // Delay navigation to ensure splash completes and LANDING_SPLASH_SHOWN is set
+        // Dashboard splash takes 1200ms, so wait 1400ms to be safe
+        // This prevents the target page from showing a second splash
         const timer = setTimeout(() => {
           navigate(lastRoute, { replace: true });
-        }, 100);
+        }, 1400);
         
         return () => clearTimeout(timer);
       }
