@@ -47,17 +47,11 @@ interface UseDashboardLoadingOptions {
  * Dashboard pages and Auth page. Could be renamed to `usePageLoading` in future.
  * 
  * Loading Phases (Mobile Native App Only):
- * - First page after app launch/return: Splash (phase 1) → Skeleton (phase 2) → Reveal (phase 3)
- * - Navigation to other pages: Skeleton (phase 2) → Reveal (phase 3)
- * - Subsequent visits to same page: Instant content (phase 3)
+ * - First visit to page: Skeleton (phase 1) → Reveal (phase 2)
+ * - Subsequent visits to same page: Instant content (phase 2)
  * 
- * Splash appears when user:
- * - Opens app for first time
- * - Returns after leaving app (sessionStorage clears)
- * - Clears app cache
- * 
- * Splash does NOT appear when:
- * - Navigating between pages in same session
+ * NOTE: Splash screen has been removed from dashboard pages as of 2026-02-14.
+ * Only Landing page shows splash screen now.
  * 
  * Usage:
  * ```tsx
@@ -92,48 +86,39 @@ export function useDashboardLoading({
     
     try {
       // Check if route restoration is pending
-      // If so, skip splash on this intermediate page (splash will show on target page)
+      // If so, skip all loading on this intermediate page
       const isRestorationPending = sessionStorage.getItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING);
       if (isRestorationPending) {
-        // Clear the flag immediately so target page can show splash
+        // Clear the flag immediately
         sessionStorage.removeItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING);
         return 'revealed'; // Skip all loading phases on intermediate page
       }
       
-      // Check if ANY splash has been shown in this session (global flag)
-      const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
+      // Check if page has been visited before
       const hasBeenVisited = sessionStorage.getItem(visitedKey);
       
-      // Mobile Native App Loading Logic:
-      // - First page visited after app launch → show splash (phase 1)
-      // - Navigation to other pages → show skeleton only (phase 2) 
-      // - Subsequent visits to same page → instant content (phase 3)
-      // - After leaving app/clearing cache → shows splash again on first page
-      if (!hasSeenSplash) {
-        return 'splash'; // First page after app return - show splash
-      } else if (!hasBeenVisited) {
+      // Mobile Native App Loading Logic (Splash removed):
+      // - First visit to page → show skeleton only (phase 1)
+      // - Subsequent visits to same page → instant content (phase 2)
+      // No splash screen on dashboard pages
+      if (!hasBeenVisited) {
         return 'skeleton'; // First visit to this page - show skeleton only
       } else {
         return 'revealed'; // Subsequent visits - instant content
       }
     } catch (error) {
-      // If sessionStorage access fails (e.g., private browsing), show splash
+      // If sessionStorage access fails (e.g., private browsing), show skeleton
       // This ensures graceful degradation
-      console.warn('Failed to access sessionStorage, defaulting to splash:', error);
-      return 'splash';
+      console.warn('Failed to access sessionStorage, defaulting to skeleton:', error);
+      return 'skeleton';
     }
   });
   
-  // Handle splash completion - transition to skeleton phase
+  // Handle splash completion - kept for backward compatibility but no longer used
+  // Dashboard pages no longer show splash screen
   const handleSplashComplete = useCallback(() => {
-    setLoadingPhase('skeleton');
-    // Set global splash shown flag to prevent splash on navigation
-    try {
-      sessionStorage.setItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN, 'true');
-    } catch (error) {
-      // Silently fail if sessionStorage is unavailable (e.g., private browsing)
-      console.warn('Failed to set splash shown flag:', error);
-    }
+    // No-op: Splash phase removed from dashboard pages
+    // This function is kept for backward compatibility with existing code
   }, []);
   
   // Mark page as visited (called when skeleton completes)

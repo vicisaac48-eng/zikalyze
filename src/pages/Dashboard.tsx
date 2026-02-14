@@ -8,7 +8,6 @@ import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePriceData } from "@/contexts/PriceDataContext";
 import { useDashboardLoading } from "@/hooks/useDashboardLoading";
-import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { SESSION_STORAGE_KEYS, LOCAL_STORAGE_KEYS } from "@/constants/storage";
 
@@ -102,18 +101,7 @@ const Dashboard = () => {
       }
     : { name: selectedCrypto, price: 0, change: 0, high24h: 0, low24h: 0, volume: 0, marketCap: 0 };
 
-  // Phase 1: Show splash screen
-  if (loadingPhase === 'splash') {
-    return (
-      <>
-        <Sidebar />
-        <BottomNav />
-        <DashboardSplash onComplete={handleSplashComplete} />
-      </>
-    );
-  }
-
-  // Phase 2: Show skeleton loader
+  // Phase 1: Show skeleton loader
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -124,7 +112,7 @@ const Dashboard = () => {
     );
   }
 
-  // Phase 3: Revealed content with staggered animations (only for native app)
+  // Phase 2: Revealed content with staggered animations (only for native app)
   const isRevealing = isNativeApp && loadingPhase === 'revealed';
 
   return (
