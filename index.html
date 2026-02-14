@@ -111,14 +111,14 @@
     <meta name="format-detection" content="address=no" />
     <meta name="format-detection" content="email=no" />
   </head>
-  <body style="background-color:#B2EBE0">
-    <!-- Initial splash screen - shown immediately before React loads -->
-    <!-- Provides instant branded experience with mint green + logo -->
+  <body style="background-color:#0a0f1a">
+    <!-- Initial splash screen - ONLY shown on mobile native apps -->
+    <!-- Hidden on web browsers for professional appearance -->
     <div id="initial-splash" style="
       position: fixed;
       inset: 0;
       z-index: 9999;
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -173,7 +173,7 @@
         ">AI-Powered Trading Analysis</p>
       </div>
       
-      <!-- Show tagline ONLY on native app - runs immediately, before any other scripts -->
+      <!-- Show splash and tagline ONLY on native app - runs immediately, before any other scripts -->
       <script>
         (function() {
           try {
@@ -189,17 +189,28 @@
               (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
             );
             
-            // ONLY show tagline if this is definitely a native app
-            // Otherwise it stays hidden (display: none !important)
+            // ONLY show splash screen AND tagline if this is definitely a native app
+            // Otherwise they stay hidden (professional dark loading for web)
             if (isNativeApp) {
+              // Show the splash screen
+              var splash = document.getElementById('initial-splash');
+              if (splash) {
+                splash.style.display = 'flex';
+              }
+              
+              // Show the tagline
               var tagline = document.getElementById('splash-tagline');
               if (tagline) {
                 tagline.style.display = 'block';
                 tagline.style.setProperty('display', 'block', 'important');
               }
+              
+              // Set body background to mint green for native app
+              document.body.style.backgroundColor = '#B2EBE0';
             }
+            // For web browsers: splash stays hidden, body stays dark (#0a0f1a)
           } catch (e) {
-            // If any error occurs, tagline stays hidden (fail-safe)
+            // If any error occurs, splash and tagline stay hidden (fail-safe)
             console.error('Native app detection error:', e);
           }
         })();
