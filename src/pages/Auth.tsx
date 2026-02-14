@@ -31,10 +31,10 @@ const DemoModeAuth = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="text-center py-4">
-      <Sparkles className="h-8 w-8 text-primary mx-auto mb-3" />
-      <h2 className="text-base font-semibold mb-2">Just Exploring?</h2>
-      <p className="text-sm text-muted-foreground mb-3">
+    <div className="text-center py-2 sm:py-4">
+      <Sparkles className="h-6 w-6 text-primary mx-auto mb-2 sm:h-8 sm:w-8 sm:mb-3" />
+      <h2 className="text-sm font-semibold mb-1 sm:text-base sm:mb-2">Just Exploring?</h2>
+      <p className="text-xs text-muted-foreground mb-2 sm:text-sm sm:mb-3">
         Try the dashboard without creating an account.
       </p>
       <Button 
@@ -185,7 +185,7 @@ const SignUpForm = () => {
       {/* Auth loading overlay - native app only */}
       <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
       
-      <form onSubmit={handleSignUp} className="space-y-4">
+      <form onSubmit={handleSignUp} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="signup-username">Username</Label>
         <div className="relative">
@@ -359,7 +359,7 @@ const SignInForm = () => {
       {/* Auth loading overlay - native app only */}
       <AuthLoadingOverlay isVisible={isProcessing && isNativeApp} />
       
-      <div className="space-y-4">
+      <div className="space-y-3">
       <div className="flex gap-2 p-1 bg-muted rounded-lg">
         <button
           type="button"
@@ -382,7 +382,7 @@ const SignInForm = () => {
       </div>
 
       {mode === "key" ? (
-        <form onSubmit={handleSignInWithKey} className="space-y-4">
+        <form onSubmit={handleSignInWithKey} className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="private-key">Private Key</Label>
             <div className="relative">
@@ -438,7 +438,7 @@ const SignInForm = () => {
           </Button>
         </form>
       ) : (
-        <form onSubmit={handleRecover} className="space-y-4">
+        <form onSubmit={handleRecover} className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="recover-username">Username</Label>
             <div className="relative">
@@ -529,40 +529,42 @@ const Auth = () => {
   }, [isSignedIn, navigate]);
 
   return (
-    <main className="h-full min-h-[100dvh] overflow-y-auto bg-background flex items-start sm:items-center justify-center p-3 pb-6 sm:p-4 safe-area-inset-top">
+    <main className="h-[100dvh] overflow-hidden bg-background flex items-center justify-center p-3 sm:p-4 safe-area-inset-top">
       {/* Background effects - reduced on mobile for performance */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow sm:top-20 sm:left-10 sm:w-72 sm:h-72" />
         <div className="absolute bottom-10 right-5 w-56 h-56 bg-accent/10 rounded-full blur-3xl animate-pulse-slow sm:bottom-20 sm:right-10 sm:w-96 sm:h-96" style={{ animationDelay: "2s" }} />
       </div>
 
-      <div className="relative z-10 w-full max-w-md mt-4 sm:mt-0">
-        {/* Logo - responsive sizing */}
-        <div className="flex items-center justify-center gap-2 mb-6 sm:gap-3 sm:mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary sm:h-14 sm:w-14">
-            <TrendingUp className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
+      <div className="relative z-10 w-full max-w-md h-full flex flex-col justify-center py-4 sm:py-0 sm:h-auto">
+        {/* Logo - compact on mobile */}
+        <div className="flex items-center justify-center gap-2 mb-3 sm:gap-3 sm:mb-6 flex-shrink-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary sm:h-14 sm:w-14">
+            <TrendingUp className="h-5 w-5 text-primary-foreground sm:h-7 sm:w-7" />
           </div>
-          <span className="text-2xl font-bold text-foreground sm:text-3xl">Zikalyze</span>
+          <span className="text-xl font-bold text-foreground sm:text-3xl">Zikalyze</span>
         </div>
 
-        {/* Auth Card - responsive padding */}
-        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-xl p-4 shadow-2xl sm:rounded-2xl sm:p-6">
-          <Tabs defaultValue="signup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+        {/* Auth Card - compact mobile padding, scrollable content */}
+        <div className="rounded-xl border border-border bg-card/80 backdrop-blur-xl p-3 shadow-2xl sm:rounded-2xl sm:p-6 flex-1 sm:flex-initial flex flex-col overflow-hidden">
+          <Tabs defaultValue="signup" className="w-full flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-6 flex-shrink-0">
               <TabsTrigger value="signup" className="text-sm sm:text-base">{t("auth.signUp", "Sign Up")}</TabsTrigger>
               <TabsTrigger value="signin" className="text-sm sm:text-base">{t("auth.signIn", "Sign In")}</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="signup">
-              <SignUpForm />
-            </TabsContent>
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+              <TabsContent value="signup" className="mt-0">
+                <SignUpForm />
+              </TabsContent>
 
-            <TabsContent value="signin">
-              <SignInForm />
-            </TabsContent>
+              <TabsContent value="signin" className="mt-0">
+                <SignInForm />
+              </TabsContent>
+            </div>
           </Tabs>
 
-          <div className="relative my-4 sm:my-6">
+          <div className="relative my-3 sm:my-6 flex-shrink-0">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
@@ -571,9 +573,11 @@ const Auth = () => {
             </div>
           </div>
 
-          <DemoModeAuth />
+          <div className="flex-shrink-0">
+            <DemoModeAuth />
+          </div>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground sm:mt-6">
+          <p className="mt-3 text-center text-xs text-muted-foreground sm:mt-6 flex-shrink-0">
             {t("auth.termsAgreement")}
           </p>
         </div>
