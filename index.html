@@ -236,13 +236,17 @@
           var root = document.getElementById('root');
           
           // Check if React has hydrated (not just mounted)
-          // Priority 1: Check for React hydration markers
-          if (root && (root.querySelector('[data-reactroot]') || root.getAttribute('data-reactroot') !== null)) {
+          // Priority 1: Check for React hydration marker on root
+          if (root && root.getAttribute('data-reactroot') !== null) {
             reactHydrated = true;
           }
-          // Priority 2: Fallback - if React 18+ doesn't use data-reactroot, check for rendered content
+          // Priority 2: Check for hydration marker in descendants (React 17)
+          else if (root && root.querySelector('[data-reactroot]')) {
+            reactHydrated = true;
+          }
+          // Priority 3: Fallback - React 18+ doesn't always use data-reactroot
+          // This checks for rendered content (best-effort, may not guarantee full interactivity)
           else if (root && root.children.length > 0) {
-            // React has rendered content, assume hydration complete
             reactHydrated = true;
           }
           
