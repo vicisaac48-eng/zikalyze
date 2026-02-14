@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsNativeApp } from "./useIsNativeApp";
 import { LOCAL_STORAGE_KEYS, SESSION_STORAGE_KEYS } from "@/constants/storage";
@@ -11,19 +11,17 @@ import { LOCAL_STORAGE_KEYS, SESSION_STORAGE_KEYS } from "@/constants/storage";
  * - On app mount, restores the last route if available
  * - Only applies to authenticated routes (dashboard pages)
  * - Does not apply to web apps, only native mobile apps
- * - Sets a flag to prevent splash on intermediate page during restoration
+ * - Sets a session flag to prevent splash on intermediate page during restoration
  * 
  * Usage:
  * Call this hook once in your app's root component after authentication is loaded.
  * 
  * @param isAuthenticated - Whether the user is currently authenticated
- * @returns willRestore - Whether route restoration will occur (used to skip splash on intermediate page)
  */
 export function useRouteRestoration(isAuthenticated: boolean) {
   const location = useLocation();
   const navigate = useNavigate();
   const isNativeApp = useIsNativeApp();
-  const [willRestore, setWillRestore] = useState(false);
 
   // Save current route to localStorage whenever it changes (native apps only)
   useEffect(() => {
@@ -55,9 +53,8 @@ export function useRouteRestoration(isAuthenticated: boolean) {
       
       // If there's a saved route and it's different from current
       if (lastRoute && lastRoute !== currentPath && lastRoute.startsWith('/dashboard')) {
-        // Set flag to indicate route restoration will occur
+        // Set session flag to indicate route restoration will occur
         // This prevents splash on intermediate /dashboard page
-        setWillRestore(true);
         sessionStorage.setItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING, 'true');
         
         // Navigate immediately to the saved route
@@ -70,7 +67,7 @@ export function useRouteRestoration(isAuthenticated: boolean) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isNativeApp]); // Only run when authentication or platform changes
 
-  return willRestore;
+  return null;
 }
 
 /**
