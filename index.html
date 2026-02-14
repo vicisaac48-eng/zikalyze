@@ -14,6 +14,13 @@
     <link rel="preload" href="./pwa-512x512.png" as="image" type="image/png" />
     <link rel="preload" href="./og-image.png" as="image" type="image/png" />
     
+    <!-- Font preloading - add custom fonts here when available -->
+    <!-- Example: <link rel="preload" href="/fonts/CustomFont.woff2" as="font" type="font/woff2" crossorigin /> -->
+    <!-- Google Fonts preload (if using): -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /> -->
+    <!-- <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" /> -->
+    
     <!-- Preconnect hints FIRST for critical external origins -->
     <link rel="preconnect" href="https://api.exchangerate-api.com" />
     <link rel="dns-prefetch" href="https://api.exchangerate-api.com" />
@@ -221,9 +228,59 @@
       // Professional splash screen with React hydration detection
       // Waits for React to fully hydrate (interactive UI), not just mount
       (function() {
+        // ============================================================
+        // A/B TEST CONFIGURATION - Splash Duration Optimization
+        // ============================================================
+        // Test variants for minimum display time:
+        // Variant A: 1500ms (fast)
+        // Variant B: 2000ms (standard - current default)
+        // Variant C: 2500ms (extended)
+        //
+        // To analyze results, check localStorage key: splash_duration_test
+        // Track conversion metrics after splash to determine optimal duration
+        // ============================================================
+        
+        var AB_TEST_ENABLED = false; // Set to true to enable A/B testing
+        var TEST_VARIANTS = [1500, 2000, 2500]; // Test durations in milliseconds
+        var DEFAULT_DURATION = 2000; // Default when A/B testing is disabled
+        
+        // Get or assign A/B test variant (persists across sessions)
+        function getSplashDuration() {
+          if (!AB_TEST_ENABLED) {
+            return DEFAULT_DURATION;
+          }
+          
+          try {
+            var storedTest = localStorage.getItem('splash_duration_test');
+            if (storedTest) {
+              var testData = JSON.parse(storedTest);
+              return testData.duration;
+            }
+            
+            // New user - randomly assign variant
+            var randomVariant = TEST_VARIANTS[Math.floor(Math.random() * TEST_VARIANTS.length)];
+            var testData = {
+              duration: randomVariant,
+              variant: String.fromCharCode(65 + TEST_VARIANTS.indexOf(randomVariant)), // A, B, or C
+              assignedAt: new Date().toISOString()
+            };
+            localStorage.setItem('splash_duration_test', JSON.stringify(testData));
+            
+            // Analytics event - track variant assignment
+            // TODO: Integrate with your analytics (Google Analytics, Mixpanel, etc.)
+            // Example: gtag('event', 'ab_test_assigned', { variant: testData.variant, duration: randomVariant });
+            console.log('[A/B Test] Splash duration variant assigned:', testData.variant, '(' + randomVariant + 'ms)');
+            
+            return randomVariant;
+          } catch (e) {
+            // Fallback if localStorage fails
+            return DEFAULT_DURATION;
+          }
+        }
+        
         var FADE_DURATION_MS = 300; // Smooth transition duration
         var CHECK_INTERVAL_MS = 50; // How often to check for React hydration
-        var MIN_DISPLAY_MS = 2000; // Minimum time to show splash (2 seconds for professional experience)
+        var MIN_DISPLAY_MS = getSplashDuration(); // A/B tested or default duration
         var MAX_TIMEOUT_MS = 10000; // Maximum time to wait (10 seconds)
         var MAX_ATTEMPTS = Math.ceil(MAX_TIMEOUT_MS / CHECK_INTERVAL_MS);
         
