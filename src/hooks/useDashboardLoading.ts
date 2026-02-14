@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useIsNativeApp } from "./useIsNativeApp";
+import { useNetworkSpeed, getAdaptiveSkeletonDelay } from "./useNetworkSpeed";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 // Loading phases for dashboard pages
@@ -28,7 +29,12 @@ interface UseDashboardLoadingOptions {
   
   /**
    * Delay before transitioning from skeleton to revealed (in ms)
-   * Default: 200ms for responsive smooth transition
+   * Default: Adaptive based on network speed (200-800ms)
+   * - Fast network (4G): 200ms
+   * - Medium network (3G): 400ms
+   * - Slow network (2G): 600ms
+   * - Very slow (slow-2G): 800ms
+   * Industry standard pattern for responsive UX
    */
   skeletonDelay?: number;
 }
@@ -67,9 +73,14 @@ export function useDashboardLoading({
   sessionKey,
   visitedKey,
   isDataReady = true,
-  skeletonDelay = 200
+  skeletonDelay
 }: UseDashboardLoadingOptions) {
   const isNativeApp = useIsNativeApp();
+  const networkSpeed = useNetworkSpeed();
+  
+  // Calculate adaptive skeleton delay based on network speed
+  // If custom delay provided, use it; otherwise use network-based adaptive delay
+  const adaptiveSkeletonDelay = skeletonDelay ?? getAdaptiveSkeletonDelay(networkSpeed);
   
   // Initialize loading phase based on native app status and session
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(() => {
@@ -132,16 +143,17 @@ export function useDashboardLoading({
     if (!isNativeApp || loadingPhase !== 'skeleton') return;
     
     if (isDataReady) {
-      // Professional delay ensures skeleton is visible for smooth UX
+      // Adaptive delay based on network speed ensures optimal UX
+      // Fast network: 200ms, Slow network: up to 800ms
       const timer = setTimeout(() => {
         setLoadingPhase('revealed');
         // Mark as visited when revealing content
         markAsVisited();
-      }, skeletonDelay);
+      }, adaptiveSkeletonDelay);
       
       return () => clearTimeout(timer);
     }
-  }, [isNativeApp, loadingPhase, isDataReady, skeletonDelay, markAsVisited]);
+  }, [isNativeApp, loadingPhase, isDataReady, adaptiveSkeletonDelay, markAsVisited]);
   
   return {
     loadingPhase,
