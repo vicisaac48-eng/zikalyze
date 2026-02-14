@@ -210,7 +210,9 @@
       // IIFE for immediate execution (faster than DOMContentLoaded)
       (function() {
         var FADE_DURATION_MS = 200; // Transition duration in milliseconds
-        var MAX_ATTEMPTS = 200; // 200 checks at 50ms intervals = 10,000ms (10 seconds) max
+        var CHECK_INTERVAL_MS = 50; // How often to check for React mount
+        var MAX_TIMEOUT_MS = 10000; // Maximum time to wait (10 seconds)
+        var MAX_ATTEMPTS = Math.ceil(MAX_TIMEOUT_MS / CHECK_INTERVAL_MS); // 200 attempts
         var attempts = 0;
         
         var checkReactMount = setInterval(function() {
@@ -230,7 +232,7 @@
             }
             clearInterval(checkReactMount);
           }
-        }, 50);
+        }, CHECK_INTERVAL_MS);
       })();
     </script>
     
