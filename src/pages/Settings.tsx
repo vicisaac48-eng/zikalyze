@@ -17,7 +17,6 @@ import { useDashboardLoading } from "@/hooks/useDashboardLoading";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import { languageCodes } from "@/i18n/config";
 import { useAuth } from "@/hooks/useAuth";
-import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -144,12 +143,7 @@ const Settings = () => {
     });
   };
 
-  // Phase 1: Show splash screen (native app only)
-  if (loadingPhase === 'splash') {
-    return <DashboardSplash onComplete={handleSplashComplete} />;
-  }
-
-  // Phase 2: Show skeleton loader (native app only)
+  // Phase 1: Show skeleton loader (native app only)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -160,7 +154,7 @@ const Settings = () => {
     );
   }
 
-  // Phase 3: Show actual content
+  // Phase 2: Show actual content
   return (
     <>
       <Sidebar />

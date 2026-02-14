@@ -6,6 +6,24 @@ import { useState, useEffect } from 'react';
 export type NetworkEffectiveType = 'slow-2g' | '2g' | '3g' | '4g' | 'unknown';
 
 /**
+ * Network Information API interface
+ */
+interface NetworkInformation extends EventTarget {
+  effectiveType?: string;
+  addEventListener(type: 'change', listener: () => void): void;
+  removeEventListener(type: 'change', listener: () => void): void;
+}
+
+/**
+ * Extended Navigator interface with Network Information API
+ */
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkInformation;
+  mozConnection?: NetworkInformation;
+  webkitConnection?: NetworkInformation;
+}
+
+/**
  * Hook to detect network connection speed and quality
  * Uses the Network Information API to determine effective connection type
  * 
@@ -25,7 +43,8 @@ export function useNetworkSpeed(): NetworkEffectiveType {
       return;
     }
 
-    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    const nav = navigator as NavigatorWithConnection;
+    const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
     
     if (!connection) {
       setEffectiveType('unknown');

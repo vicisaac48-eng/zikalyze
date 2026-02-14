@@ -4,35 +4,23 @@
     <meta charset="UTF-8" />
     <style>html,body{background-color:#0a0f1a;margin:0}</style>
     <script>
-      // Detect native app BEFORE React loads and apply mint green background
-      // This prevents dark flash on mobile app startup while keeping web professional
-      (function() {
-        let isNativeApp = false;
-        
-        // Check PWA standalone mode (most reliable, available immediately)
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-          isNativeApp = true;
-        }
-        // Check fullscreen mode (TWA - Trusted Web Activity)
-        else if (window.matchMedia('(display-mode: fullscreen)').matches) {
-          isNativeApp = true;
-        }
-        // Check iOS standalone (available immediately)
-        else if (navigator.standalone === true) {
-          isNativeApp = true;
-        }
-        // Check for Capacitor (may not be loaded yet, but worth trying)
-        else if (window.Capacitor) {
-          isNativeApp = true;
-        }
-        
-        // Apply mint green background only for native apps
-        if (isNativeApp) {
-          document.documentElement.style.backgroundColor = '#B2EBE0';
-          document.body.style.backgroundColor = '#B2EBE0';
-        }
-      })();
+      // Native app detection script removed
+      // LandingSplash component now handles the branded mint green background
+      // This prevents blank mint green flash before logo renders
     </script>
+    
+    <!-- Critical asset preloading - loads during splash screen -->
+    <link rel="preload" href="./pwa-192x192.png" as="image" type="image/png" />
+    <link rel="preload" href="./pwa-512x512.png" as="image" type="image/png" />
+    <link rel="preload" href="./og-image.png" as="image" type="image/png" />
+    
+    <!-- Font preloading - add custom fonts here when available -->
+    <!-- Example: <link rel="preload" href="/fonts/CustomFont.woff2" as="font" type="font/woff2" crossorigin="anonymous" /> -->
+    <!-- Google Fonts preload (if using): -->
+    <!-- Note: crossorigin on preconnect is needed when you'll make CORS requests (like font files) -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" /> -->
+    <!-- <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" /> -->
     
     <!-- Preconnect hints FIRST for critical external origins -->
     <link rel="preconnect" href="https://api.exchangerate-api.com" />
@@ -50,6 +38,40 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     
+    <!-- Instant native app detection via CSS media queries (no JavaScript delay!) -->
+    <style>
+      /* Default for web browsers: dark background, hidden splash */
+      body {
+        background-color: #0a0f1a;
+      }
+      
+      /* PWA Standalone Mode - Instant mint green, no flash! */
+      @media (display-mode: standalone) {
+        body {
+          background-color: #B2EBE0 !important;
+        }
+        #initial-splash {
+          display: flex !important;
+        }
+        #splash-tagline {
+          display: block !important;
+        }
+      }
+      
+      /* Android TWA Fullscreen Mode - Instant mint green, no flash! */
+      @media (display-mode: fullscreen) {
+        body {
+          background-color: #B2EBE0 !important;
+        }
+        #initial-splash {
+          display: flex !important;
+        }
+        #splash-tagline {
+          display: block !important;
+        }
+      }
+    </style>
+    
     <!-- Primary Meta Tags -->
     <title>Zikalyze - AI Crypto Trading Analysis</title>
     <meta name="title" content="Zikalyze - AI Crypto Trading Analysis" />
@@ -61,8 +83,8 @@
     <meta name="revisit-after" content="1 days" />
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#0a0f1a" />
-    <meta name="background-color" content="#0a0f1a" />
+    <meta name="theme-color" content="#B2EBE0" />
+    <meta name="background-color" content="#B2EBE0" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="Zikalyze" />
     
@@ -124,6 +146,272 @@
     <meta name="format-detection" content="email=no" />
   </head>
   <body style="background-color:#0a0f1a">
+    <!-- Initial splash screen - ONLY shown on mobile native apps -->
+    <!-- Hidden on web browsers for professional appearance -->
+    <div id="initial-splash" style="
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #B2EBE0;
+      background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    ">
+      <!-- Logo with background -->
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 6rem;
+        height: 6rem;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #70ffc1 0%, #b2ebe0 100%);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        margin-bottom: 2rem;
+      ">
+        <!-- TrendingUp Icon SVG -->
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="48" 
+          height="48" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="#111827" 
+          stroke-width="2.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        >
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      
+      <!-- Brand text -->
+      <div style="text-align: center;">
+        <h1 style="
+          font-size: 2rem;
+          font-weight: 700;
+          color: #111827;
+          margin: 0 0 0.5rem 0;
+          letter-spacing: -0.025em;
+        ">Zikalyze</h1>
+        <!-- Tagline: Only visible on native apps (PWA/Capacitor), hidden on web browsers -->
+        <p id="splash-tagline" style="
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+          margin: 0;
+          display: none !important;
+        ">AI-Powered Trading Analysis</p>
+      </div>
+      
+      <!-- Show splash and tagline ONLY on native app - runs immediately, before any other scripts -->
+      <script>
+        (function() {
+          try {
+            // Check if running as native app using multiple detection methods
+            var isNativeApp = (
+              // PWA installed in standalone mode
+              (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+              // TWA or fullscreen mode
+              (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) ||
+              // iOS Add to Home Screen
+              (window.navigator && window.navigator.standalone === true) ||
+              // Capacitor native app
+              (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
+            );
+            
+            // ONLY show splash screen AND tagline if this is definitely a native app
+            // Otherwise they stay hidden (professional dark loading for web)
+            if (isNativeApp) {
+              // Show the splash screen
+              var splash = document.getElementById('initial-splash');
+              if (splash) {
+                splash.style.display = 'flex';
+              }
+              
+              // Show the tagline
+              var tagline = document.getElementById('splash-tagline');
+              if (tagline) {
+                tagline.style.display = 'block';
+                tagline.style.setProperty('display', 'block', 'important');
+              }
+              
+              // Set body background to mint green for native app
+              document.body.style.backgroundColor = '#B2EBE0';
+            }
+            // For web browsers: splash stays hidden, body stays dark (#0a0f1a)
+          } catch (e) {
+            // If any error occurs, splash and tagline stay hidden (fail-safe)
+            console.error('Native app detection error:', e);
+          }
+        })();
+      </script>
+      
+      <!-- Loading indicator - Professional three-dot loader -->
+      <div style="
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 2rem;
+        align-items: center;
+      ">
+        <div style="
+          width: 0.75rem;
+          height: 0.75rem;
+          border-radius: 50%;
+          background-color: #70ffc1;
+          animation: bounce 1.4s ease-in-out infinite;
+        "></div>
+        <div style="
+          width: 0.75rem;
+          height: 0.75rem;
+          border-radius: 50%;
+          background-color: #c5a3ff;
+          animation: bounce 1.4s ease-in-out infinite;
+          animation-delay: 0.2s;
+        "></div>
+        <div style="
+          width: 0.75rem;
+          height: 0.75rem;
+          border-radius: 50%;
+          background-color: #70ffc1;
+          animation: bounce 1.4s ease-in-out infinite;
+          animation-delay: 0.4s;
+        "></div>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes bounce {
+        0%, 80%, 100% { 
+          transform: translateY(0);
+          opacity: 0.7;
+        }
+        40% { 
+          transform: translateY(-12px);
+          opacity: 1;
+        }
+      }
+    </style>
+    
+    <script>
+      // Set flag immediately to prevent React LandingSplash from showing
+      // This ensures the initial HTML splash is the ONLY splash shown
+      try {
+        sessionStorage.setItem('landing_splash_shown', 'true');
+      } catch (e) {
+        // Silently fail if sessionStorage is unavailable
+      }
+      
+      // Professional splash screen with React hydration detection
+      // Waits for React to fully hydrate (interactive UI), not just mount
+      (function() {
+        // ============================================================
+        // A/B TEST CONFIGURATION - Splash Duration Optimization
+        // ============================================================
+        // Test variants for minimum display time:
+        // Variant A: 1500ms (fast)
+        // Variant B: 2000ms (standard - current default)
+        // Variant C: 2500ms (extended)
+        //
+        // To analyze results, check localStorage key: splash_duration_test
+        // Track conversion metrics after splash to determine optimal duration
+        // ============================================================
+        
+        var AB_TEST_ENABLED = true; // Set to true to enable A/B testing
+        var TEST_VARIANTS = [1500, 2000, 2500]; // Test durations in milliseconds
+        var DEFAULT_DURATION = 2000; // Default when A/B testing is disabled
+        
+        // Get or assign A/B test variant (persists across sessions)
+        function getSplashDuration() {
+          if (!AB_TEST_ENABLED) {
+            return DEFAULT_DURATION;
+          }
+          
+          try {
+            var storedTest = localStorage.getItem('splash_duration_test');
+            if (storedTest) {
+              var variantData = JSON.parse(storedTest);
+              return variantData.duration;
+            }
+            
+            // New user - randomly assign variant
+            var randomIndex = Math.floor(Math.random() * TEST_VARIANTS.length);
+            var assignedDuration = TEST_VARIANTS[randomIndex];
+            var variantData = {
+              duration: assignedDuration,
+              variant: String.fromCharCode(65 + randomIndex), // A, B, or C
+              assignedAt: new Date().toISOString()
+            };
+            localStorage.setItem('splash_duration_test', JSON.stringify(variantData));
+            
+            // Analytics event - track variant assignment
+            // TODO: Integrate with your analytics (Google Analytics, Mixpanel, etc.)
+            // Example: gtag('event', 'ab_test_assigned', { variant: variantData.variant, duration: assignedDuration });
+            console.log('[A/B Test] Splash duration variant assigned:', variantData.variant, '(' + assignedDuration + 'ms)');
+            
+            return assignedDuration;
+          } catch (e) {
+            // Fallback if localStorage fails
+            return DEFAULT_DURATION;
+          }
+        }
+        
+        var FADE_DURATION_MS = 300; // Smooth transition duration
+        var CHECK_INTERVAL_MS = 50; // How often to check for React hydration
+        var MIN_DISPLAY_MS = getSplashDuration(); // A/B tested or default duration
+        var MAX_TIMEOUT_MS = 10000; // Maximum time to wait (10 seconds)
+        var MAX_ATTEMPTS = Math.ceil(MAX_TIMEOUT_MS / CHECK_INTERVAL_MS);
+        
+        var splashStartTime = Date.now();
+        var attempts = 0;
+        var reactHydrated = false;
+        
+        var checkReactHydration = setInterval(function() {
+          attempts++;
+          var root = document.getElementById('root');
+          
+          // Check if React has hydrated (not just mounted)
+          // Priority 1: Check for React hydration marker on root
+          if (root && root.getAttribute('data-reactroot') !== null) {
+            reactHydrated = true;
+          }
+          // Priority 2: Check for hydration marker in descendants (React 17)
+          else if (root && root.querySelector('[data-reactroot]')) {
+            reactHydrated = true;
+          }
+          // Priority 3: Fallback - React 18+ doesn't always use data-reactroot
+          // This checks for rendered content (best-effort, may not guarantee full interactivity)
+          else if (root && root.children.length > 0) {
+            reactHydrated = true;
+          }
+          
+          var elapsedTime = Date.now() - splashStartTime;
+          var minTimeReached = elapsedTime >= MIN_DISPLAY_MS;
+          var maxTimeReached = attempts >= MAX_ATTEMPTS;
+          
+          // Remove splash when:
+          // 1. React is fully hydrated AND minimum display time reached (professional)
+          // 2. OR maximum timeout reached (failsafe)
+          if ((reactHydrated && minTimeReached) || maxTimeReached) {
+            var initialSplash = document.getElementById('initial-splash');
+            if (initialSplash) {
+              // Professional cubic-bezier fade-out (Material Design standard)
+              // More organic than linear ease-out
+              initialSplash.style.transition = 'opacity ' + FADE_DURATION_MS + 'ms cubic-bezier(0.4, 0.0, 0.2, 1)';
+              initialSplash.style.opacity = '0';
+              setTimeout(function() {
+                initialSplash.remove();
+              }, FADE_DURATION_MS);
+            }
+            clearInterval(checkReactHydration);
+          }
+        }, CHECK_INTERVAL_MS);
+      })();
+    </script>
+    
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
   </body>

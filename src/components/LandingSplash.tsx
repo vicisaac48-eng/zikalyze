@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import { TrendingUp } from "lucide-react";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 interface LandingSplashProps {
   onComplete: () => void;
 }
 
 const LandingSplash = ({ onComplete }: LandingSplashProps) => {
+  const isNativeApp = useIsNativeApp();
+  
   // Store onComplete in ref to avoid effect re-runs on parent re-renders
   const onCompleteRef = useRef(onComplete);
   
@@ -29,43 +32,45 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
     <div 
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center landing-splash-fade-in overflow-hidden"
       style={{ 
-        backgroundColor: '#B2EBE0',
-        backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
+        backgroundColor: isNativeApp ? '#B2EBE0' : '#0a0f1a',
+        backgroundImage: isNativeApp ? 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 70%)' : 'none'
       }}
       role="status"
       aria-live="polite"
       aria-label="Loading Zikalyze application"
     >
-      {/* Animated color bands - darker versions for contrast on mint background */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
-        {/* Cyan band */}
-        <div 
-          className="absolute top-1/4 left-0 w-[200%] h-32 color-band"
-          style={{ 
-            background: 'linear-gradient(90deg, transparent 0%, #70ffc1 50%, transparent 100%)',
-            animationDelay: '0s',
-            filter: 'blur(40px)'
-          }}
-        />
-        {/* Purple band */}
-        <div 
-          className="absolute top-1/2 left-0 w-[200%] h-32 color-band"
-          style={{ 
-            background: 'linear-gradient(90deg, transparent 0%, #c5a3ff 50%, transparent 100%)',
-            animationDelay: '1s',
-            filter: 'blur(40px)'
-          }}
-        />
-        {/* Cyan band (bottom) */}
-        <div 
-          className="absolute top-3/4 left-0 w-[200%] h-32 color-band"
-          style={{ 
-            background: 'linear-gradient(90deg, transparent 0%, #70ffc1 50%, transparent 100%)',
-            animationDelay: '0.5s',
-            filter: 'blur(40px)'
-          }}
-        />
-      </div>
+      {/* Animated color bands - only show on native app for branded experience */}
+      {isNativeApp && (
+        <div className="absolute inset-0 overflow-hidden opacity-30">
+          {/* Cyan band */}
+          <div 
+            className="absolute top-1/4 left-0 w-[200%] h-32 color-band"
+            style={{ 
+              background: 'linear-gradient(90deg, transparent 0%, #70ffc1 50%, transparent 100%)',
+              animationDelay: '0s',
+              filter: 'blur(40px)'
+            }}
+          />
+          {/* Purple band */}
+          <div 
+            className="absolute top-1/2 left-0 w-[200%] h-32 color-band"
+            style={{ 
+              background: 'linear-gradient(90deg, transparent 0%, #c5a3ff 50%, transparent 100%)',
+              animationDelay: '1s',
+              filter: 'blur(40px)'
+            }}
+          />
+          {/* Cyan band (bottom) */}
+          <div 
+            className="absolute top-3/4 left-0 w-[200%] h-32 color-band"
+            style={{ 
+              background: 'linear-gradient(90deg, transparent 0%, #70ffc1 50%, transparent 100%)',
+              animationDelay: '0.5s',
+              filter: 'blur(40px)'
+            }}
+          />
+        </div>
+      )}
 
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center gap-8">
@@ -78,13 +83,15 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
         <div className="text-center space-y-2">
           <h1 
             className="text-3xl sm:text-4xl font-bold tracking-tight"
-            style={{ color: '#111827' }}
+            style={{ color: isNativeApp ? '#111827' : '#ffffff' }}
           >
             Zikalyze
           </h1>
-          <p className="text-sm sm:text-base font-medium" style={{ color: '#374151' }}>
-            AI-Powered Trading Analysis
-          </p>
+          {isNativeApp && (
+            <p className="text-sm sm:text-base font-medium" style={{ color: '#374151' }}>
+              AI-Powered Trading Analysis
+            </p>
+          )}
         </div>
 
         {/* Loading indicator */}

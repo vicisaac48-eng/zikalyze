@@ -12,7 +12,6 @@ import AIAnalyzer from "@/components/dashboard/AIAnalyzer";
 import CryptoTicker from "@/components/dashboard/CryptoTicker";
 import NewsEventsCalendar from "@/components/dashboard/NewsEventsCalendar";
 import OnChainMetrics from "@/components/dashboard/OnChainMetrics";
-import DashboardSplash from "@/components/dashboard/DashboardSplash";
 import GenericDashboardSkeleton from "@/components/dashboard/GenericDashboardSkeleton";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
 
@@ -49,12 +48,7 @@ const Analyzer = () => {
 
   const selected = cryptoData[selectedCrypto];
 
-  // Phase 1: Show splash screen (native app only)
-  if (loadingPhase === 'splash') {
-    return <DashboardSplash onComplete={handleSplashComplete} />;
-  }
-
-  // Phase 2: Show skeleton loader (native app only)
+  // Phase 1: Show skeleton loader (native app only)
   if (loadingPhase === 'skeleton') {
     return (
       <>
@@ -65,7 +59,7 @@ const Analyzer = () => {
     );
   }
 
-  // Phase 3: Show actual content
+  // Phase 2: Show actual content
   return (
     <>
       <Sidebar />
