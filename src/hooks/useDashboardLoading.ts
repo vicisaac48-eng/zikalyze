@@ -114,8 +114,13 @@ export function useDashboardLoading({
     }
   });
   
-  // Handle splash completion - kept for backward compatibility but no longer used
-  // Dashboard pages no longer show splash screen
+  /**
+   * Handle splash completion - DEPRECATED
+   * 
+   * @deprecated Dashboard pages no longer show splash screen as of 2026-02-14.
+   * This function is kept for backward compatibility but is now a no-op.
+   * Will be removed in a future cleanup phase.
+   */
   const handleSplashComplete = useCallback(() => {
     // No-op: Splash phase removed from dashboard pages
     // This function is kept for backward compatibility with existing code
