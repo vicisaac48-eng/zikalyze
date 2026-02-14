@@ -4,34 +4,9 @@
     <meta charset="UTF-8" />
     <style>html,body{background-color:#0a0f1a;margin:0}</style>
     <script>
-      // Detect native app BEFORE React loads and apply mint green background
-      // This prevents dark flash on mobile app startup while keeping web professional
-      (function() {
-        let isNativeApp = false;
-        
-        // Check PWA standalone mode (most reliable, available immediately)
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-          isNativeApp = true;
-        }
-        // Check fullscreen mode (TWA - Trusted Web Activity)
-        else if (window.matchMedia('(display-mode: fullscreen)').matches) {
-          isNativeApp = true;
-        }
-        // Check iOS standalone (available immediately)
-        else if (navigator.standalone === true) {
-          isNativeApp = true;
-        }
-        // Check for Capacitor (may not be loaded yet, but worth trying)
-        else if (window.Capacitor) {
-          isNativeApp = true;
-        }
-        
-        // Apply mint green background only for native apps
-        if (isNativeApp) {
-          document.documentElement.style.backgroundColor = '#B2EBE0';
-          document.body.style.backgroundColor = '#B2EBE0';
-        }
-      })();
+      // Native app detection script removed
+      // LandingSplash component now handles the branded mint green background
+      // This prevents blank mint green flash before logo renders
     </script>
     
     <!-- Preconnect hints FIRST for critical external origins -->
