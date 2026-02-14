@@ -17,7 +17,7 @@
     <!-- Font preloading - add custom fonts here when available -->
     <!-- Example: <link rel="preload" href="/fonts/CustomFont.woff2" as="font" type="font/woff2" crossorigin /> -->
     <!-- Google Fonts preload (if using): -->
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin /> -->
     <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /> -->
     <!-- <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" /> -->
     
@@ -258,10 +258,11 @@
             }
             
             // New user - randomly assign variant
-            var randomVariant = TEST_VARIANTS[Math.floor(Math.random() * TEST_VARIANTS.length)];
+            var randomIndex = Math.floor(Math.random() * TEST_VARIANTS.length);
+            var randomVariant = TEST_VARIANTS[randomIndex];
             var testData = {
               duration: randomVariant,
-              variant: String.fromCharCode(65 + TEST_VARIANTS.indexOf(randomVariant)), // A, B, or C
+              variant: String.fromCharCode(65 + randomIndex), // A, B, or C
               assignedAt: new Date().toISOString()
             };
             localStorage.setItem('splash_duration_test', JSON.stringify(testData));
