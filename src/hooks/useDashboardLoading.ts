@@ -91,6 +91,15 @@ export function useDashboardLoading({
     if (typeof window === 'undefined') return 'revealed';
     
     try {
+      // Check if route restoration is pending
+      // If so, skip splash on this intermediate page (splash will show on target page)
+      const isRestorationPending = sessionStorage.getItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING);
+      if (isRestorationPending) {
+        // Clear the flag immediately so target page can show splash
+        sessionStorage.removeItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING);
+        return 'revealed'; // Skip all loading phases on intermediate page
+      }
+      
       // Check if ANY splash has been shown in this session (global flag)
       const hasSeenSplash = sessionStorage.getItem(SESSION_STORAGE_KEYS.LANDING_SPLASH_SHOWN);
       const hasBeenVisited = sessionStorage.getItem(visitedKey);

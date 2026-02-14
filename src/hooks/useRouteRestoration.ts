@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsNativeApp } from "./useIsNativeApp";
-import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
+import { LOCAL_STORAGE_KEYS, SESSION_STORAGE_KEYS } from "@/constants/storage";
 
 /**
  * Hook to restore the last visited route for native mobile apps.
@@ -11,6 +11,7 @@ import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
  * - On app mount, restores the last route if available
  * - Only applies to authenticated routes (dashboard pages)
  * - Does not apply to web apps, only native mobile apps
+ * - Sets a session flag to prevent splash on intermediate page during restoration
  * 
  * Usage:
  * Call this hook once in your app's root component after authentication is loaded.
@@ -52,14 +53,13 @@ export function useRouteRestoration(isAuthenticated: boolean) {
       
       // If there's a saved route and it's different from current
       if (lastRoute && lastRoute !== currentPath && lastRoute.startsWith('/dashboard')) {
-        // Delay navigation to ensure splash completes and LANDING_SPLASH_SHOWN is set
-        // Dashboard splash takes 1200ms, so wait 1400ms to be safe
-        // This prevents the target page from showing a second splash
-        const timer = setTimeout(() => {
-          navigate(lastRoute, { replace: true });
-        }, 1400);
+        // Set session flag to indicate route restoration will occur
+        // This prevents splash on intermediate /dashboard page
+        sessionStorage.setItem(SESSION_STORAGE_KEYS.ROUTE_RESTORATION_PENDING, 'true');
         
-        return () => clearTimeout(timer);
+        // Navigate immediately to the saved route
+        // The target page will show the splash instead of the intermediate page
+        navigate(lastRoute, { replace: true });
       }
     } catch (error) {
       console.error('Failed to restore last route:', error);

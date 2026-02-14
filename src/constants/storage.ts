@@ -49,6 +49,9 @@ export const SESSION_STORAGE_KEYS = {
   
   /** Settings page visited via navigation flag (native app only) */
   SETTINGS_VISITED: 'settings_visited',
+  
+  /** Route restoration pending flag (native app only) - prevents splash on intermediate page */
+  ROUTE_RESTORATION_PENDING: 'route_restoration_pending',
 } as const;
 
 export const LOCAL_STORAGE_KEYS = {
