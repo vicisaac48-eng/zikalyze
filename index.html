@@ -198,13 +198,26 @@
     </style>
     
     <script>
-      // Remove initial splash when React mounts and renders LandingSplash
-      // This ensures smooth transition from HTML splash to React splash
-      window.addEventListener('DOMContentLoaded', function() {
-        // Wait for React to mount, then remove initial splash
+      // Set flag immediately to prevent React LandingSplash from showing
+      // This ensures the initial HTML splash is the ONLY splash shown
+      try {
+        sessionStorage.setItem('landing_splash_shown', 'true');
+      } catch (e) {
+        // Silently fail if sessionStorage is unavailable
+      }
+      
+      // Remove initial splash when React mounts
+      // IIFE for immediate execution (faster than DOMContentLoaded)
+      (function() {
+        var maxAttempts = 200; // 10 seconds max (200 * 50ms)
+        var attempts = 0;
+        
         var checkReactMount = setInterval(function() {
+          attempts++;
           var root = document.getElementById('root');
-          if (root && root.children.length > 0) {
+          
+          // Check if React has mounted OR max attempts reached
+          if ((root && root.children.length > 0) || attempts >= maxAttempts) {
             var initialSplash = document.getElementById('initial-splash');
             if (initialSplash) {
               // Fade out smoothly
@@ -217,7 +230,7 @@
             clearInterval(checkReactMount);
           }
         }, 50);
-      });
+      })();
     </script>
     
     <div id="root"></div>
