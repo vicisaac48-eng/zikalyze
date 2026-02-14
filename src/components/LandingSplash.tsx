@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import { TrendingUp } from "lucide-react";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 interface LandingSplashProps {
   onComplete: () => void;
 }
 
 const LandingSplash = ({ onComplete }: LandingSplashProps) => {
+  const isNativeApp = useIsNativeApp();
+  
   // Store onComplete in ref to avoid effect re-runs on parent re-renders
   const onCompleteRef = useRef(onComplete);
   
@@ -82,9 +85,11 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
           >
             Zikalyze
           </h1>
-          <p className="text-sm sm:text-base font-medium" style={{ color: '#374151' }}>
-            AI-Powered Trading Analysis
-          </p>
+          {isNativeApp && (
+            <p className="text-sm sm:text-base font-medium" style={{ color: '#374151' }}>
+              AI-Powered Trading Analysis
+            </p>
+          )}
         </div>
 
         {/* Loading indicator */}

@@ -1,11 +1,13 @@
 import { TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 interface DashboardSplashProps {
   onComplete: () => void;
 }
 
 const DashboardSplash = ({ onComplete }: DashboardSplashProps) => {
+  const isNativeApp = useIsNativeApp();
   const [isFadingOut, setIsFadingOut] = useState(false);
   
   // Start fade-out at 1000ms, complete at 1200ms for 200ms overlap with skeleton fade-in
@@ -55,12 +57,14 @@ const DashboardSplash = ({ onComplete }: DashboardSplashProps) => {
           >
             Zikalyze
           </h2>
-          <p 
-            className="text-sm mt-1" 
-            style={{ color: '#111827', opacity: 0.6 }}
-          >
-            AI-Powered Trading Analysis
-          </p>
+          {isNativeApp && (
+            <p 
+              className="text-sm mt-1" 
+              style={{ color: '#111827', opacity: 0.6 }}
+            >
+              AI-Powered Trading Analysis
+            </p>
+          )}
         </div>
       </div>
     </div>

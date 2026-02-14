@@ -163,13 +163,35 @@
           margin: 0 0 0.5rem 0;
           letter-spacing: -0.025em;
         ">Zikalyze</h1>
-        <p style="
+        <p id="splash-tagline" style="
           font-size: 0.875rem;
           font-weight: 500;
           color: #374151;
           margin: 0;
+          display: none;
         ">AI-Powered Trading Analysis</p>
       </div>
+      
+      <!-- Show tagline only on native app -->
+      <script>
+        (function() {
+          // Check if running as native app
+          var isNativeApp = (
+            (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+            (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) ||
+            (window.navigator && window.navigator.standalone === true) ||
+            (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
+          );
+          
+          // Show tagline only on native app
+          if (isNativeApp) {
+            var tagline = document.getElementById('splash-tagline');
+            if (tagline) {
+              tagline.style.display = 'block';
+            }
+          }
+        })();
+      </script>
       
       <!-- Loading indicator - Professional three-dot loader -->
       <div style="
