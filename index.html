@@ -209,7 +209,8 @@
       // Remove initial splash when React mounts
       // IIFE for immediate execution (faster than DOMContentLoaded)
       (function() {
-        var maxAttempts = 200; // 10 seconds max (200 * 50ms)
+        var FADE_DURATION_MS = 200; // Transition duration in milliseconds
+        var MAX_ATTEMPTS = 200; // 200 checks at 50ms intervals = 10,000ms (10 seconds) max
         var attempts = 0;
         
         var checkReactMount = setInterval(function() {
@@ -217,15 +218,15 @@
           var root = document.getElementById('root');
           
           // Check if React has mounted OR max attempts reached
-          if ((root && root.children.length > 0) || attempts >= maxAttempts) {
+          if ((root && root.children.length > 0) || attempts >= MAX_ATTEMPTS) {
             var initialSplash = document.getElementById('initial-splash');
             if (initialSplash) {
               // Fade out smoothly
-              initialSplash.style.transition = 'opacity 200ms ease-out';
+              initialSplash.style.transition = 'opacity ' + FADE_DURATION_MS + 'ms ease-out';
               initialSplash.style.opacity = '0';
               setTimeout(function() {
                 initialSplash.remove();
-              }, 200);
+              }, FADE_DURATION_MS);
             }
             clearInterval(checkReactMount);
           }
