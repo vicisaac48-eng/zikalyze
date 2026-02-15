@@ -22,6 +22,8 @@ export interface OnChainMetrics {
   avgBlockTime: number;
   source: string;
   lastUpdated: Date;
+  apiTimestamp?: Date; // Timestamp from API when data was generated
+  dataAgeMinutes?: number; // How old the API data is in minutes
   period: '24h';
   isLive: boolean;
   streamStatus: 'connected' | 'connecting' | 'disconnected' | 'polling';
@@ -49,6 +51,9 @@ const WS_ENDPOINTS: Record<string, string[]> = {
 
 const MAX_RECONNECT_ATTEMPTS = 3;
 const BASE_RECONNECT_DELAY = 2000;
+const MS_PER_MINUTE = 60 * 1000; // Milliseconds in one minute
+const MAX_DATA_AGE_MINUTES = 60; // Consider data stale if older than 60 minutes
+const LIVE_DATA_THRESHOLD_MINUTES = 30; // Data considered "live" if fresher than 30 minutes
 
 // TPS estimates for chains
 const CHAIN_TPS: Record<string, number> = {
@@ -227,6 +232,10 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       setMetrics(null);
     }
 
+    const now = new Date();
+    const apiTimestamp = now; // WebSocket data is real-time
+    const dataAgeMinutes = 0; // WebSocket derived data is immediate
+
     const newMetrics: OnChainMetrics = {
       exchangeNetFlow: derivedMetrics.exchangeNetFlow!,
       whaleActivity: derivedMetrics.whaleActivity!,
@@ -238,13 +247,17 @@ export function useOnChainData(crypto: string, price: number, change: number, cr
       difficulty: difficultyRef.current,
       avgBlockTime: avgBlockTimeRef.current,
       source: derivedMetrics.source!,
-      lastUpdated: new Date(),
+      lastUpdated: now,
+      apiTimestamp: apiTimestamp,
+      dataAgeMinutes: dataAgeMinutes,
       period: '24h',
-      isLive: livePrice.isLive,
+      isLive: livePrice.isLive && dataAgeMinutes < LIVE_DATA_THRESHOLD_MINUTES,
       streamStatus: livePrice.isLive ? 'connected' : 'connecting',
       etfFlow: derivedMetrics.etfFlow,
       validatorQueue: derivedMetrics.validatorQueue,
     };
+
+    console.log(`[OnChain] ${crypto}: Age=${dataAgeMinutes}min | Source=${derivedMetrics.source} | Live=${livePrice.isLive}`);
 
     setMetrics(newMetrics);
     setStreamStatus(livePrice.isLive ? 'connected' : 'connecting');

@@ -5,6 +5,10 @@
 
 import { safeFetch } from "@/lib/fetchWithRetry";
 
+// Constants for data freshness validation
+const MS_PER_MINUTE = 60 * 1000; // Milliseconds in one minute
+const MAX_DATA_AGE_MINUTES = 60; // Maximum acceptable data age (60 minutes)
+
 export interface OnChainAPIConfig {
   name: string;
   endpoints: {
@@ -32,6 +36,8 @@ export interface OnChainResult {
   circulatingSupply: number;
   price: number;
   source: string;
+  timestamp?: number; // API timestamp in milliseconds
+  dataAgeMinutes?: number; // Age of data in minutes
 }
 
 // Direct blockchain APIs - no third-party aggregators
@@ -321,6 +327,7 @@ export async function fetchOnChainData(symbol: string): Promise<Partial<OnChainR
 
   const results: Record<string, unknown> = {};
   const fetchPromises: Promise<void>[] = [];
+  const fetchTimestamp = Date.now(); // Record when we fetched the data
 
   // Fetch all endpoints in parallel
   for (const [key, url] of Object.entries(config.endpoints)) {
@@ -346,7 +353,26 @@ export async function fetchOnChainData(symbol: string): Promise<Partial<OnChainR
   await Promise.allSettled(fetchPromises);
 
   try {
-    return config.parser(results);
+    const parsedData = config.parser(results);
+    
+    // Add timestamp and data age tracking
+    const now = Date.now();
+    const dataAge = (now - fetchTimestamp) / MS_PER_MINUTE;
+    
+    const resultWithTimestamp: Partial<OnChainResult> = {
+      ...parsedData,
+      timestamp: fetchTimestamp,
+      dataAgeMinutes: dataAge,
+    };
+    
+    // Validate data freshness
+    if (dataAge > MAX_DATA_AGE_MINUTES) {
+      console.warn(`[OnChain] ${upperSymbol} data is stale: ${dataAge.toFixed(1)} minutes old (max ${MAX_DATA_AGE_MINUTES} minutes)`);
+    } else {
+      console.log(`[OnChain] ${upperSymbol} data fetched: ${dataAge.toFixed(1)} minutes old | Source: ${parsedData.source}`);
+    }
+    
+    return resultWithTimestamp;
   } catch (e) {
     console.warn(`[OnChain] ${upperSymbol} parse error:`, e);
     return null;
@@ -359,6 +385,7 @@ export async function fetchBlockchairData(symbol: string): Promise<Partial<OnCha
   if (!chain) return null;
 
   try {
+    const fetchTimestamp = Date.now();
     const res = await safeFetch(`https://api.blockchair.com/${chain}/stats`, {
       timeoutMs: 8000,
       maxRetries: 1,
@@ -371,7 +398,10 @@ export async function fetchBlockchairData(symbol: string): Promise<Partial<OnCha
 
     if (!stats) return null;
 
-    return {
+    const now = Date.now();
+    const dataAge = (now - fetchTimestamp) / MS_PER_MINUTE;
+
+    const result: Partial<OnChainResult> = {
       blockHeight: stats.blocks || stats.best_block_height || 0,
       hashRate: stats.hashrate_24h || stats.hashrate || 0,
       difficulty: stats.difficulty || 0,
@@ -380,7 +410,13 @@ export async function fetchBlockchairData(symbol: string): Promise<Partial<OnCha
       avgFeeRate: stats.suggested_transaction_fee_per_byte_sat || 0,
       tps: stats.transactions_24h ? Math.round(stats.transactions_24h / 86400) : 0,
       source: 'blockchair',
+      timestamp: fetchTimestamp,
+      dataAgeMinutes: dataAge,
     };
+
+    console.log(`[OnChain] ${symbol.toUpperCase()} (Blockchair): ${dataAge.toFixed(1)} minutes old`);
+
+    return result;
   } catch {
     return null;
   }
