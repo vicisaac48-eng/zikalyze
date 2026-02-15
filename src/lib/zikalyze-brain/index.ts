@@ -507,7 +507,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const dataSourceCount = [hasRealOnChain, hasRealChartData, hasRealMultiTfData, isLiveData].filter(Boolean).length;
   const verificationLevel = dataSourceCount >= 3 ? 'VERIFIED' : dataSourceCount >= 2 ? 'PARTIALLY_VERIFIED' : 'ESTIMATED';
   const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
-  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
+  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Market Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 HYBRID CONFIRMATION — Algorithm + Neural Network Combined
@@ -782,12 +782,12 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 😊 Fear & Greed: [${fearGreedVisual.bar}] ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
    └─ Source: Alternative.me (24h)
 🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)}
-   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${hasRealOnChain ? '[Live on-chain via whale-alert.io]' : '[Derived from price action]'}
-   └─ Tracker: whale-alert.io • Txns >$1M in 24h window
+   └─ Net: ${onChainMetrics.whaleActivity.netFlow} [Estimated from price momentum]
+   └─ ⚠️ Real-time whale tracking requires paid API access
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
    └─ ${hasRealOnChain ? 'Source: CryptoQuant (rolling 24h)' : 'Estimated from market momentum'}
 💼 Institutional: ${etfFlowData ? etfFlowData.institutionalSentiment : 'N/A (no ETF for this asset)'}
-   └─ ${etfFlowData ? 'Source: ETF flow data' : 'ETFs only available for BTC/ETH'}
+   └─ ${etfFlowData ? (etfFlowData.source === 'coinglass' ? 'Source: CoinGlass ETF data' : 'Estimated from price momentum') : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${htfVisual}  →  ${alignmentText}
@@ -811,8 +811,8 @@ ${bias === 'SHORT' ? `🎯 Target: $${(low24h - range * 0.1).toFixed(decimals)} 
 ✗ Invalid: ${precisionEntry.invalidation}
 ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range * 0.15).toFixed(decimals)}` : bias === 'LONG' ? `📉 If invalidated: Flip short below $${(low24h - range * 0.15).toFixed(decimals)}` : ''}
 
-📊 Success: [${probBar}] ${successProb}%
-   └─ ${probDescription}
+📊 Estimated Quality: [${probBar}] ${successProb}%
+   └─ ${probDescription} (based on confluence, not validated backtesting)
 
 ━━━ 💡 KEY INSIGHTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -901,6 +901,20 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
 ${triModularOutput}
+━━━ 📊 DATA SOURCE TRANSPARENCY ━━━━━━━━━━━━━━━━━━━━
+Verified Data Sources (Real APIs):
+• Price, Volume: CoinGecko/Binance/OKX (live WebSocket)
+• Fear & Greed: Alternative.me API (updates every 24h)
+• Technical Indicators: Calculated from real price data
+
+Estimated Data (Derived from Price Action):
+• Whale Activity: Estimated from price momentum patterns
+• Exchange Flow: ${hasRealOnChain ? 'CryptoQuant API' : 'Estimated from market data'}
+• Institutional Sentiment: ${etfFlowData && etfFlowData.source === 'coinglass' ? 'CoinGlass ETF data' : 'Estimated from price trends'}
+
+⚠️ Estimated data provides directional signals but may not
+   reflect actual on-chain activity. Use for context only.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
