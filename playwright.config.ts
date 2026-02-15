@@ -7,6 +7,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   
+  // Only run Playwright test files (.spec.ts), exclude unit tests (.unit.ts)
+  testMatch: '**/*.spec.ts',
+  
   // Maximum time one test can run for
   timeout: 60 * 1000,
   

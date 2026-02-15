@@ -8,7 +8,7 @@
  * 4. isLive flag is set based on data age
  */
 
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 // Mock the Fear & Greed API response
 const mockApiResponse = {
