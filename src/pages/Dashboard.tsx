@@ -162,7 +162,7 @@ const Dashboard = () => {
           <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
             <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6 space-y-3 sm:space-y-4 md:space-y-6">
           {/* Crypto Ticker - Hidden on desktop (md and above) to avoid confusion with Top 100 list */}
-          <div className={`md:hidden${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
+          <div className={`md:hidden ${isRevealing ? 'card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
             <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
           </div>
 
