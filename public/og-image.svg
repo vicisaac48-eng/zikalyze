@@ -71,19 +71,13 @@
     <text x="55" y="24" fill="#22c55e" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">🔔 Real-time</text>
   </g>
   
-  <!-- Accuracy badge -->
-  <g transform="translate(350, 440)">
-    <text x="0" y="0" fill="#ffffff" font-family="Arial, sans-serif" font-size="48" font-weight="bold">80%</text>
-    <text x="120" y="0" fill="#94a3b8" font-family="Arial, sans-serif" font-size="18">Accuracy Rate</text>
-  </g>
-  
   <!-- Stats -->
   <g transform="translate(350, 500)">
     <text x="0" y="0" fill="#22c55e" font-family="Arial, sans-serif" font-size="16" font-weight="bold">25K+ Users</text>
     <text x="120" y="0" fill="#94a3b8" font-family="Arial, sans-serif" font-size="16">•</text>
     <text x="140" y="0" fill="#10b981" font-family="Arial, sans-serif" font-size="16" font-weight="bold">50K+ Predictions/Day</text>
     <text x="330" y="0" fill="#94a3b8" font-family="Arial, sans-serif" font-size="16">•</text>
-    <text x="350" y="0" fill="#22c55e" font-family="Arial, sans-serif" font-size="16" font-weight="bold">200+ Markets</text>
+    <text x="350" y="0" fill="#22c55e" font-family="Arial, sans-serif" font-size="16" font-weight="bold">100+ Markets</text>
   </g>
   
   <!-- Bottom gradient line -->
