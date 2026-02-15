@@ -10,7 +10,7 @@ This directory contains assets required for uploading Zikalyze to the Google Pla
 - **Format:** PNG, 32-bit with alpha channel
 - **Purpose:** App icon displayed in Google Play Console
 - **Requirement:** **Required** by Google Play Store
-- **Design:** TrendingUp icon in cyan colored box (#70ffc1)
+- **Design:** TrendingUp icon in mint green colored box (#B2EBE0) with black icon
 
 ### 2. Feature Graphic (1024×500)
 - **File:** `feature-graphic-1024x500.png`
@@ -23,8 +23,8 @@ This directory contains assets required for uploading Zikalyze to the Google Pla
 
 The Zikalyze app icon features:
 - **TrendingUp Icon** from Lucide React icon library
-- **Colored Box Background** in brand cyan color (#70ffc1)
-- **White Icon** for maximum contrast and visibility
+- **Colored Box Background** in mint green color (#B2EBE0)
+- **Black Icon** (#000000) for maximum contrast and visibility
 - **15% Rounded Corners** for modern, friendly appearance
 
 ### Regenerating Icons
@@ -74,8 +74,8 @@ You'll also need to provide:
 
 ### Icon Design
 - **Icon:** TrendingUp from Lucide React
-- **Background:** Cyan (#70ffc1) - Brand primary color
-- **Foreground:** White (#FFFFFF) for maximum contrast
+- **Background:** Mint green (#B2EBE0) - Brand color
+- **Foreground:** Black (#000000) for maximum contrast
 - **Style:** Modern, professional, analytics-focused
 - **Consistency:** Matches in-app branding throughout
 

@@ -21,10 +21,10 @@ const ICON_SIZES = {
   favicon: 192         // Web favicon
 };
 
-// Brand colors (updated to new cyan branding #70ffc1)
+// Brand colors - Mint green background with black icon
 const COLORS = {
-  background: '#70ffc1', // New brand cyan color (updated 2026-02-15)
-  foreground: '#0a0f1a', // Dark background color for icon (better contrast)
+  background: '#B2EBE0', // Mint green branded color box
+  foreground: '#000000', // Black trending icon for maximum contrast
   rounded: true,
   roundRadius: 0.15      // 15% of size for rounded corners
 };
