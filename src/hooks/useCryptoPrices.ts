@@ -16,6 +16,9 @@ export interface CryptoPrice {
   circulating_supply: number;
   lastUpdate?: number;
   source?: string;
+  marketCapFetchTime?: number; // When market cap was fetched from API
+  volumeFetchTime?: number; // When volume was last updated
+  dataAgeMinutes?: number; // Age of market cap/volume data in minutes
 }
 
 interface CoinGeckoCoin {
@@ -79,6 +82,12 @@ const PRIORITY_TOKENS = [
 ];
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
+
+// Constants for data freshness validation
+const MS_PER_MINUTE = 60 * 1000; // Milliseconds in one minute
+const MAX_MARKETCAP_AGE_MINUTES = 60; // Market cap acceptable if < 60 minutes old
+const MAX_VOLUME_AGE_MINUTES = 30; // Volume should be fresher (< 30 minutes)
+const COINGECKO_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // Refresh CoinGecko data every 5 minutes
 
 // CoinGecko ID to CoinCap ID mapping (they differ for many coins)
 const COINGECKO_TO_COINCAP: Record<string, string> = {
@@ -373,6 +382,7 @@ export const useCryptoPrices = () => {
           // Case 2: WebSocket volume is significantly higher (> 120%) - could be a spike, use it
           else if (volumeRatio > 1.2) {
             finalUpdates.total_volume = updates.total_volume;
+            finalUpdates.volumeFetchTime = now; // Update volume timestamp
           }
           // Case 3: WebSocket volume is between 5% and 50% of current - blend conservatively
           // This handles single-exchange vs multi-exchange discrepancy
@@ -383,13 +393,28 @@ export const useCryptoPrices = () => {
           // Case 4: WebSocket volume is between 50% and 120% - normal range, blend moderately
           else {
             finalUpdates.total_volume = coin.total_volume * 0.8 + updates.total_volume * 0.2;
+            finalUpdates.volumeFetchTime = now; // Update volume timestamp when blending
           }
+        }
+        
+        // Calculate data age in minutes
+        const marketCapAge = coin.marketCapFetchTime ? (now - coin.marketCapFetchTime) / MS_PER_MINUTE : 0;
+        const volumeAge = coin.volumeFetchTime ? (now - coin.volumeFetchTime) / MS_PER_MINUTE : 0;
+        const dataAge = Math.max(marketCapAge, volumeAge);
+        
+        // Log warnings for stale data
+        if (marketCapAge > MAX_MARKETCAP_AGE_MINUTES) {
+          console.warn(`[MarketCap] ${normalizedSymbol.toUpperCase()} data is stale: ${marketCapAge.toFixed(1)} minutes old (max ${MAX_MARKETCAP_AGE_MINUTES} minutes)`);
+        }
+        if (volumeAge > MAX_VOLUME_AGE_MINUTES) {
+          console.warn(`[Volume] ${normalizedSymbol.toUpperCase()} data is stale: ${volumeAge.toFixed(1)} minutes old (max ${MAX_VOLUME_AGE_MINUTES} minutes)`);
         }
         
         const updated = {
           ...coin,
           ...finalUpdates,
           lastUpdate: now,
+          dataAgeMinutes: dataAge,
           source,
         };
         pricesRef.current.set(normalizedSymbol, updated);
@@ -502,6 +527,7 @@ export const useCryptoPrices = () => {
           id: coin.id,
         }));
         
+        const now = Date.now();
         const initialPrices: CryptoPrice[] = filteredData.map((coin, index) => ({
           id: coin.id,
           symbol: coin.symbol.toLowerCase(),
@@ -515,7 +541,10 @@ export const useCryptoPrices = () => {
           market_cap: coin.market_cap ?? 0,
           market_cap_rank: coin.market_cap_rank ?? index + 1,
           circulating_supply: coin.circulating_supply ?? 0,
-          lastUpdate: Date.now(),
+          lastUpdate: now,
+          marketCapFetchTime: now, // Track when market cap was fetched
+          volumeFetchTime: now, // Track when volume was fetched
+          dataAgeMinutes: 0, // Fresh from cache
           source: "Cache",
         }));
         
@@ -552,6 +581,7 @@ export const useCryptoPrices = () => {
         id: coin.id,
       }));
 
+      const now = Date.now();
       const cryptoPrices: CryptoPrice[] = filteredData.map((coin, index) => ({
         id: coin.id,
         symbol: coin.symbol.toLowerCase(),
@@ -565,7 +595,10 @@ export const useCryptoPrices = () => {
         market_cap: coin.market_cap ?? 0,
         market_cap_rank: coin.market_cap_rank ?? index + 1,
         circulating_supply: coin.circulating_supply ?? 0,
-        lastUpdate: Date.now(),
+        lastUpdate: now,
+        marketCapFetchTime: now, // Track when market cap was fetched
+        volumeFetchTime: now, // Track when volume was fetched
+        dataAgeMinutes: 0, // Fresh data from API
         source,
       }));
       
