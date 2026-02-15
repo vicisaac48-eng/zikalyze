@@ -141,7 +141,7 @@ const CryptoRow = memo(({
           return `${currencySymbol}${v.toFixed(0)}`;
         })()}
       </td>
-      <td className="py-2 pl-2 text-center sm:py-3 sm:pl-3 lg:pl-4">
+      <td className="py-2 pl-2 pr-2 text-center sm:py-3 sm:pl-3 sm:pr-3 lg:pl-4 lg:pr-4">
         <Button
           variant="ghost"
           size="icon"
@@ -482,7 +482,7 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                 <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">24h High</th>
                 <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">24h Low</th>
                 <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">Volume</th>
-                <th className="pb-2 pl-2 font-medium text-center sm:pb-3 sm:pl-3 lg:pl-4">Alert</th>
+                <th className="pb-2 pl-2 pr-2 font-medium text-center sm:pb-3 sm:pl-3 sm:pr-3 lg:pl-4 lg:pr-4">Alert</th>
               </tr>
             </thead>
             <tbody>
