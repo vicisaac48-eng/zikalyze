@@ -10,6 +10,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
 import LandingSplash from "@/components/LandingSplash";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
+import { ROUTES } from "@/constants/routes";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -92,12 +93,16 @@ const Landing = () => {
     }
   }, [location, t]);
 
-  // Redirect to dashboard if already logged in (non-blocking)
+  // Redirect to dashboard if already logged in (web app only)
+  // Mobile native apps are handled by LandingRoute wrapper to prevent landing page from showing
   useEffect(() => {
+    // Skip redirect on mobile native apps - handled by wrapper
+    if (isNativeApp) return;
+    
     if (!authLoading && user) {
-      navigate("/dashboard");
+      navigate(ROUTES.DASHBOARD);
     }
-  }, [navigate, user, authLoading]);
+  }, [navigate, user, authLoading, isNativeApp]);
 
   // Show splash screen on native app first visit
   if (showSplash) {
