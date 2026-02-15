@@ -13,12 +13,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { t } = useTranslation();
+  const isNativeApp = useIsNativeApp();
 
   const menuItems = [
     { icon: LayoutDashboard, label: t("sidebar.dashboard"), path: "/dashboard" },
@@ -31,7 +33,9 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/");
+    // On mobile native app, go to auth page instead of landing page
+    // Landing page should only be visible on first install or explicit navigation
+    navigate(isNativeApp ? "/auth" : "/");
   };
 
   return (

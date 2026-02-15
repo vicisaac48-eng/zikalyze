@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import SessionTimeoutModal from "@/components/SessionTimeoutModal";
 import { toast } from "sonner";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,12 +13,15 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
+  const isNativeApp = useIsNativeApp();
 
   const handleTimeout = useCallback(async () => {
     await signOut();
     toast.info("You have been signed out due to inactivity");
-    navigate("/");
-  }, [signOut, navigate]);
+    // On mobile native app, go to auth page instead of landing page
+    // Landing page should only be visible on first install or explicit navigation
+    navigate(isNativeApp ? "/auth" : "/");
+  }, [signOut, navigate, isNativeApp]);
 
   const { showWarning, remainingTime, extendSession } = useSessionTimeout({
     timeoutMs: 15 * 60 * 1000, // 15 minutes
