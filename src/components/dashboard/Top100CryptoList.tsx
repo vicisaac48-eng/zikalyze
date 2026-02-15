@@ -125,13 +125,13 @@ const CryptoRow = memo(({
               : crypto.circulating_supply.toLocaleString())
           : "---"} {crypto.symbol.toUpperCase()}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:px-3 sm:text-sm lg:px-4">
         {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden lg:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:px-3 sm:text-sm lg:px-4">
         {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden xl:table-cell sm:py-3 sm:px-3 sm:text-sm lg:px-4">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:px-3 sm:text-sm lg:px-4">
         {(() => {
           const v = crypto.total_volume;
           if (!v) return "---";
@@ -479,9 +479,9 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
                 <th className="pb-2 px-2 font-medium text-right sm:pb-3 sm:px-3 lg:px-4">24h %</th>
                 <th className="pb-2 px-2 font-medium text-right hidden sm:table-cell sm:pb-3 sm:px-3 lg:px-4">Market Cap</th>
                 <th className="pb-2 px-2 font-medium text-right hidden md:table-cell sm:pb-3 sm:px-3 lg:px-4">Circulating Supply</th>
-                <th className="pb-2 px-2 font-medium text-right hidden lg:table-cell sm:pb-3 sm:px-3 lg:px-4">24h High</th>
-                <th className="pb-2 px-2 font-medium text-right hidden lg:table-cell sm:pb-3 sm:px-3 lg:px-4">24h Low</th>
-                <th className="pb-2 px-2 font-medium text-right hidden xl:table-cell sm:pb-3 sm:px-3 lg:px-4">Volume</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">24h High</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">24h Low</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 sm:px-3 lg:px-4">Volume</th>
                 <th className="pb-2 pl-2 font-medium text-center sm:pb-3 sm:pl-3 lg:pl-4">Alert</th>
               </tr>
             </thead>
