@@ -84,7 +84,7 @@ const CryptoRow = memo(({
         isSelected ? "bg-primary/10" : ""
       }`}
     >
-      <td className="py-2 pr-2 sm:py-3 sm:pr-4 lg:pr-6">
+      <td className="py-2 pr-2 sm:py-3 sm:pr-4 md:pr-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <img 
             src={crypto.image} 
@@ -95,7 +95,7 @@ const CryptoRow = memo(({
             }}
           />
           <div className="min-w-0">
-            <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none">{crypto.name}</div>
+            <div className="font-medium text-foreground text-xs truncate max-w-[80px] sm:text-sm sm:max-w-none md:max-w-[160px]">{crypto.name}</div>
             <div className="text-xs text-muted-foreground font-semibold">{crypto.symbol.toUpperCase()}</div>
           </div>
         </div>
@@ -107,16 +107,16 @@ const CryptoRow = memo(({
           formatPrice={formatPrice}
         />
       </td>
-      <td className="py-2 px-2 text-right sm:py-3 md:pr-6">
+      <td className="py-2 px-2 text-right sm:py-3 md:pr-3">
         <div className={`flex items-center justify-end gap-0.5 text-xs sm:gap-1 sm:text-sm ${isPositive ? "text-success" : "text-destructive"}`}>
           {isPositive ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
           {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
         </div>
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:text-sm md:pr-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:table-cell sm:py-3 sm:text-sm md:pr-4">
         {currencySymbol}{crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + "B" : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:text-sm md:pr-8">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden md:table-cell sm:py-3 sm:text-sm md:pr-4">
         {crypto.circulating_supply 
           ? (crypto.circulating_supply >= 1e9 
             ? (crypto.circulating_supply / 1e9).toFixed(2) + "B" 
@@ -125,13 +125,13 @@ const CryptoRow = memo(({
               : crypto.circulating_supply.toLocaleString())
           : "---"} {crypto.symbol.toUpperCase()}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-6">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-3">
         {crypto.high_24h ? formatPrice(crypto.high_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-6">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-3">
         {crypto.low_24h ? formatPrice(crypto.low_24h) : "---"}
       </td>
-      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-6">
+      <td className="py-2 px-2 text-right text-xs text-muted-foreground hidden sm:py-3 sm:text-sm md:pr-3">
         {(() => {
           const v = crypto.total_volume;
           if (!v) return "---";
@@ -474,14 +474,14 @@ const Top100CryptoList = ({ onSelect, selected, prices: propPrices, loading: pro
           <table className="w-full">
             <thead>
               <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                <th className="pb-2 pr-2 font-medium sm:pb-3 sm:pr-4">Name</th>
-                <th className="pb-2 px-2 font-medium text-right sm:pb-3 md:pr-6">Price</th>
-                <th className="pb-2 px-2 font-medium text-right sm:pb-3 md:pr-6">24h %</th>
-                <th className="pb-2 px-2 font-medium text-right hidden sm:table-cell sm:pb-3 md:pr-8">Market Cap</th>
-                <th className="pb-2 px-2 font-medium text-right hidden md:table-cell sm:pb-3 md:pr-8">Circulating Supply</th>
-                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-6">24h High</th>
-                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-6">24h Low</th>
-                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-6">Volume</th>
+                <th className="pb-2 pr-2 font-medium sm:pb-3 sm:pr-4 md:pr-3">Name</th>
+                <th className="pb-2 px-2 font-medium text-right sm:pb-3 md:pr-3">Price</th>
+                <th className="pb-2 px-2 font-medium text-right sm:pb-3 md:pr-3">24h %</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:table-cell sm:pb-3 md:pr-4">Market Cap</th>
+                <th className="pb-2 px-2 font-medium text-right hidden md:table-cell sm:pb-3 md:pr-4">Circulating Supply</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-3">24h High</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-3">24h Low</th>
+                <th className="pb-2 px-2 font-medium text-right hidden sm:pb-3 md:pr-3">Volume</th>
                 <th className="pb-2 pl-2 pr-2 font-medium text-center sm:pb-3 md:text-right md:pl-0">Alert</th>
               </tr>
             </thead>
