@@ -10,6 +10,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { supabase } from "@/integrations/supabase/client";
 import LandingSplash from "@/components/LandingSplash";
 import { SESSION_STORAGE_KEYS } from "@/constants/storage";
+import { ROUTES } from "@/constants/routes";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ const Landing = () => {
     if (isNativeApp) return;
     
     if (!authLoading && user) {
-      navigate("/dashboard");
+      navigate(ROUTES.DASHBOARD);
     }
   }, [navigate, user, authLoading, isNativeApp]);
 

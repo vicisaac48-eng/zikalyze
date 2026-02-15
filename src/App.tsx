@@ -23,7 +23,6 @@ function SessionTracker({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 // Lazy load page components for code splitting
-// Note: Landing page is imported in LandingRoute component to handle mobile native redirects
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));

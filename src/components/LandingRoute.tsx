@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsNativeApp } from "@/hooks/useIsNativeApp";
+import { ROUTES } from "@/constants/routes";
 import Landing from "@/pages/Landing";
 
 /**
@@ -30,7 +31,7 @@ export function LandingRoute() {
     // If user is authenticated on mobile native app, redirect to dashboard
     // This prevents landing page from ever showing after login
     if (user) {
-      navigate("/dashboard", { replace: true });
+      navigate(ROUTES.DASHBOARD, { replace: true });
     }
   }, [isNativeApp, loading, user, navigate]);
 
