@@ -100,7 +100,7 @@ const CryptoRow = memo(({
           </div>
         </div>
       </td>
-      <td className="py-2 px-2 text-right sm:py-3 sm:px-3 lg:px-4">
+      <td className="py-2 px-2 text-right sm:py-3 sm:px-3 md:pr-3">
         <PriceCell 
           price={crypto.current_price}
           flash={flash}
