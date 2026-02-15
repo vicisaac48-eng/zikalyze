@@ -14,15 +14,23 @@ cd ..
 
 ### Step 2: Sign with Automated Script
 
+**Option A: Fully Automated (GitHub Codespaces / Terminal)**
+```bash
+./scripts/auto_sign_aab.sh
+```
+
+**Option B: Interactive (Local Machine)**
 ```bash
 ./scripts/sign_aab.sh
 ```
 
-That's it! The script will:
+The scripts will:
 - ✅ Check if your AAB exists
 - ✅ Help you create a keystore if needed
 - ✅ Sign your AAB
 - ✅ Guide you through upload
+
+**💻 Using GitHub Codespaces?** See [CODESPACES_AAB_SIGNING.md](./CODESPACES_AAB_SIGNING.md) for a complete guide!
 
 ### Step 3: Upload to Play Store
 
@@ -82,6 +90,7 @@ Double-check your password. If you forgot it, you need to create a new keystore 
 
 ## 📚 More Help
 
+- **GitHub Codespaces**: [CODESPACES_AAB_SIGNING.md](./CODESPACES_AAB_SIGNING.md) ⭐ NEW!
 - **Complete guide**: [AAB_SIGNING_GUIDE.md](./AAB_SIGNING_GUIDE.md)
 - **Troubleshooting**: [AAB_TROUBLESHOOTING.md](./AAB_TROUBLESHOOTING.md)
 - **Deployment guide**: [docs/PLAYSTORE_DEPLOYMENT.md](./docs/PLAYSTORE_DEPLOYMENT.md)
