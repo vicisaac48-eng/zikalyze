@@ -1,12 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📊 TECHNICAL ANALYSIS ENGINE v4.0 — Real-Time Chart-Based Analysis
+// 📊 TECHNICAL ANALYSIS ENGINE v5.0 — Enhanced with Sakata Methods
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎯 Uses REAL 24h chart data when available for accurate trend detection
 // 📈 Confluence = alignment across timeframes + EMA/RSI from live data
+// 🏯 Sakata Methods = Traditional Japanese pattern recognition (18th century)
 // ⚡ No random values — 100% deterministic and reproducible
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { MarketStructure, PrecisionEntry, ChartTrendInput, MultiTimeframeInput } from './types';
+import { analyzeSakataMethods, SakataPattern, SakataAnalysis } from './sakata-methods';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔍 TYPES FOR TOP-DOWN ANALYSIS
@@ -69,11 +71,15 @@ export interface RegimeWeightedConsensus {
 
 export interface CandlestickConfirmation {
   pattern: string;          // Pattern name (e.g., "Bullish Engulfing")
-  type: 'REVERSAL' | 'CONTINUATION';
+  type: 'REVERSAL' | 'CONTINUATION' | 'MOMENTUM';
   bias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   strength: number;         // Pattern strength 0-100
   description: string;      // User-friendly explanation
   entryTrigger: string;     // What should happen before entry
+  // Enhanced with Sakata Methods
+  sakataAnalysis?: SakataAnalysis;  // Comprehensive Sakata pattern analysis
+  combinedStrength?: number;        // Western + Sakata combined strength
+  confluence?: boolean;             // True if patterns agree
 }
 
 /**
@@ -397,6 +403,92 @@ export function detectCandlestickPattern(
 }
 
 /**
+ * 🏯 Enhanced Pattern Detection with Sakata Methods Integration
+ * Combines Western candlestick patterns with traditional Japanese Sakata Methods
+ * for superior pattern recognition and trading accuracy
+ */
+export function detectCandlestickPatternEnhanced(
+  candles: Array<{ open: number; high: number; low: number; close: number }>,
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL',
+  currentPrice: number
+): CandlestickConfirmation {
+  // Get Western candlestick pattern
+  const westernPattern = detectCandlestickPattern(candles, bias);
+  
+  // Get Sakata Methods analysis
+  const sakataAnalysis = analyzeSakataMethods(candles, currentPrice, bias);
+  
+  // If no Sakata patterns detected, return Western pattern only
+  if (!sakataAnalysis.primaryPattern) {
+    return westernPattern;
+  }
+  
+  // Combine Western and Sakata analyses
+  const westernStrength = westernPattern.strength;
+  const sakataStrength = sakataAnalysis.overallStrength;
+  
+  // Check confluence (both methods agree on direction)
+  const confluence = 
+    (westernPattern.bias === 'BULLISH' && sakataAnalysis.overallBias === 'BULLISH') ||
+    (westernPattern.bias === 'BEARISH' && sakataAnalysis.overallBias === 'BEARISH') ||
+    (westernPattern.bias === 'NEUTRAL' && sakataAnalysis.overallBias === 'NEUTRAL');
+  
+  // Combined strength with confluence bonus
+  const baseStrength = (westernStrength + sakataStrength) / 2;
+  const confluenceBonus = confluence ? 10 : 0;
+  const combinedStrength = Math.min(100, baseStrength + confluenceBonus);
+  
+  // Determine primary pattern
+  let primaryPattern: string;
+  let description: string;
+  let entryTrigger: string;
+  let patternType: 'REVERSAL' | 'CONTINUATION' | 'MOMENTUM';
+  let finalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  
+  if (confluence && combinedStrength > 70) {
+    // Strong confluence - use both
+    primaryPattern = `${westernPattern.pattern} + ${sakataAnalysis.primaryPattern.pattern}`;
+    description = `STRONG CONFLUENCE: ${westernPattern.description} + ${sakataAnalysis.recommendation}`;
+    entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
+    patternType = sakataAnalysis.primaryPattern.type;
+    finalBias = sakataAnalysis.overallBias;
+  } else if (sakataStrength > westernStrength * 1.2) {
+    // Sakata stronger - prioritize it
+    primaryPattern = sakataAnalysis.primaryPattern.pattern;
+    description = `SAKATA DOMINANT: ${sakataAnalysis.recommendation}`;
+    entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
+    patternType = sakataAnalysis.primaryPattern.type;
+    finalBias = sakataAnalysis.overallBias;
+  } else if (westernStrength > sakataStrength * 1.2) {
+    // Western stronger - prioritize it but mention Sakata
+    primaryPattern = `${westernPattern.pattern} (Sakata: ${sakataAnalysis.primaryPattern.pattern})`;
+    description = westernPattern.description;
+    entryTrigger = westernPattern.entryTrigger;
+    patternType = westernPattern.type;
+    finalBias = westernPattern.bias;
+  } else {
+    // Mixed - report both
+    primaryPattern = `${westernPattern.pattern} / ${sakataAnalysis.primaryPattern.pattern}`;
+    description = `MIXED: ${westernPattern.description} | Sakata: ${sakataAnalysis.recommendation}`;
+    entryTrigger = confluence ? sakataAnalysis.primaryPattern.entryTrigger : 'Wait for pattern alignment';
+    patternType = westernPattern.type;
+    finalBias = confluence ? sakataAnalysis.overallBias : 'NEUTRAL';
+  }
+  
+  return {
+    pattern: primaryPattern,
+    type: patternType,
+    bias: finalBias,
+    strength: Math.round(combinedStrength),
+    description,
+    entryTrigger,
+    sakataAnalysis,
+    combinedStrength: Math.round(combinedStrength),
+    confluence
+  };
+}
+
+/**
  * Calculate Regime-Weighted Consensus Score
  * IF TRENDING (ADX>25): Algorithm 70%, Neural Network 30%
  * IF RANGING (ADX<20): Neural Network 70%, Algorithm 30%
@@ -478,9 +570,9 @@ export function calculateRegimeWeightedConsensus(
       : high24h + range * 0.05; // Tight stop at structure high
   }
 
-  // Detect candlestick confirmation
+  // Detect candlestick confirmation with Sakata Methods enhancement
   const candlestickConfirmation = candles && candles.length >= 3
-    ? detectCandlestickPattern(candles, algorithmBias)
+    ? detectCandlestickPatternEnhanced(candles, algorithmBias, price)
     : {
         pattern: 'Awaiting Data',
         type: 'CONTINUATION' as const,
