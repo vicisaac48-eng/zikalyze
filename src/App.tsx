@@ -14,6 +14,7 @@ import { RouteManager } from "./components/RouteManager";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useIsNativeApp } from "./hooks/useIsNativeApp";
+import { LandingRoute } from "./components/LandingRoute";
 
 
 // Session tracking wrapper component - non-critical feature
@@ -22,7 +23,7 @@ function SessionTracker({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 // Lazy load page components for code splitting
-const Landing = lazy(() => import("./pages/Landing"));
+// Note: Landing page is imported in LandingRoute component to handle mobile native redirects
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -114,7 +115,7 @@ const App = () => (
                 <RouteManager>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
-                      <Route path="/" element={<Landing />} />
+                      <Route path="/" element={<LandingRoute />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/login" element={<Auth />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
