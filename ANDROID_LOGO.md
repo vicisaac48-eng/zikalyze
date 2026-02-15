@@ -19,7 +19,6 @@ This document provides direct download links to all Zikalyze logo and icon files
 - 📥 [**Download Favicon (PNG)**](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/favicon.png)
 - 📥 [**Download Favicon (ICO)**](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/favicon.ico)
 - 📥 [**Download OG Image (PNG)**](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/og-image.png)
-- 📥 [**Download OG Image (SVG)**](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/og-image.svg)
 
 ## 📲 Android App Icons (All Sizes)
 
