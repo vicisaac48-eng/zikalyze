@@ -448,14 +448,14 @@ export function detectCandlestickPatternEnhanced(
   if (confluence && combinedStrength > 70) {
     // Strong confluence - use advanced pattern
     primaryPattern = sakataAnalysis.primaryPattern.pattern;
-    description = `STRONG CONFLUENCE: ${westernPattern.description} + ${sakataAnalysis.recommendation}`;
+    description = `${westernPattern.description} + ${sakataAnalysis.recommendation}`;
     entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
     patternType = sakataAnalysis.primaryPattern.type;
     finalBias = sakataAnalysis.overallBias;
   } else if (sakataStrength > westernStrength * 1.2) {
     // Advanced pattern stronger
     primaryPattern = sakataAnalysis.primaryPattern.pattern;
-    description = `ADVANCED AI PATTERN: ${sakataAnalysis.recommendation}`;
+    description = sakataAnalysis.recommendation;
     entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
     patternType = sakataAnalysis.primaryPattern.type;
     finalBias = sakataAnalysis.overallBias;
