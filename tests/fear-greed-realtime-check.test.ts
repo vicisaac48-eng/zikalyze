@@ -155,5 +155,3 @@ describe('Fear & Greed Real-time Data Validation', () => {
     });
   });
 });
-
-console.log('✅ Fear & Greed real-time validation tests defined successfully!');

@@ -14,6 +14,11 @@
 
 const https = require('https');
 
+// Constants matching the hook implementation
+const TREND_THRESHOLD = 3; // Value difference required to identify a rising/falling trend
+const MAX_DATA_AGE_HOURS = 48; // Maximum acceptable data age
+const LIVE_DATA_THRESHOLD_HOURS = 24; // Data considered "live" if fresher than this
+
 console.log('╔════════════════════════════════════════════════════════════════╗');
 console.log('║  Fear & Greed Index Real-time Data Validation                 ║');
 console.log('╚════════════════════════════════════════════════════════════════╝\n');
@@ -118,14 +123,14 @@ async function validateFearGreed() {
     console.log(`  Current time: ${new Date(now).toISOString()}`);
     console.log(`  Data age: ${currentAgeHours.toFixed(2)} hours`);
     
-    // Validate data is fresh (< 48 hours for acceptance, < 24 hours for "live")
-    if (currentAgeHours > 48) {
-      console.log(`  ❌ Data is too old (${currentAgeHours.toFixed(1)} hours) - NOT REAL-TIME\n`);
+    // Validate data is fresh (using constants)
+    if (currentAgeHours > MAX_DATA_AGE_HOURS) {
+      console.log(`  ❌ Data is too old (${currentAgeHours.toFixed(1)} hours, max ${MAX_DATA_AGE_HOURS} hours) - NOT REAL-TIME\n`);
       process.exit(1);
-    } else if (currentAgeHours < 24) {
-      console.log(`  ✅ Data is REAL-TIME (${currentAgeHours.toFixed(1)} hours old)\n`);
+    } else if (currentAgeHours < LIVE_DATA_THRESHOLD_HOURS) {
+      console.log(`  ✅ Data is REAL-TIME (${currentAgeHours.toFixed(1)} hours old, threshold: ${LIVE_DATA_THRESHOLD_HOURS} hours)\n`);
     } else {
-      console.log(`  ⚠️  Data is acceptable but not live (${currentAgeHours.toFixed(1)} hours old)\n`);
+      console.log(`  ⚠️  Data is acceptable but not live (${currentAgeHours.toFixed(1)} hours old, threshold: ${LIVE_DATA_THRESHOLD_HOURS} hours)\n`);
     }
     
     // Check 5: Data Analysis
@@ -136,8 +141,8 @@ async function validateFearGreed() {
     console.log(`  Previous Label: ${previous.value_classification}`);
     
     const diff = parseInt(current.value) - parseInt(previous.value);
-    const trend = diff > 3 ? 'RISING ⬆️' : diff < -3 ? 'FALLING ⬇️' : 'STABLE ➡️';
-    console.log(`  Trend: ${trend} (${diff > 0 ? '+' : ''}${diff})\n`);
+    const trend = diff > TREND_THRESHOLD ? 'RISING ⬆️' : diff < -TREND_THRESHOLD ? 'FALLING ⬇️' : 'STABLE ➡️';
+    console.log(`  Trend: ${trend} (${diff > 0 ? '+' : ''}${diff}, threshold: ±${TREND_THRESHOLD})\n`);
     
     // Check 6: AI Metrics Calculation
     console.log('✓ Check 6: AI Metrics Calculation');
