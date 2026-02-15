@@ -466,7 +466,9 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
           extremeLevel: realTimeFearGreed.extremeLevel,
           aiWeight: realTimeFearGreed.aiWeight,
           isLive: realTimeFearGreed.isLive,
-          timestamp: realTimeFearGreed.timestamp
+          timestamp: realTimeFearGreed.timestamp,
+          apiTimestamp: realTimeFearGreed.apiTimestamp,
+          dataAgeHours: realTimeFearGreed.dataAgeHours
         },
         social: liveData.sentiment?.sentimentScore !== undefined ? { 
           overall: { score: liveData.sentiment.sentimentScore } 
@@ -474,7 +476,7 @@ const AIAnalyzer = ({ crypto, price, change, high24h, low24h, volume, marketCap,
       };
       
       // Log Fear & Greed data for debugging
-      console.log(`[AI Analysis] Fear & Greed: ${realTimeFearGreed.value} (${realTimeFearGreed.label}) | Trend: ${realTimeFearGreed.trend} | Live: ${realTimeFearGreed.isLive}`);
+      console.log(`[AI Analysis] Fear & Greed: ${realTimeFearGreed.value} (${realTimeFearGreed.label}) | Age: ${realTimeFearGreed.dataAgeHours.toFixed(1)}h | Trend: ${realTimeFearGreed.trend} | Live: ${realTimeFearGreed.isLive}`);
 
       // Build multi-timeframe input
       const adaptedMultiTfData: MultiTimeframeInput | undefined = multiTfData && !multiTfData.isLoading ? {

@@ -14,16 +14,21 @@ export interface FearGreedData {
   previousValue: number;
   previousLabel: string;
   timestamp: number;
+  apiTimestamp: number; // Timestamp from API (when data was generated)
   isLive: boolean;
   source: string;
   // Derived metrics for AI analysis
   trend: 'RISING' | 'FALLING' | 'STABLE';
   extremeLevel: 'EXTREME_FEAR' | 'FEAR' | 'NEUTRAL' | 'GREED' | 'EXTREME_GREED';
   aiWeight: number; // 0-1 weight for AI decision making
+  dataAgeHours: number; // How old the API data is in hours
 }
 
 const REFRESH_INTERVAL = 60000; // Refresh every 60 seconds
 const API_TIMEOUT = 8000;
+const MS_PER_HOUR = 60 * 60 * 1000; // Milliseconds in one hour
+const MAX_DATA_AGE_HOURS = 48; // Maximum acceptable data age
+const LIVE_DATA_THRESHOLD_HOURS = 24; // Data considered "live" if fresher than this
 
 // Label to extreme level mapping
 const labelToExtremeLevel = (value: number): FearGreedData['extremeLevel'] => {
@@ -57,6 +62,8 @@ async function fetchFearGreedIndex(): Promise<{
   label: string;
   previousValue: number;
   previousLabel: string;
+  timestamp: number;
+  previousTimestamp: number;
 } | null> {
   try {
     const controller = new AbortController();
@@ -74,11 +81,29 @@ async function fetchFearGreedIndex(): Promise<{
     const data = await response.json();
     
     if (data.data && data.data.length >= 2) {
+      const currentTimestamp = parseInt(data.data[0].timestamp) * 1000; // Convert to milliseconds
+      const previousTimestamp = parseInt(data.data[1].timestamp) * 1000;
+      
+      // Validate data freshness - ensure current data is less than MAX_DATA_AGE_HOURS old
+      const now = Date.now();
+      const dataAge = now - currentTimestamp;
+      const dataAgeHours = dataAge / MS_PER_HOUR;
+      const maxAge = MAX_DATA_AGE_HOURS * MS_PER_HOUR;
+      
+      if (dataAge > maxAge) {
+        console.warn(`[FearGreed] Data is stale: ${dataAgeHours.toFixed(1)} hours old (max ${MAX_DATA_AGE_HOURS} hours allowed)`);
+        throw new Error(`Data too old - ${dataAgeHours.toFixed(1)} hours (max ${MAX_DATA_AGE_HOURS} hours)`);
+      }
+      
+      console.log(`[FearGreed] Real-time data verified: ${dataAgeHours.toFixed(1)} hours old`);
+      
       return {
         value: parseInt(data.data[0].value),
         label: data.data[0].value_classification,
         previousValue: parseInt(data.data[1].value),
-        previousLabel: data.data[1].value_classification
+        previousLabel: data.data[1].value_classification,
+        timestamp: currentTimestamp,
+        previousTimestamp: previousTimestamp
       };
     }
     throw new Error('Invalid data format');
@@ -99,11 +124,13 @@ export function useRealTimeFearGreed(): FearGreedData {
     previousValue: 50,
     previousLabel: 'Neutral',
     timestamp: Date.now(),
+    apiTimestamp: Date.now(),
     isLive: false,
     source: 'initializing',
     trend: 'STABLE',
     extremeLevel: 'NEUTRAL',
-    aiWeight: 0.2
+    aiWeight: 0.2,
+    dataAgeHours: 0
   });
 
   const mountedRef = useRef(true);
@@ -124,27 +151,34 @@ export function useRealTimeFearGreed(): FearGreedData {
     if (!mountedRef.current) return;
     
     if (result) {
+      const dataAge = now - result.timestamp;
+      const dataAgeHours = dataAge / MS_PER_HOUR;
+      
       const newData: FearGreedData = {
         value: result.value,
         label: result.label,
         previousValue: result.previousValue,
         previousLabel: result.previousLabel,
-        timestamp: now,
-        isLive: true,
+        timestamp: now, // When we fetched it
+        apiTimestamp: result.timestamp, // When API generated it
+        isLive: dataAgeHours < LIVE_DATA_THRESHOLD_HOURS, // Consider live if less than threshold
         source: 'Alternative.me',
         trend: determineTrend(result.value, result.previousValue),
         extremeLevel: labelToExtremeLevel(result.value),
-        aiWeight: calculateAIWeight(result.value)
+        aiWeight: calculateAIWeight(result.value),
+        dataAgeHours: dataAgeHours
       };
       
       setData(newData);
-      console.log(`[FearGreed] LIVE: ${result.value} (${result.label}) | Trend: ${newData.trend} | AI Weight: ${newData.aiWeight.toFixed(2)}`);
+      console.log(`[FearGreed] LIVE: ${result.value} (${result.label}) | Age: ${dataAgeHours.toFixed(1)}h | Trend: ${newData.trend} | AI Weight: ${newData.aiWeight.toFixed(2)}`);
     } else {
       // Keep existing data but mark as potentially stale
+      const age = (now - data.apiTimestamp) / MS_PER_HOUR;
       setData(prev => ({
         ...prev,
-        isLive: (now - prev.timestamp) < 300000, // Still live if < 5 mins old
-        source: 'cached'
+        isLive: age < LIVE_DATA_THRESHOLD_HOURS, // Still live if API data fresher than threshold
+        source: 'cached',
+        dataAgeHours: age
       }));
     }
   }, []);
