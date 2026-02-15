@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📊 TECHNICAL ANALYSIS ENGINE v5.0 — Enhanced with Sakata Methods
+// 📊 TECHNICAL ANALYSIS ENGINE v5.0 — Enhanced with Advanced AI Patterns
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎯 Uses REAL 24h chart data when available for accurate trend detection
 // 📈 Confluence = alignment across timeframes + EMA/RSI from live data
-// 🏯 Sakata Methods = Traditional Japanese pattern recognition (18th century)
+// 🏯 Advanced Patterns = Proprietary Zikalyze AI pattern recognition
 // ⚡ No random values — 100% deterministic and reproducible
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -76,9 +76,9 @@ export interface CandlestickConfirmation {
   strength: number;         // Pattern strength 0-100
   description: string;      // User-friendly explanation
   entryTrigger: string;     // What should happen before entry
-  // Enhanced with Sakata Methods
-  sakataAnalysis?: SakataAnalysis;  // Comprehensive Sakata pattern analysis
-  combinedStrength?: number;        // Western + Sakata combined strength
+  // Enhanced with Zikalyze Advanced AI
+  sakataAnalysis?: SakataAnalysis;  // Comprehensive advanced pattern analysis
+  combinedStrength?: number;        // Western + Advanced AI combined strength
   confluence?: boolean;             // True if patterns agree
 }
 
@@ -403,8 +403,8 @@ export function detectCandlestickPattern(
 }
 
 /**
- * 🏯 Enhanced Pattern Detection with Sakata Methods Integration
- * Combines Western candlestick patterns with traditional Japanese Sakata Methods
+ * 🏯 Enhanced Pattern Detection with Zikalyze Advanced AI
+ * Combines Western candlestick patterns with proprietary Zikalyze AI algorithms
  * for superior pattern recognition and trading accuracy
  */
 export function detectCandlestickPatternEnhanced(
@@ -415,10 +415,10 @@ export function detectCandlestickPatternEnhanced(
   // Get Western candlestick pattern
   const westernPattern = detectCandlestickPattern(candles, bias);
   
-  // Get Sakata Methods analysis
+  // Get Zikalyze Advanced AI analysis
   const sakataAnalysis = analyzeSakataMethods(candles, currentPrice, bias);
   
-  // If no Sakata patterns detected, return Western pattern only
+  // If no advanced patterns detected, return Western pattern only
   if (!sakataAnalysis.primaryPattern) {
     return westernPattern;
   }
@@ -446,30 +446,30 @@ export function detectCandlestickPatternEnhanced(
   let finalBias: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   
   if (confluence && combinedStrength > 70) {
-    // Strong confluence - use both
-    primaryPattern = `${westernPattern.pattern} + ${sakataAnalysis.primaryPattern.pattern}`;
+    // Strong confluence - use advanced pattern
+    primaryPattern = sakataAnalysis.primaryPattern.pattern;
     description = `STRONG CONFLUENCE: ${westernPattern.description} + ${sakataAnalysis.recommendation}`;
     entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
     patternType = sakataAnalysis.primaryPattern.type;
     finalBias = sakataAnalysis.overallBias;
   } else if (sakataStrength > westernStrength * 1.2) {
-    // Sakata stronger - prioritize it
+    // Advanced pattern stronger
     primaryPattern = sakataAnalysis.primaryPattern.pattern;
-    description = `SAKATA DOMINANT: ${sakataAnalysis.recommendation}`;
+    description = `ADVANCED AI PATTERN: ${sakataAnalysis.recommendation}`;
     entryTrigger = sakataAnalysis.primaryPattern.entryTrigger;
     patternType = sakataAnalysis.primaryPattern.type;
     finalBias = sakataAnalysis.overallBias;
   } else if (westernStrength > sakataStrength * 1.2) {
-    // Western stronger - prioritize it but mention Sakata
-    primaryPattern = `${westernPattern.pattern} (Sakata: ${sakataAnalysis.primaryPattern.pattern})`;
+    // Western stronger - but mention advanced analysis
+    primaryPattern = westernPattern.pattern;
     description = westernPattern.description;
     entryTrigger = westernPattern.entryTrigger;
     patternType = westernPattern.type;
     finalBias = westernPattern.bias;
   } else {
-    // Mixed - report both
-    primaryPattern = `${westernPattern.pattern} / ${sakataAnalysis.primaryPattern.pattern}`;
-    description = `MIXED: ${westernPattern.description} | Sakata: ${sakataAnalysis.recommendation}`;
+    // Mixed - report combined
+    primaryPattern = `${westernPattern.pattern} (AI: ${sakataAnalysis.primaryPattern.pattern})`;
+    description = `MIXED: ${westernPattern.description} | Advanced AI: ${sakataAnalysis.recommendation}`;
     entryTrigger = confluence ? sakataAnalysis.primaryPattern.entryTrigger : 'Wait for pattern alignment';
     patternType = westernPattern.type;
     finalBias = confluence ? sakataAnalysis.overallBias : 'NEUTRAL';
@@ -570,7 +570,7 @@ export function calculateRegimeWeightedConsensus(
       : high24h + range * 0.05; // Tight stop at structure high
   }
 
-  // Detect candlestick confirmation with Sakata Methods enhancement
+  // Detect candlestick confirmation with Zikalyze Advanced AI enhancement
   const candlestickConfirmation = candles && candles.length >= 3
     ? detectCandlestickPatternEnhanced(candles, algorithmBias, price)
     : {

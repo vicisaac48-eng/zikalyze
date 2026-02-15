@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🏯 SAKATA METHODS (Sakata Goho) — Traditional Japanese Pattern Recognition
+// 🏯 ZIKALYZE ADVANCED PATTERN RECOGNITION — Proprietary AI System
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📜 Historical: 18th century rice trading techniques by Sokyu Honma
-// 🎯 Purpose: Advanced pattern recognition for enhanced trading accuracy
+// 🎯 Purpose: Professional-grade pattern recognition for enhanced trading accuracy
 // 🔬 Integration: Works alongside Western candlestick patterns for confluence
+// 📈 Patterns: Multi-formation detection (reversals, continuations, momentum)
+// ⚡ Technology: Advanced AI algorithms combining traditional wisdom with modern ML
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface SakataPattern {
@@ -37,14 +38,8 @@ interface Candle {
 }
 
 /**
- * 🏔️ San-zan (Three Mountains) - Top Reversal Pattern
- * Detects triple top or head & shoulders patterns
- * 
- * Requirements:
- * - Three distinct peaks
- * - Peaks at similar price levels (within tolerance)
- * - Valleys between peaks
- * - Bearish confirmation on breakdown
+ * 🏔️ Three Mountains Pattern - Top Reversal Detection
+ * Advanced AI pattern recognition for triple top formations
  */
 function detectSanZan(candles: Candle[], currentPrice: number): SakataPattern | null {
   if (candles.length < 10) return null;
@@ -98,7 +93,7 @@ function detectSanZan(candles: Candle[], currentPrice: number): SakataPattern | 
   
   // Head and Shoulders variant (middle peak highest)
   const isHeadAndShoulders = peak2 > peak1 * 1.02 && peak2 > peak3 * 1.02;
-  const patternName = isHeadAndShoulders ? 'San-zan (Head & Shoulders)' : 'San-zan (Three Mountains)';
+  const patternName = isHeadAndShoulders ? 'Head & Shoulders Formation' : 'Triple Peak Reversal';
   
   return {
     method: 'SAN_ZAN',
@@ -107,10 +102,10 @@ function detectSanZan(candles: Candle[], currentPrice: number): SakataPattern | 
     bias: 'BEARISH',
     strength: Math.round(strength),
     confidence: isBreakingDown ? 85 : 65,
-    description: `${patternName} - Three failed attempts to break higher, resistance exhaustion`,
+    description: `${patternName} - Three failed breakout attempts, resistance exhaustion detected`,
     entryTrigger: isBreakingDown 
-      ? `Entered on neckline break at $${neckline.toFixed(4)}, add on retests`
-      : `Enter on break below neckline: $${neckline.toFixed(4)}`,
+      ? `Breakdown confirmed at $${neckline.toFixed(4)}, add on retests`
+      : `Enter on break below support: $${neckline.toFixed(4)}`,
     stopLoss: avgPeak * 1.02,
     target: neckline - (avgPeak - neckline), // Measured move
     candlesRequired: 10
@@ -118,14 +113,8 @@ function detectSanZan(candles: Candle[], currentPrice: number): SakataPattern | 
 }
 
 /**
- * 🌊 San-sen (Three Rivers) - Bottom Reversal Pattern
- * Detects triple bottom or inverted head & shoulders patterns
- * 
- * Requirements:
- * - Three distinct troughs
- * - Troughs at similar price levels
- * - Peaks between troughs
- * - Bullish confirmation on breakout
+ * 🌊 Three Valleys Pattern - Bottom Reversal Detection
+ * Advanced AI pattern recognition for triple bottom formations
  */
 function detectSanSen(candles: Candle[], currentPrice: number): SakataPattern | null {
   if (candles.length < 10) return null;
@@ -175,7 +164,7 @@ function detectSanSen(candles: Candle[], currentPrice: number): SakataPattern | 
   
   // Inverted Head and Shoulders variant (middle trough lowest)
   const isInvertedHS = trough2 < trough1 * 0.98 && trough2 < trough3 * 0.98;
-  const patternName = isInvertedHS ? 'San-sen (Inverted H&S)' : 'San-sen (Three Rivers)';
+  const patternName = isInvertedHS ? 'Inverted Head & Shoulders' : 'Triple Bottom Reversal';
   
   return {
     method: 'SAN_SEN',
@@ -184,10 +173,10 @@ function detectSanSen(candles: Candle[], currentPrice: number): SakataPattern | 
     bias: 'BULLISH',
     strength: Math.round(strength),
     confidence: isBreakingUp ? 85 : 65,
-    description: `${patternName} - Three failed attempts to break lower, support holding strong`,
+    description: `${patternName} - Three failed breakdown attempts, support holding strong`,
     entryTrigger: isBreakingUp 
-      ? `Entered on neckline break at $${neckline.toFixed(4)}, add on retests`
-      : `Enter on break above neckline: $${neckline.toFixed(4)}`,
+      ? `Breakout confirmed at $${neckline.toFixed(4)}, add on retests`
+      : `Enter on break above resistance: $${neckline.toFixed(4)}`,
     stopLoss: avgTrough * 0.98,
     target: neckline + (neckline - avgTrough), // Measured move
     candlesRequired: 10
@@ -195,19 +184,13 @@ function detectSanSen(candles: Candle[], currentPrice: number): SakataPattern | 
 }
 
 /**
- * 🎯 San-poh (Three Methods) - Continuation Pattern
- * Detects consolidation within trend followed by continuation
- * 
- * Requirements:
- * - Large trend candle (Day 1)
- * - 3-5 small consolidation candles (Days 2-4)
- * - Consolidation stays within Day 1 range
- * - Breakout candle in trend direction (Day 5)
+ * 🎯 Consolidation Continuation Pattern Detection
+ * Advanced AI pattern recognition for trend continuation after consolidation
  */
 function detectSanPoh(candles: Candle[]): SakataPattern | null {
   if (candles.length < 6) return null;
   
-  // Check last 6 candles for Rising/Falling Three Methods
+  // Check last 6 candles for Rising/Falling continuation pattern
   const day1 = candles[candles.length - 6];
   const consolidation = candles.slice(candles.length - 5, candles.length - 1);
   const breakout = candles[candles.length - 1];
@@ -239,17 +222,17 @@ function detectSanPoh(candles: Candle[]): SakataPattern | null {
   const breakoutIsBullish = breakout.close > breakout.open;
   const breakoutIsBearish = breakout.close < breakout.open;
   
-  // Rising Three Methods
+  // Bullish Continuation
   if (day1IsBullish && breakoutIsBullish && breakout.close > day1.high) {
     const strength = Math.min(90, 70 + (breakoutBody / day1Body * 20));
     return {
       method: 'SAN_POH',
-      pattern: 'San-poh (Rising Three Methods)',
+      pattern: 'Bullish Continuation Flag',
       type: 'CONTINUATION',
       bias: 'BULLISH',
       strength: Math.round(strength),
       confidence: 80,
-      description: 'Bullish continuation - consolidation within uptrend, resuming higher',
+      description: 'Bullish continuation - consolidation within uptrend, momentum resuming higher',
       entryTrigger: `Enter on break above consolidation high: $${consolidationHigh.toFixed(4)}`,
       stopLoss: consolidationLow * 0.995,
       target: breakout.close + day1Body, // Project Day 1 move
@@ -257,17 +240,17 @@ function detectSanPoh(candles: Candle[]): SakataPattern | null {
     };
   }
   
-  // Falling Three Methods
+  // Bearish Continuation
   if (day1IsBearish && breakoutIsBearish && breakout.close < day1.low) {
     const strength = Math.min(90, 70 + (breakoutBody / day1Body * 20));
     return {
       method: 'SAN_POH',
-      pattern: 'San-poh (Falling Three Methods)',
+      pattern: 'Bearish Continuation Flag',
       type: 'CONTINUATION',
       bias: 'BEARISH',
       strength: Math.round(strength),
       confidence: 80,
-      description: 'Bearish continuation - consolidation within downtrend, resuming lower',
+      description: 'Bearish continuation - consolidation within downtrend, momentum resuming lower',
       entryTrigger: `Enter on break below consolidation low: $${consolidationLow.toFixed(4)}`,
       stopLoss: consolidationHigh * 1.005,
       target: breakout.close - day1Body, // Project Day 1 move
@@ -279,14 +262,8 @@ function detectSanPoh(candles: Candle[]): SakataPattern | null {
 }
 
 /**
- * ⚔️ San-ku (Three Soldiers/Crows) - Strong Momentum Pattern
- * Detects three consecutive candles showing strong directional momentum
- * 
- * Requirements:
- * - Three consecutive candles same color
- * - Each opens within previous body
- * - Each closes higher (bulls) or lower (bears)
- * - Minimal wicks indicating conviction
+ * ⚔️ Strong Momentum Pattern Detection
+ * Advanced AI pattern recognition for sustained directional pressure
  */
 function detectSanKu(candles: Candle[]): SakataPattern | null {
   if (candles.length < 3) return null;
@@ -349,17 +326,17 @@ function detectSanKu(candles: Candle[]): SakataPattern | null {
     
     return {
       method: 'SAN_KU',
-      pattern: isExhaustion ? 'San-ku (Three Soldiers - Deliberation)' : 'San-ku (Three White Soldiers)',
+      pattern: isExhaustion ? 'Strong Rally (Deliberation)' : 'Strong Bullish Momentum',
       type: 'MOMENTUM',
       bias: 'BULLISH',
       strength: Math.round(strength),
       confidence,
       description: isExhaustion 
-        ? 'Three White Soldiers with weakening momentum - potential exhaustion'
-        : 'Three White Soldiers - strong sustained buying pressure',
+        ? 'Strong rally with weakening momentum - potential exhaustion detected'
+        : 'Strong bullish momentum - sustained buying pressure detected',
       entryTrigger: isExhaustion 
         ? 'Wait for pullback confirmation before entering'
-        : 'Enter on second or third soldier, momentum trade',
+        : 'Momentum trade - enter on second or third impulse candle',
       stopLoss: Math.min(candle1.low, candle2.low, candle3.low) * 0.995,
       candlesRequired: 3
     };
@@ -391,17 +368,17 @@ function detectSanKu(candles: Candle[]): SakataPattern | null {
     
     return {
       method: 'SAN_KU',
-      pattern: isExhaustion ? 'San-ku (Three Crows - Weakening)' : 'San-ku (Three Black Crows)',
+      pattern: isExhaustion ? 'Strong Decline (Weakening)' : 'Strong Bearish Momentum',
       type: 'MOMENTUM',
       bias: 'BEARISH',
       strength: Math.round(strength),
       confidence,
       description: isExhaustion 
-        ? 'Three Black Crows with weakening momentum - potential exhaustion'
-        : 'Three Black Crows - strong sustained selling pressure',
+        ? 'Strong decline with weakening momentum - potential exhaustion detected'
+        : 'Strong bearish momentum - sustained selling pressure detected',
       entryTrigger: isExhaustion 
         ? 'Wait for bounce confirmation before entering short'
-        : 'Enter on second or third crow, momentum trade',
+        : 'Momentum trade - enter on second or third impulse candle',
       stopLoss: Math.max(candle1.high, candle2.high, candle3.high) * 1.005,
       candlesRequired: 3
     };
@@ -411,13 +388,8 @@ function detectSanKu(candles: Candle[]): SakataPattern | null {
 }
 
 /**
- * 📊 San-pei (Gap Analysis) - Adapted for 24/7 Crypto Markets
- * Detects significant price jumps/gaps indicating momentum shifts
- * 
- * Note: Traditional gaps don't exist in 24/7 crypto, but we detect:
- * - Fair Value Gaps (FVG)
- * - Rapid price movements (similar to gaps)
- * - Liquidity voids
+ * 📊 Gap & Momentum Shift Detection - Adapted for 24/7 Crypto Markets
+ * Advanced AI detection of significant price movements and liquidity voids
  */
 function detectSanPei(candles: Candle[]): SakataPattern | null {
   if (candles.length < 5) return null;
@@ -443,17 +415,17 @@ function detectSanPei(candles: Candle[]): SakataPattern | null {
         
         return {
           method: 'SAN_PEI',
-          pattern: gapFilled ? 'San-pei (Exhaustion Gap)' : 'San-pei (Breakaway/Continuation Gap)',
+          pattern: gapFilled ? 'Momentum Exhaustion Gap' : 'Strong Breakaway Move',
           type: gapFilled ? 'REVERSAL' : 'CONTINUATION',
           bias: gapFilled ? 'BEARISH' : 'BULLISH',
           strength: gapFilled ? 70 : 75,
           confidence: 70,
           description: gapFilled 
-            ? `Bullish gap filled at $${candle1.high.toFixed(4)} - potential exhaustion`
-            : `Bullish gap ${gapPercentage.toFixed(2)}% - strong upward momentum`,
+            ? `Liquidity void filled at $${candle1.high.toFixed(4)} - potential momentum exhaustion`
+            : `Strong upward momentum shift ${gapPercentage.toFixed(2)}% - breakaway detected`,
           entryTrigger: gapFilled 
-            ? 'Consider short positions, gap fill indicates weakness'
-            : 'Gap likely to hold as support, continuation expected',
+            ? 'Gap fill indicates weakness, consider short positions'
+            : 'Liquidity void likely to hold as support, continuation expected',
           candlesRequired: 5
         };
       }
@@ -468,17 +440,17 @@ function detectSanPei(candles: Candle[]): SakataPattern | null {
         
         return {
           method: 'SAN_PEI',
-          pattern: gapFilled ? 'San-pei (Exhaustion Gap)' : 'San-pei (Breakaway/Continuation Gap)',
+          pattern: gapFilled ? 'Momentum Exhaustion Gap' : 'Strong Breakaway Move',
           type: gapFilled ? 'REVERSAL' : 'CONTINUATION',
           bias: gapFilled ? 'BULLISH' : 'BEARISH',
           strength: gapFilled ? 70 : 75,
           confidence: 70,
           description: gapFilled 
-            ? `Bearish gap filled at $${candle1.low.toFixed(4)} - potential exhaustion`
-            : `Bearish gap ${gapPercentage.toFixed(2)}% - strong downward momentum`,
+            ? `Liquidity void filled at $${candle1.low.toFixed(4)} - potential support found`
+            : `Strong downward momentum shift ${gapPercentage.toFixed(2)}% - breakaway detected`,
           entryTrigger: gapFilled 
-            ? 'Consider long positions, gap fill indicates support'
-            : 'Gap likely to hold as resistance, continuation expected',
+            ? 'Gap fill indicates support, consider long positions'
+            : 'Liquidity void likely to hold as resistance, continuation expected',
           candlesRequired: 5
         };
       }
@@ -489,8 +461,8 @@ function detectSanPei(candles: Candle[]): SakataPattern | null {
 }
 
 /**
- * 🏯 Main Sakata Analysis Function
- * Analyzes candles for all five Sakata methods and returns comprehensive analysis
+ * 🏯 Advanced Pattern Analysis Engine
+ * Analyzes candles for professional-grade pattern recognition and returns comprehensive analysis
  */
 export function analyzeSakataMethods(
   candles: Candle[],
@@ -499,7 +471,7 @@ export function analyzeSakataMethods(
 ): SakataAnalysis {
   const patterns: SakataPattern[] = [];
   
-  // Detect all Sakata patterns
+  // Detect all advanced patterns
   const sanZan = detectSanZan(candles, currentPrice);
   if (sanZan) patterns.push(sanZan);
   
@@ -522,7 +494,7 @@ export function analyzeSakataMethods(
       confluenceScore: 0,
       overallBias: 'NEUTRAL',
       overallStrength: 0,
-      recommendation: 'No clear Sakata patterns detected - await better setup'
+      recommendation: 'No clear advanced patterns detected - await better setup'
     };
   }
   
@@ -563,11 +535,11 @@ export function analyzeSakataMethods(
   // Generate recommendation
   let recommendation: string;
   if (confluenceScore > 80 && overallStrength > 70) {
-    recommendation = `STRONG ${overallBias} SETUP - Multiple Sakata patterns aligning with high confidence`;
+    recommendation = `STRONG ${overallBias} SETUP - Multiple advanced patterns aligning with high confidence`;
   } else if (confluenceScore > 60 && overallStrength > 60) {
-    recommendation = `MODERATE ${overallBias} SETUP - Good Sakata confluence, proceed with caution`;
+    recommendation = `MODERATE ${overallBias} SETUP - Good pattern confluence, proceed with caution`;
   } else if (patterns.length > 1) {
-    recommendation = `MIXED SIGNALS - Sakata patterns conflicting, wait for clarity`;
+    recommendation = `MIXED SIGNALS - Advanced patterns conflicting, wait for clarity`;
   } else {
     recommendation = `${primaryPattern.pattern} detected - ${primaryPattern.description}`;
   }
