@@ -2,7 +2,9 @@
 
 This guide provides all the graphic assets and requirements needed for publishing Zikalyze to the Google Play Store.
 
-> **✅ Recently Updated (2026-02-11):** All logo files have been converted to proper PNG format with correct dimensions. App icons are now 512×512 PNG with transparency. See [LOGO_FIX_COMPLETE.md](./LOGO_FIX_COMPLETE.md) for details.
+> **✅ Recently Updated (2026-02-15):** Professional Play Store feature graphics created! Two high-quality variants available with modern design, proper branding, and optimized file sizes. All graphics ready for immediate Play Store submission. See preview at `android/play-store-assets/preview.html`
+
+> **Previous Update (2026-02-11):** All logo files have been converted to proper PNG format with correct dimensions. App icons are now 512×512 PNG with transparency. See [LOGO_FIX_COMPLETE.md](./LOGO_FIX_COMPLETE.md) for details.
 
 ## 📋 Required Graphics Overview
 
@@ -20,24 +22,44 @@ Google Play Store requires specific graphic assets for your app listing. Here's 
 
 ## ✅ Available Assets (Ready to Use)
 
-### 1. Feature Graphic (1024 × 500) ✅ READY
+### 1. Feature Graphic (1024 × 500) ✅ READY - NEW PROFESSIONAL DESIGN!
 
-**Perfect for Play Store feature graphic requirement!**
+**Professional Play Store feature graphics - Two variants available!**
 
-📥 **[Download Feature Graphic (1024×500 PNG)](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/feature-graphic.png)**
+#### Main Feature Graphic (Recommended) 🌟
+
+📥 **[Download Main Feature Graphic (1024×500 PNG)](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/public/feature-graphic.png)**
 
 - ✅ Exact size required by Play Store (1024×500)
-- ✅ Professional design with Zikalyze branding
-- ✅ Shows app logo, name, and key features
-- ✅ Uses official brand colors (#70ffc1 cyan/green)
-- ✅ File size: 48KB (well under 1MB limit)
+- ✅ Professional modern design with gradient background
+- ✅ Glowing trending chart icon showing upward momentum
+- ✅ Clean typography with brand colors (#70ffc1 cyan)
+- ✅ File size: ~38KB (well under 1MB limit)
 - ✅ Ready to upload directly to Play Console
+- ✅ Optimized for mobile viewing
 
-**Features Displayed:**
-- App logo with upward trend chart
-- "Zikalyze AI" in brand cyan color
+**Design Elements:**
+- Modern gradient background with geometric accents
+- Professional glowing chart icon
+- "Zikalyze AI" in brand cyan color with shadow effects
 - Tagline: "AI-Powered Cryptocurrency Analysis"
-- Key features: Real-Time Signals • Whale Tracking • Multi-Timeframe Analysis
+- Three key features with bullet points:
+  - ⚡ Real-Time Trading Signals
+  - 🐋 Whale Activity Tracking
+  - 📊 Multi-Timeframe Analysis
+
+#### Alternative Feature Graphic
+
+📥 **[Download Alternative (1024×500 PNG)](https://raw.githubusercontent.com/vicisaac48-eng/zikalyze/main/android/play-store-assets/feature-graphic-alternative.png)**
+
+- ✅ Centered bold design approach
+- ✅ Diagonal stripe pattern background
+- ✅ Horizontal feature icons layout
+- ✅ File size: ~31KB
+- ✅ Alternative option if you prefer centered layout
+
+**Preview Both Graphics:**
+Open `android/play-store-assets/preview.html` in your browser to see both graphics side-by-side with full specifications.
 
 ### 2. App Icon (512 × 512) ✅ READY
 
