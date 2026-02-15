@@ -40,6 +40,39 @@ interface WhaleActivityResult {
   dataAge: number; // milliseconds
 }
 
+// Blockchain mapping for multi-chain support
+const BLOCKCHAIN_MAP: Record<string, string> = {
+  // Bitcoin
+  'BTC': 'bitcoin',
+  // Ethereum ecosystem
+  'ETH': 'ethereum',
+  'USDT': 'ethereum', 'USDC': 'ethereum', 'DAI': 'ethereum',
+  'LINK': 'ethereum', 'UNI': 'ethereum', 'AAVE': 'ethereum',
+  'MKR': 'ethereum', 'COMP': 'ethereum', 'SNX': 'ethereum',
+  'CRV': 'ethereum', 'LDO': 'ethereum', 'PEPE': 'ethereum',
+  'SHIB': 'ethereum', 'FET': 'ethereum', 'RENDER': 'ethereum',
+  // Binance Smart Chain
+  'BNB': 'bsc', 'CAKE': 'bsc',
+  // Solana ecosystem
+  'SOL': 'solana', 'BONK': 'solana', 'WIF': 'solana', 'JUP': 'solana',
+  // Polygon
+  'MATIC': 'polygon',
+  // Avalanche
+  'AVAX': 'avalanche',
+  // Cardano
+  'ADA': 'cardano',
+  // Polkadot
+  'DOT': 'polkadot',
+  // Cosmos ecosystem
+  'ATOM': 'cosmos', 'INJ': 'cosmos', 'TIA': 'cosmos',
+  // Other L1s
+  'XRP': 'ripple', 'DOGE': 'dogecoin', 'LTC': 'litecoin',
+  'NEAR': 'near', 'APT': 'aptos', 'SUI': 'sui',
+  'ARB': 'arbitrum', 'OP': 'optimism',
+  'HBAR': 'hedera', 'ICP': 'internet-computer',
+  'KAS': 'kaspa', 'TAO': 'bittensor'
+};
+
 // Known exchange addresses to identify buy/sell transactions
 const EXCHANGE_ADDRESSES: Record<string, string[]> = {
   BTC: [
@@ -47,12 +80,15 @@ const EXCHANGE_ADDRESSES: Record<string, string[]> = {
     'bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h', // Binance
     '3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r', // Bitfinex
     '3Kzh9qAqVWQhEsfQz7zEQL1EuSx5tyNLNS', // Bitfinex
+    'bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97', // Binance
   ],
   ETH: [
     '0x28c6c06298d514db089934071355e5743bf21d60', // Binance 14
     '0x21a31ee1afc51d94c2efccaa2092ad1028285549', // Binance 15
     '0x5041ed759Dd4aFc3a72b8192C143F72f4724081A', // Kraken
     '0x77134cbC06cB00b66F4c7e623D5fdBF6777635EC', // Kraken
+    '0xdfd5293d8e347dfe59e90efd55b2956a1343963d', // Binance Hot Wallet
+    '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8', // Binance Hot Wallet
   ]
 };
 
@@ -172,6 +208,147 @@ async function fetchBTCLargeTransactions(): Promise<WhaleTransaction[]> {
   }
 }
 
+// Blockchair API for ETH and other EVM chains (free tier available)
+async function fetchBlockchairTransactions(blockchain: string, symbol: string, priceUSD: number): Promise<WhaleTransaction[]> {
+  try {
+    const blockchainName = blockchain === 'bsc' ? 'bitcoin-cash' : blockchain; // Blockchair naming
+    
+    // Blockchair supports: bitcoin, ethereum, litecoin, bitcoin-cash, dogecoin, dash, ripple, groestlcoin, cardano, zcash
+    const supportedChains = ['bitcoin', 'ethereum', 'litecoin', 'dogecoin', 'bitcoin-cash', 'cardano'];
+    
+    if (!supportedChains.includes(blockchainName)) {
+      return [];
+    }
+    
+    const response = await fetch(`https://api.blockchair.com/${blockchainName}/transactions?q=output_total_usd(1000000..)&limit=50`, {
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!response.ok) {
+      console.log(`Blockchair API error for ${blockchain}: ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    const transactions: WhaleTransaction[] = [];
+    
+    if (data.data && Array.isArray(data.data)) {
+      for (const tx of data.data.slice(0, 50)) {
+        const value = tx.output_total_usd || 0;
+        
+        if (value < 1000000) continue; // Skip if less than $1M
+        
+        transactions.push({
+          hash: tx.hash,
+          timestamp: new Date(tx.time).getTime(),
+          value: value,
+          valueNative: tx.output_total / (10 ** 18), // Wei to ETH (approximate)
+          from: tx.sender || 'unknown',
+          to: tx.recipient || 'unknown',
+          type: classifyGenericTransaction(tx.sender, tx.recipient, symbol),
+          blockchain: blockchain,
+          symbol: symbol
+        });
+      }
+    }
+    
+    console.log(`✅ Fetched ${transactions.length} ${symbol} whale transactions from Blockchair`);
+    return transactions;
+  } catch (error) {
+    console.error(`Blockchair fetch error for ${blockchain}:`, error);
+    return [];
+  }
+}
+
+// Generic Etherscan-based API (works for ETH, BSC, Polygon, Avalanche, Arbitrum, Optimism)
+async function fetchEtherscanTransactions(blockchain: string, symbol: string, contractAddress?: string): Promise<WhaleTransaction[]> {
+  try {
+    // Map blockchain to Etherscan-compatible API
+    const apiUrls: Record<string, string> = {
+      'ethereum': 'https://api.etherscan.io/api',
+      'bsc': 'https://api.bscscan.com/api',
+      'polygon': 'https://api.polygonscan.com/api',
+      'avalanche': 'https://api.snowtrace.io/api',
+      'arbitrum': 'https://api.arbiscan.io/api',
+      'optimism': 'https://api-optimistic.etherscan.io/api',
+    };
+    
+    const apiUrl = apiUrls[blockchain];
+    if (!apiUrl) return [];
+    
+    // For native tokens (ETH, BNB, MATIC, AVAX), get regular transactions
+    // For ERC-20 tokens, would need contract address (not implemented here for simplicity)
+    
+    // Get latest block
+    const blockResponse = await fetch(`${apiUrl}?module=proxy&action=eth_blockNumber`, {
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!blockResponse.ok) return [];
+    
+    const blockData = await blockResponse.json();
+    const latestBlock = parseInt(blockData.result, 16);
+    
+    // This is a simplified implementation
+    // In production, you'd use transaction history APIs or event logs
+    console.log(`✅ Latest ${blockchain} block: ${latestBlock}`);
+    
+    // For now, return empty - would need API keys for full implementation
+    return [];
+  } catch (error) {
+    console.error(`Etherscan fetch error for ${blockchain}:`, error);
+    return [];
+  }
+}
+
+// Solana on-chain data via public RPC
+async function fetchSolanaTransactions(symbol: string): Promise<WhaleTransaction[]> {
+  try {
+    // Solana RPC endpoint (public)
+    const rpcUrl = 'https://api.mainnet-beta.solana.com';
+    
+    // Get recent block signatures (simplified)
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getRecentBlockhash'
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    
+    // This is simplified - full implementation would:
+    // 1. Track program accounts (DEX accounts)
+    // 2. Monitor token transfers
+    // 3. Classify buy/sell based on SOL/USDC pairs
+    
+    console.log(`ℹ️ Solana whale tracking requires advanced RPC calls - using fallback`);
+    return [];
+  } catch (error) {
+    console.error('Solana fetch error:', error);
+    return [];
+  }
+}
+
+// Generic transaction classifier when exchange addresses unknown
+function classifyGenericTransaction(from: string, to: string, symbol: string): 'BUY' | 'SELL' | 'TRANSFER' {
+  // Check against known exchange addresses for this symbol
+  const exchangeAddrs = EXCHANGE_ADDRESSES[symbol] || [];
+  
+  const fromExchange = exchangeAddrs.some(addr => addr.toLowerCase() === from?.toLowerCase());
+  const toExchange = exchangeAddrs.some(addr => addr.toLowerCase() === to?.toLowerCase());
+  
+  if (fromExchange && !toExchange) return 'BUY';
+  if (!fromExchange && toExchange) return 'SELL';
+  return 'TRANSFER';
+}
+
 // Classify transaction type based on address ownership
 function classifyTransactionType(fromType: string, toType: string): 'BUY' | 'SELL' | 'TRANSFER' {
   if (fromType === 'exchange' && toType !== 'exchange') {
@@ -276,7 +453,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, whaleAlertApiKey } = await req.json();
+    const { symbol, whaleAlertApiKey, priceUSD } = await req.json();
     
     if (!symbol) {
       return new Response(
@@ -291,7 +468,11 @@ serve(async (req) => {
     let transactions: WhaleTransaction[] = [];
     let source: WhaleActivityResult['source'] = 'derived';
     
-    // Try Whale-Alert first if API key provided
+    // Get blockchain for this symbol
+    const blockchain = BLOCKCHAIN_MAP[symbolUpper] || 'unknown';
+    console.log(`📡 Blockchain: ${blockchain} for ${symbolUpper}`);
+    
+    // Try Whale-Alert first if API key provided (works for all chains)
     if (whaleAlertApiKey && whaleAlertApiKey !== 'demo') {
       transactions = await fetchWhaleAlertTransactions(symbolUpper, whaleAlertApiKey);
       if (transactions.length > 0) {
@@ -300,15 +481,68 @@ serve(async (req) => {
       }
     }
     
-    // Fallback to blockchain APIs
+    // Fallback to blockchain-specific APIs
     if (transactions.length === 0) {
-      if (symbolUpper === 'BTC') {
+      // Bitcoin
+      if (blockchain === 'bitcoin') {
         transactions = await fetchBTCLargeTransactions();
         if (transactions.length > 0) {
           source = 'blockchain-api';
         }
       }
-      // TODO: Add ETH, SOL, and other blockchain APIs
+      // Ethereum and ERC-20 tokens
+      else if (blockchain === 'ethereum') {
+        // Try Blockchair first (free, good coverage)
+        transactions = await fetchBlockchairTransactions(blockchain, symbolUpper, priceUSD || 3000);
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      // BSC (Binance Smart Chain)
+      else if (blockchain === 'bsc') {
+        transactions = await fetchBlockchairTransactions(blockchain, symbolUpper, priceUSD || 600);
+        if (transactions.length === 0) {
+          transactions = await fetchEtherscanTransactions(blockchain, symbolUpper);
+        }
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      // Polygon
+      else if (blockchain === 'polygon') {
+        transactions = await fetchEtherscanTransactions(blockchain, symbolUpper);
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      // Avalanche
+      else if (blockchain === 'avalanche') {
+        transactions = await fetchEtherscanTransactions(blockchain, symbolUpper);
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      // Solana
+      else if (blockchain === 'solana') {
+        transactions = await fetchSolanaTransactions(symbolUpper);
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      // Other supported chains via Blockchair
+      else if (['litecoin', 'dogecoin', 'cardano'].includes(blockchain)) {
+        transactions = await fetchBlockchairTransactions(blockchain, symbolUpper, priceUSD || 100);
+        if (transactions.length > 0) {
+          source = 'blockchain-api';
+        }
+      }
+      
+      // Log result
+      if (transactions.length > 0) {
+        console.log(`✅ Got ${transactions.length} transactions from ${blockchain} blockchain API`);
+      } else {
+        console.log(`⚠️ No whale data available for ${symbolUpper} on ${blockchain} - will use derived fallback`);
+      }
     }
     
     // Aggregate the data

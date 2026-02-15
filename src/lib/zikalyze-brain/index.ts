@@ -782,8 +782,7 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 😊 Fear & Greed: [${fearGreedVisual.bar}] ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
    └─ Source: Alternative.me (24h)
 🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)}
-   └─ Net: ${onChainMetrics.whaleActivity.netFlow} [Estimated from price momentum]
-   └─ ⚠️ Real-time whale tracking requires paid API access
+   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${onChainMetrics.whaleActivity.source === 'whale-alert' ? '[Live from Whale-Alert API]' : onChainMetrics.whaleActivity.source === 'blockchain-api' ? '[Live on-chain data]' : '[Estimated from price momentum]'}
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
    └─ ${hasRealOnChain ? 'Source: CryptoQuant (rolling 24h)' : 'Estimated from market momentum'}
 💼 Institutional: ${etfFlowData ? etfFlowData.institutionalSentiment : 'N/A (no ETF for this asset)'}

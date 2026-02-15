@@ -285,6 +285,7 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
       },
       body: JSON.stringify({
         symbol: crypto,
+        priceUSD: price, // Pass current price for accurate USD calculations
         whaleAlertApiKey: Deno.env.get('WHALE_ALERT_API_KEY') || 'demo'
       }),
       signal: AbortSignal.timeout(12000)
