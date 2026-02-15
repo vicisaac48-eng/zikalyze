@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, User, Settings } from "lucide-react";
+import { Search, User, Settings, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BottomNav from "@/components/dashboard/BottomNav";
@@ -139,6 +139,12 @@ const Dashboard = () => {
                   {userName}
                 </span>
               )}
+              {/* Bell icon for alerts - visible on desktop */}
+              <Link to="/dashboard/alerts" className="hidden md:block">
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                  <Bell className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                </Button>
+              </Link>
               {/* Settings link on mobile */}
               <Link to="/dashboard/settings" className="md:hidden">
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -155,8 +161,8 @@ const Dashboard = () => {
         <PullToRefresh onRefresh={handleRefresh}>
           <div className="min-h-screen min-h-[100dvh] bg-background texture-noise custom-scrollbar">
             <div className="main-content px-3 pb-4 sm:px-4 sm:pb-6 md:px-6 space-y-3 sm:space-y-4 md:space-y-6">
-          {/* Crypto Ticker */}
-          <div className={isRevealing ? 'card-reveal' : ''} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
+          {/* Crypto Ticker - Hidden on desktop (md and above) to avoid confusion with Top 100 list */}
+          <div className={`md:hidden${isRevealing ? ' card-reveal' : ''}`} style={isRevealing ? { animationDelay: '0.05s' } : undefined}>
             <CryptoTicker selected={selectedCrypto} onSelect={setSelectedCrypto} getPriceBySymbol={getPriceBySymbol} loading={loading} />
           </div>
 
