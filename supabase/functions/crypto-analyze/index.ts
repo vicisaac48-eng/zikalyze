@@ -265,8 +265,27 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
   // ═══════════════════════════════════════════════════════════════════════════
   // 🐋 WHALE ACTIVITY — Live On-Chain Data (Professional Implementation)
   // ═══════════════════════════════════════════════════════════════════════════
-  // Fetch real whale transactions from blockchain APIs
-  // Falls back to derived estimates if APIs unavailable
+  // ⚠️ CRITICAL INTEGRATION - DO NOT REMOVE OR BYPASS
+  //
+  // This calls the dedicated whale-tracker service for real-time whale data.
+  // 
+  // PROTECTED BY: tests/whale-activity-protection.test.ts
+  //
+  // Data Flow:
+  // 1. Call whale-tracker service (Supabase function)
+  // 2. Try Whale-Alert API if key available
+  // 3. Fall back to blockchain-specific APIs
+  // 4. Use derived estimates only if all APIs fail
+  //
+  // DO NOT:
+  // ❌ Remove the whale-tracker service call
+  // ❌ Always use derived data without trying real APIs
+  // ❌ Skip the source field in whaleActivity object
+  // ❌ Remove the fallback error handling
+  //
+  // This provides whale activity for ALL 100+ cryptocurrencies
+  // See: WHALE_TRACKING_IMPLEMENTATION.md
+  // ═══════════════════════════════════════════════════════════════════════════
   
   let whaleActivity = {
     buying: 0,

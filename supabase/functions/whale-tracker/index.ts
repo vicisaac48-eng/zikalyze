@@ -8,8 +8,26 @@ const corsHeaders = {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🐋 PROFESSIONAL WHALE TRACKER — Multi-Source On-Chain Intelligence
 // ═══════════════════════════════════════════════════════════════════════════════
-// Aggregates large transactions from multiple blockchain data sources
-// Provides real buy/sell pressure from actual on-chain whale activity
+// ⚠️ CRITICAL SERVICE - DO NOT DELETE OR MODIFY WITHOUT REVIEW
+// 
+// This service provides live whale activity tracking for all 100+ cryptocurrencies
+// across multiple blockchains. It is a core feature of the platform.
+//
+// PROTECTED BY: tests/whale-activity-protection.test.ts
+// 
+// Features:
+// - Multi-blockchain support (BTC, ETH, SOL, BSC, MATIC, AVAX, ARB, OP, etc.)
+// - 3-tier fallback system (Whale-Alert → Blockchain APIs → Derived)
+// - Real-time transaction monitoring
+// - Buy/sell classification
+// - Exchange address tracking
+//
+// Removal or breaking changes will:
+// ❌ Break whale activity for all users
+// ❌ Cause test failures
+// ❌ Remove key competitive advantage
+//
+// See WHALE_TRACKING_IMPLEMENTATION.md for full documentation
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface WhaleTransaction {
