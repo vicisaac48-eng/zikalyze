@@ -14,12 +14,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsNativeApp } from "@/hooks/useIsNativeApp";
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { signOut } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // Shared styles for nav items with GPU-optimized animations for 60fps
@@ -35,7 +37,9 @@ const BottomNav = () => {
   const handleLogout = async () => {
     setShowMoreMenu(false);
     await signOut();
-    navigate("/");
+    // On mobile native app, go to auth page instead of landing page
+    // Landing page should only be visible on first install or explicit navigation
+    navigate(isNativeApp ? "/auth" : "/");
   };
 
   return (
