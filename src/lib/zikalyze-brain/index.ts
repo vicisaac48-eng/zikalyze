@@ -825,10 +825,6 @@ ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range *
 
 ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
-━━━ 🧠 DUAL-SYSTEM CONFIRMATION (How We Decide) ━━━━━━━
-   What this shows: Two independent systems cross-checking each other
-   Both agreeing = higher confidence in the signal
-
 ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 
 📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
