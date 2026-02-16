@@ -505,7 +505,10 @@ export function calculateRegimeWeightedConsensus(
   candles?: Array<{ open: number; high: number; low: number; close: number }>
 ): RegimeWeightedConsensus {
   // Neural Network confidence threshold for trending regime filter
-  const NEURAL_CONFIDENCE_THRESHOLD_TRENDING = 0.51;
+  // Base threshold is 51%, but can be dynamically adjusted based on algorithmic confidence
+  const BASE_NEURAL_THRESHOLD = 0.51;
+  const HIGH_ALGO_CONFIDENCE_THRESHOLD = 85; // When algo is >85%, relax neural requirement
+  const THRESHOLD_RELAXATION = 0.05; // Allow 5% lower neural confidence when algo is highly confident
   
   const range = high24h - low24h;
   
@@ -532,12 +535,20 @@ export function calculateRegimeWeightedConsensus(
   }
 
   // Check skip condition: In TRENDING mode, skip if Neural < threshold
+  // Dynamic threshold: Lower requirement when algorithm is highly confident (>85%)
   let skipTrade = false;
   let skipReason: string | undefined;
   
-  if (adxResult.regime === 'TRENDING' && neuralConfidence < NEURAL_CONFIDENCE_THRESHOLD_TRENDING) {
-    skipTrade = true;
-    skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < ${(NEURAL_CONFIDENCE_THRESHOLD_TRENDING * 100).toFixed(0)}% threshold`;
+  if (adxResult.regime === 'TRENDING') {
+    // Calculate effective threshold based on algorithmic confidence
+    const algorithmBonus = algorithmConfidence > HIGH_ALGO_CONFIDENCE_THRESHOLD ? THRESHOLD_RELAXATION : 0;
+    const effectiveThreshold = BASE_NEURAL_THRESHOLD - algorithmBonus;
+    
+    if (neuralConfidence < effectiveThreshold) {
+      skipTrade = true;
+      skipReason = `Neural Network filter failed: ${(neuralConfidence * 100).toFixed(0)}% < ${(effectiveThreshold * 100).toFixed(0)}% threshold` +
+        (algorithmBonus > 0 ? ' (threshold relaxed due to high algorithmic confidence)' : '');
+    }
   }
 
   // Calculate weighted score
