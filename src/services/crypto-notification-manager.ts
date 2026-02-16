@@ -79,7 +79,7 @@ export class CryptoNotificationManager {
       }
 
       if (data) {
-        data.forEach((pref: any) => {
+        data.forEach((pref: { symbol: string; enabled: boolean; price_alerts: boolean; volume_spikes: boolean; whale_activity: boolean; news_events: boolean }) => {
           this.preferences.set(pref.symbol, {
             symbol: pref.symbol,
             enabled: pref.enabled,

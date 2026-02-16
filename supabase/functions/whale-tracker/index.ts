@@ -138,7 +138,7 @@ async function fetchWhaleAlertTransactions(symbol: string, apiKey?: string): Pro
       return [];
     }
     
-    return data.transactions.map((tx: any) => ({
+    return data.transactions.map((tx: { hash: string; timestamp: number; amount_usd: number; amount: number; blockchain: string; from: string; to: string; symbol: string }) => ({
       hash: tx.hash,
       timestamp: tx.timestamp * 1000,
       value: tx.amount_usd,
@@ -187,7 +187,7 @@ async function fetchBTCLargeTransactions(): Promise<WhaleTransaction[]> {
         
         for (const tx of blockData.tx || []) {
           // Calculate total output in BTC
-          const totalOut = tx.out.reduce((sum: number, output: any) => sum + (output.value || 0), 0) / 100000000;
+          const totalOut = tx.out.reduce((sum: number, output: { value?: number }) => sum + (output.value || 0), 0) / 100000000;
           
           // Assume BTC price ~$95,000 (should be passed in, but rough estimate for now)
           const estimatedUSD = totalOut * 95000;
@@ -195,8 +195,8 @@ async function fetchBTCLargeTransactions(): Promise<WhaleTransaction[]> {
           // Only track transactions > $1M
           if (estimatedUSD < 1000000) continue;
           
-          const fromAddresses = tx.inputs?.map((inp: any) => inp.prev_out?.addr).filter(Boolean) || [];
-          const toAddresses = tx.out?.map((out: any) => out.addr).filter(Boolean) || [];
+          const fromAddresses = tx.inputs?.map((inp: { prev_out?: { addr?: string } }) => inp.prev_out?.addr).filter(Boolean) || [];
+          const toAddresses = tx.out?.map((out: { addr?: string }) => out.addr).filter(Boolean) || [];
           
           transactions.push({
             hash: tx.hash,
