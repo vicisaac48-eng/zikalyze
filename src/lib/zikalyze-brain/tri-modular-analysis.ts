@@ -912,13 +912,30 @@ ${marketMood}
 
 ${agreementStatus}
 
-━━━ 📚 WHAT THE TERMS MEAN ━━━━━━━━━━━━━━━━━━━━━━
+━━━ 📚 UNDERSTANDING THE ANALYSIS ━━━━━━━━━━━━━━━━
 
-• "LONG" = Expecting price to go UP (buy)
-• "SHORT" = Expecting price to go DOWN (sell)
-• "Kill Switch" = Price where you should exit the trade
-• "Confluence" = Multiple signals agreeing together
-• "Position Size" = How much money to put in the trade
+🎯 Trading Actions:
+• "LONG" = Buy now, expecting price to rise
+• "SHORT" = Sell now, expecting price to fall
+• "NO TRADE" = Wait for better opportunity
+
+💰 Risk Management:
+• "Position Size" = How much of your money to invest
+• "Kill Switch" = Emergency exit price to limit losses
+• "Stop Loss" = Automatic sell if price moves against you
+
+📊 Technical Terms:
+• "Confluence" = Multiple indicators pointing same direction
+  (Higher confluence = more reliable signal)
+• "Timeframe" = Period of analysis (1H = 1 hour, 4H = 4 hours)
+  (Weekly trends are stronger than hourly trends)
+• "Support" = Price level where buying typically appears
+• "Resistance" = Price level where selling typically appears
+
+🧠 AI Components:
+• "Algorithm" = Rule-based system using proven patterns
+• "Neural Network" = AI learning from historical data
+• "Hybrid Confirmation" = Both systems must agree for best signals
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ Remember: This is NOT financial advice. 

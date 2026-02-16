@@ -262,44 +262,115 @@ async function fetchOnChainMetrics(crypto: string, price: number, change: number
     }
   }
   
-  // Whale activity estimation with nuanced flow analysis
-  // Consider: true whales vs exchange distortions vs institutional offsets
-  const whaleNetBuy = isStrongBullish || isAccumulating;
-  const isMixed = Math.abs(change) < 2 || (change > 0 && change < 3);
-  const hasETFCounterFlow = change > 0 && exchangeNetFlow.trend === 'INFLOW'; // ETF selling while price up
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🐋 WHALE ACTIVITY — Live On-Chain Data (Professional Implementation)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ⚠️ CRITICAL INTEGRATION - DO NOT REMOVE OR BYPASS
+  //
+  // This calls the dedicated whale-tracker service for real-time whale data.
+  // 
+  // PROTECTED BY: tests/whale-activity-protection.test.ts
+  //
+  // Data Flow:
+  // 1. Call whale-tracker service (Supabase function)
+  // 2. Try Whale-Alert API if key available
+  // 3. Fall back to blockchain-specific APIs
+  // 4. Use derived estimates only if all APIs fail
+  //
+  // DO NOT:
+  // ❌ Remove the whale-tracker service call
+  // ❌ Always use derived data without trying real APIs
+  // ❌ Skip the source field in whaleActivity object
+  // ❌ Remove the fallback error handling
+  //
+  // This provides whale activity for ALL 100+ cryptocurrencies
+  // See: WHALE_TRACKING_IMPLEMENTATION.md
+  // ═══════════════════════════════════════════════════════════════════════════
   
-  // More nuanced whale flow determination
-  let whaleNetFlow: string;
-  let whaleBuying: number;
-  let whaleSelling: number;
-  
-  if (isStrongBullish && !hasETFCounterFlow) {
-    whaleNetFlow = 'NET BUYING';
-    whaleBuying = 65 + Math.random() * 20;
-    whaleSelling = 20 + Math.random() * 15;
-  } else if (isStrongBearish) {
-    whaleNetFlow = 'NET SELLING';
-    whaleBuying = 25 + Math.random() * 15;
-    whaleSelling = 55 + Math.random() * 20;
-  } else if (hasETFCounterFlow) {
-    whaleNetFlow = 'MIXED (ETF outflows offset)';
-    whaleBuying = 45 + Math.random() * 15;
-    whaleSelling = 40 + Math.random() * 15;
-  } else if (isMixed) {
-    whaleNetFlow = 'ACCUMULATING WITH CAUTION';
-    whaleBuying = 50 + Math.random() * 15;
-    whaleSelling = 35 + Math.random() * 15;
-  } else {
-    whaleNetFlow = 'BALANCED';
-    whaleBuying = 45 + Math.random() * 10;
-    whaleSelling = 45 + Math.random() * 10;
-  }
-  
-  const whaleActivity = {
-    buying: whaleBuying,
-    selling: whaleSelling,
-    netFlow: whaleNetFlow
+  let whaleActivity = {
+    buying: 0,
+    selling: 0,
+    netFlow: 'UNKNOWN',
+    source: 'derived'
   };
+  
+  try {
+    // Call the dedicated whale-tracker service
+    const whaleResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/whale-tracker`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+      },
+      body: JSON.stringify({
+        symbol: crypto,
+        priceUSD: price, // Pass current price for accurate USD calculations
+        whaleAlertApiKey: Deno.env.get('WHALE_ALERT_API_KEY') || 'demo'
+      }),
+      signal: AbortSignal.timeout(12000)
+    });
+    
+    if (whaleResponse.ok) {
+      const whaleData = await whaleResponse.json();
+      
+      if (whaleData && whaleData.isLive && whaleData.transactionCount > 0) {
+        whaleActivity = {
+          buying: whaleData.buying,
+          selling: whaleData.selling,
+          netFlow: whaleData.netFlow,
+          source: whaleData.source
+        };
+        
+        console.log(`🐋 Live whale data: ${whaleData.netFlow} (${whaleData.buying}% / ${whaleData.selling}%) - ${whaleData.transactionCount} txs from ${whaleData.source}`);
+      } else {
+        console.log('⚠️ Whale tracker returned no live data, using derived estimate');
+        throw new Error('No live whale data available');
+      }
+    } else {
+      console.log('⚠️ Whale tracker service unavailable, using derived estimate');
+      throw new Error('Whale tracker service error');
+    }
+  } catch (error) {
+    // Fallback to derived whale activity if APIs fail
+    console.log('⚠️ Falling back to derived whale activity');
+    
+    const whaleNetBuy = isStrongBullish || isAccumulating;
+    const isMixed = Math.abs(change) < 2 || (change > 0 && change < 3);
+    const hasETFCounterFlow = change > 0 && exchangeNetFlow.trend === 'INFLOW';
+    
+    let whaleNetFlow: string;
+    let whaleBuying: number;
+    let whaleSelling: number;
+    
+    if (isStrongBullish && !hasETFCounterFlow) {
+      whaleNetFlow = 'NET BUYING';
+      whaleBuying = 65 + Math.random() * 20;
+      whaleSelling = 20 + Math.random() * 15;
+    } else if (isStrongBearish) {
+      whaleNetFlow = 'NET SELLING';
+      whaleBuying = 25 + Math.random() * 15;
+      whaleSelling = 55 + Math.random() * 20;
+    } else if (hasETFCounterFlow) {
+      whaleNetFlow = 'MIXED (ETF outflows offset)';
+      whaleBuying = 45 + Math.random() * 15;
+      whaleSelling = 40 + Math.random() * 15;
+    } else if (isMixed) {
+      whaleNetFlow = 'ACCUMULATING WITH CAUTION';
+      whaleBuying = 50 + Math.random() * 15;
+      whaleSelling = 35 + Math.random() * 15;
+    } else {
+      whaleNetFlow = 'BALANCED';
+      whaleBuying = 45 + Math.random() * 10;
+      whaleSelling = 45 + Math.random() * 10;
+    }
+    
+    whaleActivity = {
+      buying: whaleBuying,
+      selling: whaleSelling,
+      netFlow: whaleNetFlow,
+      source: 'derived'
+    };
+  }
   
   // Long-term holder behavior estimation
   const lthAccumulating = change > -2 && !isStrongBearish;

@@ -507,7 +507,7 @@ export function runClientSideAnalysis(input: AnalysisInput): AnalysisResult {
   const dataSourceCount = [hasRealOnChain, hasRealChartData, hasRealMultiTfData, isLiveData].filter(Boolean).length;
   const verificationLevel = dataSourceCount >= 3 ? 'VERIFIED' : dataSourceCount >= 2 ? 'PARTIALLY_VERIFIED' : 'ESTIMATED';
   const verificationEmoji = verificationLevel === 'VERIFIED' ? '✅' : verificationLevel === 'PARTIALLY_VERIFIED' ? '🟡' : '⚠️';
-  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
+  const verificationLabel = verificationLevel === 'VERIFIED' ? 'Market Data Verified' : verificationLevel === 'PARTIALLY_VERIFIED' ? 'Partially Verified' : 'Using Estimates';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 🧠 HYBRID CONFIRMATION — Algorithm + Neural Network Combined
@@ -777,19 +777,25 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
 │  🎯 VERDICT: ${bias === 'LONG' ? (confidence >= 68 ? '🟢 Favoring Bullish' : confidence >= 55 ? '🟢 Leaning Bullish' : '🟢 Slight Bull Tilt') : bias === 'SHORT' ? (confidence >= 68 ? '🔴 Favoring Bearish' : confidence >= 55 ? '🔴 Leaning Bearish' : '🔴 Slight Bear Tilt') : '⚪ NEUTRAL'}  │  Confidence: ${confidence.toFixed(0)}%
 └─────────────────────────────────────────────────┘
 
-━━━ 📊 MARKET PULSE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ 📊 MARKET PULSE (Current Market Sentiment) ━━━━━━━━━
 
 😊 Fear & Greed: [${fearGreedVisual.bar}] ${fearGreed} ${fearGreedVisual.emoji} ${fearGreedVisual.label}
+   └─ Measures overall market emotion (0=Extreme Fear, 100=Extreme Greed)
    └─ Source: Alternative.me (24h)
 🐋 Whale Activity: ${getWhaleVisual(onChainMetrics.whaleActivity.netFlow, onChainMetrics.whaleActivity.buying, onChainMetrics.whaleActivity.selling)}
-   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${hasRealOnChain ? '[Live on-chain via whale-alert.io]' : '[Derived from price action]'}
-   └─ Tracker: whale-alert.io • Txns >$1M in 24h window
+   └─ Tracks large investor movements (whales = holders of >$1M)
+   └─ Net: ${onChainMetrics.whaleActivity.netFlow} ${onChainMetrics.whaleActivity.source === 'whale-alert' ? '[Live from Whale-Alert API]' : onChainMetrics.whaleActivity.source === 'blockchain-api' ? '[Live on-chain data]' : '[Estimated from price momentum]'}
 🔗 Exchange Flow: ${onChainMetrics.exchangeNetFlow.trend} (${onChainMetrics.exchangeNetFlow.magnitude})
+   └─ Shows if coins moving to exchanges (selling pressure) or wallets (holding)
    └─ ${hasRealOnChain ? 'Source: CryptoQuant (rolling 24h)' : 'Estimated from market momentum'}
 💼 Institutional: ${etfFlowData ? etfFlowData.institutionalSentiment : 'N/A (no ETF for this asset)'}
-   └─ ${etfFlowData ? 'Source: ETF flow data' : 'ETFs only available for BTC/ETH'}
-${macroSection ? `\n━━━ ⚡ MACRO CATALYST ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n${macroSection}\n` : ''}
-━━━ 🔭 MULTI-TIMEFRAME ━━━━━━━━━━━━━━━━━━━━━━━━━━
+   └─ Big money funds (banks, hedge funds) buying or selling activity
+   └─ ${etfFlowData ? (etfFlowData.source === 'coinglass' ? 'Source: CoinGlass ETF data' : 'Estimated from price momentum') : 'ETFs only available for BTC/ETH'}
+${macroSection ? `\n━━━ ⚡ MACRO CATALYST (Big Picture Events) ━━━━━━━━━━━\n\n${macroSection}\n` : ''}
+━━━ 🔭 MULTI-TIMEFRAME ANALYSIS (Trend Alignment) ━━━━━━
+   What this shows: Checking if short-term and long-term trends agree
+   Strong signals occur when all timeframes point the same direction
+
 ${htfVisual}  →  ${alignmentText}
 
 W: ${topDownAnalysis.weekly.trend.padEnd(7)} ${createBar(topDownAnalysis.weekly.strength, 100, '█', '░', 8)} ${topDownAnalysis.weekly.strength.toFixed(0)}%
@@ -799,8 +805,10 @@ D: ${topDownAnalysis.daily.trend.padEnd(7)} ${createBar(topDownAnalysis.daily.st
 15M: ${topDownAnalysis.m15.trend.padEnd(5)} ${createBar(topDownAnalysis.m15.strength, 100, '█', '░', 8)} ${topDownAnalysis.m15.strength.toFixed(0)}%
 
 🎯 Confluence: ${topDownAnalysis.confluenceScore}% ${topDownAnalysis.confluenceScore === 100 ? '(STRONG ✓) — All timeframes aligned!' : topDownAnalysis.confluenceScore >= 70 ? '(STRONG ✓)' : topDownAnalysis.confluenceScore >= 50 ? '(MODERATE)' : '(WEAK ⚠️)'}
+   └─ Higher confluence = more reliable signal (aim for 70%+)
 
-━━━ 📌 15-MINUTE PRECISION ENTRY ━━━━━━━━━━━━━━━
+━━━ 📌 ENTRY TIMING (When to Take Action) ━━━━━━━━━━━
+   What this shows: The best moment to enter the trade
 
 ⏱️ ${regimeConsensus.skipTrade ? '🔴 TRADE SKIPPED (NN Filter)' : precisionEntry.timing === 'NOW' ? '🟢 EXECUTE NOW' : precisionEntry.timing === 'WAIT_PULLBACK' ? '🟡 WAIT FOR PULLBACK' : precisionEntry.timing === 'WAIT_BREAKOUT' ? '🟡 WAIT FOR BREAKOUT' : '🔴 NO TRADE'}
 
@@ -811,50 +819,65 @@ ${bias === 'SHORT' ? `🎯 Target: $${(low24h - range * 0.1).toFixed(decimals)} 
 ✗ Invalid: ${precisionEntry.invalidation}
 ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range * 0.15).toFixed(decimals)}` : bias === 'LONG' ? `📉 If invalidated: Flip short below $${(low24h - range * 0.15).toFixed(decimals)}` : ''}
 
-📊 Success: [${probBar}] ${successProb}%
-   └─ ${probDescription}
+📊 Estimated Quality: [${probBar}] ${successProb}%
+   └─ ${probDescription} (based on confluence, not validated backtesting)
+   └─ Note: Higher quality = better chance of profitable trade
 
 ━━━ 💡 KEY INSIGHTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
-━━━ 🧠 HYBRID AI CONFIRMATION ━━━━━━━━━━━━━━━━━━━
+━━━ 🧠 DUAL-SYSTEM CONFIRMATION (How We Decide) ━━━━━━━
+   What this shows: Two independent systems cross-checking each other
+   Both agreeing = higher confidence in the signal
 
 ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 
 📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
-   └─ ICT/SMC, Fibonacci, Multi-TF Confluence
+   └─ Uses proven trading patterns and technical indicators
+   └─ Methods: Smart Money Concepts, Fibonacci, Multi-Timeframe Analysis
 🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(BIAS_DISPLAY_WIDTH)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
-   └─ MLP Pattern Recognition: ${hybridResult.neuralReasoning}
+   └─ Learns from thousands of past market patterns
+   └─ Pattern Recognition: ${hybridResult.neuralReasoning}
 
 🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
    └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
 
-━━━ ${regimeEmoji} REGIME-WEIGHTED CONSENSUS ━━━━━━━━━━━━━━━
+━━━ ${regimeEmoji} MARKET CONDITION ANALYSIS ━━━━━━━━━━━━━━
+   What this shows: Is the market trending or choppy?
+   Different conditions favor different strategies
 
 📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
-   └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Algorithm prioritized' : adxResult.regime === 'RANGING' ? 'Sideways chop — Neural Network prioritized' : 'Transitional — Balanced weighting'}
+   └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Trend-following works best' : adxResult.regime === 'RANGING' ? 'Sideways movement — Range-trading works best' : 'Transitional — Be cautious'}
+   └─ ADX measures trend strength (25+ = trending, <20 = choppy)
 
 ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
    └─ Weights: Algorithm ${(regimeConsensus.algorithmWeight * 100).toFixed(0)}% | Neural ${(regimeConsensus.neuralWeight * 100).toFixed(0)}%
+   └─ In trending markets, we trust rule-based patterns more
+   └─ In choppy markets, we trust AI pattern recognition more
 
 📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}% (combined algo + AI — differs from directional confidence)
    └─ ${adxResult.regime === 'TRENDING' 
-        ? `ICT/SMC structures define entry, NN filters (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
+        ? `Pattern-based entry, AI safety filter (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
         : adxResult.regime === 'RANGING'
-          ? 'Pattern recognition spots fake-outs, Algorithm sets stops'
-          : 'Equal weighting — Watch for regime shift'}
+          ? 'AI spots false breakouts, patterns set risk levels'
+          : 'Equal weighting — Watch for market shift'}
 
 🎯 Support Zone: $${regimeConsensus.supportZone.toFixed(decimals)}
+   └─ Price level where buying interest typically appears
 🎯 Resistance Zone: $${regimeConsensus.resistanceZone.toFixed(decimals)}
-🛑 Stop Loss: $${regimeConsensus.stopLoss.toFixed(decimals)}${regimeConsensus.skipTrade ? `
+   └─ Price level where selling pressure typically emerges
+🛑 Stop Loss: $${regimeConsensus.stopLoss.toFixed(decimals)}
+   └─ Emergency exit to protect capital if trade goes wrong${regimeConsensus.skipTrade ? `
 
 ⚠️ TRADE SKIPPED: ${regimeConsensus.skipReason}` : ''}
 
-━━━ 🕯️ CANDLESTICK CONFIRMATION ━━━━━━━━━━━━━━━━━
+━━━ 🕯️ PRICE PATTERN CONFIRMATION ━━━━━━━━━━━━━━━━━
+   What this shows: Recent price action patterns giving clues
 
 📍 Pattern: ${regimeConsensus.candlestickConfirmation.pattern} (${regimeConsensus.candlestickConfirmation.bias})
    └─ Type: ${regimeConsensus.candlestickConfirmation.type} | Strength: ${regimeConsensus.candlestickConfirmation.strength}%
+   └─ Candlestick patterns are historical price formations that often repeat
 
 💡 ${regimeConsensus.candlestickConfirmation.description}
 
@@ -901,6 +924,20 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
 ${triModularOutput}
+━━━ 📊 DATA SOURCE TRANSPARENCY ━━━━━━━━━━━━━━━━━━━━
+Verified Data Sources (Real APIs):
+• Price, Volume: CoinGecko/Binance/OKX (live WebSocket)
+• Fear & Greed: Alternative.me API (updates every 24h)
+• Technical Indicators: Calculated from real price data
+
+Estimated Data (Derived from Price Action):
+• Whale Activity: Estimated from price momentum patterns
+• Exchange Flow: ${hasRealOnChain ? 'CryptoQuant API' : 'Estimated from market data'}
+• Institutional Sentiment: ${etfFlowData && etfFlowData.source === 'coinglass' ? 'CoinGlass ETF data' : 'Estimated from price trends'}
+
+⚠️ Estimated data provides directional signals but may not
+   reflect actual on-chain activity. Use for context only.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
