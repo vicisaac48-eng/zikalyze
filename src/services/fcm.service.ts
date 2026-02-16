@@ -37,15 +37,19 @@ import {
   getPlatform
 } from '@/config/firebase.config';
 
+// Type imports for Firebase SDK
+import type { FirebaseApp } from 'firebase/app';
+import type { Messaging, MessagePayload } from 'firebase/messaging';
+
 // Dynamic imports for Firebase SDK (web only)
-let firebaseApp: any = null;
-let firebaseMessaging: any = null;
-let getToken: any = null;
-let onMessage: any = null;
-let deleteToken: any = null;
+let firebaseApp: FirebaseApp | null = null;
+let firebaseMessaging: Messaging | null = null;
+let getToken: typeof import('firebase/messaging').getToken | null = null;
+let onMessage: typeof import('firebase/messaging').onMessage | null = null;
+let deleteToken: typeof import('firebase/messaging').deleteToken | null = null;
 
 // Dynamic import for Capacitor Firebase (native only)
-let FirebaseMessaging: any = null;
+let FirebaseMessaging: typeof import('@capacitor-firebase/messaging').FirebaseMessaging | null = null;
 
 /**
  * FCM Token interface
@@ -331,7 +335,7 @@ class FCMServiceClass {
       }
 
       // Listen for notifications received while app is in foreground
-      FirebaseMessaging.addListener('notificationReceived', (event: any) => {
+      FirebaseMessaging.addListener('notificationReceived', (event: { notification?: { title?: string; body?: string; data?: Record<string, unknown> } }) => {
         console.log('[FCM] Notification received (native):', event);
         
         const notification: FCMNotification = {
@@ -351,7 +355,7 @@ class FCMServiceClass {
       });
 
       // Listen for notification tap actions
-      FirebaseMessaging.addListener('notificationActionPerformed', (event: any) => {
+      FirebaseMessaging.addListener('notificationActionPerformed', (event: { notification?: { data?: Record<string, unknown> } }) => {
         console.log('[FCM] Notification action performed:', event);
         
         // Handle deep linking if provided in notification data
@@ -370,7 +374,7 @@ class FCMServiceClass {
         return;
       }
 
-      onMessage(firebaseMessaging, (payload: any) => {
+      onMessage(firebaseMessaging, (payload: MessagePayload) => {
         console.log('[FCM] Message received (web):', payload);
 
         const notification: FCMNotification = {

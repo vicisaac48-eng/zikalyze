@@ -159,7 +159,7 @@ class PrivacyEncryptionService {
   async encryptUserProfile(profile: {
     username: string;
     email?: string;
-    preferences?: any;
+    preferences?: Record<string, unknown>;
   }, password: string): Promise<string> {
     const profileJson = JSON.stringify(profile);
     const encrypted = await this.encrypt(profileJson, password);
@@ -172,7 +172,7 @@ class PrivacyEncryptionService {
   async decryptUserProfile(encryptedProfile: string, password: string): Promise<{
     username: string;
     email?: string;
-    preferences?: any;
+    preferences?: Record<string, unknown>;
   }> {
     const encrypted = JSON.parse(encryptedProfile) as EncryptedData;
     const decrypted = await this.decrypt(encrypted, password);
@@ -226,7 +226,7 @@ class PrivacyEncryptionService {
   /**
    * Encrypt localStorage data
    */
-  async encryptForStorage(key: string, data: any, password: string): Promise<void> {
+  async encryptForStorage<T = unknown>(key: string, data: T, password: string): Promise<void> {
     const dataString = JSON.stringify(data);
     const encrypted = await this.encrypt(dataString, password);
     localStorage.setItem(key, JSON.stringify(encrypted));
@@ -235,7 +235,7 @@ class PrivacyEncryptionService {
   /**
    * Decrypt localStorage data
    */
-  async decryptFromStorage(key: string, password: string): Promise<any> {
+  async decryptFromStorage<T = unknown>(key: string, password: string): Promise<T | null> {
     const encryptedString = localStorage.getItem(key);
     if (!encryptedString) {
       throw new Error('Data not found');
