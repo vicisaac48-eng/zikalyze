@@ -74,9 +74,13 @@ const LandingSplash = ({ onComplete }: LandingSplashProps) => {
 
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center gap-8">
-        {/* Logo with pulse animation */}
-        <div className="logo-splash-pulse flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl bg-primary">
-          <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 text-primary-foreground" />
+        {/* Logo with pulse animation - smaller on native app */}
+        <div className={`logo-splash-pulse flex items-center justify-center rounded-2xl sm:rounded-3xl bg-primary ${
+          isNativeApp ? 'w-20 h-20 sm:w-28 sm:h-28' : 'w-24 h-24 sm:w-32 sm:h-32'
+        }`}>
+          <TrendingUp className={`text-primary-foreground ${
+            isNativeApp ? 'w-10 h-10 sm:w-14 sm:h-14' : 'w-12 h-12 sm:w-16 sm:h-16'
+          }`} />
         </div>
 
         {/* Brand text */}
