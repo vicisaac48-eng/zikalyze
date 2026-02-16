@@ -870,9 +870,6 @@ ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
 
 ⚠️ TRADE SKIPPED: ${regimeConsensus.skipReason}` : ''}
 
-━━━ 🕯️ PRICE PATTERN CONFIRMATION ━━━━━━━━━━━━━━━━━
-   What this shows: Recent price action patterns giving clues
-
 📍 Pattern: ${regimeConsensus.candlestickConfirmation.pattern} (${regimeConsensus.candlestickConfirmation.bias})
    └─ Type: ${regimeConsensus.candlestickConfirmation.type} | Strength: ${regimeConsensus.candlestickConfirmation.strength}%
    └─ Candlestick patterns are historical price formations that often repeat
