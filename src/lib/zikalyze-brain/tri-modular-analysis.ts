@@ -897,21 +897,6 @@ export function generateSimplifiedSummary(
    (Zikalyze AI Analysis)
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-🎯 WHAT TO DO: ${action}
-   Confidence: ${displayConfidence}${displayPercentage > 0 ? ` (${displayPercentage}%)` : ''}
-${skipExplanation}
-${marketMood}
-
-💰 HOW MUCH TO RISK:
-   ${positionAdvice}
-   
-   Why? ${reasoningText}
-
-🚨 WHEN TO EXIT:
-   ${exitExplanation}
-
-${agreementStatus}
-
 ━━━ 📚 UNDERSTANDING THE ANALYSIS ━━━━━━━━━━━━━━━━
 
 🎯 Trading Actions:
