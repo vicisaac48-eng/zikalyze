@@ -914,9 +914,6 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   📋 React to the breakout, don't predict`}
 ${triModularOutput}
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
-This analysis uses BOTH algorithmic calculations AND neural
-network predictions for hybrid confirmation. Crypto markets
-are highly volatile.
 • Avoid bad trades — Quality check prevents poor setups ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
