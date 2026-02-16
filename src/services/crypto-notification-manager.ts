@@ -102,7 +102,7 @@ export class CryptoNotificationManager {
    * @param cryptoSymbols Array of cryptocurrency symbols
    * @protected - Core function for topic subscriptions
    */
-  async subscribeToAll Cryptos(cryptoSymbols: string[]): Promise<void> {
+  async subscribeToAllCryptos(cryptoSymbols: string[]): Promise<void> {
     console.log(`[CryptoNotificationManager] Subscribing to ${cryptoSymbols.length} cryptocurrencies`);
     
     // Subscribe to FCM topics for each cryptocurrency

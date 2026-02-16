@@ -221,7 +221,8 @@ describe('🔒 FCM Push Notification Protection Tests', () => {
       const content = readFileSync(guidePath, 'utf-8');
       
       expect(content).toContain('100');
-      expect(content).toContain('cryptocurrency') || expect(content).toContain('cryptocurrencies');
+      const hasCryptoReference = content.includes('cryptocurrency') || content.includes('cryptocurrencies');
+      expect(hasCryptoReference).toBeTruthy();
     });
   });
 
