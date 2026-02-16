@@ -916,9 +916,7 @@ ${triModularOutput}
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
-are highly volatile and unpredictable.
-• Follow the trend — Don't trade against HTF direction ✓
-• Wait for confirmation — Need 2+ confirmations before entry ✓
+are highly volatile.
 • Avoid bad trades — Quality check prevents poor setups ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
