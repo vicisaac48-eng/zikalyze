@@ -924,19 +924,6 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
 ${triModularOutput}
-━━━ 📊 DATA SOURCE TRANSPARENCY ━━━━━━━━━━━━━━━━━━━━
-Verified Data Sources (Real APIs):
-• Price, Volume: CoinGecko/Binance/OKX (live WebSocket)
-• Fear & Greed: Alternative.me API (updates every 24h)
-
-Estimated Data (Derived from Price Action):
-• Whale Activity: Estimated from price momentum patterns
-• Exchange Flow: ${hasRealOnChain ? 'CryptoQuant API' : 'Estimated from market data'}
-• Institutional Sentiment: ${etfFlowData && etfFlowData.source === 'coinglass' ? 'CoinGlass ETF data' : 'Estimated from price trends'}
-
-⚠️ Estimated data provides directional signals but may not
-   reflect actual on-chain activity. Use for context only.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
 This analysis uses BOTH algorithmic calculations AND neural
 network predictions for hybrid confirmation. Crypto markets
