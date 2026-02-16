@@ -442,9 +442,10 @@ class FCMServiceClass {
 
   /**
    * Subscribe to multiple cryptocurrency topics at once
+   * Works with FREE Spark plan (unlimited topics)
    * @param cryptoSymbols Array of crypto symbols (e.g., ['BTC', 'ETH', 'SOL'])
    * @returns Array of results for each subscription
-   * @protected - Batch subscription for multiple cryptocurrencies
+   * @protected - Batch subscription for multiple cryptocurrencies (FREE)
    */
   async subscribeToMultipleTopics(cryptoSymbols: string[]): Promise<boolean[]> {
     const results: boolean[] = [];
@@ -456,7 +457,7 @@ class FCMServiceClass {
     }
 
     const successCount = results.filter(r => r).length;
-    console.log(`[FCM] Subscribed to ${successCount}/${cryptoSymbols.length} cryptocurrency topics`);
+    console.log(`[FCM FREE] Subscribed to ${successCount}/${cryptoSymbols.length} cryptocurrency topics (no cost)`);
     
     return results;
   }

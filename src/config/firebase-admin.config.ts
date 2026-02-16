@@ -73,12 +73,13 @@ export function getFCMServerKey(): string | null {
 }
 
 /**
- * Get notification batch size (Blaze plan allows 500)
+ * Get notification batch size (FREE Spark plan: 100, Blaze plan: 500)
  * @returns Batch size for multicast messages
  */
 export function getNotificationBatchSize(): number {
   const envBatchSize = Deno.env.get('NOTIFICATION_BATCH_SIZE');
-  return envBatchSize ? parseInt(envBatchSize, 10) : 500;
+  // Default to 100 for FREE Spark plan compatibility
+  return envBatchSize ? parseInt(envBatchSize, 10) : 100;
 }
 
 /**
