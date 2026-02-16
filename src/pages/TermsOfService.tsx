@@ -3,7 +3,7 @@ import { ArrowLeft, FileText, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TermsOfService = () => {
-  const lastUpdated = "January 20, 2025";
+  const lastUpdated = "February 16, 2026";
 
   return (
     <div className="min-h-screen bg-background">
