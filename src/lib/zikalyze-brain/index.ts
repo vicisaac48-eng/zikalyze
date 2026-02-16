@@ -920,8 +920,6 @@ are highly volatile and unpredictable.
 • Follow the trend — Don't trade against HTF direction ✓
 • Wait for confirmation — Need 2+ confirmations before entry ✓
 • Avoid bad trades — Quality check prevents poor setups ✓
-• Both Algorithm and Neural Network were used together ✓
-• Tri-Modular Analysis with Kill Switch included ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
