@@ -507,7 +507,7 @@ export function calculateRegimeWeightedConsensus(
   // Neural Network confidence threshold for trending regime filter
   // Base threshold is 51%, but can be dynamically adjusted based on algorithmic confidence
   const BASE_NEURAL_THRESHOLD = 0.51;
-  const HIGH_ALGO_CONFIDENCE_THRESHOLD = 85; // When algo is >85%, relax neural requirement
+  const HIGH_ALGO_CONFIDENCE_THRESHOLD = 70; // When algo is >70%, relax neural requirement
   const THRESHOLD_RELAXATION = 0.05; // Allow 5% lower neural confidence when algo is highly confident
   
   const range = high24h - low24h;
@@ -535,7 +535,7 @@ export function calculateRegimeWeightedConsensus(
   }
 
   // Check skip condition: In TRENDING mode, skip if Neural < threshold
-  // Dynamic threshold: Lower requirement when algorithm is highly confident (>85%)
+  // Dynamic threshold: Lower requirement when algorithm is highly confident (>70%)
   let skipTrade = false;
   let skipReason: string | undefined;
   
