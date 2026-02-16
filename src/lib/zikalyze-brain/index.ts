@@ -838,8 +838,6 @@ ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
    └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
 
 ━━━ ${regimeEmoji} MARKET CONDITION ANALYSIS ━━━━━━━━━━━━━━
-   What this shows: Is the market trending or choppy?
-   Different conditions favor different strategies
 
 📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
    └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Trend-following works best' : adxResult.regime === 'RANGING' ? 'Sideways movement — Range-trading works best' : 'Transitional — Be cautious'}
