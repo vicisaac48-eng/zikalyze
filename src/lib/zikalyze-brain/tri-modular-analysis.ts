@@ -932,11 +932,6 @@ ${agreementStatus}
 • "Support" = Price level where buying typically appears
 • "Resistance" = Price level where selling typically appears
 
-🧠 AI Components:
-• "Algorithm" = Rule-based system using proven patterns
-• "Neural Network" = AI learning from historical data
-• "Hybrid Confirmation" = Both systems must agree for best signals
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ Remember: This is NOT financial advice. 
    Only trade what you can afford to lose.
