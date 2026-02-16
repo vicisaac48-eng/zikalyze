@@ -928,7 +928,6 @@ ${triModularOutput}
 Verified Data Sources (Real APIs):
 • Price, Volume: CoinGecko/Binance/OKX (live WebSocket)
 • Fear & Greed: Alternative.me API (updates every 24h)
-• Technical Indicators: Calculated from real price data
 
 Estimated Data (Derived from Price Action):
 • Whale Activity: Estimated from price momentum patterns
