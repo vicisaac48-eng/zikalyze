@@ -793,8 +793,6 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
    └─ ${etfFlowData ? (etfFlowData.source === 'coinglass' ? 'Source: CoinGlass ETF data' : 'Estimated from price momentum') : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST (Big Picture Events) ━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ANALYSIS (Trend Alignment) ━━━━━━
-   What this shows: Checking if short-term and long-term trends agree
-   Strong signals occur when all timeframes point the same direction
 
 ${htfVisual}  →  ${alignmentText}
 
