@@ -18,6 +18,11 @@ android {
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
+        
+        // Configure NDK to include native libraries for all common architectures
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
     }
     buildTypes {
         release {
@@ -60,6 +65,9 @@ dependencies {
     
     // Firebase Analytics - version managed by BOM
     implementation 'com.google.firebase:firebase-analytics'
+    
+    // Firebase Cloud Messaging - includes native libraries for push notifications
+    implementation 'com.google.firebase:firebase-messaging'
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

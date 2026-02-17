@@ -103,8 +103,20 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
       
-      - name: Upload Native Debug Symbols
+      - name: Check for Native Debug Symbols
         if: github.event.inputs.build_type == 'release'
+        id: check_symbols
+        run: |
+          if [ -f "android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip" ]; then
+            echo "symbols_exist=true" >> $GITHUB_OUTPUT
+            echo "✅ Native debug symbols found"
+          else
+            echo "symbols_exist=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No native debug symbols generated (no native code in app)"
+          fi
+      
+      - name: Upload Native Debug Symbols
+        if: github.event.inputs.build_type == 'release' && steps.check_symbols.outputs.symbols_exist == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: zikalyze-native-debug-symbols
@@ -128,8 +140,15 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "1. Scroll down to the **Artifacts** section below" >> $GITHUB_STEP_SUMMARY
             echo "2. Download **zikalyze-release-aab** for Play Store upload" >> $GITHUB_STEP_SUMMARY
-            echo "3. Download **zikalyze-native-debug-symbols** (required by Play Store)" >> $GITHUB_STEP_SUMMARY
-            echo "4. Upload BOTH files to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Important:** Play Store requires both AAB and debug symbols to avoid warnings" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.check_symbols.outputs.symbols_exist }}" == "true" ]; then
+              echo "3. Download **zikalyze-native-debug-symbols** (required by Play Store)" >> $GITHUB_STEP_SUMMARY
+              echo "4. Upload BOTH files to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ **Important:** Play Store requires both AAB and debug symbols to avoid warnings" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "3. Upload to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "ℹ️ **Note:** No native debug symbols were generated (app has no native code yet)" >> $GITHUB_STEP_SUMMARY
+              echo "Debug symbols will be generated automatically once native libraries are added" >> $GITHUB_STEP_SUMMARY
+            fi
           fi

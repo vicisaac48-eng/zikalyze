@@ -19,7 +19,9 @@ When running the workflow with `build_type: release`, you got:
 When running the workflow with `build_type: release`, you now get:
 - ✅ `zikalyze-release-apk` (APK for testing)
 - ✅ `zikalyze-release-aab` (AAB for Play Store)
-- ✅ `zikalyze-native-debug-symbols` (debug symbols ZIP) ⭐ **NEW**
+- ✅ `zikalyze-native-debug-symbols` (debug symbols ZIP - if native code exists) ⭐ **NEW**
+
+**Note:** Debug symbols are only generated when your app includes native libraries (`.so` files). If no native code exists, the workflow will complete successfully without the debug symbols artifact, and the build summary will indicate this is normal behavior.
 
 ## How to Use
 
@@ -131,14 +133,32 @@ When the workflow completes, you'll see a summary like this:
 ### Artifact Upload Configuration
 
 ```yaml
-- name: Upload Native Debug Symbols
+- name: Check for Native Debug Symbols
   if: github.event.inputs.build_type == 'release'
+  id: check_symbols
+  run: |
+    if [ -f "android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip" ]; then
+      echo "symbols_exist=true" >> $GITHUB_OUTPUT
+      echo "✅ Native debug symbols found"
+    else
+      echo "symbols_exist=false" >> $GITHUB_OUTPUT
+      echo "ℹ️ No native debug symbols generated (no native code in app)"
+    fi
+
+- name: Upload Native Debug Symbols
+  if: github.event.inputs.build_type == 'release' && steps.check_symbols.outputs.symbols_exist == 'true'
   uses: actions/upload-artifact@v4
   with:
     name: zikalyze-native-debug-symbols
     path: android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
     retention-days: 30
 ```
+
+**Key Points:**
+- The workflow first checks if the debug symbols file exists
+- Upload only occurs if the file is present
+- This prevents "file not found" warnings when no native code exists
+- Build summary adapts based on whether symbols were generated
 
 ### Build Output Locations
 
@@ -147,12 +167,21 @@ After `./gradlew bundleRelease`, these files are created:
 ```
 android/app/build/outputs/
 ├── bundle/release/
-│   └── app-release.aab                                    ← Uploaded as zikalyze-release-aab
+│   └── app-release.aab                                    ← Always created, uploaded as zikalyze-release-aab
 ├── native-debug-symbols/release/
-│   └── native-debug-symbols.zip                           ← Uploaded as zikalyze-native-debug-symbols
+│   └── native-debug-symbols.zip                           ← Only if native code exists, uploaded as zikalyze-native-debug-symbols
 └── apk/release/
-    └── app-release-unsigned.apk                           ← Uploaded as zikalyze-release-apk
+    └── app-release-unsigned.apk                           ← Always created, uploaded as zikalyze-release-apk
 ```
+
+**When are debug symbols generated?**
+The `native-debug-symbols.zip` file is only created when your app includes native libraries. This happens when:
+- Using Firebase SDK (includes native components)
+- Using React Native modules
+- Including custom native code (C/C++)
+- Using third-party libraries with `.so` files
+
+If your app is pure web/JavaScript (like a basic Capacitor app), no native symbols are generated, and that's perfectly normal.
 
 ### Artifact Naming
 
@@ -170,13 +199,16 @@ android/app/build/outputs/
 
 **Causes:**
 - Workflow was run with `build_type: debug` (debug symbols only for release)
+- App has no native libraries yet (debug symbols only generated when native code exists)
 - Workflow failed before upload step
 - Old workflow version (before this update)
 
 **Solution:**
 1. Re-run workflow with `build_type: release`
-2. Check workflow logs for build errors
-3. Ensure workflow file is up to date with latest changes
+2. Check workflow logs - look for "No native debug symbols generated" message
+3. This is NORMAL if your app has no native libraries (`.so` files) yet
+4. Debug symbols will be automatically generated once native libraries are added (e.g., from Firebase SDK, native modules, etc.)
+5. Ensure workflow file is up to date with latest changes
 
 ### Wrong File in Artifact
 
