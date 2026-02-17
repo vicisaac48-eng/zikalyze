@@ -200,8 +200,11 @@ The guide covers:
 - Setting up your Play Console listing
 - Signing your app
 - Submitting for review
+- **NEW:** Uploading native debug symbols (fixes Play Store warnings)
 
 **Working with AAB files?** See [AAB_CODESPACE_QUICKSTART.md](./AAB_CODESPACE_QUICKSTART.md) for quick reference or [AAB_UTF8_ENCODING_FIX.md](./AAB_UTF8_ENCODING_FIX.md) if you encounter UTF-8 encoding errors.
+
+**Play Store Warnings?** See [PLAYSTORE_DEBUG_SYMBOLS.md](./PLAYSTORE_DEBUG_SYMBOLS.md) to fix "missing debug symbols" warnings.
 
 ## 🌐 IPFS Deployment
 
