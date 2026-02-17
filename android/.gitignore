@@ -25,7 +25,8 @@ output.json
 *.keystore
 
 # Google Services (Uncomment to track if needed)
-google-services.json
+# google-services.json
+# Note: Tracked in repository for CI/CD builds. Contains public client-side API keys.
 
 # Capacitor auto-generated files
 app/src/main/assets/capacitor.config.json
