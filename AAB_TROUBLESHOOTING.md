@@ -2,6 +2,8 @@
 
 This guide helps diagnose and fix issues when uploading Android App Bundles (AAB) to Google Play Store.
 
+> **New:** Having "not UTF-8 encoded" errors with AAB files? See [AAB_UTF8_ENCODING_FIX.md](./AAB_UTF8_ENCODING_FIX.md)
+
 ## 🚨 Common AAB Upload Problems
 
 ### Problem: "AAB was not accepted" or "Upload failed"
