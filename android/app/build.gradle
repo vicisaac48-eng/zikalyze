@@ -24,6 +24,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // Generate separate native debug symbols for Play Store
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
         debug {
             minifyEnabled false

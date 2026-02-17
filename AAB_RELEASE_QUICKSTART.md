@@ -30,6 +30,7 @@
    - Go to: https://play.google.com/console
    - Navigate to: Your App → Production → Create new release
    - Upload the signed AAB file
+   - **NEW:** Also upload debug symbols (see below)
    - Add release notes
    - Submit for review
 
@@ -52,11 +53,16 @@ cd android
 ./gradlew bundleRelease
 cd ..
 
-# 5. AAB output location
-# android/app/build/outputs/bundle/release/app-release.aab
+# 5. AAB and Debug Symbols output locations
+# AAB: android/app/build/outputs/bundle/release/app-release.aab
+# Debug Symbols: android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
 
 # 6. Sign the AAB
 ./scripts/auto_sign_aab.sh
+
+# 7. IMPORTANT: Upload BOTH files to Play Store
+# - Upload app-release.aab (signed)
+# - Upload native-debug-symbols.zip (in "Native debug symbols" section)
 ```
 
 ---
@@ -69,6 +75,8 @@ cd ..
 - **Detailed Guide:** `AAB_SIGNING_GUIDE.md`
 - **Quick Reference:** `QUICK_START_SIGNING.md`
 - **Troubleshooting:** `AAB_TROUBLESHOOTING.md`
+- **Debug Symbols:** `PLAYSTORE_DEBUG_SYMBOLS.md` (NEW - fixes Play Store warnings)
+- **Quick Fix:** `QUICK_FIX_DEBUG_SYMBOLS.md` (NEW)
 
 ---
 
@@ -124,6 +132,7 @@ Before uploading to Play Store:
 
 - [ ] AAB built successfully
 - [ ] AAB signed with release keystore
+- [ ] **Debug symbols zip generated** (`native-debug-symbols.zip`)
 - [ ] Version code incremented in `android/app/build.gradle`
 - [ ] Version name updated (e.g., 1.0.1 → 1.0.2)
 - [ ] Release notes prepared
