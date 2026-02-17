@@ -201,6 +201,8 @@ The guide covers:
 - Signing your app
 - Submitting for review
 
+**Working with AAB files?** See [AAB_CODESPACE_QUICKSTART.md](./AAB_CODESPACE_QUICKSTART.md) for quick reference or [AAB_UTF8_ENCODING_FIX.md](./AAB_UTF8_ENCODING_FIX.md) if you encounter UTF-8 encoding errors.
+
 ## 🌐 IPFS Deployment
 
 This project supports automatic deployment to IPFS (InterPlanetary File System) via Pinata. For detailed instructions on setting up IPFS deployment, see [IPFS_DEPLOYMENT.md](./IPFS_DEPLOYMENT.md).

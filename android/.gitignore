@@ -3,6 +3,13 @@
 /build/
 /capacitor-cordova-android-plugins/build/
 
+# Android build artifacts (AAB and APK files)
+*.aab
+*.apk
+app/build/outputs/
+app/output/
+output/
+
 # Local configuration file (sdk path, etc)
 local.properties
 
@@ -13,14 +20,13 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
-*.apk
 output.json
 
 # IntelliJ
 *.iml
 .idea/
 
-# Keystore files
+# Keystore files (binary)
 *.jks
 *.keystore
 
