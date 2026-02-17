@@ -4,7 +4,7 @@
 New privacy policy and terms of service content not showing on the website due to service worker caching.
 
 ## Root Cause
-The privacy policy (`public/privacy.html`) was dated February 16, 2026, while the terms (`public/terms.html`) was updated to February 17, 2026. Even though source files were current, the service worker cache (v7) was serving old cached versions with outdated revision hashes.
+The privacy policy (`public/privacy.html`) was dated February 16, 2026, while the terms (`public/terms.html`) were updated to February 17, 2026. Even though source files were current, the service worker cache (v7) was serving old cached versions with outdated revision hashes.
 
 ## Solution Implemented
 
