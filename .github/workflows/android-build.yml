@@ -103,6 +103,14 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
       
+      - name: Upload Native Debug Symbols
+        if: github.event.inputs.build_type == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zikalyze-native-debug-symbols
+          path: android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
+          retention-days: 30
+      
       # Build summary
       - name: Build Summary
         if: always()
@@ -120,5 +128,8 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "1. Scroll down to the **Artifacts** section below" >> $GITHUB_STEP_SUMMARY
             echo "2. Download **zikalyze-release-aab** for Play Store upload" >> $GITHUB_STEP_SUMMARY
-            echo "3. Upload the AAB file to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
+            echo "3. Download **zikalyze-native-debug-symbols** (required by Play Store)" >> $GITHUB_STEP_SUMMARY
+            echo "4. Upload BOTH files to [Google Play Console](https://play.google.com/console)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Important:** Play Store requires both AAB and debug symbols to avoid warnings" >> $GITHUB_STEP_SUMMARY
           fi

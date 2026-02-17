@@ -11,11 +11,12 @@
    - Select build type: `release`
    - Click **"Run workflow"**
 
-2. **Download the AAB:**
+2. **Download the AAB and Debug Symbols:**
    - Wait for workflow to complete (~5-10 minutes)
    - Scroll to **Artifacts** section
-   - Download **zikalyze-release-aab.zip**
-   - Extract to get `app-release.aab`
+   - Download **zikalyze-release-aab.zip** (contains AAB)
+   - Download **zikalyze-native-debug-symbols.zip** (contains debug symbols)
+   - Extract both files
 
 3. **Sign the AAB:**
    ```bash
@@ -30,7 +31,7 @@
    - Go to: https://play.google.com/console
    - Navigate to: Your App → Production → Create new release
    - Upload the signed AAB file
-   - **NEW:** Also upload debug symbols (see below)
+   - **Upload debug symbols** from zikalyze-native-debug-symbols.zip
    - Add release notes
    - Submit for review
 
@@ -105,8 +106,11 @@ When you run the workflow with `build_type: release`, you get:
 
 1. **zikalyze-release-apk** (unsigned APK for testing)
 2. **zikalyze-release-aab** (unsigned AAB for Play Store)
+3. **zikalyze-native-debug-symbols** (debug symbols ZIP - required by Play Store)
 
-Both are retained for 30 days in GitHub Actions artifacts.
+All are retained for 30 days in GitHub Actions artifacts.
+
+**Important:** You must upload BOTH the AAB and debug symbols to Play Console to avoid warnings.
 
 ---
 
