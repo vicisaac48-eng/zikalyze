@@ -30,3 +30,9 @@ dist-ssr
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Android build artifacts (binary files)
+*.aab
+*.apk
+android/app/build/
+android/app/output/
