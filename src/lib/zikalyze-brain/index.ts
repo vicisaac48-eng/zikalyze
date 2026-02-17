@@ -793,8 +793,6 @@ ${volumeSpike.isSpike ? `📊 VOLUME SPIKE: +${volumeSpike.percentageAboveAvg.to
    └─ ${etfFlowData ? (etfFlowData.source === 'coinglass' ? 'Source: CoinGlass ETF data' : 'Estimated from price momentum') : 'ETFs only available for BTC/ETH'}
 ${macroSection ? `\n━━━ ⚡ MACRO CATALYST (Big Picture Events) ━━━━━━━━━━━\n\n${macroSection}\n` : ''}
 ━━━ 🔭 MULTI-TIMEFRAME ANALYSIS (Trend Alignment) ━━━━━━
-   What this shows: Checking if short-term and long-term trends agree
-   Strong signals occur when all timeframes point the same direction
 
 ${htfVisual}  →  ${alignmentText}
 
@@ -827,10 +825,6 @@ ${bias === 'SHORT' ? `📈 If invalidated: Flip long above $${(high24h + range *
 
 ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
-━━━ 🧠 DUAL-SYSTEM CONFIRMATION (How We Decide) ━━━━━━━
-   What this shows: Two independent systems cross-checking each other
-   Both agreeing = higher confidence in the signal
-
 ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 
 📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
@@ -844,8 +838,6 @@ ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
    └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
 
 ━━━ ${regimeEmoji} MARKET CONDITION ANALYSIS ━━━━━━━━━━━━━━
-   What this shows: Is the market trending or choppy?
-   Different conditions favor different strategies
 
 📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
    └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Trend-following works best' : adxResult.regime === 'RANGING' ? 'Sideways movement — Range-trading works best' : 'Transitional — Be cautious'}
@@ -871,9 +863,6 @@ ${masterEmoji} Master Control: ${regimeConsensus.masterControl}
    └─ Emergency exit to protect capital if trade goes wrong${regimeConsensus.skipTrade ? `
 
 ⚠️ TRADE SKIPPED: ${regimeConsensus.skipReason}` : ''}
-
-━━━ 🕯️ PRICE PATTERN CONFIRMATION ━━━━━━━━━━━━━━━━━
-   What this shows: Recent price action patterns giving clues
 
 📍 Pattern: ${regimeConsensus.candlestickConfirmation.pattern} (${regimeConsensus.candlestickConfirmation.bias})
    └─ Type: ${regimeConsensus.candlestickConfirmation.type} | Strength: ${regimeConsensus.candlestickConfirmation.strength}%
@@ -924,29 +913,8 @@ ${bias === 'SHORT' ? `📈 UPSIDE SCENARIO: If price reclaims $${(high24h - rang
   → First to break with volume defines direction
   📋 React to the breakout, don't predict`}
 ${triModularOutput}
-━━━ 📊 DATA SOURCE TRANSPARENCY ━━━━━━━━━━━━━━━━━━━━
-Verified Data Sources (Real APIs):
-• Price, Volume: CoinGecko/Binance/OKX (live WebSocket)
-• Fear & Greed: Alternative.me API (updates every 24h)
-• Technical Indicators: Calculated from real price data
-
-Estimated Data (Derived from Price Action):
-• Whale Activity: Estimated from price momentum patterns
-• Exchange Flow: ${hasRealOnChain ? 'CryptoQuant API' : 'Estimated from market data'}
-• Institutional Sentiment: ${etfFlowData && etfFlowData.source === 'coinglass' ? 'CoinGlass ETF data' : 'Estimated from price trends'}
-
-⚠️ Estimated data provides directional signals but may not
-   reflect actual on-chain activity. Use for context only.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ━━━ ⚠️ ACCURACY DISCLAIMER ━━━━━━━━━━━━━━━━━━━━━━
-This analysis uses BOTH algorithmic calculations AND neural
-network predictions for hybrid confirmation. Crypto markets
-are highly volatile and unpredictable.
-• Follow the trend — Don't trade against HTF direction ✓
-• Wait for confirmation — Need 2+ confirmations before entry ✓
 • Avoid bad trades — Quality check prevents poor setups ✓
-• Both Algorithm and Neural Network were used together ✓
-• Tri-Modular Analysis with Kill Switch included ✓
 • This is NOT financial advice — trade at your own risk
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;

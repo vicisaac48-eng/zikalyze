@@ -897,21 +897,6 @@ export function generateSimplifiedSummary(
    (Zikalyze AI Analysis)
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-🎯 WHAT TO DO: ${action}
-   Confidence: ${displayConfidence}${displayPercentage > 0 ? ` (${displayPercentage}%)` : ''}
-${skipExplanation}
-${marketMood}
-
-💰 HOW MUCH TO RISK:
-   ${positionAdvice}
-   
-   Why? ${reasoningText}
-
-🚨 WHEN TO EXIT:
-   ${exitExplanation}
-
-${agreementStatus}
-
 ━━━ 📚 UNDERSTANDING THE ANALYSIS ━━━━━━━━━━━━━━━━
 
 🎯 Trading Actions:
@@ -931,11 +916,6 @@ ${agreementStatus}
   (Weekly trends are stronger than hourly trends)
 • "Support" = Price level where buying typically appears
 • "Resistance" = Price level where selling typically appears
-
-🧠 AI Components:
-• "Algorithm" = Rule-based system using proven patterns
-• "Neural Network" = AI learning from historical data
-• "Hybrid Confirmation" = Both systems must agree for best signals
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ Remember: This is NOT financial advice. 

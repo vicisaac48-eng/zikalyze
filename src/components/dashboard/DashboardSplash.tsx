@@ -40,10 +40,10 @@ const DashboardSplash = ({ onComplete }: DashboardSplashProps) => {
       aria-label="Loading dashboard"
     >
       <div className="flex flex-col items-center gap-6">
-        {/* Professional icon with shadow and pulse */}
+        {/* Professional icon with shadow and pulse - smaller on native app */}
         <div className="splash-icon">
           <TrendingUp 
-            className="w-20 h-20 sm:w-24 sm:h-24" 
+            className={isNativeApp ? "w-16 h-16 sm:w-20 sm:h-20" : "w-20 h-20 sm:w-24 sm:h-24"}
             style={{ color: '#111827' }}
             strokeWidth={2.5}
           />
