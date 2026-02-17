@@ -1,5 +1,5 @@
 // Service Worker for Push Notifications, Offline Caching, and Background AI Learning
-const CACHE_NAME = 'zikalyze-v6';
+const CACHE_NAME = 'zikalyze-v7';
 const STATIC_ASSETS = [
   './',
   './favicon.ico',
