@@ -18,3 +18,12 @@
 
 # Keep source file name for better crash reports
 -renamesourcefileattribute SourceFile
+
+# Firebase - Keep all Firebase classes to ensure native libraries are included
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Keep native methods (JNI) - ensures native libraries (.so files) are packaged
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
