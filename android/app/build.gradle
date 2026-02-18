@@ -31,9 +31,19 @@ android {
             ndk {
                 debugSymbolLevel 'FULL'
             }
+            
+            // Enable Crashlytics NDK for native crash reporting
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled false
+                unstrippedNativeLibsDir file('build/intermediates/merged_native_libs/release/out/lib')
+            }
         }
         debug {
             minifyEnabled false
+            
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled false
+            }
         }
     }
     
@@ -80,6 +90,12 @@ dependencies {
     // Firebase Cloud Messaging - includes native libraries for push notifications
     implementation 'com.google.firebase:firebase-messaging'
     
+    // Firebase Crashlytics - crash reporting for Java/Kotlin code
+    implementation 'com.google.firebase:firebase-crashlytics'
+    
+    // Firebase Crashlytics NDK - provides native crash reporting and debug symbols
+    implementation 'com.google.firebase:firebase-crashlytics-ndk'
+    
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
@@ -92,6 +108,7 @@ try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
+        apply plugin: 'com.google.firebase.crashlytics'
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")

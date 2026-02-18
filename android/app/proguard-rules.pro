@@ -23,6 +23,10 @@
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
+# Keep Crashlytics to ensure crash reporting works
+-keep class com.google.firebase.crashlytics.** { *; }
+-dontwarn com.google.firebase.crashlytics.**
+
 # Keep native methods (JNI) - ensures native libraries (.so files) are packaged
 -keepclasseswithmembernames class * {
     native <methods>;
