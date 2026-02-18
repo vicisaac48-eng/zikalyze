@@ -1,8 +1,5 @@
 apply plugin: 'com.android.application'
 
-// Apply Google Services plugin after Android plugin
-apply plugin: 'com.google.gms.google-services'
-
 android {
     namespace "com.zikalyze.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -39,6 +36,20 @@ android {
             minifyEnabled false
         }
     }
+    
+    // Enable extraction of native debug symbols when building bundles
+    bundle {
+        language {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
+    }
+    
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
