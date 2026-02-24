@@ -827,34 +827,6 @@ ${keyInsights.slice(0, 5).map(i => `• ${i}`).join('\n')}
 
 ${confluenceEmoji} Algorithm + Neural Network: ${agreementText}
 
-📊 Algorithm (Rule-Based):  ${algorithmEmoji} ${hybridResult.algorithmBias.padEnd(BIAS_DISPLAY_WIDTH)} ${hybridResult.algorithmConfidence.toFixed(0)}%
-   └─ Uses proven trading patterns and technical indicators
-   └─ Methods: Smart Money Concepts, Fibonacci, Multi-Timeframe Analysis
-🧠 Neural Network (AI):     ${neuralEmoji} ${hybridResult.neuralDirection.padEnd(BIAS_DISPLAY_WIDTH)} ${(hybridResult.neuralConfidence * 100).toFixed(0)}%
-   └─ Learns from thousands of past market patterns
-   └─ Pattern Recognition: ${hybridResult.neuralReasoning}
-
-🎯 Combined Confidence: ${hybridResult.combinedConfidence.toFixed(0)}% (${hybridResult.confluenceLevel})
-   └─ ${hybridResult.agreement ? 'Both systems agree — Higher conviction signal' : 'Systems diverge — Consider reduced position size'}
-
-━━━ ${regimeEmoji} MARKET CONDITION ANALYSIS ━━━━━━━━━━━━━━
-
-📊 Market Regime: ${adxResult.regime} (ADX: ${adxResult.adx.toFixed(1)})
-   └─ ${adxResult.regime === 'TRENDING' ? 'Strong directional move — Trend-following works best' : adxResult.regime === 'RANGING' ? 'Sideways movement — Range-trading works best' : 'Transitional — Be cautious'}
-   └─ ADX measures trend strength (25+ = trending, <20 = choppy)
-
-${masterEmoji} Master Control: ${regimeConsensus.masterControl}
-   └─ Weights: Algorithm ${(regimeConsensus.algorithmWeight * 100).toFixed(0)}% | Neural ${(regimeConsensus.neuralWeight * 100).toFixed(0)}%
-   └─ In trending markets, we trust rule-based patterns more
-   └─ In choppy markets, we trust AI pattern recognition more
-
-📈 Weighted Consensus Score: ${regimeConsensus.weightedScore.toFixed(0)}% (combined algo + AI — differs from directional confidence)
-   └─ ${adxResult.regime === 'TRENDING' 
-        ? `Pattern-based entry, AI safety filter (${(hybridResult.neuralConfidence * 100).toFixed(0)}%${hybridResult.neuralConfidence < 0.51 ? ' ⚠️ BELOW 51%' : ' ✓'})` 
-        : adxResult.regime === 'RANGING'
-          ? 'AI spots false breakouts, patterns set risk levels'
-          : 'Equal weighting — Watch for market shift'}
-
 🎯 Support Zone: $${regimeConsensus.supportZone.toFixed(decimals)}
    └─ Price level where buying interest typically appears
 🎯 Resistance Zone: $${regimeConsensus.resistanceZone.toFixed(decimals)}
